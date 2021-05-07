@@ -1,0 +1,10 @@
+[general]
+name=ProtoPlugin
+email=jwittker@uos.de
+author=Jwittker
+qgisMinimumVersion=3.0
+description=Prototype Plugin for Project Group Theoretical Computer Science. Creates Graphs from VectorLayers.
+about=Plugin for Project Group Theoretical Computer Science.
+version=version 1
+repository=https://gitpgtcs.informatik.uni-osnabrueck.de/spanners/frontend
+qgisMaximumversion=3.99
