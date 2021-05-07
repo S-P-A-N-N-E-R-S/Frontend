@@ -21,25 +21,17 @@ class ProtoPlugin:
         self.action.setWhatsThis("Select VectorLayer and click green Button")
         self.action.setStatusTip("Select VectorLayer and click green Button")
 
-
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu("&Proto Plugin", self.action)
-
-        self.iface.mapCanvas().renderComplete.connect(self.renderTest)
 
 
     def unload(self):
         self.iface.removePluginMenu("&Proto Plugin", self.action)
         self.iface.removeToolBarIcon(self.action)
 
-        self.iface.mapCanvas().renderComplete.disconnect(self.renderTest)
-
     def run(self):
         print("ProtoPlugin: Run Called!")
         self.createGraph()
-
-    def renderTest(self, painter):
-        print("ProtoPlugin: RenderTest Called!")
 
     def createGraph(self):
         layer = self.iface.activeLayer()
