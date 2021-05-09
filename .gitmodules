@@ -1,0 +1,3 @@
+[submodule "protocol"]
+	path = protocol
+	url = git@gitpgtcs.informatik.uni-osnabrueck.de:spanners/protocol.git
