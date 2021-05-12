@@ -32,95 +32,123 @@ class ProtoPlugin:
     def run(self):
         print("ProtoPlugin: Run Called!")
         self.createGraph()
-
+    
+       
+    
     def createGraph(self):
         layer = self.iface.activeLayer()
-
-        # check if layer type is vectorLayer
-        vector = True
-        if layer and layer.type() != QgsMapLayer.VectorLayer:
-            vector = False
-            print("No VectorLayer found.")
+        graph = QgsGraph() 
+        vertexID = 0
+        edgeID = 0 
         
-        # check features (only one representative)
-        points = False
-        lines = False
-        if vector:
-            for feat in layer.getFeatures():
-                geom = feat.geometry()
-            
-                # check for geometry, assume no mixture of e.g. lines and points
-                points = False
-                lines = False
-                if geom.type() == QgsWkbTypes.PointGeometry:
-                    points = True
-                    print("Points Found.")
-                elif geom.type() == QgsWkbTypes.LineGeometry:
-                    lines = True
-                    print("Lines Found.")
-                else:
-                    # no points or lines in vectorLayer found
-                    print("No Points or Lines found. Error!")
+        # create new VectorLayer to show graph
+        # TODO: add function to create VectorLayer (used for points and lines) to minimize double code
+        newVectorLayerVertices = QgsVectorLayer("Point", "GraphVertices", "memory")
+        newDataProviderVertices = newVectorLayerVertices.dataProvider()
 
-                break
-
-        # if layer consists only of lines, GraphBuilder can be applied
-        if lines:
-            director = QgsVectorLayerDirector(layer, -1, '', '', '', QgsVectorLayerDirector.DirectionBoth)
-            director.addStrategy(QgsNetworkDistanceStrategy())
-
-            graphBuilder = QgsGraphBuilder(layer.crs())
-            director.makeGraph(graphBuilder, [])
-            graph = graphBuilder.graph()
-
-            # create new VectorLayer to show graph
-            newVectorLayer = QgsVectorLayer("LineString", "LinesFromGraph", "memory")
-            newDataProvider = newVectorLayer.dataProvider()
-
-            # add Fields to VectorLayer
-            newDataProvider.addAttributes([QgsField("edgeNr", QVariant.Int), QgsField("type", QVariant.String)])
-            newVectorLayer.updateFields()
-
-            # add Feature for every edge in graph based on its points
-            for edgeId in range(graph.edgeCount()):
-                feat = QgsFeature()
-                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(graph.vertex(graph.edge(edgeId).fromVertex()).point()),
-                                                            QgsPoint(graph.vertex(graph.edge(edgeId).toVertex()).point())]))
-                feat.setAttributes([edgeId, "EdgeFromGraph"])
-                newDataProvider.addFeature(feat)
-            
-            newVectorLayer.updateExtents()
-            QgsProject.instance().addMapLayer(newVectorLayer)
-
-            print("Done: ", graph.edgeCount(), " edges added.")
+        # add Fields to VectorLayer
+        newDataProviderVertices.addAttributes([QgsField("ID", QVariant.Int)])
+        newVectorLayerVertices.updateFields()
         
-        # if layer consists only of points, a QgsGraph has to be filled with those points
-        elif points:
-            graph = QgsGraph()
+        # create new VectorLayer to show graph
+        # TODO: add function to create VectorLayer (used for points and lines) to minimize double code
+        newVectorLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")
+        newDataProviderEdges = newVectorLayerEdges.dataProvider()
 
-            # get points from features of layer
-            for feat in layer.getFeatures():
-                geom = feat.geometry()
-                graph.addVertex(geom.asPoint())
-
-
-            # create new VectorLayer to show graph
-            # TODO: add function to create VectorLayer (used for points and lines) to minimize double code
-            newVectorLayer = QgsVectorLayer("Point", "PointsFromGraph", "memory")
-            newDataProvider = newVectorLayer.dataProvider()
-
-            # add Fields to VectorLayer
-            newDataProvider.addAttributes([QgsField("vertexNr", QVariant.Int), QgsField("type", QVariant.String)])
-            newVectorLayer.updateFields()
-
-            # add Feature for every vertex in graph
-            for vertexId in range(graph.vertexCount()):
-                feat = QgsFeature()
-                feat.setGeometry(QgsGeometry.fromPointXY(graph.vertex(vertexId).point()))
-                feat.setAttributes([vertexId, "VertexFromGraph"])
-                newDataProvider.addFeature(feat)
-
-            newVectorLayer.updateExtents()
-            QgsProject.instance().addMapLayer(newVectorLayer)
-
-            print("Done: ", graph.vertexCount(), " vertices added")
+        # add Fields to VectorLayer
+        newDataProviderEdges.addAttributes([QgsField("ID", QVariant.Int), QgsField("fromVertex",QVariant.Int), QgsField("toVertex",QVariant.Int),QgsField("weight", QVariant.String)])
+        newVectorLayerEdges.updateFields()
+        
+           
+        #check if vector layer   
+        if layer.type() == QgsMapLayer.VectorLayer:
+            
+            #get the geometry type      
+            geometryTypeOfLayer = layer.geometryType()
+        
+            if geometryTypeOfLayer == QgsWkbTypes.PointGeometry:
+                vertexID = 0
+                
+                for feat in layer.getFeatures():
+                    geom = feat.geometry()
+                    vertexID+=1
+                    graph.addVertex(geom.asPoint())
+                    newFeature = QgsFeature()                                         
+                    newFeature.setGeometry(QgsGeometry.fromPointXY(geom.asPoint()))                   
+                    newFeature.setAttributes([vertexID])               
+                    newDataProviderVertices.addFeature(newFeature)                                    
+                QgsProject.instance().addMapLayer(newVectorLayerVertices)                          
+                
+            elif geometryTypeOfLayer == QgsWkbTypes.LineGeometry:
+                edgeID = 0
+                vertexID = 0
+      
+                for feat in layer.getFeatures():
+                    geom = feat.geometry()
+                    startVertex = QgsPointXY
+                    endVertex = QgsPointXY
+                    #vertices
+                    if QgsWkbTypes.isSingleType(geom.wkbType()):
+                        
+                        vertices = geom.asPolyline()
+                        startVertex = vertices[0]
+                        endVertex = vertices[-1]
+                        
+                        graph.addVertex(startVertex)
+                        graph.addVertex(endVertex)
+                        
+                        newFeature = QgsFeature()                     
+                        newFeature.setGeometry(QgsGeometry.fromPointXY(startVertex))                                           
+                        newFeature.setAttributes([vertexID])
+                        vertexID+=1               
+                        newDataProviderVertices.addFeature(newFeature)                     
+                        
+                        newFeature = QgsFeature(newVectorLayerVertices.fields())  
+                        newFeature.setAttributes([vertexID])                    
+                        newFeature.setGeometry(QgsGeometry.fromPointXY(endVertex))                                                                  
+                        vertexID+=1               
+                        newDataProviderVertices.addFeature(newFeature) 
+                                                                                        
+                    else:
+                        
+                        vertices = geom.asMultiPolyline()
+                        startVertex = vertices[0][0]
+                        endVertex = vertices[-1][-1]
+                                                
+                        graph.addVertex(startVertex)
+                        graph.addVertex(endVertex)
+                                              
+                        newFeature = QgsFeature()                     
+                        newFeature.setGeometry(QgsGeometry.fromPointXY(startVertex))                                           
+                        newFeature.setAttributes([vertexID])
+                        vertexID+=1              
+                        newDataProviderVertices.addFeature(newFeature)                     
+                        
+                        newFeature = QgsFeature(newVectorLayerVertices.fields())   
+                        newFeature.setAttributes([vertexID])                   
+                        newFeature.setGeometry(QgsGeometry.fromPointXY(endVertex))                                                                 
+                        vertexID+=1                
+                        newDataProviderVertices.addFeature(newFeature) 
+                                            
+                        
+                        
+                    #edges 
+                    edgeID+=1
+                    strategy = QgsNetworkSpeedStrategy(1,50,1)
+                    graph.addEdge(vertexID-2, vertexID-1,[strategy])             
+                    newFeature = QgsFeature()
+                    newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(startVertex), QgsPoint(endVertex)]))
+                    newFeature.setAttributes([edgeID, vertexID-2, vertexID-1, 1])
+                    newDataProviderEdges.addFeature(newFeature)
+                   
+                    QgsProject.instance().addMapLayer(newVectorLayerVertices)
+                    QgsProject.instance().addMapLayer(newVectorLayerEdges)  
+      
+            elif geometryTypeOfLayer == QgsWkbTypes.PolygonGeometry:
+                
+                for feat in layer.getFeatures():
+                    print("TODO")
+   
+                      
+        
+                 
