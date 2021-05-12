@@ -5,6 +5,10 @@ When loaded, select a VectorLayer and click the green Button in the Plugin Toolb
 
 The plugin loads the VectorLayer into a QgsGraph and the QgsGraph into a new VectorLayer.
 
+# Compile resources and ui files
+
+The *.qrc and *.ui files can be complied with the following command: `make compile`
+
 # Deploy plugin to QGIS3
 
 The plugin can be deployed to QGIS on Linux with the following command: `make deploy`
