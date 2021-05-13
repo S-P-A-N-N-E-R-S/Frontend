@@ -165,7 +165,7 @@ QListWidget::item::selected {
          <item>
           <widget class="QStackedWidget" name="stacked_panels_widget">
            <property name="currentIndex">
-            <number>4</number>
+            <number>2</number>
            </property>
            <widget class="QWidget" name="create_example_data">
             <property name="sizePolicy">
@@ -347,7 +347,7 @@ QListWidget::item::selected {
                      <x>10</x>
                      <y>180</y>
                      <width>791</width>
-                     <height>251</height>
+                     <height>291</height>
                     </rect>
                    </property>
                    <property name="title">
@@ -380,7 +380,7 @@ QListWidget::item::selected {
                       <x>10</x>
                       <y>30</y>
                       <width>771</width>
-                      <height>211</height>
+                      <height>291</height>
                      </rect>
                     </property>
                     <layout class="QFormLayout" name="formLayout_3">
@@ -394,14 +394,14 @@ QListWidget::item::selected {
                      <item row="3" column="0" colspan="2">
                       <widget class="QgsFieldComboBox" name="mFieldComboBox"/>
                      </item>
-                     <item row="4" column="0">
+                     <item row="6" column="0">
                       <widget class="QLabel" name="label_5">
                        <property name="text">
                         <string>Rasterdata [optional]</string>
                        </property>
                       </widget>
                      </item>
-                     <item row="5" column="0" colspan="2">
+                     <item row="7" column="0" colspan="2">
                       <layout class="QHBoxLayout" name="horizontalLayout_6">
                        <item>
                         <widget class="QgsFeaturePickerWidget" name="mFeaturePickerWidget_2"/>
@@ -415,14 +415,14 @@ QListWidget::item::selected {
                        </item>
                       </layout>
                      </item>
-                     <item row="6" column="0">
+                     <item row="8" column="0">
                       <widget class="QLabel" name="label_10">
                        <property name="text">
                         <string>Rasterdata type [optional]</string>
                        </property>
                       </widget>
                      </item>
-                     <item row="7" column="0" colspan="2">
+                     <item row="9" column="0" colspan="2">
                       <widget class="QComboBox" name="comboBox_4">
                        <item>
                         <property name="text">
@@ -461,6 +461,16 @@ QListWidget::item::selected {
                         </property>
                        </item>
                       </widget>
+                     </item>
+                     <item row="4" column="0">
+                      <widget class="QLabel" name="label_15">
+                       <property name="text">
+                        <string>Points of interest [optional] (point layer, only if line layer)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="5" column="0" colspan="2">
+                      <widget class="QgsFileWidget" name="mQgsFileWidget_4"/>
                      </item>
                     </layout>
                    </widget>
@@ -586,7 +596,7 @@ QListWidget::item::selected {
                     <item row="2" column="1">
                      <widget class="QLabel" name="label_13">
                       <property name="text">
-                       <string>Graph (Custom graph layer or graph file)</string>
+                       <string>Graph (Layer with graph ref. or graph file)</string>
                       </property>
                      </widget>
                     </item>
@@ -668,7 +678,7 @@ QListWidget::item::selected {
                      <item row="0" column="0">
                       <widget class="QLabel" name="label_11">
                        <property name="text">
-                        <string>CRS (if not in data like .gml)</string>
+                        <string>CRS (if not in graph input like .gml)</string>
                        </property>
                       </widget>
                      </item>
@@ -689,9 +699,9 @@ QListWidget::item::selected {
                       </widget>
                      </item>
                      <item row="3" column="0" colspan="2">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox">
+                      <widget class="QSpinBox" name="spinBox">
                        <property name="minimum">
-                        <double>1.000000000000000</double>
+                        <number>1</number>
                        </property>
                       </widget>
                      </item>
@@ -876,7 +886,7 @@ QListWidget::item::selected {
                     <x>10</x>
                     <y>30</y>
                     <width>791</width>
-                    <height>41</height>
+                    <height>46</height>
                    </rect>
                   </property>
                   <layout class="QFormLayout" name="formLayout_5">
