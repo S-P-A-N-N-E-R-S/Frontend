@@ -58,6 +58,7 @@ class ProtoPlugin:
     def initGui(self):
         # create menu
         menu = QMenu("Proto Plugin")
+        menu.setIcon(QIcon(getImagePath("icon.png")))
         menu.addAction(self.exampleAction)
         menu.addAction(self.graphAction)
         menu.addAction(self.ogdfAnalysisAction)
