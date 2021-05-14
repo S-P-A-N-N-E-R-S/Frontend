@@ -10,20 +10,27 @@ from . import resources
 
 import time
 
+from .ui.protoPluginDialog import ProtoPluginDialog
+from .helperFunctions import getImagePath, getPluginPath
+
+
 class ProtoPlugin:
 
     def __init__(self, iface):
         self.iface = iface
 
     def initGui(self):
-        self.action = QAction(QIcon(":/plugins/ProtoPlugin/icon.png"), "Proto Plugin", self.iface.mainWindow())
-        self.action.triggered.connect(self.run)
+        self.action = QAction(QIcon(getImagePath("icon.png")), "Proto Plugin", self.iface.mainWindow())
+        self.action.triggered.connect(self.openDialog)
         self.action.setWhatsThis("Select VectorLayer and click green Button")
         self.action.setStatusTip("Select VectorLayer and click green Button")
 
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu("&Proto Plugin", self.action)
 
+    def openDialog(self):
+        dialog = ProtoPluginDialog()
+        dialog.exec_()
 
     def unload(self):
         self.iface.removePluginMenu("&Proto Plugin", self.action)
