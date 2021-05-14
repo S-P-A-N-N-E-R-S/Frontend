@@ -1,5 +1,5 @@
 
-class BaseContentWindow:
+class BaseContentView:
 
 
     def __init__(self, dialog):

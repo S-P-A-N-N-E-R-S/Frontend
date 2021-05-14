@@ -164,9 +164,9 @@ QListWidget::item::selected {
            <number>0</number>
           </property>
           <item>
-           <widget class="QStackedWidget" name="stacked_content_window">
+           <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">

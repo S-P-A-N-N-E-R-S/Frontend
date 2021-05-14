@@ -1,7 +1,7 @@
-from .baseContentWindow import BaseContentWindow
+from .baseContentView import BaseContentView
 
 
-class OptionsWindow(BaseContentWindow):
+class OptionsView(BaseContentView):
 
     def __init__(self, dialog):
         super().__init__(dialog)

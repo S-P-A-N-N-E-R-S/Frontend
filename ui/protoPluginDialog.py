@@ -22,15 +22,16 @@
 """
 
 import os
+from enum import Enum
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
 
-from .exampleDataWindow import ExampleDataWindow
-from .createGraphWindow import CreateGraphWindow
-from .ogdfAnalysisWindow import OGDFAnalysisWindow
-from .jobsWindow import JobsWindow
-from .optionsWindow import OptionsWindow
+from .exampleDataView import ExampleDataView
+from .createGraphView import CreateGraphView
+from .ogdfAnalysisView import OGDFAnalysisView
+from .jobsView import JobsView
+from .optionsView import OptionsView
 
 
 
@@ -40,6 +41,13 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class ProtoPluginDialog(QtWidgets.QDialog, FORM_CLASS):
+
+    class Views(Enum):
+        ExampleDataView = 0
+        CreateGraphView = 1
+        OGDFAnalysisView = 2
+        JobsView = 3
+        OptionsView = 4
 
     def __init__(self, parent=None):
         """Constructor."""
@@ -52,24 +60,25 @@ class ProtoPluginDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
 
         # left navigation
-        self.menu_list.currentRowChanged['int'].connect(
-            self.stacked_content_window.setCurrentIndex)
+        self.menu_list.currentRowChanged.connect(self.stacked_content_views.setCurrentIndex)
 
         # setup each content view
-        self.contentWindows = [
-            ExampleDataWindow(self),
-            CreateGraphWindow(self),
-            OGDFAnalysisWindow(self),
-            JobsWindow(self),
-            OptionsWindow(self),
+        self.contentViews = [
+            ExampleDataView(self),
+            CreateGraphView(self),
+            OGDFAnalysisView(self),
+            JobsView(self),
+            OptionsView(self),
         ]
 
-        for contentWindow in self.contentWindows:
-            contentWindow.setupWindow()
+        for contentViews in self.contentViews:
+            contentViews.setupWindow()
 
         # create example data as default
         self.menu_list.setCurrentRow(0)
 
+    def setView(self, View):
+        self.menu_list.setCurrentRow(View.value)
 
 
 
