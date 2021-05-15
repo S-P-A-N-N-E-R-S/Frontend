@@ -12,3 +12,8 @@ def getImagePath(image):
     """ Get the image path """
     path = join(getPluginPath(), "resources/images")
     return abspath(join(path, image))
+
+def getExamplePath(example):
+    """ Get the example path """
+    path = join(getPluginPath(), "resources/examples")
+    return abspath(join(path, example))
