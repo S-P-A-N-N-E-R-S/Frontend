@@ -7,8 +7,13 @@ from qgis.gui import *
 from qgis.analysis import *
 
 from . import resources
+from .qgsgraphlayer import QgsGraphLayer
 
+import sys
 import time
+
+# save / serialize graph in into a pickle file
+import pickle
 
 class ProtoPlugin:
 
@@ -35,13 +40,18 @@ class ProtoPlugin:
 
     def createGraph(self):
         layer = self.iface.activeLayer()
-
+        
         # check if layer type is vectorLayer
         vector = True
         if layer and layer.type() != QgsMapLayer.VectorLayer:
             vector = False
             print("No VectorLayer found.")
-        
+
+        # check if layer is graphLayer
+        graphLoaded = False
+        if isinstance(layer, QgsGraphLayer):
+            graphLoaded = True
+
         # check features (only one representative)
         points = False
         lines = False
@@ -69,17 +79,24 @@ class ProtoPlugin:
             director = QgsVectorLayerDirector(layer, -1, '', '', '', QgsVectorLayerDirector.DirectionBoth)
             director.addStrategy(QgsNetworkDistanceStrategy())
 
-            graphBuilder = QgsGraphBuilder(layer.crs())
-            director.makeGraph(graphBuilder, [])
-            graph = graphBuilder.graph()
+            if not graphLoaded:
+                graphBuilder = QgsGraphBuilder(layer.crs())
+                director.makeGraph(graphBuilder, [])
+                graph = graphBuilder.graph()
+            else:
+                print("Get existing graph from graphLayer")
+                graph = layer.getGraph()
 
             # create new VectorLayer to show graph
-            newVectorLayer = QgsVectorLayer("LineString", "LinesFromGraph", "memory")
-            newDataProvider = newVectorLayer.dataProvider()
+            newGraphLayer = QgsGraphLayer("LineString", "LinesFromGraph", "memory")
+            newDataProvider = newGraphLayer.dataProvider()
+
+            # add graph to graphLayer
+            newGraphLayer.setGraph(graph)
 
             # add Fields to VectorLayer
             newDataProvider.addAttributes([QgsField("edgeNr", QVariant.Int), QgsField("type", QVariant.String)])
-            newVectorLayer.updateFields()
+            newGraphLayer.updateFields()
 
             # add Feature for every edge in graph based on its points
             for edgeId in range(graph.edgeCount()):
@@ -89,29 +106,37 @@ class ProtoPlugin:
                 feat.setAttributes([edgeId, "EdgeFromGraph"])
                 newDataProvider.addFeature(feat)
             
-            newVectorLayer.updateExtents()
-            QgsProject.instance().addMapLayer(newVectorLayer)
+            newGraphLayer.updateExtents()
+            QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.edgeCount(), " edges added.")
         
         # if layer consists only of points, a QgsGraph has to be filled with those points
         elif points:
-            graph = QgsGraph()
+            
+            if not graphLoaded:                
+                graph = QgsGraph()
 
-            # get points from features of layer
-            for feat in layer.getFeatures():
-                geom = feat.geometry()
-                graph.addVertex(geom.asPoint())
-
+                # get points from features of layer
+                for feat in layer.getFeatures():
+                    geom = feat.geometry()
+                    addedPoint = geom.asPoint()
+                    graph.addVertex(addedPoint)
+            else:
+                print("Get existing graph from graphLayer")
+                graph = layer.getGraph()
 
             # create new VectorLayer to show graph
             # TODO: add function to create VectorLayer (used for points and lines) to minimize double code
-            newVectorLayer = QgsVectorLayer("Point", "PointsFromGraph", "memory")
-            newDataProvider = newVectorLayer.dataProvider()
+            newGraphLayer = QgsGraphLayer("Point", "PointsFromGraph", "memory")
+            newDataProvider = newGraphLayer.dataProvider()
+
+            # add graph to graphLayer
+            newGraphLayer.setGraph(graph)
 
             # add Fields to VectorLayer
             newDataProvider.addAttributes([QgsField("vertexNr", QVariant.Int), QgsField("type", QVariant.String)])
-            newVectorLayer.updateFields()
+            newGraphLayer.updateFields()
 
             # add Feature for every vertex in graph
             for vertexId in range(graph.vertexCount()):
@@ -120,7 +145,7 @@ class ProtoPlugin:
                 feat.setAttributes([vertexId, "VertexFromGraph"])
                 newDataProvider.addFeature(feat)
 
-            newVectorLayer.updateExtents()
-            QgsProject.instance().addMapLayer(newVectorLayer)
+            newGraphLayer.updateExtents()
+            QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.vertexCount(), " vertices added")
