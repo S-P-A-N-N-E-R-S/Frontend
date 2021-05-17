@@ -34,22 +34,7 @@ class ProtoPlugin:
         print("ProtoPlugin: Run Called!")
         self.createGraph()
         
-        
-        #testGraph = QgsGraph()
-        
-    
-        #testGraph.addVertex(QgsPointXY(123,333))
-        #testGraph.addVertex(QgsPointXY(100,200))
-        #testGraph.addEdge(0, 1,[])
-        
-        #print(testGraph.edge(0).cost())
-        
-        
-        
-        
-        
-    
-       
+             
     
     def createGraph(self):
         

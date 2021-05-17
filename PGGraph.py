@@ -17,18 +17,24 @@ class PGGraph(QgsGraph):
         super().__init__()
         self.distanceMetric = "Euclidean"
         
-    def costOfEdge(self, edge):
-        if self.distanceMetric == "Euclidean":
+    def costOfEdge(self, edge):               
+        if self.distanceMetric == "Euclidean":            
             fromPoint = self.vertex(edge.fromVertex()).point()
-            toPoint = self.vertex(edge.toVertex()).point()
-        
+            toPoint = self.vertex(edge.toVertex()).point()        
             euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))           
             return euclDist
         else:
             return 0   
 
-    def costOfEdgeID(self, edgeID):
-        return 0
+    def costOfEdgeID(self, edgeID):        
+        edgeFromID = self.edge(edgeID)
+        if self.distanceMetric == "Euclidean":            
+            fromPoint = self.vertex(edgeFromID.fromVertex()).point()
+            toPoint = self.vertex(edgeFromID.toVertex()).point()        
+            euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))           
+            return euclDist
+        else:
+            return 0  
     
 
 

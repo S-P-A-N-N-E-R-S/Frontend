@@ -5,6 +5,7 @@ from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 from .PGGraph import PGGraph
 from random import *
+import math
 
 """
 Instuctions:
@@ -25,8 +26,11 @@ Differet options for special graph creation can be set before calling makeGraph(
 If you want to create a special random graph use:
     ga.setRandomOptions(optionType, value)    
 
+
+
 Supported options:
     - connectionType: None, Complete, Nearest neighbor, Tree
+    - neigborNumber: int
     - edgeDirection: Undirected, Directed
     - distanceStrategy: Euclidean, Manhatten, Speed
     - speedOption: Attribute field with the speed information
@@ -40,7 +44,8 @@ Supported random options:
     - area: Area of the globe you want the random Graph to be in
     - createWeights: True, False
     - rangeOfWeights: Array with two values for the random weights
-
+    
+---> Not all of the options are implemented (more a list of possible options)    
 
 """
 class GraphBuilder:
@@ -51,8 +56,9 @@ class GraphBuilder:
         self.vLayer = QgsVectorLayer()
         self.rLayer = QgsRasterLayer()
         self.__options = {
-            "connectionType": "Complete",          
-            "edgeDirection": "Undirected",
+            "connectionType": "Nearest neighbor",
+            "neigborNumber": 5,       
+            "edgeDirection": "Directed",
             "distanceMetric": "Euclidean",
             "speedOptions": [1, 50, 1],
             "useRasterData": False,
@@ -105,11 +111,12 @@ class GraphBuilder:
                 print("TODO")
         
         #create random graph 
-        #TODO: solve problem with the CRS: Point position on map depend on the currently 
+        #TODO: create options for different other areas: Europe, Australia, OS, America...
         #selected CRS in the Qgis Project       
         else:
             for i in range(self.__randomOptions["numberOfVertices"]):
-                self.graph.addVertex(QgsPointXY(randrange(1136014), randrange(6681824)))           
+                if self.__randomOptions["area"] == "Germany":
+                    self.graph.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884)))           
         
         
         
@@ -117,7 +124,7 @@ class GraphBuilder:
         #set selected distance metric for the graph 
         self.graph.distanceMetric = self.__options["distanceMetric"] 
         
-        if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
+        if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry or self.__options["createRandomGraph"] == True:
             if self.__options["connectionType"] == "Complete":
                 for i in range(self.graph.vertexCount()):
                     for j in range(self.graph.vertexCount()):
@@ -126,13 +133,41 @@ class GraphBuilder:
                             if self.__options["edgeDirection"] == "Directed":
                                 self.graph.addEdge(j, i)    
                                     
-            
-            elif self.options["connectionType"] == "Nearest neighbor":
-                print("TODO")
+            #TODO: Add directed option
+            elif self.__options["connectionType"] == "Nearest neighbor":                
+                #calculate shortest distances between all pairs of nodes
+                
+                for i in range(self.graph.vertexCount()):
+                    distances = []
+                    maxDistanceValue = 0
+                    for j in range(self.graph.vertexCount()):
+                        p1 = self.graph.vertex(i).point()
+                        p2 = self.graph.vertex(j).point()
+                        distanceP2P = math.sqrt(pow(p1.x()-p2.x(),2) + pow(p1.y()-p2.y(),2))
+                        distances.append(distanceP2P)    
+                        if(distanceP2P > maxDistanceValue):
+                            maxDistanceValue = distanceP2P                
+                    #get the defined amound of neighbors
+                    for k in range(self.__options["neigborNumber"]+1):
+                        minIndex = 0
+                        minValue = maxDistanceValue+1
+                        for p in range(len(distances)):
+                            if distances[p] < minValue:
+                                minIndex = p
+                                minValue = distances[p]
+                                
+                        #add edge
+                        self.graph.addEdge(i,minIndex)        
+                        #remove value at minIndex
+                        distances[minIndex] = maxDistanceValue+1      
+                        
+                                    
+                
+                
+                
             elif self.options["connectionType"] == "Tree":
                 print("TODO")
-                
-                                
+                                                
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:
             print("TODO")
         
@@ -151,7 +186,7 @@ class GraphBuilder:
         graphLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")
         dpVerticeLayer = graphLayerVertices.dataProvider()
         dpEdgeLayer = graphLayerEdges.dataProvider()
-        dpVerticeLayer.addAttributes([QgsField("ID", QVariant.Int)])
+        dpVerticeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("X", QVariant.Int), QgsField("Y", QVariant.Int)])
         graphLayerVertices.updateFields()
         dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("fromVertex",QVariant.Int), QgsField("toVertex",QVariant.Int),QgsField("weight", QVariant.Int)])
         graphLayerEdges.updateFields() 
@@ -160,7 +195,7 @@ class GraphBuilder:
         for i in range(self.graph.vertexCount()):
             newFeature = QgsFeature()
             newFeature.setGeometry(QgsGeometry.fromPointXY(self.graph.vertex(i).point()))  
-            newFeature.setAttributes([i])
+            newFeature.setAttributes([i, self.graph.vertex(i).point().x(), self.graph.vertex(i).point().y()])
             dpVerticeLayer.addFeature(newFeature)
         
         for i in range(self.graph.edgeCount()):
@@ -170,8 +205,12 @@ class GraphBuilder:
             newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))            
             newFeature.setAttributes([i, self.graph.edge(i).fromVertex(), self.graph.edge(i).toVertex(), self.graph.costOfEdgeID(i)])
             dpEdgeLayer.addFeature(newFeature)    
-        
-        graphLayerVertices.setCrs(self.vLayer.crs())      
+        if self.__options["createRandomGraph"] == False:
+            
+            graphLayerVertices.setCrs(self.vLayer.crs())  
+        else:
+            graphLayerVertices.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))   
+                
         QgsProject.instance().addMapLayer(graphLayerVertices)
         
         layer_settings  = QgsPalLayerSettings()
@@ -197,8 +236,11 @@ class GraphBuilder:
         graphLayerEdges.setLabelsEnabled(True)
         graphLayerEdges.setLabeling(layer_settings)
         graphLayerEdges.triggerRepaint()
-        
-        graphLayerEdges.setCrs(self.vLayer.crs())
+        if self.__options["createRandomGraph"] == False:
+            graphLayerEdges.setCrs(self.vLayer.crs())
+        else:
+            graphLayerEdges.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))    
+            
         QgsProject.instance().addMapLayer(graphLayerEdges)
        
        
