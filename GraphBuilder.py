@@ -5,6 +5,7 @@ from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 from .PGGraph import PGGraph
 from random import *
+from qgis import processing
 import math
 
 """
@@ -29,7 +30,7 @@ If you want to create a special random graph use:
 
 
 Supported options:
-    - connectionType: None, Complete, Nearest neighbor, Tree
+    - connectionType: None, Complete, Nearest neighbor, Cluster
     - neigborNumber: int
     - edgeDirection: Undirected, Directed
     - distanceStrategy: Euclidean, Manhatten, Speed
@@ -38,12 +39,11 @@ Supported options:
     - createGraphAsLayers: False, True
     - createRandomGraph: False, True
         - further definitions possible at randomOptions dict
-        
+    - useAdditionalLineInformation: If the user wants to use both points and lines    
 Supported random options:
     - numberOfVertices: int
     - area: Area of the globe you want the random Graph to be in
-    - createWeights: True, False
-    - rangeOfWeights: Array with two values for the random weights
+
     
 ---> Not all of the options are implemented (more a list of possible options)    
 
@@ -63,14 +63,15 @@ class GraphBuilder:
             "speedOptions": [1, 50, 1],
             "useRasterData": False,
             "createGraphAsLayers": True,
-            "createRandomGraph": True
+            "createRandomGraph": True,
+            
+            "useAdditionalLineInformation": False
             
         }
         self.__randomOptions = {
             "numberOfVertices": 100,
             "area": "Germany",
-            "createWeights": True,
-            "rangeOfWeights": [0,100]       
+                  
         }
         
         
@@ -96,17 +97,24 @@ class GraphBuilder:
     
     def __createVertices(self):
         #build graph using the set vector layer
-        #TODO: if vector layer is not set use example vectorlayer in ressource folder
+        #TODO: if vector layer is not set use example vectorlayer in ressource folder        
         if self.__options["createRandomGraph"] == False:
         
             if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:                                        
                 for feat in self.vLayer.getFeatures():
                     geom = feat.geometry()                
                     self.graph.addVertex(geom.asPoint())
-                                             
+            #TODO: add support for LineString, so that the user can use simplify tool                                 
             elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:
-                print("TODO")
-            
+                
+                for feature in self.vLayer.getFeatures():
+                    geom = feature.geometry()
+                    for part in geom.asMultiPolyline():
+                        for i in range(len(part)):
+                            addedID = self.graph.addVertex(part[i])
+                            if i != 0:
+                                self.graph.addEdge(addedID-1, addedID)
+                                    
             elif self.vLayer.geometryType() == QgsWkbTypes.PolygonGeometry:
                 print("TODO")
         
@@ -120,6 +128,8 @@ class GraphBuilder:
         
         
         
+        
+        
     def __createEdges(self):   
         #set selected distance metric for the graph 
         self.graph.distanceMetric = self.__options["distanceMetric"] 
@@ -127,23 +137,20 @@ class GraphBuilder:
         if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry or self.__options["createRandomGraph"] == True:
             if self.__options["connectionType"] == "Complete":
                 for i in range(self.graph.vertexCount()):
-                    for j in range(self.graph.vertexCount()):
-                        if i != j:                                                       
+                    for j in range(i+1, self.graph.vertexCount()):                                                                              
                             self.graph.addEdge(i, j)
-                            if self.__options["edgeDirection"] == "Directed":
+                            if self.__options["edgeDirection"] == "Undirected":
                                 self.graph.addEdge(j, i)    
                                     
-            #TODO: Add directed option
+            
             elif self.__options["connectionType"] == "Nearest neighbor":                
-                #calculate shortest distances between all pairs of nodes
-                
+                #calculate shortest distances between all pairs of nodes                
                 for i in range(self.graph.vertexCount()):
                     distances = []
                     maxDistanceValue = 0
                     for j in range(self.graph.vertexCount()):
-                        p1 = self.graph.vertex(i).point()
-                        p2 = self.graph.vertex(j).point()
-                        distanceP2P = math.sqrt(pow(p1.x()-p2.x(),2) + pow(p1.y()-p2.y(),2))
+                        
+                        distanceP2P = self.graph.distanceP2P(i,j)
                         distances.append(distanceP2P)    
                         if(distanceP2P > maxDistanceValue):
                             maxDistanceValue = distanceP2P                
@@ -157,25 +164,21 @@ class GraphBuilder:
                                 minValue = distances[p]
                                 
                         #add edge
-                        self.graph.addEdge(i,minIndex)        
+                        if self.__options["edgeDirection"] == "Directed":
+                            if not self.graph.hasEdge(minIndex, i):
+                                self.graph.addEdge(i,minIndex)
+                        else:    
+                            self.graph.addEdge(i,minIndex)        
                         #remove value at minIndex
                         distances[minIndex] = maxDistanceValue+1      
-                        
-                                    
-                
-                
-                
-            elif self.options["connectionType"] == "Tree":
-                print("TODO")
-                                                
-        elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:
-            print("TODO")
+                                                 
+            elif self.__options["connectionType"] == "Cluster":
+                print("TODO")                            
+               
         
         elif self.vLayer.geometryType() == QgsWkbTypes.PolygonGeometry:
             print("TODO")
-         
-            
-        
+                        
     def __createEdgeWeights(self):
         print("TODO")
     
@@ -188,7 +191,7 @@ class GraphBuilder:
         dpEdgeLayer = graphLayerEdges.dataProvider()
         dpVerticeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("X", QVariant.Int), QgsField("Y", QVariant.Int)])
         graphLayerVertices.updateFields()
-        dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("fromVertex",QVariant.Int), QgsField("toVertex",QVariant.Int),QgsField("weight", QVariant.Int)])
+        dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("fromVertex",QVariant.Int), QgsField("toVertex",QVariant.Int),QgsField("weight", QVariant.Double)])
         graphLayerEdges.updateFields() 
             
         #add the vertices and edges to the layers
@@ -202,9 +205,13 @@ class GraphBuilder:
             newFeature = QgsFeature()
             fromVertex = self.graph.vertex(self.graph.edge(i).fromVertex()).point()
             toVertex = self.graph.vertex(self.graph.edge(i).toVertex()).point()
-            newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))            
+            newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)])) 
+            
+            
+            
             newFeature.setAttributes([i, self.graph.edge(i).fromVertex(), self.graph.edge(i).toVertex(), self.graph.costOfEdgeID(i)])
-            dpEdgeLayer.addFeature(newFeature)    
+            dpEdgeLayer.addFeature(newFeature)
+              
         if self.__options["createRandomGraph"] == False:
             
             graphLayerVertices.setCrs(self.vLayer.crs())  
