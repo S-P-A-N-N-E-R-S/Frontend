@@ -10,7 +10,7 @@ from . import resources
 
 import time
 
-from .ui.protoPluginDialog import ProtoPluginDialog
+from .ui.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath, getPluginPath
 
 
@@ -26,32 +26,32 @@ class ProtoPlugin:
 
     def initActions(self):
         self.exampleAction = QAction("Create example data", self.iface.mainWindow())
-        self.exampleAction.triggered.connect(lambda: self.openView(ProtoPluginDialog.Views.ExampleDataView))
+        self.exampleAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ExampleDataView))
         self.exampleAction.setWhatsThis("Create example data")
         self.exampleAction.setStatusTip("Create example data")
 
         self.graphAction = QAction("Create graph", self.iface.mainWindow())
-        self.graphAction.triggered.connect(lambda: self.openView(ProtoPluginDialog.Views.CreateGraphView))
+        self.graphAction.triggered.connect(lambda: self.openView(PluginDialog.Views.CreateGraphView))
         self.graphAction.setWhatsThis("Create graph")
         self.graphAction.setStatusTip("Create graph")
 
         self.ogdfAnalysisAction = QAction("OGDF analysis", self.iface.mainWindow())
-        self.ogdfAnalysisAction.triggered.connect(lambda: self.openView(ProtoPluginDialog.Views.OGDFAnalysisView))
+        self.ogdfAnalysisAction.triggered.connect(lambda: self.openView(PluginDialog.Views.OGDFAnalysisView))
         self.ogdfAnalysisAction.setWhatsThis("OGDF analysis")
         self.ogdfAnalysisAction.setStatusTip("OGDF analysis")
 
         self.ogdfJobsAction = QAction("OGDF jobs", self.iface.mainWindow())
-        self.ogdfJobsAction.triggered.connect(lambda: self.openView(ProtoPluginDialog.Views.JobsView))
+        self.ogdfJobsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.JobsView))
         self.ogdfJobsAction.setWhatsThis("OGDF jobs")
         self.ogdfJobsAction.setStatusTip("OGDF jobs")
 
         self.optionsAction = QAction("Options", self.iface.mainWindow())
-        self.optionsAction.triggered.connect(lambda: self.openView(ProtoPluginDialog.Views.OptionsView))
+        self.optionsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.OptionsView))
         self.optionsAction.setWhatsThis("Options")
         self.optionsAction.setStatusTip("Options")
 
         self.defaultAction = QAction(QIcon(getImagePath("icon.png")), "Create example data", self.iface.mainWindow())
-        self.defaultAction.triggered.connect(lambda: self.openView(ProtoPluginDialog.Views.ExampleDataView))
+        self.defaultAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ExampleDataView))
         self.defaultAction.setWhatsThis("Create example data")
         self.defaultAction.setStatusTip("Create example data")
 
@@ -78,7 +78,7 @@ class ProtoPlugin:
         plugin_menu.addMenu(menu)
 
     def openView(self, view):
-        dialog = ProtoPluginDialog()
+        dialog = PluginDialog()
         dialog.setView(view)
         dialog.exec()
 
