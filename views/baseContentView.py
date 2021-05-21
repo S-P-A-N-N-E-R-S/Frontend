@@ -4,7 +4,6 @@ from qgis.core import Qgis
 
 class BaseContentView:
 
-
     def __init__(self, dialog):
         """
         Base constuctor of a content window
@@ -12,6 +11,7 @@ class BaseContentView:
         """
         self.name = None
         self.dialog = dialog
+        self.controller = None
 
         # setup message bar
         self.bar = QgsMessageBar()
