@@ -7,7 +7,7 @@ from qgis.gui import *
 from qgis.analysis import *
 
 from . import resources
-from .qgsgraphlayer import QgsGraphLayer
+from .qgsgraphlayer import QgsGraphLayer, QgsGraphLayerRenderer, QgsGraphLayerType
 
 import sys
 import time
@@ -50,6 +50,7 @@ class ProtoPlugin:
         # check if layer is graphLayer
         graphLoaded = False
         if isinstance(layer, QgsGraphLayer):
+            print("graphLoaded")
             graphLoaded = True
 
         # check features (only one representative)
@@ -87,32 +88,18 @@ class ProtoPlugin:
                 print("Get existing graph from graphLayer")
                 graph = layer.getGraph()
 
-            # create new VectorLayer to show graph
-            newGraphLayer = QgsGraphLayer("LineString", "LinesFromGraph", "memory")
-            newDataProvider = newGraphLayer.dataProvider()
+            # create new graphLayer to show graph
+            newGraphLayer = QgsGraphLayer()
 
             # add graph to graphLayer
             newGraphLayer.setGraph(graph)
 
-            # add Fields to VectorLayer
-            newDataProvider.addAttributes([QgsField("edgeNr", QVariant.Int), QgsField("type", QVariant.String)])
-            newGraphLayer.updateFields()
-
-            # add Feature for every edge in graph based on its points
-            for edgeId in range(graph.edgeCount()):
-                feat = QgsFeature()
-                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(graph.vertex(graph.edge(edgeId).fromVertex()).point()),
-                                                            QgsPoint(graph.vertex(graph.edge(edgeId).toVertex()).point())]))
-                feat.setAttributes([edgeId, "EdgeFromGraph"])
-                newDataProvider.addFeature(feat)
-            
-            newGraphLayer.updateExtents()
             QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.edgeCount(), " edges added.")
         
         # if layer consists only of points, a QgsGraph has to be filled with those points
-        elif points:
+        elif points or graphLoaded:
             
             if not graphLoaded:                
                 graph = QgsGraph()
@@ -126,26 +113,12 @@ class ProtoPlugin:
                 print("Get existing graph from graphLayer")
                 graph = layer.getGraph()
 
-            # create new VectorLayer to show graph
-            # TODO: add function to create VectorLayer (used for points and lines) to minimize double code
-            newGraphLayer = QgsGraphLayer("Point", "PointsFromGraph", "memory")
-            newDataProvider = newGraphLayer.dataProvider()
-
+            # create graphLayer to show graph
+            newGraphLayer = QgsGraphLayer()
+            
             # add graph to graphLayer
             newGraphLayer.setGraph(graph)
 
-            # add Fields to VectorLayer
-            newDataProvider.addAttributes([QgsField("vertexNr", QVariant.Int), QgsField("type", QVariant.String)])
-            newGraphLayer.updateFields()
-
-            # add Feature for every vertex in graph
-            for vertexId in range(graph.vertexCount()):
-                feat = QgsFeature()
-                feat.setGeometry(QgsGeometry.fromPointXY(graph.vertex(vertexId).point()))
-                feat.setAttributes([vertexId, "VertexFromGraph"])
-                newDataProvider.addFeature(feat)
-
-            newGraphLayer.updateExtents()
             QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.vertexCount(), " vertices added")
