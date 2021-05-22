@@ -17,13 +17,6 @@ class BaseContentView:
         self.bar = QgsMessageBar()
         self.dialog.content_widget.layout().insertWidget(0, self.bar)
 
-    def setupWindow(self):
-        """
-        Sets up the contents and Slots of the content window
-        :return:
-        """
-        raise NotImplementedError
-
     def showError(self, msg):
         self.bar.pushMessage("Error", msg, level=Qgis.Critical)
 

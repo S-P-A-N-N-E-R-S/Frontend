@@ -30,15 +30,14 @@ class ExampleController(BaseController):
         self.view.setVectorFilter()
 
     def changeFilter(self):
-        type = self.view.getData()
+        _, type = self.view.getExample()
         if type == "vector":
             self.view.setVectorFilter()
         elif type == "raster":
             self.view.setRasterFilter()
 
     def createData(self):
-        example = self.view.getExample()
-        type = self.view.getData()
+        example, type = self.view.getExample()
         path = self.view.getFilePath()
         extension =  os.path.splitext(path)[1] if path else "tif"
 

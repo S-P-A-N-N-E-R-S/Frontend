@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>995</width>
+    <width>1012</width>
     <height>754</height>
    </rect>
   </property>
@@ -140,7 +140,7 @@ QListWidget::item::selected {
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>816</width>
+           <width>833</width>
            <height>734</height>
           </rect>
          </property>
@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>0</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -267,7 +267,7 @@ QListWidget::item::selected {
                       <x>9</x>
                       <y>9</y>
                       <width>791</width>
-                      <height>161</height>
+                      <height>131</height>
                      </rect>
                     </property>
                     <layout class="QFormLayout" name="formLayout_2">
@@ -328,9 +328,9 @@ QListWidget::item::selected {
                     <property name="geometry">
                      <rect>
                       <x>10</x>
-                      <y>180</y>
+                      <y>150</y>
                       <width>791</width>
-                      <height>291</height>
+                      <height>321</height>
                      </rect>
                     </property>
                     <property name="title">
@@ -357,106 +357,90 @@ QListWidget::item::selected {
                     <property name="saveCheckedState">
                      <bool>false</bool>
                     </property>
-                    <widget class="QWidget" name="formLayoutWidget_3">
-                     <property name="geometry">
-                      <rect>
-                       <x>10</x>
-                       <y>30</y>
-                       <width>771</width>
-                       <height>291</height>
-                      </rect>
+                    <layout class="QVBoxLayout" name="verticalLayout_13">
+                     <property name="sizeConstraint">
+                      <enum>QLayout::SetMinimumSize</enum>
                      </property>
-                     <layout class="QFormLayout" name="formLayout_3">
-                      <item row="2" column="0">
-                       <widget class="QLabel" name="create_graph_cost_label">
-                        <property name="text">
-                         <string>Cost field [optional]</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="3" column="0" colspan="2">
-                       <widget class="QgsFieldComboBox" name="create_graph_cost_input"/>
-                      </item>
-                      <item row="6" column="0">
-                       <widget class="QLabel" name="create_graph_raster_label">
-                        <property name="text">
-                         <string>Rasterdata [optional]</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="7" column="0" colspan="2">
-                       <layout class="QHBoxLayout" name="horizontalLayout_6">
-                        <item>
-                         <widget class="QgsFeaturePickerWidget" name="create_graph_raster_input"/>
-                        </item>
-                        <item>
-                         <widget class="QToolButton" name="create_graph_raster_input_tools">
-                          <property name="text">
-                           <string>...</string>
-                          </property>
-                         </widget>
-                        </item>
-                       </layout>
-                      </item>
-                      <item row="8" column="0">
-                       <widget class="QLabel" name="create_graph_rastertype_label">
-                        <property name="text">
-                         <string>Rasterdata type [optional]</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="9" column="0" colspan="2">
-                       <widget class="QComboBox" name="create_graph_rastertype_input">
-                        <item>
+                     <item>
+                      <layout class="QFormLayout" name="formLayout_3">
+                       <property name="sizeConstraint">
+                        <enum>QLayout::SetDefaultConstraint</enum>
+                       </property>
+                       <item row="0" column="0">
+                        <widget class="QLabel" name="create_graph_distance_label">
                          <property name="text">
-                          <string>elevation</string>
+                          <string>Distance</string>
                          </property>
-                        </item>
-                        <item>
+                        </widget>
+                       </item>
+                       <item row="1" column="0" colspan="2">
+                        <widget class="QComboBox" name="create_graph_distance_input"/>
+                       </item>
+                       <item row="2" column="0">
+                        <widget class="QLabel" name="create_graph_cost_label">
                          <property name="text">
-                          <string>prohibited area</string>
+                          <string>Cost field [optional]</string>
                          </property>
-                        </item>
-                        <item>
+                        </widget>
+                       </item>
+                       <item row="3" column="0" colspan="2">
+                        <widget class="QgsFieldComboBox" name="create_graph_cost_input"/>
+                       </item>
+                       <item row="4" column="0">
+                        <widget class="QLabel" name="create_graph_poi_label">
                          <property name="text">
-                          <string>cost</string>
+                          <string>Points of interest [optional] (point layer, only if line layer)</string>
                          </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item row="0" column="0">
-                       <widget class="QLabel" name="create_graph_distance_label">
-                        <property name="text">
-                         <string>Distance</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="1" column="0" colspan="2">
-                       <widget class="QComboBox" name="create_graph_distance_input">
-                        <item>
+                        </widget>
+                       </item>
+                       <item row="5" column="0" colspan="2">
+                        <layout class="QHBoxLayout" name="horizontalLayout_4">
+                         <item>
+                          <widget class="QgsMapLayerComboBox" name="create_graph_poi_input"/>
+                         </item>
+                         <item>
+                          <widget class="QToolButton" name="create_graph_poi_input_tools">
+                           <property name="text">
+                            <string>...</string>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                       <item row="6" column="0">
+                        <widget class="QLabel" name="create_graph_raster_label">
                          <property name="text">
-                          <string>euclidian</string>
+                          <string>Rasterdata [optional]</string>
                          </property>
-                        </item>
-                        <item>
+                        </widget>
+                       </item>
+                       <item row="7" column="0" colspan="2">
+                        <layout class="QHBoxLayout" name="horizontalLayout_6">
+                         <item>
+                          <widget class="QgsMapLayerComboBox" name="create_graph_raster_input"/>
+                         </item>
+                         <item>
+                          <widget class="QToolButton" name="create_graph_raster_input_tools">
+                           <property name="text">
+                            <string>...</string>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                       <item row="8" column="0">
+                        <widget class="QLabel" name="create_graph_rastertype_label">
                          <property name="text">
-                          <string>shortest path</string>
+                          <string>Rasterdata type [optional]</string>
                          </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item row="4" column="0">
-                       <widget class="QLabel" name="create_graph_poi_label">
-                        <property name="text">
-                         <string>Points of interest [optional] (point layer, only if line layer)</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="5" column="0" colspan="2">
-                       <widget class="QgsFileWidget" name="create_graph_poi_input"/>
-                      </item>
-                     </layout>
-                    </widget>
+                        </widget>
+                       </item>
+                       <item row="9" column="0" colspan="2">
+                        <widget class="QComboBox" name="create_graph_rastertype_input"/>
+                       </item>
+                      </layout>
+                     </item>
+                    </layout>
                    </widget>
                   </widget>
                   <widget class="QWidget" name="tab_4">
@@ -497,34 +481,6 @@ QListWidget::item::selected {
                    </size>
                   </property>
                  </spacer>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="create_graph_show_btn">
-                  <property name="text">
-                   <string>Show</string>
-                  </property>
-                  <property name="checkable">
-                   <bool>false</bool>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                  <property name="autoRepeat">
-                   <bool>false</bool>
-                  </property>
-                  <property name="autoExclusive">
-                   <bool>false</bool>
-                  </property>
-                  <property name="autoDefault">
-                   <bool>true</bool>
-                  </property>
-                  <property name="default">
-                   <bool>false</bool>
-                  </property>
-                  <property name="flat">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
                 </item>
                 <item>
                  <widget class="QPushButton" name="create_graph_create_btn">
@@ -618,7 +574,7 @@ QListWidget::item::selected {
                    <widget class="QgsCollapsibleGroupBox" name="mGroupBox_3">
                     <property name="geometry">
                      <rect>
-                      <x>0</x>
+                      <x>10</x>
                       <y>180</y>
                       <width>791</width>
                       <height>251</height>
@@ -648,42 +604,39 @@ QListWidget::item::selected {
                     <property name="saveCheckedState">
                      <bool>false</bool>
                     </property>
-                    <widget class="QWidget" name="formLayoutWidget_8">
-                     <property name="geometry">
-                      <rect>
-                       <x>10</x>
-                       <y>30</y>
-                       <width>771</width>
-                       <height>211</height>
-                      </rect>
+                    <layout class="QVBoxLayout" name="verticalLayout_14">
+                     <property name="sizeConstraint">
+                      <enum>QLayout::SetMinimumSize</enum>
                      </property>
-                     <layout class="QFormLayout" name="formLayout_8">
-                      <item row="0" column="0">
-                       <widget class="QLabel" name="ogdf_analysis_crs_label">
-                        <property name="text">
-                         <string>CRS (if not in graph input like .gml)</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="2" column="0">
-                       <widget class="QLabel" name="ogdf_analysis_stretch_label">
-                        <property name="text">
-                         <string>stretch factor</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="3" column="0" colspan="2">
-                       <widget class="QSpinBox" name="ogdf_analysis_stretch_input">
-                        <property name="minimum">
-                         <number>1</number>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="1" column="0" colspan="2">
-                       <widget class="QgsProjectionSelectionWidget" name="ogdf_analysis_crs_input"/>
-                      </item>
-                     </layout>
-                    </widget>
+                     <item>
+                      <layout class="QFormLayout" name="formLayout_8">
+                       <item row="0" column="0">
+                        <widget class="QLabel" name="ogdf_analysis_crs_label">
+                         <property name="text">
+                          <string>CRS (if not in graph input like .gml)</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="2" column="0">
+                        <widget class="QLabel" name="ogdf_analysis_stretch_label">
+                         <property name="text">
+                          <string>stretch factor</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="3" column="0" colspan="2">
+                        <widget class="QSpinBox" name="ogdf_analysis_stretch_input">
+                         <property name="minimum">
+                          <number>1</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="1" column="0" colspan="2">
+                        <widget class="QgsProjectionSelectionWidget" name="ogdf_analysis_crs_input"/>
+                       </item>
+                      </layout>
+                     </item>
+                    </layout>
                    </widget>
                   </widget>
                   <widget class="QWidget" name="tab_6">

@@ -11,7 +11,6 @@ class ExampleDataView(BaseContentView):
         self.name = "example data"
         self.controller = ExampleController(self)
 
-    def setupWindow(self):
         # set up file upload widget
         self.dialog.example_data_output.setStorageMode(QgsFileWidget.SaveFile)
 
@@ -31,10 +30,7 @@ class ExampleDataView(BaseContentView):
         self.dialog.example_data_output.setFilter(filter)
 
     def getExample(self):
-        return self.dialog.example_data_input.currentText()
-
-    def getData(self):
-        return self.dialog.example_data_input.currentData()
+        return self.dialog.example_data_input.currentText(), self.dialog.example_data_input.currentData()
 
     def addExample(self, name, userData=None):
         self.dialog.example_data_input.addItem(name, userData)

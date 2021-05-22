@@ -9,5 +9,3 @@ class JobsView(BaseContentView):
         self.name = "jobs"
         self.controller = JobsController(self)
 
-    def setupWindow(self):
-        pass

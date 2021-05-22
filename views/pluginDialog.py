@@ -71,9 +71,6 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
             OptionsView(self),
         ]
 
-        for contentViews in self.contentViews:
-            contentViews.setupWindow()
-
         # create example data as default
         self.menu_list.setCurrentRow(0)
 

@@ -8,6 +8,3 @@ class OGDFAnalysisView(BaseContentView):
         super().__init__(dialog)
         self.name = "ogdf analysis"
         self.controller = OGDFAnalysisController(self)
-
-    def setupWindow(self):
-        pass

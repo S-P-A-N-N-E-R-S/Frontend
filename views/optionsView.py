@@ -8,6 +8,3 @@ class OptionsView(BaseContentView):
         super().__init__(dialog)
         self.name = "options"
         self.controller = OptionsController(self)
-
-    def setupWindow(self):
-        pass
