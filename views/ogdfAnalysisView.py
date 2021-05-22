@@ -36,3 +36,26 @@ class OGDFAnalysisView(BaseContentView):
     def getStretch(self):
         return self.dialog.ogdf_analysis_stretch_input.int()
 
+    # log
+
+    def setLogText(self, text):
+        self.dialog.ogdf_analysis_log.setPlainText(text)
+
+    def insertLogText(self, text):
+        self.dialog.ogdf_analysis_log.insertPlainText(text)
+
+    def setLogHtml(self, text):
+        self.dialog.ogdf_analysis_log.setHtml(text)
+
+    def insertLogHtml(self, text):
+        self.dialog.ogdf_analysis_log.insertHtml(text)
+
+    def clearLog(self):
+        self.dialog.ogdf_analysis_log.clear()
+
+    def getLogText(self):
+        return self.dialog.ogdf_analysis_log.toPlainText()
+
+    def getLogHtml(self):
+        return self.dialog.ogdf_analysis_log.toHtml()
+

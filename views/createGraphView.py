@@ -54,3 +54,25 @@ class CreateGraphView(BaseContentView):
     def getRasterType(self):
         return self.dialog.create_graph_rastertype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
 
+    # log
+
+    def setLogText(self, text):
+        self.dialog.create_graph_log.setPlainText(text)
+
+    def insertLogText(self, text):
+        self.dialog.create_graph_log.insertPlainText(text)
+
+    def setLogHtml(self, text):
+        self.dialog.create_graph_log.setHtml(text)
+
+    def insertLogHtml(self, text):
+        self.dialog.create_graph_log.insertHtml(text)
+
+    def clearLog(self):
+        self.dialog.create_graph_log.clear()
+
+    def getLogText(self):
+        return self.dialog.create_graph_log.toPlainText()
+
+    def getLogHtml(self):
+        return self.dialog.create_graph_log.toHtml()
