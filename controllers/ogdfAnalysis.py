@@ -6,5 +6,7 @@ class OGDFAnalysisController(BaseController):
     def __init__(self, view):
         super().__init__(view)
 
+        self.view.addAnalysis("Spanner")
+
     def runJob(self):
         pass

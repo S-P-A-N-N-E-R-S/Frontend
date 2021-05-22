@@ -26,7 +26,7 @@ class OGDFAnalysisView(BaseContentView):
         return self.dialog.ogdf_analysis_analysis_input.currentText(), self.dialog.create_graph_distance_input.currentData()
 
     def addAnalysis(self, analysis, userData=None):
-        self.dialog.create_graph_distance_input.addItem(analysis, userData)
+        self.dialog.ogdf_analysis_analysis_input.addItem(analysis, userData)
 
     # advanced parameters
 

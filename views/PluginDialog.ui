@@ -542,7 +542,7 @@ QListWidget::item::selected {
                      <item row="3" column="1">
                       <layout class="QHBoxLayout" name="horizontalLayout_9">
                        <item>
-                        <widget class="QgsFeaturePickerWidget" name="ogdf_analysis_graph_input"/>
+                        <widget class="QgsMapLayerComboBox" name="ogdf_analysis_graph_input"/>
                        </item>
                        <item>
                         <widget class="QToolButton" name="ogdf_analysis_graph_input_tools">
@@ -561,13 +561,7 @@ QListWidget::item::selected {
                       </widget>
                      </item>
                      <item row="5" column="1">
-                      <widget class="QComboBox" name="ogdf_analysis_analysis_input">
-                       <item>
-                        <property name="text">
-                         <string>Spanner</string>
-                        </property>
-                       </item>
-                      </widget>
+                      <widget class="QComboBox" name="ogdf_analysis_analysis_input"/>
                      </item>
                     </layout>
                    </widget>
@@ -907,11 +901,6 @@ QListWidget::item::selected {
    <extends>QGroupBox</extends>
    <header>qgscollapsiblegroupbox.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>QgsFeaturePickerWidget</class>
-   <extends>QWidget</extends>
-   <header>qgsfeaturepickerwidget.h</header>
   </customwidget>
   <customwidget>
    <class>QgsFieldComboBox</class>
