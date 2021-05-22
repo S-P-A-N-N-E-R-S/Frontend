@@ -1,6 +1,8 @@
 from .baseContentView import BaseContentView
 from ..controllers.ogdfAnalysis import OGDFAnalysisController
 
+from qgis.core import QgsMapLayerProxyModel
+
 
 class OGDFAnalysisView(BaseContentView):
 
@@ -8,3 +10,29 @@ class OGDFAnalysisView(BaseContentView):
         super().__init__(dialog)
         self.name = "ogdf analysis"
         self.controller = OGDFAnalysisController(self)
+
+        # setup graph input
+        self.dialog.ogdf_analysis_graph_input.setFilters(QgsMapLayerProxyModel.PluginLayer)
+
+        self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
+
+    def getJobName(self):
+        return self.dialog.ogdf_analysis_job_input.text()
+
+    def getGraph(self):
+        return self.dialog.ogdf_analysis_graph_input.currentLayer()
+
+    def getAnalysis(self):
+        return self.dialog.ogdf_analysis_analysis_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+
+    def addAnalysis(self, analysis, userData=None):
+        self.dialog.create_graph_distance_input.addItem(analysis, userData)
+
+    # advanced parameters
+
+    def getCRS(self):
+        return self.dialog.ogdf_analysis_crs_input.crs()
+
+    def getStretch(self):
+        return self.dialog.ogdf_analysis_stretch_input.int()
+
