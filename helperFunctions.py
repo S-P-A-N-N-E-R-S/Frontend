@@ -48,8 +48,6 @@ def saveLayer(layer, layerName, type, path=None, format=None):
                     createdLayer = QgsVectorLayer(path, splitext(basename(path))[0], "ogr")
                     if createdLayer.isValid():
                         return createdLayer
-                    else:
-                        return None
                 else:
                     # create scratch layer by copy vector data
                     wkbType = QgsWkbTypes.displayString(layer.wkbType())
@@ -61,8 +59,6 @@ def saveLayer(layer, layerName, type, path=None, format=None):
                     tmpLayerData.addFeatures(layer.getFeatures())
                     if tmpLayer.isValid():
                         return tmpLayer
-                    else:
-                        return None
 
         elif type == "raster":
                 if not path:
@@ -82,3 +78,4 @@ def saveLayer(layer, layerName, type, path=None, format=None):
                 createdLayer = QgsRasterLayer(path, splitext(basename(path))[0])
                 if createdLayer.isValid():
                     return createdLayer
+    return None
