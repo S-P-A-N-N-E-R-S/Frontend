@@ -20,20 +20,22 @@ class ExampleDataView(BaseContentView):
         # create button
         self.dialog.create_example_data_btn.clicked.connect(self.controller.createData)
 
-    def setVectorFilter(self):
-        self.setFilter("GPKG files (*.gpkg);;Shape files (*.shp)")
-
-    def setRasterFilter(self):
-        self.setFilter("TIF files (*.tif);;IMG files (*.img)")
-
-    def setFilter(self, filter):
-        self.dialog.example_data_output.setFilter(filter)
-
     def getExample(self):
         return self.dialog.example_data_input.currentText(), self.dialog.example_data_input.currentData()
 
     def addExample(self, name, userData=None):
         self.dialog.example_data_input.addItem(name, userData)
+
+    # destination output
+
+    def setFilter(self, filter):
+        self.dialog.example_data_output.setFilter(filter)
+
+    def setVectorFilter(self):
+        self.setFilter("GPKG files (*.gpkg);;Shape files (*.shp)")
+
+    def setRasterFilter(self):
+        self.setFilter("TIF files (*.tif);;IMG files (*.img)")
 
     def getFilePath(self):
         return self.dialog.example_data_output.filePath()

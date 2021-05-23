@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>2</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -711,34 +711,19 @@ QListWidget::item::selected {
                     <property name="autoScrollMargin">
                      <number>16</number>
                     </property>
-                    <item>
-                     <property name="text">
-                      <string>Job 1</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>Job 2</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>Job 3</string>
-                     </property>
-                    </item>
                    </widget>
                   </item>
                   <item row="1" column="1">
                    <widget class="QTextBrowser" name="ogdf_jobs_status_text"/>
                   </item>
-                  <item row="2" column="0" colspan="2">
+                  <item row="4" column="0" colspan="2">
                    <widget class="QProgressBar" name="ogdf_jobs_progressbar">
                     <property name="value">
-                     <number>24</number>
+                     <number>0</number>
                     </property>
                    </widget>
                   </item>
-                  <item row="4" column="0">
+                  <item row="6" column="0">
                    <widget class="QLabel" name="ogdf_jobs_output_label">
                     <property name="styleSheet">
                      <string notr="true">m</string>
@@ -763,10 +748,10 @@ QListWidget::item::selected {
                     </property>
                    </widget>
                   </item>
-                  <item row="5" column="0" colspan="2">
+                  <item row="7" column="0" colspan="2">
                    <widget class="QgsFileWidget" name="ogdf_jobs_output"/>
                   </item>
-                  <item row="3" column="0" colspan="2">
+                  <item row="5" column="0" colspan="2">
                    <spacer name="verticalSpacer">
                     <property name="orientation">
                      <enum>Qt::Vertical</enum>
@@ -779,12 +764,26 @@ QListWidget::item::selected {
                     </property>
                    </spacer>
                   </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="ogdf_jobs_progressbar_label">
+                    <property name="text">
+                     <string>Progress</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QPushButton" name="ogdf_jobs_refresh_btn">
+                    <property name="text">
+                     <string>Refresh</string>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                 <item>
                  <widget class="QDialogButtonBox" name="ogdf_jobs_buttons">
                   <property name="standardButtons">
-                   <set>QDialogButtonBox::Cancel|QDialogButtonBox::Retry|QDialogButtonBox::Save</set>
+                   <set>QDialogButtonBox::Abort|QDialogButtonBox::Retry|QDialogButtonBox::Save</set>
                   </property>
                   <property name="centerButtons">
                    <bool>false</bool>
