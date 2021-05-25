@@ -1,6 +1,6 @@
-from qgis.analysis import QgsGraph
+from qgis.analysis import QgsGraph, QgsNetworkDistanceStrategy
 from qgis.core import (QgsMapLayerRenderer, QgsPluginLayer,
-                       QgsPluginLayerType, QgsSymbol, QgsWkbTypes)
+                       QgsPluginLayerType, QgsPointXY)
 
 from qgis.PyQt.QtGui import QColor, QPen
 from qgis.PyQt.QtXml import *
@@ -113,10 +113,32 @@ class QgsGraphLayer(QgsPluginLayer):
         """Read QgsGraph (and its subclasses) from the project file.
 
         Args:
-            node ([type]): [description]
+            node (QDomNode): XML Node for layer
             context ([type]): [description]
         """
-        pass
+        self.mGraph = QgsGraph()
+        
+        verticesNode = node.firstChild()
+        vertexNodes = verticesNode.childNodes()
+
+        # get vertex information and add them to mGraph
+        for vertexNode in vertexNodes:
+            if vertexNode.isElement():
+                elem = vertexNode.toElement()
+                self.mGraph.addVertex(QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y"))))
+
+        edgesNode = node.lastChild()
+        edgeNodes = edgesNode.childNodes()
+
+        # get edge information and add them to mGraph
+        strat = QgsNetworkDistanceStrategy()
+        for edgeNode in edgeNodes:
+            if edgeNode.isElement():
+                elem = edgeNode.toElement()
+                self.mGraph.addEdge(elem.attribute("fromVertex"), elem.attribute("toVertex"), strat)
+
+        return True
+
 
     def writeXml(self, node, doc, context):
         """Write the mGraph (QgsGraph and its subclasses) to the project file.
@@ -127,6 +149,10 @@ class QgsGraphLayer(QgsPluginLayer):
             doc (QDomDocument): XML Project File
             context ([type]): [description]
         """
+
+        if node.isElement():
+            node.toElement().setAttribute("type", "graph")
+
         # graphNode saves all graphData
         graphNode = doc.createElement("graph")
         node.appendChild(graphNode)

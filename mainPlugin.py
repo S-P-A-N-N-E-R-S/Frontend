@@ -53,7 +53,7 @@ class ProtoPlugin:
             graphLoaded = True
 
         else:
-            print("No Vector-/GraphLayer found")
+            print("No Vector-/GraphLayer found", layer)
 
 
         # check features (only one representative)
