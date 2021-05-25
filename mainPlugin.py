@@ -21,7 +21,6 @@ class ProtoPlugin:
         self.action.triggered.connect(self.run)
         self.action.setWhatsThis("Select VectorLayer and click green Button")
         self.action.setStatusTip("Select VectorLayer and click green Button")
-
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu("&Proto Plugin", self.action)
 
@@ -34,36 +33,20 @@ class ProtoPlugin:
         print("ProtoPlugin: Run Called!")
         self.createGraph()
         
-        
-        #testGraph = QgsGraph()
-        
-    
-        #testGraph.addVertex(QgsPointXY(123,333))
-        #testGraph.addVertex(QgsPointXY(100,200))
-        #testGraph.addEdge(0, 1,[])
-        
-        #print(testGraph.edge(0).cost())
-        
-        
-        
-        
-        
-    
-       
-    
-    def createGraph(self):
-        
-        #change later if the gui is done
+  
+    def createGraph(self):                   
         selectedLayer = self.iface.activeLayer()
-        ga = GraphBuilder()
+        path = "/home/tim/Documents/QGIS_Data/shapefiles_toulouse/gis_osm_power_a_07_1.shp"
+       
+        polygonLayer = QgsVectorLayer(path, "Polygons", "ogr")       
         
-        ga.setVectorLayer(selectedLayer)
+        ga = GraphBuilder()        
+        ga.setVectorLayer(selectedLayer)  
+        #ga.setPolygonLayer(polygonLayer)  
         
-        
-        graph = ga.makeGraph()
-        
-         
+                          
+        graph = ga.makeGraph()                
    
-                      
+                   
+       
         
-                 
