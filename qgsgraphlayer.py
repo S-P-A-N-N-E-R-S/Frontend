@@ -92,10 +92,10 @@ class QgsGraphLayer(QgsPluginLayer):
 
     LAYER_TYPE="graph"
 
-    def __init__(self, name, graph):
+    def __init__(self, name="QgsGraphLayer"):
         super().__init__(QgsGraphLayer.LAYER_TYPE, name)
         self.setValid(True)
-        self.mGraph = graph
+        self.mGraph = QgsGraph()
 
     def createMapRenderer(self, rendererContext):
         return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph)
@@ -116,26 +116,32 @@ class QgsGraphLayer(QgsPluginLayer):
             node (QDomNode): XML Node for layer
             context ([type]): [description]
         """
+        # start with empty QgsGraph
         self.mGraph = QgsGraph()
-        
-        verticesNode = node.firstChild()
+
+        # find graph node in xml
+        graphNode = node.firstChild()
+        while graphNode.nodeName() != "graph":
+            graphNode = graphNode.nextSibling()
+            
+        verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
 
         # get vertex information and add them to mGraph
-        for vertexNode in vertexNodes:
-            if vertexNode.isElement():
-                elem = vertexNode.toElement()
+        for vertexId in range(vertexNodes.length()):
+            if vertexNodes.at(vertexId).isElement():
+                elem = vertexNodes.at(vertexId).toElement()
                 self.mGraph.addVertex(QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y"))))
 
-        edgesNode = node.lastChild()
+        edgesNode = verticesNode.nextSibling()
         edgeNodes = edgesNode.childNodes()
 
         # get edge information and add them to mGraph
         strat = QgsNetworkDistanceStrategy()
-        for edgeNode in edgeNodes:
-            if edgeNode.isElement():
-                elem = edgeNode.toElement()
-                self.mGraph.addEdge(elem.attribute("fromVertex"), elem.attribute("toVertex"), strat)
+        for edgeId in range(edgeNodes.length()):
+            if edgeNodes.at(edgeId).isElement():
+                elem = edgeNodes.at(edgeId).toElement()
+                self.mGraph.addEdge(int(elem.attribute("fromVertex")), int(elem.attribute("toVertex")), [strat])
 
         return True
 
@@ -151,7 +157,8 @@ class QgsGraphLayer(QgsPluginLayer):
         """
 
         if node.isElement():
-            node.toElement().setAttribute("type", "graph")
+            node.toElement().setAttribute("type", "plugin")
+            node.toElement().setAttribute("name", "graph")
 
         # graphNode saves all graphData
         graphNode = doc.createElement("graph")

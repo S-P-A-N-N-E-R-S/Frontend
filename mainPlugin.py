@@ -1,6 +1,5 @@
 from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
-from qgis.PyQt.QtCore import QVariant
 
 from qgis.core import *
 from qgis.gui import *
@@ -20,6 +19,8 @@ class ProtoPlugin:
     def __init__(self, iface):
         self.iface = iface
 
+        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
+
     def initGui(self):
         self.action = QAction(QIcon(":/plugins/ProtoPlugin/icon.png"), "Proto Plugin", self.iface.mainWindow())
         self.action.triggered.connect(self.run)
@@ -33,6 +34,8 @@ class ProtoPlugin:
     def unload(self):
         self.iface.removePluginMenu("&Proto Plugin", self.action)
         self.iface.removeToolBarIcon(self.action)
+
+        # QgsApplication.pluginLayerRegistry().removePluginLayerType("graph")
 
     def run(self):
         print("ProtoPlugin: Run Called!")
@@ -88,7 +91,8 @@ class ProtoPlugin:
             graph = graphBuilder.graph()
 
             # create new graphLayer to show graph
-            newGraphLayer = QgsGraphLayer("QgsGraphLayer", graph)
+            newGraphLayer = QgsGraphLayer()
+            newGraphLayer.setGraph(graph)
 
             QgsProject.instance().addMapLayer(newGraphLayer)
 
@@ -111,7 +115,8 @@ class ProtoPlugin:
                 graph = layer.getGraph()
 
             # create graphLayer to show graph
-            newGraphLayer = QgsGraphLayer("QgsGraphLayer", graph)
+            newGraphLayer = QgsGraphLayer()
+            newGraphLayer.setGraph(graph)
             
             QgsProject.instance().addMapLayer(newGraphLayer)
 
