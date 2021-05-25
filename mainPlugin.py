@@ -41,17 +41,20 @@ class ProtoPlugin:
     def createGraph(self):
         layer = self.iface.activeLayer()
         
-        # check if layer type is vectorLayer
-        vector = True
-        if layer and layer.type() != QgsMapLayer.VectorLayer:
-            vector = False
-            print("No VectorLayer found.")
-
-        # check if layer is graphLayer
+        # check layerType of layer (vector or graph else raster)
+        vector = False
         graphLoaded = False
-        if isinstance(layer, QgsGraphLayer):
-            print("graphLoaded")
+        if layer and layer.type() == QgsMapLayer.VectorLayer:
+            vector = True
+            print("VectorLayer found.")
+
+        elif layer and isinstance(layer, QgsGraphLayer):
+            print("GraphLayer found")
             graphLoaded = True
+
+        else:
+            print("No Vector-/GraphLayer found")
+
 
         # check features (only one representative)
         points = False
@@ -80,25 +83,19 @@ class ProtoPlugin:
             director = QgsVectorLayerDirector(layer, -1, '', '', '', QgsVectorLayerDirector.DirectionBoth)
             director.addStrategy(QgsNetworkDistanceStrategy())
 
-            if not graphLoaded:
-                graphBuilder = QgsGraphBuilder(layer.crs())
-                director.makeGraph(graphBuilder, [])
-                graph = graphBuilder.graph()
-            else:
-                print("Get existing graph from graphLayer")
-                graph = layer.getGraph()
+            graphBuilder = QgsGraphBuilder(layer.crs())
+            director.makeGraph(graphBuilder, [])
+            graph = graphBuilder.graph()
 
             # create new graphLayer to show graph
-            newGraphLayer = QgsGraphLayer()
-
-            # add graph to graphLayer
-            newGraphLayer.setGraph(graph)
+            newGraphLayer = QgsGraphLayer("QgsGraphLayer", graph)
 
             QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.edgeCount(), " edges added.")
         
         # if layer consists only of points, a QgsGraph has to be filled with those points
+        # if layer is GraphLayer, a QgsGraph can be retrieved from layer directly
         elif points or graphLoaded:
             
             if not graphLoaded:                
@@ -114,11 +111,8 @@ class ProtoPlugin:
                 graph = layer.getGraph()
 
             # create graphLayer to show graph
-            newGraphLayer = QgsGraphLayer()
+            newGraphLayer = QgsGraphLayer("QgsGraphLayer", graph)
             
-            # add graph to graphLayer
-            newGraphLayer.setGraph(graph)
-
             QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.vertexCount(), " vertices added")

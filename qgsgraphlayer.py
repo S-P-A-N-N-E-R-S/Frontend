@@ -3,7 +3,7 @@ from qgis.core import (QgsMapLayerRenderer, QgsPluginLayer,
                        QgsPluginLayerType, QgsSymbol, QgsWkbTypes)
 
 from qgis.PyQt.QtGui import QColor, QPen
-from qgis.PyQt.QtCore import QPointF, QPoint
+from qgis.PyQt.QtXml import *
 
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
@@ -29,7 +29,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         return self.__drawGraph()
 
     def __drawGraph(self):
-
 
         painter = self.renderContext().painter()
         painter.setPen(self.pen)
@@ -93,10 +92,10 @@ class QgsGraphLayer(QgsPluginLayer):
 
     LAYER_TYPE="graph"
 
-    def __init__(self):
-        super().__init__(QgsGraphLayer.LAYER_TYPE, "QgsGraph_Layer")
+    def __init__(self, name, graph):
+        super().__init__(QgsGraphLayer.LAYER_TYPE, name)
         self.setValid(True)
-        self.mGraph = []
+        self.mGraph = graph
 
     def createMapRenderer(self, rendererContext):
         return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph)
@@ -124,11 +123,66 @@ class QgsGraphLayer(QgsPluginLayer):
             To be done after mGraph has been set.
 
         Args:
-            node ([type]): [description]
-            doc ([type]): [description]
+            node (QDomNode): XML Node for layer
+            doc (QDomDocument): XML Project File
             context ([type]): [description]
         """
-        pass
+        # graphNode saves all graphData
+        graphNode = doc.createElement("graph")
+        node.appendChild(graphNode)
+
+        # vertexNode saves all vertices with tis coordinates
+        verticesNode = doc.createElement("vertices")
+        graphNode.appendChild(verticesNode)
+
+        # edgeNode saves all edges with its vertices ids
+        # TODO: also save cost information stored in PGGraph (merge necessary beforehand)
+        edgesNode = doc.createElement("edges")
+        graphNode.appendChild(edgesNode)
+
+        # store vertices
+        for vertexId in range(self.mGraph.vertexCount()):
+            # QgsPointXY TODO: support for QgsPointZ?
+            point = self.mGraph.vertex(vertexId).point()
+
+            # store vertex information (coordinates have to be string to avoid implicit conversion to int)
+            self.__writeVertexXML(doc, verticesNode, vertexId, point.x(), point.y())
+
+        if self.mGraph.edgeCount() != 0:
+            # store edges if available
+            
+            for edgeId in range(self.mGraph.edgeCount()):
+                edge = self.mGraph.edge(edgeId)
+                
+                fromVertex = edge.fromVertex()
+                toVertex = edge.toVertex()
+
+                # store edge information (TODO: add cost)
+                edgeNode = doc.createElement("edge")
+                edgeNode.setAttribute("id", edgeId)
+                edgeNode.setAttribute("toVertex", toVertex)
+                edgeNode.setAttribute("fromVertex", fromVertex)
+                edgesNode.appendChild(edgeNode)
+                    
+        return True
+
+    def __writeVertexXML(self, doc, node, id, x, y):
+        """Writes given vertex information to XML.
+
+        Args:
+            doc (QDomDocument): XML Project File
+            node (QDomNode): vertices node to append new vertex node to
+            id (int): vertexId
+            x (float): vertex x-coordinate
+            y (float): vertex y-coordinate
+        """
+        vertexNode = doc.createElement("vertex")
+        vertexNode.setAttribute("id", id)
+        # store coordinates as strings to avoid implicite conversion from float to int
+        vertexNode.setAttribute("x", str(x))
+        vertexNode.setAttribute("y", str(y))
+        node.appendChild(vertexNode)
+
 
 class QgsGraphLayerType(QgsPluginLayerType):
     """When loading a project containing a QgsGraphLayer, a factory class is needed.
