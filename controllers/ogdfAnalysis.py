@@ -12,7 +12,7 @@ class OGDFAnalysisController(BaseController):
 
         self.view.addAnalysis("t-Spanner")
         self.view.addAnalysis("minimum spanner")
-        self.view.addAnalysis("shortestst path")
+        self.view.addAnalysis("shortest path")
         self.view.addAnalysis("steiner tree")
         self.view.addAnalysis("delaunay triangulation")
 

@@ -36,6 +36,24 @@ class OGDFAnalysisView(BaseContentView):
     def getStretch(self):
         return self.dialog.ogdf_analysis_stretch_input.int()
 
+    def getStartNode(self):
+        return self.dialog.ogdf_analysis_start_input.currentText(), self.dialog.ogdf_analysis_start_input.currentData()
+
+    def addStartNode(self, startNode, userData=None):
+        self.dialog.ogdf_analysis_start_input.addItem(startNode, userData)
+
+    def addStartNodes(self, startNodes):
+        self.dialog.ogdf_analysis_start_input.addItems(startNodes)
+
+    def getEndNode(self):
+        return self.dialog.ogdf_analysis_end_input.currentText(), self.dialog.ogdf_analysis_end_input.currentData()
+
+    def addEndNode(self, endNode, userData=None):
+        self.dialog.ogdf_analysis_end_input.addItem(endNode, userData)
+
+    def addEndNodes(self, endNodes):
+        self.dialog.ogdf_analysis_end_input.addItems(endNodes)
+
     # log
 
     def setLogText(self, text):
