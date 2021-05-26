@@ -4,6 +4,10 @@ from .base import BaseController
 class JobsController(BaseController):
 
     def __init__(self, view):
+        """
+        Constructor
+        :type view: JobsView
+        """
         super().__init__(view)
 
         self.view.setOutputVisible(False)

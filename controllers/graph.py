@@ -4,6 +4,10 @@ from .base import BaseController
 class CreateGraphController(BaseController):
 
     def __init__(self, view):
+        """
+        Constructor
+        :type view: CreateGraphView
+        """
         super().__init__(view)
 
         self.view.addDistance("euclidean")

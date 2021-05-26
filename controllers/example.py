@@ -6,7 +6,6 @@ from .. import helperFunctions as helper
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject, QgsVectorFileWriter, QgsRasterPipe, QgsRasterFileWriter, QgsWkbTypes, QgsProcessingUtils
 
 
-
 class ExampleController(BaseController):
 
     def __init__(self, view):
