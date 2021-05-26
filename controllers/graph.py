@@ -16,6 +16,9 @@ class CreateGraphController(BaseController):
         self.view.addRasterType("elevation")
         self.view.addRasterType("prohibited area")
         self.view.addRasterType("cost")
+        self.view.addRasterType("rgb vector")
+
+        self.view.addPolygonType("prohibited area")
 
     def createGraph(self):
         pass

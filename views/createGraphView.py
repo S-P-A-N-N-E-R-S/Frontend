@@ -12,7 +12,7 @@ class CreateGraphView(BaseContentView):
         self.controller = CreateGraphController(self)
 
         # set up layer inputs
-        self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer | QgsMapLayerProxyModel.RasterLayer)
+        self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer | QgsMapLayerProxyModel.RasterLayer | QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_poi_input.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
 
@@ -42,6 +42,12 @@ class CreateGraphView(BaseContentView):
     def getCostField(self):
         return self.dialog.create_graph_cost_input.currentField()
 
+    def getCoordinateType(self):
+        if self.dialog.create_graph_coordinatetype_planar.isChecked():
+            return "planar"
+        else:
+            return "spherical"
+
     def getPOILayer(self):
         return self.dialog.create_graph_poi_input.currentLayer()
 
@@ -53,6 +59,35 @@ class CreateGraphView(BaseContentView):
 
     def getRasterType(self):
         return self.dialog.create_graph_rastertype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
+
+    def getRasterMinimum(self):
+        return self.dialog.create_graph_rastermin_input.int()
+
+    def getRasterMaximum(self):
+        return self.dialog.create_graph_rastermax_input.int()
+
+    def isRasterRangeModeSelected(self):
+        return True if self.getRasterRangeMode() else False
+
+    def getRasterRangeMode(self):
+        if self.dialog.create_graph_rasterrange_scale_input.isChecked():
+            return "scale"
+        elif self.dialog.create_graph_rasterrange_cutoff_input.isChecked():
+            return "cut-off"
+        # if both not checked
+        return False
+
+    def getPolygonLayer(self):
+        return self.dialog.create_graph_polygon_input.currentLayer()
+
+    def addPolygonType(self, type, userData=None):
+        self.dialog.create_graph_polygontype_input.addItem(type, userData)
+
+    def getPolygonType(self):
+        return self.dialog.create_graph_polygontype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
+
+    def getCRS(self):
+        return self.dialog.create_graph_crs_input.crs()
 
     # log
 

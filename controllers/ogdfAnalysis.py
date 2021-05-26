@@ -10,7 +10,11 @@ class OGDFAnalysisController(BaseController):
         """
         super().__init__(view)
 
-        self.view.addAnalysis("Spanner")
+        self.view.addAnalysis("t-Spanner")
+        self.view.addAnalysis("minimum spanner")
+        self.view.addAnalysis("shortestst path")
+        self.view.addAnalysis("steiner tree")
+        self.view.addAnalysis("delaunay triangulation")
 
     def runJob(self):
         pass
