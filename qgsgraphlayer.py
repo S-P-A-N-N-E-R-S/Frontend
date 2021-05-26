@@ -1,6 +1,8 @@
 from qgis.analysis import QgsGraph, QgsNetworkDistanceStrategy
 from qgis.core import (QgsMapLayerRenderer, QgsPluginLayer,
                        QgsPluginLayerType, QgsPointXY)
+from qgis.gui import QgsVertexMarker
+from qgis.utils import iface
 
 from qgis.PyQt.QtGui import QColor, QPen
 from qgis.PyQt.QtXml import *
@@ -16,11 +18,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
             self.rendererContext = rendererContext
             
             self.mGraph = graph
-            
-            self.pen = QPen()
-            self.pen.setColor(QColor('black'))
-            self.pen.setWidth(3)
-            self.pen.setCosmetic(True)
 
         except Exception as err:
             print(err)
@@ -31,48 +28,39 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
     def __drawGraph(self):
 
         painter = self.renderContext().painter()
-        painter.setPen(self.pen)
+        painter.setPen(QColor('black'))
 
-        # set painter scale (and mirror at y-axis)
-        pixelMap = self.renderContext().mapToPixel()
-        scale = 1 / pixelMap.mapUnitsPerPixel()
-        painter.scale(-scale, scale)
-
-        # set painter rotation
-        painter.rotate(180)
-
-        # set painter to midpoint of extent
-        extent = self.renderContext().extent()
-        painter.translate(extent.xMaximum(), extent.yMinimum())
-        
         if isinstance(self.mGraph, QgsGraph):
             try:
+                # used to convert map coordinates to canvas coordinates
+                converter = QgsVertexMarker(iface.mapCanvas())
+
                 if self.mGraph.edgeCount() == 0:
                     # draw only points if no edges exist in graph
                     for vertexId in range(self.mGraph.vertexCount()):
-                        point = self.mGraph.vertex(vertexId).point().toQPointF()
+
+                        point = converter.toCanvasCoordinates(self.mGraph.vertex(vertexId).point())
 
                         painter.drawPoint(point)
+
                 else:      
                     # draw points and edges of graph  
                     for edgeId in range(self.mGraph.edgeCount()):
                         # get edge and its vertices
                         edge = self.mGraph.edge(edgeId)
-                        toPoint = self.mGraph.vertex(edge.toVertex()).point().toQPointF()
-                        fromPoint = self.mGraph.vertex(edge.fromVertex()).point().toQPointF()
+                        toPoint = converter.toCanvasCoordinates(self.mGraph.vertex(edge.toVertex()).point())
+                        fromPoint = converter.toCanvasCoordinates(self.mGraph.vertex(edge.fromVertex()).point())
 
                         # draw vertices (TODO: probably drawn multiple times in this loop)
-                        # TODO: when using QT methods to draw: 0,0 is top left, and units have to be adapted
+                        painter.setPen(QColor('black'))
                         painter.drawPoint(toPoint)
                         painter.drawPoint(fromPoint)
 
                         # draw edges
+                        painter.setPen(QColor('green'))
                         painter.drawLine(toPoint, fromPoint)
 
-                        # comment as to why using QT to draw: RubberBand draws BoundingBox of Points, 
-                        # QgsVertexMarker crashes my QGIS (don't know why, to be investigated)
-                        # QgsFeatureRenderer can only be used when adding Features to QgsGraphLayer (seems to be too much effort/overhead for drawing?)
-
+                iface.mapCanvas().scene().removeItem(converter)
             except Exception as err:
                 print(err)
         else:

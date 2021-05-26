@@ -94,6 +94,8 @@ class ProtoPlugin:
             newGraphLayer = QgsGraphLayer()
             newGraphLayer.setGraph(graph)
 
+            newGraphLayer.setCrs(layer.crs())
+
             QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.edgeCount(), " edges added.")
@@ -117,6 +119,8 @@ class ProtoPlugin:
             # create graphLayer to show graph
             newGraphLayer = QgsGraphLayer()
             newGraphLayer.setGraph(graph)
+
+            newGraphLayer.setCrs(layer.crs())
             
             QgsProject.instance().addMapLayer(newGraphLayer)
 
