@@ -52,7 +52,7 @@ EXTRAS = metadata.txt icon.png
 
 EXTRA_DIRS =
 
-COMPILED_RESOURCE_FILES = resources.py
+# COMPILED_RESOURCE_FILES = resources.py
 
 PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 
@@ -71,7 +71,7 @@ QGISDIR=.local/share/QGIS/QGIS3/profiles/default
 # Normally you would not need to edit below here
 #################################################
 
-RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
+# RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
 
 .PHONY: default
 default:
@@ -82,18 +82,15 @@ default:
 	@echo You can install pb_tool using: pip install pb_tool
 	@echo See https://g-sherman.github.io/plugin_build_tool/ for info.
 
-compile: $(COMPILED_RESOURCE_FILES) uicompile
+# compile: $(COMPILED_RESOURCE_FILES)
 
-uicompile:
-	$(foreach UI_FILE, $(UI_FILES), pyuic5 -o $(basename $(UI_FILE)).py $(UI_FILE))
-
-%.py : %.qrc $(RESOURCES_SRC)
-	pyrcc5 -o $*.py  $<
+#%.py : %.qrc $(RESOURCES_SRC)
+#	pyrcc5 -o $*.py  $<
 
 %.qm : %.ts
 	$(LRELEASE) $<
 
-deploy: compile
+deploy:
 	@echo
 	@echo "------------------------------------------"
 	@echo "Deploying plugin to your .qgis2 directory."
