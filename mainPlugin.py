@@ -2,10 +2,11 @@ from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
 from qgis.PyQt.QtCore import QVariant
 
+from .GraphBuilder import GraphBuilder
 from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
-
+from .PGGraph import PGGraph
 from . import resources
 
 from .views.pluginDialog import PluginDialog
