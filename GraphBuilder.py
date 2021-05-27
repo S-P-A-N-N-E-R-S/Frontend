@@ -6,7 +6,6 @@ from qgis.PyQt.QtCore import QVariant
 from .PGGraph import PGGraph
 from random import *
 from qgis import processing
-from .FunctionLibrary import *
 import math
 
 
