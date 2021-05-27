@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>2</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -425,7 +425,11 @@ QListWidget::item::selected {
                              <item row="7" column="0" colspan="2">
                               <layout class="QHBoxLayout" name="horizontalLayout_13">
                                <item>
-                                <widget class="QgsMapLayerComboBox" name="create_graph_poi_input"/>
+                                <widget class="QgsMapLayerComboBox" name="create_graph_poi_input">
+                                 <property name="allowEmptyLayer">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
                                </item>
                                <item>
                                 <widget class="QToolButton" name="create_graph_poi_input_tools">
@@ -446,7 +450,11 @@ QListWidget::item::selected {
                              <item row="9" column="0" colspan="2">
                               <layout class="QHBoxLayout" name="horizontalLayout_14">
                                <item>
-                                <widget class="QgsMapLayerComboBox" name="create_graph_raster_input"/>
+                                <widget class="QgsMapLayerComboBox" name="create_graph_raster_input">
+                                 <property name="allowEmptyLayer">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
                                </item>
                                <item>
                                 <widget class="QToolButton" name="create_graph_raster_input_tools">
@@ -600,7 +608,11 @@ QListWidget::item::selected {
                              <item row="15" column="0" colspan="2">
                               <layout class="QHBoxLayout" name="horizontalLayout_16">
                                <item>
-                                <widget class="QgsMapLayerComboBox" name="create_graph_polygon_input"/>
+                                <widget class="QgsMapLayerComboBox" name="create_graph_polygon_input">
+                                 <property name="allowEmptyLayer">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
                                </item>
                                <item>
                                 <widget class="QToolButton" name="create_graph_polygon_input_tools">
