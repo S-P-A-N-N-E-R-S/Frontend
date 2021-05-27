@@ -3,6 +3,8 @@ from ..controllers.graph import CreateGraphController
 
 from qgis.core import QgsMapLayerProxyModel
 
+from PyQt5.QtWidgets import QFileDialog, QAction
+
 
 class CreateGraphView(BaseContentView):
 
@@ -15,18 +17,64 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer | QgsMapLayerProxyModel.RasterLayer | QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_poi_input.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.dialog.create_graph_polygon_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
 
         # show layer fields
-        self.dialog.create_graph_cost_input.setLayer(self.getLayer())
+        self.dialog.create_graph_cost_input.setLayer(self.getInputLayer())
         self.dialog.create_graph_input.layerChanged.connect(self.dialog.create_graph_cost_input.setLayer)
+
+        # set up file upload
+        self.dialog.create_graph_input_tools.clicked.connect(
+            lambda: self.__browseFile("create_graph_input", "GPKG files (*.gpkg);;Shape files (*.shp);;GraphML (*.graphml )")
+        )
 
         self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
 
-    def getLayer(self):
+    def __browseFile(self, layerComboBox, filter):
+        """
+        Allows to browse for a file and adds it to the QGSMapLayerComboBox
+        :param layerComboBox: name of the QGSMapLayerComboBox
+        :param filter: supported file types
+        :return:
+        """
+        path, selectedFilter = QFileDialog.getOpenFileName(filter=filter)
+        if path:
+            comboBox = getattr(self.dialog, layerComboBox)
+            comboBox.setAdditionalItems([path])
+            comboBox.setCurrentIndex(self.dialog.create_graph_input.count()-1)
+
+    def isInputLayer(self):
+        """
+        True: if input is layer
+        False: if input is path
+        :return:
+        """
+        if self.dialog.create_graph_input.currentLayer():
+            return True
+        return False
+
+    def getInputLayer(self):
+        """
+        Returns the current selected layer or none if path is sleceted
+        :return: Layer or None if path is selected
+        """
         return self.dialog.create_graph_input.currentLayer()
+
+    def getInputPath(self):
+        """
+        Returns input path of selected file path in layer combobox
+        :return: Path to file or None if layer is selected
+        """
+        # assumed that only one additional item is inserted
+        if not self.isInputLayer():
+            return self.dialog.create_graph_input.additionalItems()[0]
+        return None
 
     def isRandom(self):
         return self.dialog.random_graph_checkbox.isChecked()
+
+    def setSavePathFilter(self, filter):
+        self.dialog.create_graph_dest_output.setFilter(filter)
 
     def getSavePath(self):
         return self.dialog.create_graph_dest_output.filePath()
