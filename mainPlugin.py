@@ -1,12 +1,5 @@
 from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
-from qgis.PyQt.QtCore import QVariant
-
-from qgis.core import *
-from qgis.gui import *
-from qgis.analysis import *
-
-from . import resources
 
 from .views.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath, getPluginPath
