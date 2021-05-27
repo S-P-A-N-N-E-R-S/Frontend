@@ -19,23 +19,14 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.dialog.create_graph_polygon_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
 
-        # set null layer as default
-        self.dialog.create_graph_poi_input.setCurrentIndex(0)
-        self.dialog.create_graph_raster_input.setCurrentIndex(0)
-        self.dialog.create_graph_polygon_input.setCurrentIndex(0)
-
         # show layer fields
         self.dialog.create_graph_cost_input.setLayer(self.getInputLayer())
         self.dialog.create_graph_input.layerChanged.connect(self.dialog.create_graph_cost_input.setLayer)
 
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
-            lambda: self.__browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
+            lambda: self.__browseFile("create_graph_input", "GPKG files (*.gpkg);;Shape files (*.shp);;GraphML (*.graphml )")
         )
-
-        # disable input field if random is checked
-        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input.setDisabled)
-        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input_tools.setDisabled)
 
         self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
 
@@ -51,9 +42,6 @@ class CreateGraphView(BaseContentView):
             comboBox = getattr(self.dialog, layerComboBox)
             comboBox.setAdditionalItems([path])
             comboBox.setCurrentIndex(self.dialog.create_graph_input.count()-1)
-
-    def hasInput(self):
-        return self.dialog.create_graph_input.count() > 0
 
     def isInputLayer(self):
         """
@@ -78,7 +66,7 @@ class CreateGraphView(BaseContentView):
         :return: Path to file or None if layer is selected
         """
         # assumed that only one additional item is inserted
-        if self.hasInput() and not self.isInputLayer():
+        if not self.isInputLayer():
             return self.dialog.create_graph_input.additionalItems()[0]
         return None
 
@@ -92,12 +80,6 @@ class CreateGraphView(BaseContentView):
         return self.dialog.create_graph_dest_output.filePath()
 
     # advanced parameters
-
-    def addConnectionType(self, type, userData=None):
-        self.dialog.create_graph_connectiontype_input.addItem(type, userData)
-
-    def getConnectionType(self):
-        return self.dialog.create_graph_connectiontype_input.currentText(), self.dialog.create_graph_distance_input.currentData()
 
     def addDistance(self, distance, userData=None):
         self.dialog.create_graph_distance_input.addItem(distance, userData)
