@@ -235,7 +235,7 @@ class GraphBuilder:
                    
     
     def removeIntersectingEdges(self):               
-        currentEdges = self.__createEdgeLayer(False)
+        currentEdges = self.createEdgeLayer(False)
         result2 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.polygonLayer, "OUTPUT": "memory:"})         
         layerWithDelEdges = result2["OUTPUT"]
         
@@ -275,7 +275,9 @@ class GraphBuilder:
             
             
         if addToCanvas == True:
-            QgsProject.instance().addMapLayer(graphLayerVertices)    
+            QgsProject.instance().addMapLayer(graphLayerVertices)
+
+        return graphLayerVertices
     
     # create the two layers that represent the graph
     def createEdgeLayer(self, addToCanvas):
