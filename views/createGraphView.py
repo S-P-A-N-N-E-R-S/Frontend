@@ -3,8 +3,6 @@ from ..controllers.graph import CreateGraphController
 
 from qgis.core import QgsMapLayerProxyModel
 
-from PyQt5.QtWidgets import QFileDialog, QAction
-
 
 class CreateGraphView(BaseContentView):
 
@@ -30,7 +28,7 @@ class CreateGraphView(BaseContentView):
 
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
-            lambda: self.__browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
+            lambda: self._browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
         )
 
         # disable input field if random is checked
@@ -39,18 +37,6 @@ class CreateGraphView(BaseContentView):
 
         self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
 
-    def __browseFile(self, layerComboBox, filter):
-        """
-        Allows to browse for a file and adds it to the QGSMapLayerComboBox
-        :param layerComboBox: name of the QGSMapLayerComboBox
-        :param filter: supported file types
-        :return:
-        """
-        path, selectedFilter = QFileDialog.getOpenFileName(filter=filter)
-        if path:
-            comboBox = getattr(self.dialog, layerComboBox)
-            comboBox.setAdditionalItems([path])
-            comboBox.setCurrentIndex(self.dialog.create_graph_input.count()-1)
 
     def hasInput(self):
         return self.dialog.create_graph_input.count() > 0
