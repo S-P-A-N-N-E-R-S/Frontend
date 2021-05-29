@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>1</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -272,8 +272,8 @@ QListWidget::item::selected {
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>486</width>
-                         <height>712</height>
+                         <width>773</width>
+                         <height>755</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -883,7 +883,7 @@ QListWidget::item::selected {
                           </widget>
                          </item>
                          <item>
-                          <widget class="QComboBox" name="ogdf_analysis_start_input"/>
+                          <widget class="QSpinBox" name="ogdf_analysis_start_input"/>
                          </item>
                          <item>
                           <widget class="QLabel" name="ogdf_analysis_end_label">
@@ -893,7 +893,7 @@ QListWidget::item::selected {
                           </widget>
                          </item>
                          <item>
-                          <widget class="QComboBox" name="ogdf_analysis_end_input"/>
+                          <widget class="QSpinBox" name="ogdf_analysis_end_input"/>
                          </item>
                          <item>
                           <spacer name="horizontalSpacer_4">
