@@ -272,8 +272,8 @@ QListWidget::item::selected {
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>773</width>
-                         <height>711</height>
+                         <width>486</width>
+                         <height>712</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1091,19 +1091,29 @@ QListWidget::item::selected {
                      <x>10</x>
                      <y>30</y>
                      <width>791</width>
-                     <height>46</height>
+                     <height>101</height>
                     </rect>
                    </property>
                    <layout class="QFormLayout" name="formLayout_5">
                     <item row="0" column="0">
-                     <widget class="QLabel" name="options_server_adress_label">
+                     <widget class="QLabel" name="options_server_host_label">
                       <property name="text">
-                       <string>Server address</string>
+                       <string>Host</string>
                       </property>
                      </widget>
                     </item>
                     <item row="1" column="0" colspan="2">
-                     <widget class="QLineEdit" name="options_server_adress_input"/>
+                     <widget class="QLineEdit" name="options_server_host_input"/>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="options_server_port_label">
+                      <property name="text">
+                       <string>Port</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="0" colspan="2">
+                     <widget class="QLineEdit" name="options_server_port_input"/>
                     </item>
                    </layout>
                   </widget>
@@ -1111,7 +1121,7 @@ QListWidget::item::selected {
                    <property name="geometry">
                     <rect>
                      <x>10</x>
-                     <y>90</y>
+                     <y>140</y>
                      <width>791</width>
                      <height>171</height>
                     </rect>
