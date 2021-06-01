@@ -29,22 +29,58 @@ class PGGraph(QgsGraph):
      
           
     def costOfEdge(self, edgeID):        
-        edgeFromID = self.edge(edgeID)
+            
+        # differentiate between edge weights from cost functions and set weights from graph builder        
+        if self.distanceStrategy == "Euclidean":                                                                    
+            return self.euclideanDist(edgeID)
         
-        #differentiate between edge weights from cost functions and set weights from graph builder        
-        if self.distanceStrategy == "Euclidean":                       
-            fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-            toPoint = self.vertex(edgeFromID.toVertex()).point()        
-            euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))                     
-            return euclDist
+        elif self.distanceStrategy == "Manhattan":
+            return self.manhattanDist(edgeID)
+        
+        # caluclate geodesic distance using the Haversine formula
+        elif self.distanceStrategy == "Geodesic":
+            return self.geodesicDist(edgeID)
+        
+        #if the type is advanced the distances are set by the GraphBuilder directly
+        elif self.distanceStrategy == "Advanced":
+            return self.edgeWeights[edgeID]
+        
         else:
             return 0  
     
+    def euclideanDist(self, edgeID):
+        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
+        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2)) 
+        return euclDist
+        
+    def manhattanDist(self, edgeID): 
+        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
+        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        manhattenDist = abs(fromPoint.x()-toPoint.x()) + abs(fromPoint.y()-toPoint.y())
+        return manhattenDist
+    
+    def geodesicDist(self, edgeID):
+        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
+        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        radius = 6371000
+        phi1 = math.radians(fromPoint.y())
+        phi2 = math.radians(toPoint.y())
+        
+        deltaPhi = math.radians(toPoint.y()-fromPoint.y())
+        deltaLambda = math.radians(toPoint.x()-fromPoint.x())
+        a = math.sin(deltaPhi/2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(deltaLambda / 2.0) ** 2
+    
+        c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
+        
+        return radius*c;
+        
     def distanceP2P(self, vertex1, vertex2):
         fromPoint = self.vertex(vertex1).point()
         toPoint = self.vertex(vertex2).point()
         return math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
         
+
     
     def hasEdge(self, vertex1, vertex2):
         for i in range(self.edgeCount()):            

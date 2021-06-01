@@ -4,9 +4,9 @@ from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 from .PGGraph import PGGraph
+from .AdvancedCostCalculator import AdvancedCostCalculator
 from random import *
 from qgis import processing
-from .FunctionLibrary import *
 import math
 
 
@@ -30,29 +30,36 @@ If you want to create a special random graph use:
     ga.setRandomOptions(optionType, value)    
 
 
-
 Supported options:
     - connectionType: None, Complete, Nearest neighbor, ShortestPathNetwork
     - neighborNumber: int
     - edgeDirection: Undirected, Directed
-    - distanceStrategy: Euclidean, Manhatten, Speed
-    - speedOption: Attribute field with the speed information
-    - useRasterData: False, True
+    - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced
     - createGraphAsLayers: False, True
     - createRandomGraph: False, True
         - further definitions possible at randomOptions dict             
+    - usePolygons: False, True
 
 Supported random options:
     - numberOfVertices: int
     - area: Area of the globe you want the random Graph to be in
 
 Raster data options:
-    - typeOfData
-    - costFunction: Climb, notAllowedAreas
-    - threshold
+    - pointSamplingDistance: Distance in meters for the distance between sampled points on the line
+
+Advanced distance strategies: 
+
+    - CostFunction: User gives specific cost function using data of sampled raster values, fields and normal distances as variables
+    - Variables for cost function general: euclidean, manhatten, geodesic, line or point field values
+    - Variables for raster data: sum, mean, median, min, max, variance, standard deviation, majority, minority, gradientSum, gradientMin, gradientMax
+    
+    --> python.math functions for basic operations on the data
+    --> Additional if construct for custom data selection (for example: if(gradientMax > 10, sum, infinity)
+    --> it should not matter which kind of raster data it is
+    --> Advanced distances are set directly
     
     
----> Not all of the options are implemented (more a list of possible options)    
+---> Not all of the options are implemented  
 
 """
 class GraphBuilder:
@@ -60,29 +67,34 @@ class GraphBuilder:
     def __init__(self):
         self.graph = PGGraph()
         
-        #TODO: load example data into the two layers
+        # TODO: load example data into the two layers
         self.vLayer = QgsVectorLayer()
         self.rLayer = QgsRasterLayer()
         self.polygonLayer = QgsVectorLayer()
         self.additionalLineLayer = QgsVectorLayer()
+        self.costFunction = ""
         
         self.__options = {
             "connectionType": "Nearest neighbor",            
             "neighborNumber": 5,       
             "edgeDirection": "Directed",
             "distanceStrategy": "Euclidean",
-            "speedOptions": [1, 50, 1],
             "useRasterData": False,
             "createGraphAsLayers": True,
             "createRandomGraph": True,          
-            "usePolygons": False
-                       
+            "usePolygons": False,
+            "samplingDistance" : 1000    
+                              
         }
         self.__randomOptions = {
             "numberOfVertices": 100,
             "area": "Germany",
                   
         }
+        self.__advancedCostsOptions = {
+            "type": "ShortestPath"           
+        }
+        
         
     def setGraph(self, graph):
         self.graph = graph
@@ -98,19 +110,21 @@ class GraphBuilder:
     def setVectorLayer(self, vectorLayer):
         self.__options["createRandomGraph"] = False
         self.vLayer = vectorLayer    
-        
-        
+                
     def setRasterLayer(self, rasterLayer):
         self.__options["useRasterData"] = True;
         self.rLayer = rasterLayer
     
+    def setCostFunction(self, function):
+        self.__options["distanceStrategy"] = "Advanced"
+        self.costFunction = function
     
     def setOption(self, optionsType, value):
-        #TODO: check if inputs are valid
+        # TODO: check if inputs are valid
         self.__options[optionsType] = value
     
     def setRandomOptions(self, optionType, value):
-        #TODO: check if inputs are valid
+        # TODO: check if inputs are valid
         self.__randomOptions[optionType] = value        
     
     def createRandomVertices(self):
@@ -118,9 +132,7 @@ class GraphBuilder:
             if self.__randomOptions["area"] == "Germany":
                 self.graph.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884))) 
     
-    def createVerticesForPoints(self):
-       
-        
+    def createVerticesForPoints(self):        
         for feat in self.vLayer.getFeatures():
             geom = feat.geometry()                
             self.graph.addVertex(geom.asPoint())
@@ -130,8 +142,7 @@ class GraphBuilder:
             for j in range(i+1, self.graph.vertexCount()):                                                                              
                 self.graph.addEdge(i, j)
                         
-            
-            
+                       
     def createNearestNeighbor(self):
         # calculate shortest distances between all pairs of nodes                
         for i in range(self.graph.vertexCount()):
@@ -160,8 +171,7 @@ class GraphBuilder:
                 # add edge                
                 if not self.graph.hasEdge(minIndex, i):
                     self.graph.addEdge(i,minIndex)
-                          
-                
+                                         
                 # don't look at minIndex again
                 distances[minIndex] = maxDistanceValue+1           
             
@@ -217,8 +227,7 @@ class GraphBuilder:
         for feature in self.vLayer.getFeatures():                   
             geom = feature.geometry()
             
-            if QgsWkbTypes.isMultiType(geom.wkbType()):
-                 
+            if QgsWkbTypes.isMultiType(geom.wkbType()):                 
                 for part in geom.asMultiPolyline():
                     for i in range(len(part)):
                         addedID = self.graph.addVertex(part[i]) 
@@ -236,7 +245,7 @@ class GraphBuilder:
                    
     
     def removeIntersectingEdges(self):               
-        currentEdges = self.__createEdgeLayer(False)
+        currentEdges = self.createEdgeLayer(False)
         result2 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.polygonLayer, "OUTPUT": "memory:"})         
         layerWithDelEdges = result2["OUTPUT"]
         
@@ -279,36 +288,26 @@ class GraphBuilder:
             QgsProject.instance().addMapLayer(graphLayerVertices)    
     
     # create the two layers that represent the graph
-    def createEdgeLayer(self, addToCanvas):
-        
-        graphLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")
-        
+    def createEdgeLayer(self, addToCanvas):        
+        graphLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")        
         dpEdgeLayer = graphLayerEdges.dataProvider()
-        
-        
         dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("fromVertex",QVariant.Double), QgsField("toVertex",QVariant.Double),QgsField("weight", QVariant.Double)])
         graphLayerEdges.updateFields() 
-        
-        
+                
         if self.__options["createRandomGraph"] == False:            
             graphLayerEdges.setCrs(self.vLayer.crs())  
         else:
             graphLayerEdges.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))       
-        
-        
+                
         for i in range(self.graph.edgeCount()):
             newFeature = QgsFeature()
             fromVertex = self.graph.vertex(self.graph.edge(i).fromVertex()).point()
             toVertex = self.graph.vertex(self.graph.edge(i).toVertex()).point()
-            newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)])) 
-                             
+            newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))                              
             newFeature.setAttributes([i, self.graph.edge(i).fromVertex(), self.graph.edge(i).toVertex(), self.graph.costOfEdge(i)])
             dpEdgeLayer.addFeature(newFeature)
-              
-        
-                
-        if addToCanvas == True:
-        
+
+        if addToCanvas == True:        
             layer_settings  = QgsPalLayerSettings()
             text_format = QgsTextFormat()
     
@@ -341,7 +340,8 @@ class GraphBuilder:
        
         return graphLayerEdges
 
-    #returns the graph    
+
+    # returns the graph    
     def makeGraph(self):
                                                                       
         if self.__options["createRandomGraph"] == True:
@@ -364,14 +364,23 @@ class GraphBuilder:
             for i in range(eCount):
                 edge = self.graph.edge(i)
                 self.graph.addEdge(edge.toVertex(), edge.fromVertex())  
-            
-                
+                            
         if self.__options["usePolygons"] == True:
             self.removeIntersectingEdges()        
-      
-      
-      
-        if(self.__options["createGraphAsLayers"] == True):
+    
+        # set distance strategy
+        self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
+        
+        # call AdvancedCostCalculations methods
+        if self.__options["distanceStrategy"] == "Advanced":
+            if self.__options["connectionType"] == "ShortestPathNetwork":
+                costCalculator = AdvancedCostCalculator(self.rLayer, self.additionalLineLayer, self.graph)
+            else:
+                costCalculator = AdvancedCostCalculator(self.rLayer, self.vLayer, self.graph)
+            
+            self.graph = costCalculator.setEdgeCosts(self.costFunction)    
+        
+        if self.__options["createGraphAsLayers"] == True:
             self.createVertexLayer(True)
             self.createEdgeLayer(True)
         
