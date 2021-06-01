@@ -79,11 +79,14 @@ class QgsGraphLayer(QgsPluginLayer):
     """
 
     LAYER_TYPE="graph"
+    LAYER_PROPERTY = "graph_layer_type"
 
     def __init__(self, name="QgsGraphLayer"):
         super().__init__(QgsGraphLayer.LAYER_TYPE, name)
         self.setValid(True)
         self.mGraph = QgsGraph()
+
+        self.layerType = QgsGraphLayerType()
 
     def createMapRenderer(self, rendererContext):
         return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph)
@@ -92,7 +95,8 @@ class QgsGraphLayer(QgsPluginLayer):
         pass 
 
     def setGraph(self, graph):
-        self.mGraph = graph
+        if isinstance(graph, QgsGraph):
+            self.mGraph = graph
 
     def getGraph(self):
         return self.mGraph
@@ -104,6 +108,10 @@ class QgsGraphLayer(QgsPluginLayer):
             node (QDomNode): XML Node for layer
             context ([type]): [description]
         """
+        self.readCustomProperties(node)
+
+        self.setLayerType(QgsGraphLayer.LAYER_TYPE)
+
         # start with empty QgsGraph
         self.mGraph = QgsGraph()
 
@@ -146,7 +154,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
         if node.isElement():
             node.toElement().setAttribute("type", "plugin")
-            node.toElement().setAttribute("name", "graph")
+            node.toElement().setAttribute("name", QgsGraphLayer.LAYER_TYPE)
 
         # graphNode saves all graphData
         graphNode = doc.createElement("graph")
@@ -204,6 +212,13 @@ class QgsGraphLayer(QgsPluginLayer):
         vertexNode.setAttribute("y", str(y))
         node.appendChild(vertexNode)
 
+    def setLayerType(self, layerType):
+        self.layerType = layerType
+        self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.layerType)
+
+    def showlayerProperties(self, layer):
+        # TODO
+        pass
 
 class QgsGraphLayerType(QgsPluginLayerType):
     """When loading a project containing a QgsGraphLayer, a factory class is needed.
