@@ -5,14 +5,7 @@ from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
 
-from . import resources
-from .qgsgraphlayer import QgsGraphLayer, QgsGraphLayerRenderer, QgsGraphLayerType
-
-import sys
-import time
-
-# save / serialize graph in into a pickle file
-import pickle
+from .qgsgraphlayer import QgsGraphLayer, QgsGraphLayerType
 
 class ProtoPlugin:
 
@@ -20,6 +13,8 @@ class ProtoPlugin:
         self.iface = iface
 
         QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
+
+        QgsProject.instance().readProject.connect(self.projectLoaded)
 
     def initGui(self):
         self.action = QAction(QIcon(":/plugins/ProtoPlugin/icon.png"), "Proto Plugin", self.iface.mainWindow())
@@ -30,16 +25,37 @@ class ProtoPlugin:
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu("&Proto Plugin", self.action)
 
-
     def unload(self):
         self.iface.removePluginMenu("&Proto Plugin", self.action)
         self.iface.removeToolBarIcon(self.action)
 
-        # QgsApplication.pluginLayerRegistry().removePluginLayerType("graph")
+        QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
+
 
     def run(self):
         print("ProtoPlugin: Run Called!")
         self.createGraph()
+
+    def projectLoaded(self):
+        print("Project Loaded")
+        registry = QgsApplication.pluginLayerRegistry()
+        layerTypes = registry.pluginLayerTypes()
+
+        for layerTypeName in layerTypes:
+            print("Create Layer")
+            registry.pluginLayerType(layerTypeName).createLayer()
+
+    def addLayer(self, layerType):
+        print("Add Layer")
+        layer = QgsGraphLayer()
+        layer.setLayerType(layerType)
+
+        if layer.isValid():
+            # coordRefSys = layerType.coordRefSys(self.iface.mapCanvas().mapSettings().destinationCrs())
+            QgsProject.instance().addMapLayer(layer)
+
+        return layer
+
 
     def createGraph(self):
         layer = self.iface.activeLayer()
@@ -51,13 +67,12 @@ class ProtoPlugin:
             vector = True
             print("VectorLayer found.")
 
-        elif layer and isinstance(layer, QgsGraphLayer):
+        elif isinstance(layer, QgsGraphLayer):
             print("GraphLayer found")
             graphLoaded = True
 
         else:
             print("No Vector-/GraphLayer found", layer)
-
 
         # check features (only one representative)
         points = False
@@ -117,11 +132,11 @@ class ProtoPlugin:
                 graph = layer.getGraph()
 
             # create graphLayer to show graph
-            newGraphLayer = QgsGraphLayer()
+            newGraphLayer = self.addLayer(QgsGraphLayer.LAYER_TYPE)
             newGraphLayer.setGraph(graph)
 
             newGraphLayer.setCrs(layer.crs())
             
-            QgsProject.instance().addMapLayer(newGraphLayer)
+            # QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.vertexCount(), " vertices added")
