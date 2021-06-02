@@ -18,10 +18,10 @@ class OptionsView(BaseContentView):
         self.dialog.options_server_host_input.setText(host)
 
     def getPort(self):
-        return self.dialog.options_server_port_input.text()
+        return self.dialog.options_server_port_input.value()
 
     def setPort(self, port):
-        self.dialog.options_server_port_input.setText(port)
+        self.dialog.options_server_port_input.setValue(port)
 
     # credentials
 

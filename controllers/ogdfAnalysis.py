@@ -3,9 +3,14 @@ import os
 from qgis.core import QgsSettings
 
 from .base import BaseController
-# from ..network.client import Client
 from ..models.GraphBuilder import GraphBuilder
 from ..models.PGGraph import PGGraph
+
+# client imports
+from ..network.client import Client
+from ..network.requests.shortPathRequest import ShortPathRequest
+from ..network.exceptions import NetworkClientError
+
 
 class OGDFAnalysisController(BaseController):
 
@@ -18,27 +23,14 @@ class OGDFAnalysisController(BaseController):
 
         # set up client
         self.settings = QgsSettings()
-        self.client = None
-        host = self.settings.value("protoplugin/host", None)
-        port = self.settings.value("protoplugin/port", None)
 
-        # try:
-        #     if host and port:
-        #         self.client = Client(host, port)
-        # except Exception as e:
-        #     print(e)
-
-        self.view.addAnalysis("t-Spanner")
-        self.view.addAnalysis("minimum spanner")
+        # self.view.addAnalysis("t-Spanner")
+        # self.view.addAnalysis("minimum spanner")
         self.view.addAnalysis("shortest path")
-        self.view.addAnalysis("steiner tree")
-        self.view.addAnalysis("delaunay triangulation")
+        # self.view.addAnalysis("steiner tree")
+        # self.view.addAnalysis("delaunay triangulation")
 
     def runJob(self):
-        # if not self.client:
-        #     self.view.showWarning("Please configure the server!")
-        #     return
-
         startNodeIndex = self.view.getStartNode()
         endNodeIndex = self.view.getEndNode()
 
@@ -46,17 +38,20 @@ class OGDFAnalysisController(BaseController):
         if not graph:
             return
 
-        # try:
-        #     self.client.connect()
-        #
-        #     # shortPathRequest = ShortPathRequest(graph, startIndex, endIndex)
-        #     # msgLength = self.client.sendShortPathRequest(shortPathRequest)
-        #
-        #     graph = self.client.readShortPathResponse()
-        #
-        #     self.client.disconnectSocket()
-        # except Exception as e:
-        #     print(e)
+        host = self.settings.value("protoplugin/host", None)
+        port = self.settings.value("protoplugin/port", None)
+        if not (host and port):
+            self.view.showError("Please set host and port in options!")
+            return None
+
+        with Client(host, port) as client:
+            shortPathRequest = ShortPathRequest(graph, startNodeIndex, endNodeIndex)
+            msgLength = client.sendShortPathRequest(shortPathRequest)
+
+            try:
+                graph = client.readShortPathResponse()
+            except NetworkClientError as e:
+                self.view.showError(str(e))
 
         # show graph in qgis
         builder = GraphBuilder()
