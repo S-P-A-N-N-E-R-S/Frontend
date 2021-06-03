@@ -1,9 +1,11 @@
 from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
+from qgis.PyQt.QtXml import *
 
 from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
+
 
 from .qgsgraphlayer import QgsGraphLayer, QgsGraphLayerType
 
@@ -11,10 +13,6 @@ class ProtoPlugin:
 
     def __init__(self, iface):
         self.iface = iface
-
-        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
-
-        QgsProject.instance().readProject.connect(self.projectLoaded)
 
     def initGui(self):
         self.action = QAction(QIcon(":/plugins/ProtoPlugin/icon.png"), "Proto Plugin", self.iface.mainWindow())
@@ -24,6 +22,11 @@ class ProtoPlugin:
 
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu("&Proto Plugin", self.action)
+
+        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
+
+        # re-read and therefore reload plugin layers after adding QgsGraphLayerType to PluginLayerRegistry
+        self.reloadPluginLayers()
 
     def unload(self):
         self.iface.removePluginMenu("&Proto Plugin", self.action)
@@ -36,23 +39,39 @@ class ProtoPlugin:
         print("ProtoPlugin: Run Called!")
         self.createGraph()
 
-    def projectLoaded(self):
-        print("Project Loaded")
-        registry = QgsApplication.pluginLayerRegistry()
-        layerTypes = registry.pluginLayerTypes()
+    def reloadPluginLayers(self):
+        """Re-reads and reloads plugin layers
+        """
+        # read project file as QDomDocument
+        with open(QgsProject.instance().absoluteFilePath(), 'r') as projectFile:
+            projectDocument = QDomDocument()
+            projectDocument.setContent(projectFile.read())
 
-        for layerTypeName in layerTypes:
-            print("Create Layer")
-            registry.pluginLayerType(layerTypeName).createLayer()
+            # for every maplayer node in project file
+            mapLayerNodeList = projectDocument.elementsByTagName("maplayer")
+            for mapLayerNodeId in range(mapLayerNodeList.count()):
+                mapLayerNode = mapLayerNodeList.at(mapLayerNodeId)
+
+                # check if maplayer is a plugin layer
+                mapLayerElem = mapLayerNode.toElement()
+                if mapLayerElem.attribute("type") == "plugin":
+                    # re-read plugin layer from node
+                    QgsProject.instance().readLayer(mapLayerNode)
+
+        # readLayer() adds a new layer but does not remove not correctly loaded layer
+        # TODO: find a way to remove those layers -> following mapLayers() doesnt return those layers
+        # for remLayer in QgsProject.instance().mapLayers():
+        #     if remLayer.type() == None:
+        #         QgsProject.instance().removeMapLayer(remLayer)
 
     def addLayer(self, layerType):
-        print("Add Layer")
         layer = QgsGraphLayer()
         layer.setLayerType(layerType)
 
         if layer.isValid():
             # coordRefSys = layerType.coordRefSys(self.iface.mapCanvas().mapSettings().destinationCrs())
             QgsProject.instance().addMapLayer(layer)
+
 
         return layer
 
@@ -136,7 +155,5 @@ class ProtoPlugin:
             newGraphLayer.setGraph(graph)
 
             newGraphLayer.setCrs(layer.crs())
-            
-            # QgsProject.instance().addMapLayer(newGraphLayer)
 
             print("Done: ", graph.vertexCount(), " vertices added")

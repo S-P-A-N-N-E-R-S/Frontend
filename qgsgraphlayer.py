@@ -4,7 +4,7 @@ from qgis.core import (QgsMapLayerRenderer, QgsPluginLayer,
 from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
-from qgis.PyQt.QtGui import QColor, QPen
+from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtXml import *
 
 
@@ -108,8 +108,6 @@ class QgsGraphLayer(QgsPluginLayer):
             node (QDomNode): XML Node for layer
             context ([type]): [description]
         """
-        self.readCustomProperties(node)
-
         self.setLayerType(QgsGraphLayer.LAYER_TYPE)
 
         # start with empty QgsGraph
@@ -117,7 +115,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
         # find graph node in xml
         graphNode = node.firstChild()
-        while graphNode.nodeName() != "graph":
+        while graphNode.nodeName() != "graphData":
             graphNode = graphNode.nextSibling()
             
         verticesNode = graphNode.firstChild()
@@ -141,7 +139,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
         return True
 
-
     def writeXml(self, node, doc, context):
         """Write the mGraph (QgsGraph and its subclasses) to the project file.
             To be done after mGraph has been set.
@@ -157,7 +154,7 @@ class QgsGraphLayer(QgsPluginLayer):
             node.toElement().setAttribute("name", QgsGraphLayer.LAYER_TYPE)
 
         # graphNode saves all graphData
-        graphNode = doc.createElement("graph")
+        graphNode = doc.createElement("graphData")
         node.appendChild(graphNode)
 
         # vertexNode saves all vertices with tis coordinates
@@ -215,10 +212,6 @@ class QgsGraphLayer(QgsPluginLayer):
     def setLayerType(self, layerType):
         self.layerType = layerType
         self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.layerType)
-
-    def showlayerProperties(self, layer):
-        # TODO
-        pass
 
 class QgsGraphLayerType(QgsPluginLayerType):
     """When loading a project containing a QgsGraphLayer, a factory class is needed.
