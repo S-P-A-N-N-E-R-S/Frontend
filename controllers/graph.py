@@ -87,7 +87,7 @@ class CreateGraphController(BaseController):
                 # poi layer
                 poiLayer = self.view.getPOILayer()
                 if poiLayer and self.view.getConnectionType()[0] == "ShortestPathNetwork":
-                    builder.setAdditionalLineLayer(polygonLayer)
+                    builder.setAdditionalLineLayer(poiLayer)
 
                 # set options
                 builder.setOption("connectionType", self.view.getConnectionType()[0])
