@@ -14,7 +14,7 @@ class OptionsController(BaseController):
 
         # show saved settings
         host = self.settings.value("protoplugin/host", "")
-        port = self.settings.value("protoplugin/port", "")
+        port = self.settings.value("protoplugin/port", 80)
         username = self.settings.value("protoplugin/username", "")
 
         self.view.setHost(host)
