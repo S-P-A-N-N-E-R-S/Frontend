@@ -41,6 +41,27 @@ class CreateGraphController(BaseController):
         builder.setOption("createGraphAsLayers", False)
         graph = None
 
+        # raster data
+        rasterLayer = self.view.getRasterLayer()
+        if rasterLayer:
+            builder.setRasterLayer(rasterLayer)
+
+        # polygon data
+        polygonLayer = self.view.getPolygonLayer()
+        if polygonLayer:
+            builder.setPolygonLayer(polygonLayer)
+
+        # poi layer
+        poiLayer = self.view.getPOILayer()
+        if poiLayer and self.view.getConnectionType()[0] == "ShortestPathNetwork":
+            builder.setAdditionalLineLayer(poiLayer)
+
+        # set options
+        builder.setOption("connectionType", self.view.getConnectionType()[0])
+        builder.setOption("edgeDirection", "Directed")
+        builder.setOption("speedOption", self.view.getCostField())
+        builder.setOption("distanceStrategy", self.view.getDistance()[0])
+
         # create random graph
         if self.view.isRandom():
             builder.setOption("createRandomGraph", True)
@@ -73,27 +94,6 @@ class CreateGraphController(BaseController):
             if layer:
                 # build graph from layer
                 builder.setVectorLayer(layer)
-
-                # raster data
-                rasterLayer = self.view.getRasterLayer()
-                if rasterLayer:
-                    builder.setRasterLayer(rasterLayer)
-
-                # polygon data
-                polygonLayer = self.view.getPolygonLayer()
-                if polygonLayer:
-                    builder.setPolygonLayer(polygonLayer)
-
-                # poi layer
-                poiLayer = self.view.getPOILayer()
-                if poiLayer and self.view.getConnectionType()[0] == "ShortestPathNetwork":
-                    builder.setAdditionalLineLayer(poiLayer)
-
-                # set options
-                builder.setOption("connectionType", self.view.getConnectionType()[0])
-                builder.setOption("edgeDirection", "Directed")
-                builder.setOption("speedOption", self.view.getCostField())
-                builder.setOption("distanceStrategy", self.view.getDistance()[0])
 
                 graph = builder.makeGraph()
 
