@@ -17,11 +17,13 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_poi_input.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.dialog.create_graph_polygon_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.dialog.create_graph_additionalline_input.setFilters(QgsMapLayerProxyModel.LineLayer)
 
         # set null layer as default
         self.dialog.create_graph_poi_input.setCurrentIndex(0)
         self.dialog.create_graph_raster_input.setCurrentIndex(0)
         self.dialog.create_graph_polygon_input.setCurrentIndex(0)
+        self.dialog.create_graph_additionalline_input.setCurrentIndex(0)
 
         # show layer fields
         self.dialog.create_graph_cost_input.setLayer(self.getInputLayer())
@@ -171,6 +173,9 @@ class CreateGraphView(BaseContentView):
 
     def getCRS(self):
         return self.dialog.create_graph_crs_input.crs()
+
+    def getAdditionalLineLayer(self):
+        return self.dialog.create_graph_additionalline_input.currentLayer()
 
     # log
 

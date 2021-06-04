@@ -271,9 +271,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>0</y>
+                         <y>-172</y>
                          <width>773</width>
-                         <height>755</height>
+                         <height>806</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -660,6 +660,20 @@ QListWidget::item::selected {
                                </item>
                                <item>
                                 <widget class="QComboBox" name="create_graph_polygontype_input"/>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_additionalline_label">
+                                 <property name="text">
+                                  <string>Additional line layer (only for ShortestPathNetwork)</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QgsMapLayerComboBox" name="create_graph_additionalline_input">
+                                 <property name="allowEmptyLayer">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
                                </item>
                                <item>
                                 <widget class="QLabel" name="create_graph_crs_label">
