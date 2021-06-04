@@ -18,7 +18,7 @@ class OptionsController(BaseController):
         username = self.settings.value("protoplugin/username", "")
 
         self.view.setHost(host)
-        self.view.setPort(port)
+        self.view.setPort(int(port))
         self.view.setUsername(username)
 
     def saveOptions(self):

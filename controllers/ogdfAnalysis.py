@@ -39,7 +39,7 @@ class OGDFAnalysisController(BaseController):
             return
 
         host = self.settings.value("protoplugin/host", None)
-        port = self.settings.value("protoplugin/port", None)
+        port = int(self.settings.value("protoplugin/port", None))
         if not (host and port):
             self.view.showError("Please set host and port in options!")
             return None
