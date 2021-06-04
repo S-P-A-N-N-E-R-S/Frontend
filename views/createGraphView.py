@@ -12,7 +12,8 @@ class CreateGraphView(BaseContentView):
         self.controller = CreateGraphController(self)
 
         # set up layer inputs
-        self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer | QgsMapLayerProxyModel.RasterLayer | QgsMapLayerProxyModel.PolygonLayer)
+        self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer)
+        # self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer | QgsMapLayerProxyModel.RasterLayer | QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_poi_input.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.dialog.create_graph_polygon_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
@@ -30,6 +31,36 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_input_tools.clicked.connect(
             lambda: self._browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
         )
+
+        # hide all unused inputs
+        self.dialog.create_graph_cost_label.hide()
+        self.dialog.create_graph_cost_input.hide()
+
+        self.dialog.create_graph_coordinatetype_label.hide()
+        self.dialog.create_graph_coordinatetype_planar.hide()
+        self.dialog.create_graph_coordinatestype_spherical.hide()
+
+        self.dialog.create_graph_poi_label.hide()
+        self.dialog.create_graph_poi_input.hide()
+        self.dialog.create_graph_poi_input_tools.hide()
+
+        self.dialog.create_graph_rastertype_label.hide()
+        self.dialog.create_graph_rastertype_input.hide()
+
+        self.dialog.create_graph_rasterrange_label.hide()
+        self.dialog.create_graph_rasterrangemode_label.hide()
+        self.dialog.create_graph_rasterrange_scale_input.hide()
+        self.dialog.create_graph_rasterrange_cutoff_input.hide()
+        self.dialog.create_graph_rastermin_label.hide()
+        self.dialog.create_graph_rastermin_input.hide()
+        self.dialog.create_graph_rastermax_label.hide()
+        self.dialog.create_graph_rastermax_input.hide()
+
+        self.dialog.create_graph_polygontype_label.hide()
+        self.dialog.create_graph_polygontype_input.hide()
+
+        self.dialog.create_graph_crs_label.hide()
+        self.dialog.create_graph_crs_input.hide()
 
         # disable input field if random is checked
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input.setDisabled)
