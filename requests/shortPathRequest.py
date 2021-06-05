@@ -32,6 +32,6 @@ class ShortPathRequest():
             protoEdge.uid = edgeIdx
             protoEdge.inVertexUid = edge.fromVertex()
             protoEdge.outVertexUid = edge.toVertex()
-            protoEdge.attributes["cost"] = str(edge.cost(0))
+            protoEdge.attributes["cost"] = str(self.graph.costOfEdge(edgeIdx))
 
         return request
