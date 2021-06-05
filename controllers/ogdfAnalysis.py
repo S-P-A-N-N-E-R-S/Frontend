@@ -9,6 +9,7 @@ from ..models.PGGraph import PGGraph
 # client imports
 from ..network.client import Client
 from ..network.requests.shortPathRequest import ShortPathRequest
+from ..network.responses.shortPathResponse import ShortPathResponse
 from ..network.exceptions import NetworkClientError
 
 
@@ -49,13 +50,13 @@ class OGDFAnalysisController(BaseController):
             msgLength = client.sendShortPathRequest(shortPathRequest)
 
             try:
-                graph = client.readShortPathResponse()
+                response = client.readShortPathResponse(ShortPathResponse(PGGraph()))
             except NetworkClientError as e:
                 self.view.showError(str(e))
 
         # show graph in qgis
         builder = GraphBuilder()
-        builder.setGraph(graph)
+        builder.setGraph(response.graph)
         vertexLayer = builder.createVertexLayer(True)
         edgeLayer = builder.createEdgeLayer(True)
 
