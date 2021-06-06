@@ -1,12 +1,48 @@
 from qgis.analysis import QgsGraph, QgsNetworkDistanceStrategy
 from qgis.core import (QgsMapLayerRenderer, QgsPluginLayer,
-                       QgsPluginLayerType, QgsPointXY)
+                       QgsPluginLayerType, QgsPointXY,
+                       QgsVectorDataProvider, QgsCoordinateReferenceSystem,
+                       QgsField, QgsFeature, QgsFields,
+                       QgsPoint, QgsGeometry,
+                       QgsFeatureSink, QgsFeatureSource)
 from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
+from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtXml import *
 
+class QgsGraphDataProvider(QgsVectorDataProvider):
+
+    def __init__(self):
+        super().__init__()
+
+        self.mName = "memory"
+        self.mCrs = None
+
+    def name(self):
+        return self.mName
+
+    def description(self):
+        return "DataProvider for QgsGraphLayer"
+
+    def isValid(self):
+        return True
+    
+    def setCrs(self, crs):
+        self.mCrs = crs
+
+    def crs(self):
+        if self.mCrs == None:
+            return QgsCoordinateReferenceSystem()
+
+        return self.mCrs
+
+    # def fields(self):
+    #     return self.getFeatures()
+
+    def featureCount(self):
+        return 0
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
@@ -70,7 +106,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
         return True
 
-class QgsGraphLayer(QgsPluginLayer):
+class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     """Subclass of PluginLayer to render a QgsGraph (and its subclasses) 
         and to save a QgsGraph (and its subclasses) to the project file.
 
@@ -86,7 +122,19 @@ class QgsGraphLayer(QgsPluginLayer):
         self.setValid(True)
         self.mGraph = QgsGraph()
 
-        self.layerType = QgsGraphLayerType()
+        self.mLayerType = QgsGraphLayerType()
+
+        self.mDataProvider = QgsGraphDataProvider()
+        self.mFields = QgsFields()
+
+    def dataProvider(self):
+        return self.mDataProvider
+
+    def fields(self):
+        return self.mFields
+
+    def setCrs(self, crs):
+        self.mDataProvider.setCrs(crs)
 
     def createMapRenderer(self, rendererContext):
         return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph)
@@ -97,6 +145,52 @@ class QgsGraphLayer(QgsPluginLayer):
     def setGraph(self, graph):
         if isinstance(graph, QgsGraph):
             self.mGraph = graph
+
+            if self.mGraph.edgeCount() != 0:
+                
+                edgeIdField = QgsField("EdgeId", QVariant.Int)
+                fromVertexField = QgsField("fromVertex", QVariant.Double)
+                toVertexField = QgsField("toVertex", QVariant.Double)
+                
+                self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
+                
+                # self.updateFields()
+                self.mFields.append(edgeIdField)
+                self.mFields.append(fromVertexField)
+                self.mFields.append(toVertexField)
+                
+                for edgeId in range(self.mGraph.edgeCount()):
+                    edge = self.mGraph.edge(edgeId)
+
+                    feat = QgsFeature()
+                    fromVertex = edge.fromVertex().point()
+                    toVertex = edge.toVertex().point()
+                    feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+
+                    feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex()])
+                    self.mDataProvider.addFeature(feat)
+
+            else:
+                vertexIdField = QgsField("VertexId", QVariant.Int)
+                xField = QgsField("x", QVariant.Double)
+                yField = QgsField("y", QVariant.Double)
+
+                self.mDataProvider.addAttributes([vertexIdField, xField, yField])
+                
+                # self.updateFields()
+                self.mFields.append(vertexIdField)
+                self.mFields.append(xField)
+                self.mFields.append(yField)
+
+                for vertexId in range(self.mGraph.vertexCount()):
+                    vertex = self.mGraph.vertex(vertexId).point()
+
+                    feat = QgsFeature()
+                    feat.setGeometry(QgsGeometry.fromPointXY(vertex))
+
+                    feat.setAttributes([vertexId, vertex.x(), vertex.y()])
+                    self.mDataProvider.addFeature(feat)
+
 
     def getGraph(self):
         return self.mGraph
@@ -210,8 +304,8 @@ class QgsGraphLayer(QgsPluginLayer):
         node.appendChild(vertexNode)
 
     def setLayerType(self, layerType):
-        self.layerType = layerType
-        self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.layerType)
+        self.mLayerType = layerType
+        self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.mLayerType)
 
 class QgsGraphLayerType(QgsPluginLayerType):
     """When loading a project containing a QgsGraphLayer, a factory class is needed.
