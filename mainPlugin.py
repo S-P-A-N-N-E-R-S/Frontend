@@ -7,7 +7,7 @@ from qgis.gui import *
 from qgis.analysis import *
 
 
-from .qgsgraphlayer import QgsGraphLayer, QgsGraphLayerType
+from .qgsgraphlayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
 
 class ProtoPlugin:
 
@@ -24,6 +24,11 @@ class ProtoPlugin:
         self.iface.addPluginToMenu("&Proto Plugin", self.action)
 
         QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
+
+        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
+                                                                            QgsGraphDataProvider.description(),
+                                                                            QgsGraphDataProvider.createProvider()))
+
 
         # re-read and therefore reload plugin layers after adding QgsGraphLayerType to PluginLayerRegistry
         self.reloadPluginLayers()

@@ -1,10 +1,5 @@
 from qgis.analysis import QgsGraph, QgsNetworkDistanceStrategy
-from qgis.core import (QgsMapLayerRenderer, QgsPluginLayer,
-                       QgsPluginLayerType, QgsPointXY,
-                       QgsVectorDataProvider, QgsCoordinateReferenceSystem,
-                       QgsField, QgsFeature, QgsFields,
-                       QgsPoint, QgsGeometry,
-                       QgsFeatureSink, QgsFeatureSource)
+from qgis.core import *
 from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
@@ -12,23 +7,96 @@ from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtXml import *
 
-class QgsGraphDataProvider(QgsVectorDataProvider):
+class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, source, request=QgsFeatureRequest()):
+        super().__init__(request)
+
+        self.__request = request
+        self.__source = source
+        self.__index = 0
+
+        # TODO: possible crs transformation
+
+    def fetchFeature(self, feat):
+        # TODO
+        pass
+
+    def __iter__(self):
+        self.__index = 0
+        return self
+
+    def __next__(self):
+        feat = QgsFeature() # TODO: here get actual next feature instead of dummy feature
+        if not self.nextFeature(feat): # nextFeature?!
+            raise StopIteration
+        else:
+            return feat
+
+    def close(self):
+        self.__index = -1
+        return True
+
+
+class QgsGraphFeatureSource(QgsAbstractFeatureSource):
+
+    def __init__(self, provider):
+        super(QgsGraphFeatureSource).__init__()
+
+        self.__provider = provider
+        self.__features = provider.__features
+
+    def getFeatures(self, request):
+        return QgsFeatureIterator(QgsGraphFeatureIterator(request))
+
+
+class QgsGraphDataProvider(QgsVectorDataProvider):
+    """Data provider for GraphLayer
+
+    Args:
+        QgsVectorDataProvider ([type]): Extends QgsVectorDataProvider to be able to store fields and features.
+                                        Makes GraphLayer storeable / exportable (TODO)
+    """
+
+    nextFeatId = 1
+
+    @classmethod
+    def providerKey(self):
+        return "graphprovider"
+
+    @classmethod
+    def description(self):
+        return "DataProvider for QgsGraphLayer"
+
+    @classmethod
+    def createProvider(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(), flags=QgsDataProvider.ReadFlags()):
+        return QgsGraphDataProvider(uri, providerOptions, flags)
+
+    def __init__(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(), flags=QgsDataProvider.ReadFlags()):
+        super().__init__(uri)
 
         self.mName = "memory"
         self.mCrs = None
+        
+        self.__uri = uri
+        self.__providerOptions = providerOptions
+        self.__flags = flags
+        self.__features = {}
+        self.__fields = None
+        self.__subsetString = ''
+
+        # if 'index=yes' in self.__uri:
+        #     self.createSpatialIndex()
 
     def name(self):
         return self.mName
 
-    def description(self):
-        return "DataProvider for QgsGraphLayer"
-
     def isValid(self):
         return True
-    
+
+    def dataSourceUri(self, expandAuthConfig=True):
+        return self.__uri
+
     def setCrs(self, crs):
         self.mCrs = crs
 
@@ -38,11 +106,48 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
         return self.mCrs
 
-    # def fields(self):
-    #     return self.getFeatures()
+    def featureSource(self):
+        return QgsGraphFeatureSource(self)
+
+    def getFeatures(self, request=QgsFeatureRequest()):
+        # TODO
+        # return QgsFeatureIterator(QgsGraphFeatureIterator(QgsGraphFeatureSource(), request))
+        pass
 
     def featureCount(self):
-        return 0
+        return len(self.getFeatures())
+
+    def fields(self):
+        return self.__fields
+
+    def addFeature(self, feat, flags=None):
+        self.__features[self.nextFeatId] = feat
+        self.nextFeatId += 1
+
+        # if self.__spatialindex is not None:
+        #     self.__spatialindex.insertFeatue(feat)
+
+        return True
+
+    def deleteFeature(self, id):
+        # necessary?
+        pass
+
+    def addAttributes(self, attrs):
+        for field in attrs:
+            self.__fields.append(field)
+
+        return True
+
+    def createSpatialIndex(self):
+        # TODO
+        pass
+
+    def capabilities(self):
+        return QgsVectorDataProvider.AddFeature | QgsVectorDataProvider.AddAttributes
+
+    def subsetString(self):
+        return self.__subsetString
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
@@ -128,6 +233,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mFields = QgsFields()
 
     def dataProvider(self):
+        # TODO: issue with DB Manager plugin
         return self.mDataProvider
 
     def fields(self):
