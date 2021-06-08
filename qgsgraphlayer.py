@@ -19,8 +19,27 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         # TODO: possible crs transformation
 
     def fetchFeature(self, feat):
-        # TODO
-        pass
+        """Gets actually looked at feature. Increases feature index for next fetchFeature.
+
+        Args:
+            feat ([type]): Feature to be filled with information from fetched feature.
+
+        Returns:
+            [type]: True if successfull
+        """
+        # TODO this is a very simplified version of fetchFeature (e.g. request completely ignored -> necessary?)
+        try:
+            _feat = self.__sources.__features[self.__index]
+            feat.setGeometry(_feat.geometry())
+            feat.setFields(_feat.fields())
+            feat.setAttributes(_feat.attributes())
+            feat.setValid(_feat.isValid())
+            feat.setId(_feat.id())
+
+            self.__index += 1
+            return True
+        except Exception as e:
+            return False
 
     def __iter__(self):
         self.__index = 0
@@ -32,6 +51,10 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
             raise StopIteration
         else:
             return feat
+
+    def rewind(self):
+        self.__index = 0
+        return True
 
     def close(self):
         self.__index = -1
@@ -47,7 +70,7 @@ class QgsGraphFeatureSource(QgsAbstractFeatureSource):
         self.__features = provider.__features
 
     def getFeatures(self, request):
-        return QgsFeatureIterator(QgsGraphFeatureIterator(request))
+        return QgsFeatureIterator(QgsGraphFeatureIterator(self, request))
 
 
 class QgsGraphDataProvider(QgsVectorDataProvider):
@@ -72,27 +95,32 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
     def createProvider(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(), flags=QgsDataProvider.ReadFlags()):
         return QgsGraphDataProvider(uri, providerOptions, flags)
 
+    
     def __init__(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(), flags=QgsDataProvider.ReadFlags()):
         super().__init__(uri)
 
-        self.mName = "memory"
-        self.mCrs = None
+        tempLayer = QgsVectorLayer(uri, "tmp", "memory")
+        self.mCrs = QgsProject.instance().crs()
         
         self.__uri = uri
         self.__providerOptions = providerOptions
         self.__flags = flags
         self.__features = {}
-        self.__fields = None
+        self.__fields = tempLayer.fields()
+        self.__extent = QgsRectangle()
         self.__subsetString = ''
+        self.__featureCount = 0
+
+        self.__points = True
 
         # if 'index=yes' in self.__uri:
         #     self.createSpatialIndex()
 
-    def name(self):
-        return self.mName
-
     def isValid(self):
         return True
+
+    def setDataSourceUri(self, uri):
+        self.__uri = uri
 
     def dataSourceUri(self, expandAuthConfig=True):
         return self.__uri
@@ -110,19 +138,20 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         return QgsGraphFeatureSource(self)
 
     def getFeatures(self, request=QgsFeatureRequest()):
-        # TODO
-        # return QgsFeatureIterator(QgsGraphFeatureIterator(QgsGraphFeatureSource(), request))
-        pass
+        return QgsFeatureIterator(QgsGraphFeatureIterator(self.featureSource(), request))
 
     def featureCount(self):
-        return len(self.getFeatures())
+        return self.__featureCount
 
     def fields(self):
         return self.__fields
 
     def addFeature(self, feat, flags=None):
+        # TODO check for valid feature
+
         self.__features[self.nextFeatId] = feat
         self.nextFeatId += 1
+        self.__featureCount += 1
 
         # if self.__spatialindex is not None:
         #     self.__spatialindex.insertFeatue(feat)
@@ -130,24 +159,48 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         return True
 
     def deleteFeature(self, id):
-        # necessary?
-        pass
+        try:
+            del self.__features[id]
+            self.__featureCount -= 1
+        
+            return True
+        except Exception as e:
+            # probably index out of bound
+            return False
 
     def addAttributes(self, attrs):
+        # TODO check for valid attribute types defined by fields
         for field in attrs:
             self.__fields.append(field)
+            self.__uri += "&field=" + field.displayName() + ":" + field.typeName()
 
         return True
 
     def createSpatialIndex(self):
-        # TODO
+        # TODO?
         pass
 
     def capabilities(self):
+        # how many capabilities to return?
         return QgsVectorDataProvider.AddFeature | QgsVectorDataProvider.AddAttributes
 
     def subsetString(self):
         return self.__subsetString
+
+    
+    def extent(self):
+        # TODO this update of extent maybe in addFeature?
+        for feat in self.__features.values():
+            self.__extent.combineExtentWith(feat.geometry().boundingBox())
+
+        return self.__extent
+
+    def updateExtents(self):
+        # TODO understand this
+        self.__extent.setMinimal()
+
+    def name(self):
+        return self.providerKey()
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
@@ -232,6 +285,10 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mDataProvider = QgsGraphDataProvider()
         self.mFields = QgsFields()
 
+        self.mCrs = QgsProject.instance().crs()
+        self.__crsUri = "crs=" + self.mCrs.authid()
+        self.mDataProvider.setCrs(self.mCrs)
+
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
         return self.mDataProvider
@@ -240,6 +297,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mFields
 
     def setCrs(self, crs):
+        self.mCrs = crs
+        self.__crsUri = "crs=" + crs.authid()
         self.mDataProvider.setCrs(crs)
 
     def createMapRenderer(self, rendererContext):
@@ -254,9 +313,11 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
             if self.mGraph.edgeCount() != 0:
                 
-                edgeIdField = QgsField("EdgeId", QVariant.Int)
-                fromVertexField = QgsField("fromVertex", QVariant.Double)
-                toVertexField = QgsField("toVertex", QVariant.Double)
+                self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri)
+
+                edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
+                fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
+                toVertexField = QgsField("toVertex", QVariant.Double, "double")
                 
                 self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
                 
@@ -277,9 +338,11 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                     self.mDataProvider.addFeature(feat)
 
             else:
-                vertexIdField = QgsField("VertexId", QVariant.Int)
-                xField = QgsField("x", QVariant.Double)
-                yField = QgsField("y", QVariant.Double)
+                self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri)
+
+                vertexIdField = QgsField("vertexId", QVariant.Int, "integer")
+                xField = QgsField("x", QVariant.Double, "double")
+                yField = QgsField("y", QVariant.Double, "double")
 
                 self.mDataProvider.addAttributes([vertexIdField, xField, yField])
                 
@@ -296,7 +359,6 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
                     feat.setAttributes([vertexId, vertex.x(), vertex.y()])
                     self.mDataProvider.addFeature(feat)
-
 
     def getGraph(self):
         return self.mGraph

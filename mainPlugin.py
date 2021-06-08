@@ -29,7 +29,6 @@ class ProtoPlugin:
                                                                             QgsGraphDataProvider.description(),
                                                                             QgsGraphDataProvider.createProvider()))
 
-
         # re-read and therefore reload plugin layers after adding QgsGraphLayerType to PluginLayerRegistry
         self.reloadPluginLayers()
 
@@ -131,9 +130,8 @@ class ProtoPlugin:
 
             # create new graphLayer to show graph
             newGraphLayer = QgsGraphLayer()
-            newGraphLayer.setGraph(graph)
-
             newGraphLayer.setCrs(layer.crs())
+            newGraphLayer.setGraph(graph)
 
             QgsProject.instance().addMapLayer(newGraphLayer)
 
@@ -157,8 +155,9 @@ class ProtoPlugin:
 
             # create graphLayer to show graph
             newGraphLayer = self.addLayer(QgsGraphLayer.LAYER_TYPE)
+            newGraphLayer.setCrs(layer.crs())
             newGraphLayer.setGraph(graph)
 
-            newGraphLayer.setCrs(layer.crs())
+            print(newGraphLayer.dataProvider().dataSourceUri())
 
             print("Done: ", graph.vertexCount(), " vertices added")
