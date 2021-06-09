@@ -72,8 +72,8 @@ class PGGraph(QgsGraph):
         return False
         
                    
-    def addEdge(self, vertex1, vertex2):
-        super().addEdge(vertex1, vertex2, [])
+    def addEdge(self, vertex1, vertex2, strats=[]):
+        super().addEdge(vertex1, vertex2, strats)
         
         
         

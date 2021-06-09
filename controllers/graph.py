@@ -56,6 +56,11 @@ class CreateGraphController(BaseController):
         if poiLayer and self.view.getConnectionType()[0] == "ShortestPathNetwork":
             builder.setAdditionalLineLayer(poiLayer)
 
+        # additional line layer
+        additionalLineLayer = self.view.getAdditionalLineLayer()
+        if additionalLineLayer:
+            builder.setAdditionalLineLayer(additionalLineLayer)
+
         # set options
         builder.setOption("connectionType", self.view.getConnectionType()[0])
         builder.setOption("edgeDirection", "Directed")
