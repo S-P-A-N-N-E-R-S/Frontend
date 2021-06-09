@@ -11,11 +11,17 @@ class OptionsView(BaseContentView):
 
         self.dialog.options_save_btn.clicked.connect(self.controller.saveOptions)
 
-    def getServerAddress(self):
-        return self.dialog.options_server_adress_input.text()
+    def getHost(self):
+        return self.dialog.options_server_host_input.text()
 
-    def setServerAddress(self, address):
-        self.dialog.options_server_adress_input.setText(address)
+    def setHost(self, host):
+        self.dialog.options_server_host_input.setText(host)
+
+    def getPort(self):
+        return self.dialog.options_server_port_input.value()
+
+    def setPort(self, port):
+        self.dialog.options_server_port_input.setValue(port)
 
     # credentials
 

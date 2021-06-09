@@ -285,7 +285,9 @@ class GraphBuilder:
             
             
         if addToCanvas == True:
-            QgsProject.instance().addMapLayer(graphLayerVertices)    
+            QgsProject.instance().addMapLayer(graphLayerVertices)
+
+        return graphLayerVertices
     
     # create the two layers that represent the graph
     def createEdgeLayer(self, addToCanvas):        
