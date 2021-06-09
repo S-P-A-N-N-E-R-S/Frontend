@@ -6,30 +6,34 @@ import math
 from random import *
 
 
-
-"""
-Class extends the QgsGraph by adding a function costOfEdge
-which returns the distance between the two endpoint of an edge.
-Different metrics for this distance can be defined by setting 
-the distanceStrategy attribute of the class
-
-Strategies are divided in cost functions and already set weights
-"""
 class PGGraph(QgsGraph):
+    """
+    Class extends the QgsGraph by adding a function costOfEdge
+    which returns the distance between the two endpoint of an edge.
+    Different metrics for this distance can be defined by setting 
+    the distanceStrategy attribute of the class
     
+    Strategies are divided in cost functions and already set weights
+    by an advanced strategy
+    """   
     def __init__(self):        
         super().__init__()
         self.distanceStrategy = "Euclidean"
+        # list of list to hold multiple weight function values
         self.edgeWeights = []        
-        self.vertexWeights = []
-     
-    
+        self.vertexWeights = []                
     def setDistanceStrategy(self, strategy):
         self.distanceStrategy = strategy
      
-          
-    def costOfEdge(self, edgeID):        
-            
+         
+    def costOfEdge(self, edgeID, functionIndex = 0):  
+        """
+        Function to get the weight of an edge. The returned value
+        depends on the set distance strategy
+        
+        :type edgeID: Integer
+        :return cost of Edge
+        """                  
         # differentiate between edge weights from cost functions and set weights from graph builder        
         if self.distanceStrategy == "Euclidean":                                                                    
             return self.euclideanDist(edgeID)
@@ -37,83 +41,81 @@ class PGGraph(QgsGraph):
         elif self.distanceStrategy == "Manhattan":
             return self.manhattanDist(edgeID)
         
-        # caluclate geodesic distance using the Haversine formula
+        # calculate geodesic distance using the Haversine formula
         elif self.distanceStrategy == "Geodesic":
             return self.geodesicDist(edgeID)
         
         #if the type is advanced the distances are set by the GraphBuilder directly
         elif self.distanceStrategy == "Advanced":
-            return self.edgeWeights[edgeID]
+            return self.edgeWeights[functionIndex][edgeID]
         
         else:
             return 0  
     
     def euclideanDist(self, edgeID):
+        edgeFromID = self.edge(edgeID)
         fromPoint = self.vertex(edgeFromID.fromVertex()).point()
         toPoint = self.vertex(edgeFromID.toVertex()).point() 
         euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2)) 
         return euclDist
         
     def manhattanDist(self, edgeID): 
+        edgeFromID = self.edge(edgeID)
         fromPoint = self.vertex(edgeFromID.fromVertex()).point()
         toPoint = self.vertex(edgeFromID.toVertex()).point() 
         manhattenDist = abs(fromPoint.x()-toPoint.x()) + abs(fromPoint.y()-toPoint.y())
         return manhattenDist
     
     def geodesicDist(self, edgeID):
+        edgeFromID = self.edge(edgeID)
         fromPoint = self.vertex(edgeFromID.fromVertex()).point()
         toPoint = self.vertex(edgeFromID.toVertex()).point() 
         radius = 6371000
         phi1 = math.radians(fromPoint.y())
-        phi2 = math.radians(toPoint.y())
-        
+        phi2 = math.radians(toPoint.y())        
         deltaPhi = math.radians(toPoint.y()-fromPoint.y())
         deltaLambda = math.radians(toPoint.x()-fromPoint.x())
-        a = math.sin(deltaPhi/2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(deltaLambda / 2.0) ** 2
-    
-        c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
-        
+        a = math.sin(deltaPhi/2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(deltaLambda / 2.0) ** 2    
+        c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))       
         return radius*c;
-        
+           
     def distanceP2P(self, vertex1, vertex2):
+        """
+        Method to get the euclidean distance between two vertices
+        
+        :type vertex1: Integer
+        :type vertex2: Integer
+        :return distance between vertices
+        """
         fromPoint = self.vertex(vertex1).point()
         toPoint = self.vertex(vertex2).point()
         return math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
-        
-
-    
+           
     def hasEdge(self, vertex1, vertex2):
+        """
+        Method searches for the edge between to vertices
+        
+        :type vertex1: Integer
+        :type vertex2: Integer
+        :return Boolean
+        """
         for i in range(self.edgeCount()):            
             if self.edge(i).fromVertex() == vertex1 and self.edge(i).toVertex() == vertex2:
                 return True
                
         return False
               
-    
-    def findEdgeWithID(self, startVertex, endVertex):
-        for i in range(self.edgeCount()):
-            if self.edge(i).fromVertex() == startVertex and self.edge(i).toVertex == endVertex:
-                return True
-        return False
-    
-    def findEdgeWithPoints(self, startVertex, endVertex):
-        idStart = self.findVertex(startVertex)
-        idEnd = self.findVertex(endVertex)
-        
-        if idStart != -1 and idEnd != -1:
-            for i in range(self.edgeCount()):
-                if self.edge(i).fromVertex() == idStart and self.edge(i).toVertex == idEnd:
-                    return True
-        
-        return False
-        
-                   
-    def addEdge(self, vertex1, vertex2):
-        super().addEdge(vertex1, vertex2, [])
-        
-        
+                          
+    def addEdge(self, vertex1, vertex2):       
+        # overload to not use distance strategy
+        super().addEdge(vertex1, vertex2, [])               
         
     def writeGraphML(self, path):
+        """
+        Write the graph into a .graphml format
+        
+        :type path: String       
+        """
         file = open(path, "w")
         header = ['<?xml version="1.0" encoding="UTF-8"?>\n',
             '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n',  
@@ -143,8 +145,14 @@ class PGGraph(QgsGraph):
         file.write("\t</graph>\n")
         file.write("</graphml>")
         file.close()
+    
+    
+    def readGraphML(self, path):   
+        """
+        Read a .graphml file into a PGGraph
         
-    def readGraphML(self, path):        
+        :type path: String
+        """     
         file = open(path, "r")
         lines = file.readlines()
         nodeCoordinatesGiven = False
@@ -157,12 +165,12 @@ class PGGraph(QgsGraph):
             elif 'x="' in line and 'y="' in line:
                 nodeCoordinatesGiven = True
                 break
-                   
+         
+        # maybe no coordinate are given in the .graphml file           
         if nodeCoordinatesGiven == True:
             for line in lines:
                 if '<node' in line:
-                    nodeIDs.append(line.split('id="')[1].split('"')[0])
-                
+                    nodeIDs.append(line.split('id="')[1].split('"')[0])                
                 elif 'x="' in line:
                     xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
                     yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
@@ -178,12 +186,12 @@ class PGGraph(QgsGraph):
                         if nodeIDs[i] == fromVertex:
                             fromVertexID = i
                         elif nodeIDs[i] == toVertex:
-                            toVertexID = i    
-                    
+                            toVertexID = i                        
                     self.addEdge(fromVertexID, toVertexID)                     
                     if edgeTypeDirection == "Undirected":   
                         self.addEdge(toVertexID, fromVertexID)      
-                                         
+         
+        # if no coordinates are given assign random                             
         else:
             for line in lines:
                 if '<node' in line:

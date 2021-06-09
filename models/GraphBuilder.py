@@ -8,142 +8,187 @@ from .AdvancedCostCalculator import AdvancedCostCalculator
 from random import *
 from qgis import processing
 import math
+import re
 
 
-"""
-Instuctions:
 
-Call the makeGraph() method of this class to build a graph:
-    ga = GraphBuilder()
-    graph = ga.makeGraph()
-
-To set the vector layer call:
-    ga.setVectorLayer(vectorlayer)
-    
-To set the raster layer call:
-    ga.setRasterLayer(rasterlayer)
-
-Differet options for special graph creation can be set before calling makeGraph():
-    ga.setOption(optionType, value) with optionType being a string
-    
-If you want to create a special random graph use:
-    ga.setRandomOptions(optionType, value)    
-
-
-Supported options:
-    - connectionType: None, Complete, Nearest neighbor, ShortestPathNetwork
-    - neighborNumber: int
-    - edgeDirection: Undirected, Directed
-    - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced
-    - createGraphAsLayers: False, True
-    - createRandomGraph: False, True
-        - further definitions possible at randomOptions dict             
-    - usePolygons: False, True
-
-Supported random options:
-    - numberOfVertices: int
-    - area: Area of the globe you want the random Graph to be in
-
-Raster data options:
-    - pointSamplingDistance: Distance in meters for the distance between sampled points on the line
-
-Advanced distance strategies: 
-
-    - CostFunction: User gives specific cost function using data of sampled raster values, fields and normal distances as variables
-    - Variables for cost function general: euclidean, manhatten, geodesic, line or point field values
-    - Variables for raster data: sum, mean, median, min, max, variance, standard deviation, majority, minority, gradientSum, gradientMin, gradientMax
-    
-    --> python.math functions for basic operations on the data
-    --> Additional if construct for custom data selection (for example: if(gradientMax > 10, sum, infinity)
-    --> it should not matter which kind of raster data it is
-    --> Advanced distances are set directly
-    
-    
----> Not all of the options are implemented  
-
-"""
 class GraphBuilder:
+    """
+    The GraphBuilder offers the possibility to build different graphs in QGIS. Define the desired graph
+    by setting options and layers before calling the makeGraph method.
+
+    Options:
+        - connectionType: None, Complete, Nearest neighbor, ShortestPathNetwork
+        - neighborNumber: int
+        - edgeDirection: Undirected, Directed
+        - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced
+        - createGraphAsLayers: False, True
+        - createRandomGraph: False, True        
+        - usePolygons: False, True
+    
+    Random options:
+        - numberOfVertices: int
+        - area: Area of the globe you want the random Graph to be in
+        - crs: ID for the crs to use    
+        
+    """
     
     def __init__(self):
-        self.graph = PGGraph()
-        
-        # TODO: load example data into the two layers
+        """
+        Constructor:
+        Initial setting for the GraphBuilder. If no additional options or layers are set, a random
+        graph with a nearest neighbor connection is generated.
+        """
+        self.graph = PGGraph()        
         self.vLayer = QgsVectorLayer()
-        self.rLayer = QgsRasterLayer()
+        self.rLayers = []
         self.polygonLayer = QgsVectorLayer()
         self.additionalLineLayer = QgsVectorLayer()
-        self.costFunction = ""
+        self.additionalPointLayer = QgsVectorLayer()
+        self.costFunctions = []
+       
         
         self.__options = {
             "connectionType": "Nearest neighbor",            
-            "neighborNumber": 5,       
+            "neighborNumber": 4,       
             "edgeDirection": "Directed",
             "distanceStrategy": "Euclidean",
             "useRasterData": False,
             "createGraphAsLayers": True,
             "createRandomGraph": True,          
-            "usePolygons": False,
-            "samplingDistance" : 1000    
+            "usePolygons": False,   
                               
         }
+        
         self.__randomOptions = {
             "numberOfVertices": 100,
             "area": "Germany",
-                  
+            "crs": ""      
         }
-        self.__advancedCostsOptions = {
-            "type": "ShortestPath"           
-        }
-        
-        
-    def setGraph(self, graph):
-        self.graph = graph
     
     def setPolygonLayer(self, vectorLayer):
+        """
+        All edges crossing the polygon will be deleted from the graph
+        
+        :type vectorLayer: QgsVectorLayer containing polygons
+        """
+        if vectorLayer.geometryType() != QgsWkbTypes.PolygonGeometry:
+            raise TypeError("Not a polygon geometry")                     
+        
         self.__options["usePolygons"] = True
         self.polygonLayer = vectorLayer
+    
+    def setAdditionalPointLayer(self, vectorLayer): 
+        """
+        Additional points to a given line layer. The points will be added in addition to the
+        network generated for the line layer and connected to the nearest point
+        
+        :type vectorLayer: QgsVectorLayer containing points
+        """       
+        if vectorLayer.geometryType() != QgsWkbTypes.PointGeometry:
+            raise TypeError("Not a point geometry") 
+        
+        self.additionalPointLayer = vectorLayer
         
     def setAdditionalLineLayer(self, vectorLayer):
+        """
+        Additional network for given point layer. The points will be connected by the 
+        shortest path in the network.
+        
+        :type vectorLayer: QgsVectorLayer containing lines
+        """
+        if vectorLayer.geometryType() != QgsWkbTypes.LineGeometry:
+            raise TypeError("Not a line geometry") 
+        
         self.__options["connectionType"] = "ShortestPathNetwork"
         self.additionalLineLayer = vectorLayer
         
     def setVectorLayer(self, vectorLayer):
+        """
+        Set the basis vector layer for the graph creation.
+        
+        :type vectorLayer: QgsVectorLayer containing lines or points
+        """
+        if vectorLayer.geometryType() != QgsWkbTypes.LineGeometry and vectorLayer.geometryType() != QgsWkbTypes.PointGeometry:
+            raise TypeError("Not a point or line geometry") 
+       
         self.__options["createRandomGraph"] = False
         self.vLayer = vectorLayer    
                 
     def setRasterLayer(self, rasterLayer):
+        """
+        Set raster data to be used in the AdvancedCostCalculator class.
+        
+        :type QgsRasterLayer
+        """
         self.__options["useRasterData"] = True;
-        self.rLayer = rasterLayer
+        self.rLayers.append(rasterLayer)
     
     def setCostFunction(self, function):
+        """
+        Set the cost function for an advanced distance strategy. Returns if the
+        function has a valid format and the function is set. 
+        
+        :type function: String
+        :return Boolean
+        """  
         self.__options["distanceStrategy"] = "Advanced"
-        self.costFunction = function
+        costFunction = function.replace(" ", "").replace('"', '')            
+        formulaParts = re.split("\+|-|\*|/", costFunction)
+        possibleMetrics = ["euclidean", "manhattan", "geodesic"]
+        possibleRasterAnalysis = ["raster:sum", "raster:mean", "raster:median", "raster:min",
+                                  "raster:max", "raster:variance", "raster:standDev", "raster:majority",
+                                  "raster:minority", "raster:gradientSum", "raster:gradientMin", "raster:gradientMax"]
+        
+        for i in range(len(formulaParts)):            
+            var = formulaParts[i]
+            if not (var in possibleMetrics or var.isnumeric() or "if" in var or "field:" in var or "math." in var or "raster:" in var):
+                return False
+            if "raster:"  in var:
+                if not var in possibleRasterAnalysis:
+                    return False
+                                
+        self.costFunctions.append(function)
+        return True
     
     def setOption(self, optionsType, value):
-        # TODO: check if inputs are valid
+        if not optionsType in self.__options:
+            raise KeyError("Option not found")                
         self.__options[optionsType] = value
     
     def setRandomOptions(self, optionType, value):
-        # TODO: check if inputs are valid
+        if not optionType in self.__randomOptions:
+            raise KeyError("Option not found")
         self.__randomOptions[optionType] = value        
     
-    def createRandomVertices(self):
+    def __createRandomVertices(self):
         for i in range(self.__randomOptions["numberOfVertices"]):
             if self.__randomOptions["area"] == "Germany":
                 self.graph.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884))) 
+            elif self.__randomOptions["area"] == "France":
+                self.graph.addVertex(QgsPointXY(randrange(-216458,686688), randrange(5414887,6442792)))     
+            elif self.__randomOptions["area"] == "Osnabrueck":
+                self.graph.addVertex(QgsPointXY(randrange(891553,903357), randrange(6842102,6856659))) 
+            elif self.__randomOptions["area"] == "United States":
+                self.graph.addVertex(QgsPointXY(randrange(-13615804,-7941914), randrange(3807078,6115319)))     
+            elif self.__randomOptions["area"] == "Rome":
+                self.graph.addVertex(QgsPointXY(randrange(1378926,1402097), randrange(5131959,5158304))) 
+            elif self.__randomOptions["area"] == "Australia":
+                self.graph.addVertex(QgsPointXY(randrange(12842159,16797763), randrange(-4432001,-1569266)))     
     
-    def createVerticesForPoints(self):        
+    def __createVerticesForPoints(self):        
         for feat in self.vLayer.getFeatures():
             geom = feat.geometry()                
             self.graph.addVertex(geom.asPoint())
             
-    def createComplete(self):
+    def __createComplete(self):
         for i in range(self.graph.vertexCount()):
             for j in range(i+1, self.graph.vertexCount()):                                                                              
                 self.graph.addEdge(i, j)
-                        
-                       
-    def createNearestNeighbor(self):
+                                              
+    def __createNearestNeighbor(self):
+        if self.graph.vertexCount() < self.__options["neighborNumber"]:
+            self.__options["neighborNumber"] = self.graph.vertexCount()-1
         # calculate shortest distances between all pairs of nodes                
         for i in range(self.graph.vertexCount()):
             distances = []
@@ -152,17 +197,13 @@ class GraphBuilder:
                 distanceP2P = self.graph.distanceP2P(i,j)
                 distances.append(distanceP2P)    
                 if(distanceP2P > maxDistanceValue):
-                    maxDistanceValue = distanceP2P                
-            
+                    maxDistanceValue = distanceP2P                            
             distances[i] = maxDistanceValue+100
-            
-            if self.graph.vertexCount() < self.__options["neighborNumber"]:
-                self.__options["neighborNumber"] = self.graph.vertexCount()-1
-            
+                       
             # get the defined amount of neighbors
             for k in range(self.__options["neighborNumber"]):
                 minIndex = 0
-                minValue = maxDistanceValue+1
+                minValue = maxDistanceValue+100
                 for p in range(len(distances)):
                     if distances[p] < minValue:
                         minIndex = p
@@ -173,9 +214,9 @@ class GraphBuilder:
                     self.graph.addEdge(i,minIndex)
                                          
                 # don't look at minIndex again
-                distances[minIndex] = maxDistanceValue+1           
+                distances[minIndex] = maxDistanceValue+100           
             
-    def createShortestPathNetwork(self):
+    def __createShortestPathNetwork(self):
         if self.__options["createRandomGraph"] == False:           
             crs = self.vLayer.crs().authid()
         else:                    
@@ -205,7 +246,7 @@ class GraphBuilder:
                             id2 = newGraph.addVertex(endVertex)                                    
                             newGraph.addEdge(id1, id2)
                                                                                                                                                                                                                                                                                             
-                
+        # add vertices from the point layer and create an edge to the network        
         for i in range(self.graph.vertexCount()):
             nearestVertex = 0
             newVertex = newGraph.addVertex(self.graph.vertex(i).point())
@@ -217,13 +258,13 @@ class GraphBuilder:
                     distanceP2PMin = distanceP2P
                     nearestVertex = id            
                
-            newGraph.addEdge(newVertex, nearestVertex)
-            
+            newGraph.addEdge(newVertex, nearestVertex)                   
         
         self.graph = newGraph 
      
     
-    def createGraphForLineGeometry(self):
+    def __createGraphForLineGeometry(self):        
+        # get all the lines and set end nodes as vertices and connections as edges
         for feature in self.vLayer.getFeatures():                   
             geom = feature.geometry()
             
@@ -242,13 +283,32 @@ class GraphBuilder:
                     id1 = self.graph.addVertex(startVertex)
                     id2 = self.graph.addVertex(endVertex)                    
                     self.graph.addEdge(id1, id2)
-                   
+        
+        # add points and connection to network if additional points are given           
+        for feature in self.additionalPointLayer.getFeatures():          
+            geom = feature.geometry()
+            pointID = self.graph.addVertex(geom.asPoint())
+            
+            # search nearest node in network
+            nearestNodeID = 0
+            shortestDist = self.graph.distanceP2P(pointID, 0)
+            for i in range(1, self.graph.vertexCount()):
+                if i!= pointID:
+                    currentDist = self.graph.distanceP2P(pointID, i)
+                    if currentDist < shortestDist:
+                        nearestNodeID = i
+                        shortestDist = currentDist
+            
+            self.graph.addEdge(pointID, nearestNodeID)        
     
-    def removeIntersectingEdges(self):               
-        currentEdges = self.createEdgeLayer(False)
+    def __removeIntersectingEdges(self): 
+        # create the current edge layer              
+        currentEdges = self.__createEdgeLayer(False)
+        # call QGIS tool to extract all the edges which cross the polygon
         result2 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.polygonLayer, "OUTPUT": "memory:"})         
         layerWithDelEdges = result2["OUTPUT"]
         
+        # copy the result of the QGIS tool into a new graph
         newGraph = PGGraph()
         for feature in layerWithDelEdges.getFeatures():                   
             geom = feature.geometry()
@@ -264,7 +324,13 @@ class GraphBuilder:
         
         self.graph = newGraph
     
-    def createVertexLayer(self, addToCanvas):
+    def __createVertexLayer(self, addToCanvas):
+        """
+        Method creates a QgsVectorLayer containing points. The points are the vertices of the graph.
+        
+        :type addToCanvas: Boolean
+        :return QgsVectorLayer
+        """
         graphLayerVertices = QgsVectorLayer("Point", "GraphVertices", "memory")
         dpVerticeLayer = graphLayerVertices.dataProvider()
         dpVerticeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("X", QVariant.Double), QgsField("Y", QVariant.Double)])
@@ -273,7 +339,10 @@ class GraphBuilder:
         if self.__options["createRandomGraph"] == False:            
             graphLayerVertices.setCrs(self.vLayer.crs())  
         else:
-            graphLayerVertices.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))       
+            if self.__randomOptions["crs"] == "":                
+                graphLayerVertices.setCrs(QgsProject.instance().crs())
+            else:
+                graphLayerVertices.setCrs(QgsCoordinateReferenceSystem(self.__randomOptions["crs"]))       
         
     
         #add the vertices and edges to the layers
@@ -285,21 +354,30 @@ class GraphBuilder:
             
             
         if addToCanvas == True:
-            QgsProject.instance().addMapLayer(graphLayerVertices)
-
-        return graphLayerVertices
+            QgsProject.instance().addMapLayer(graphLayerVertices)    
     
-    # create the two layers that represent the graph
-    def createEdgeLayer(self, addToCanvas):        
-        graphLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")        
+        return graphLayerVertices
+       
+    def __createEdgeLayer(self, addToCanvas):
+        """
+        Method creates a QgsVectorLayer containing lines. The lines are the edges of the graph. The weights are
+        visible by creating labels.
+        
+        :type addToCanvas: Boolean
+        :return QgsVectorLayer
+        """        
+        graphLayerEdges = QgsVectorLayer("MultiLineString", "GraphEdges", "memory")        
         dpEdgeLayer = graphLayerEdges.dataProvider()
         dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("fromVertex",QVariant.Double), QgsField("toVertex",QVariant.Double),QgsField("weight", QVariant.Double)])
         graphLayerEdges.updateFields() 
                 
-        if self.__options["createRandomGraph"] == False:            
+        if self.__options["createRandomGraph"] == False:         
             graphLayerEdges.setCrs(self.vLayer.crs())  
         else:
-            graphLayerEdges.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))       
+            if self.__randomOptions["crs"] == "":                
+                graphLayerEdges.setCrs(QgsProject.instance().crs())
+            else:               
+                graphLayerEdges.setCrs(QgsCoordinateReferenceSystem(self.__randomOptions["crs"]))      
                 
         for i in range(self.graph.edgeCount()):
             newFeature = QgsFeature()
@@ -332,34 +410,33 @@ class GraphBuilder:
             layer_settings = QgsVectorLayerSimpleLabeling(layer_settings)
             graphLayerEdges.setLabelsEnabled(True)
             graphLayerEdges.setLabeling(layer_settings)
-            graphLayerEdges.triggerRepaint()
-            if self.__options["createRandomGraph"] == False:
-                graphLayerEdges.setCrs(self.vLayer.crs())
-            else:
-                graphLayerEdges.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))    
-                
+            graphLayerEdges.triggerRepaint()                             
             QgsProject.instance().addMapLayer(graphLayerEdges)
        
         return graphLayerEdges
 
-
-    # returns the graph    
+       
     def makeGraph(self):
-                                                                      
+        """
+        If this method is called the creation of the graph starts. The set options are read and 
+        methods are called accordingly.   
+        
+        :return PGGraph    
+        """                                                              
         if self.__options["createRandomGraph"] == True:
-            self.createRandomVertices()
+            self.__createRandomVertices()        
         else:          
             if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
-                self.createVerticesForPoints()                   
+                self.__createVerticesForPoints()                   
         if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry or self.__options["createRandomGraph"] == True:                          
             if self.__options["connectionType"] == "Complete":
-                self.createComplete()                        
+                self.__createComplete()                        
             elif self.__options["connectionType"] == "Nearest neighbor":
-                self.createNearestNeighbor()                
+                self.__createNearestNeighbor()                
             elif self.__options["connectionType"] == "ShortestPathNetwork":
-                self.createShortestPathNetwork()                                               
+                self.__createShortestPathNetwork()                                               
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:      
-            self.createGraphForLineGeometry()
+            self.__createGraphForLineGeometry()
                       
         if self.__options["edgeDirection"] == "Undirected":
             eCount = self.graph.edgeCount()
@@ -368,31 +445,26 @@ class GraphBuilder:
                 self.graph.addEdge(edge.toVertex(), edge.fromVertex())  
                             
         if self.__options["usePolygons"] == True:
-            self.removeIntersectingEdges()        
+            self.__removeIntersectingEdges()        
     
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
         
         # call AdvancedCostCalculations methods
         if self.__options["distanceStrategy"] == "Advanced":
-            if self.__options["connectionType"] == "ShortestPathNetwork":
-                costCalculator = AdvancedCostCalculator(self.rLayer, self.additionalLineLayer, self.graph)
+            if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.__options["connectionType"] == "ShortestPathNetwork":
+                costCalculator = AdvancedCostCalculator(self.rLayers, self.additionalLineLayer, self.graph, True, self.__options["usePolygons"])                     
             else:
-                costCalculator = AdvancedCostCalculator(self.rLayer, self.vLayer, self.graph)
+                costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, False, self.__options["usePolygons"])
             
-            self.graph = costCalculator.setEdgeCosts(self.costFunction)    
+            for func in self.costFunctions:
+                self.graph = costCalculator.setEdgeCosts(func)  
+              
         
         if self.__options["createGraphAsLayers"] == True:
-            self.createVertexLayer(True)
-            self.createEdgeLayer(True)
+            self.__createVertexLayer(True)
+            self.__createEdgeLayer(True)
         
         return self.graph
         
         
-        
-        
-        
-    
-    
-        
-       
