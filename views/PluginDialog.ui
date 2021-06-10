@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>0</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -1193,7 +1193,7 @@ QListWidget::item::selected {
                    <item row="1" column="0" colspan="2">
                     <widget class="QGroupBox" name="options_credentials">
                      <property name="title">
-                      <string>Credentials</string>
+                      <string>Authentication</string>
                      </property>
                      <layout class="QVBoxLayout" name="verticalLayout_20">
                       <item>
