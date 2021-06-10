@@ -33,7 +33,7 @@ class OptionsView(BaseContentView):
     def setPort(self, port):
         self.dialog.options_server_port_input.setValue(port)
 
-    # credentials
+    # authentication
 
     def getUsername(self):
         return self.dialog.options_credentials_username_input.text()
@@ -43,3 +43,6 @@ class OptionsView(BaseContentView):
 
     def getPassword(self):
         return self.dialog.options_credentials_password_input.text()
+
+    def setPasswordPlaceholder(self, text):
+        self.dialog.options_credentials_password_input.setPlaceholderText(text)
