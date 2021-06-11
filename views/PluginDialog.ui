@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -178,22 +178,8 @@ QListWidget::item::selected {
              <layout class="QVBoxLayout" name="verticalLayout_2">
               <item>
                <layout class="QFormLayout" name="formLayout">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="example_data_label">
-                  <property name="text">
-                   <string>Example data set</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="1" column="0" colspan="2">
                  <widget class="QComboBox" name="example_data_input"/>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="example_data_output_label">
-                  <property name="text">
-                   <string>Destination</string>
-                  </property>
-                 </widget>
                 </item>
                 <item row="3" column="0" colspan="2">
                  <widget class="QgsFileWidget" name="example_data_output">
@@ -208,6 +194,33 @@ QListWidget::item::selected {
                   </property>
                   <property name="storageMode">
                    <enum>QgsFileWidget::SaveFile</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0" colspan="2">
+                 <spacer name="verticalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="2" column="0" colspan="2">
+                 <widget class="QLabel" name="example_data_output_label">
+                  <property name="text">
+                   <string>Destination</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0" colspan="2">
+                 <widget class="QLabel" name="example_data_label">
+                  <property name="text">
+                   <string>Example data set</string>
                   </property>
                  </widget>
                 </item>
@@ -271,9 +284,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>-172</y>
+                         <y>0</y>
                          <width>773</width>
-                         <height>806</height>
+                         <height>921</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -320,13 +333,6 @@ QListWidget::item::selected {
                             </property>
                             <property name="storageMode">
                              <enum>QgsFileWidget::SaveFile</enum>
-                            </property>
-                           </widget>
-                          </item>
-                          <item row="2" column="1">
-                           <widget class="QCheckBox" name="random_graph_checkbox">
-                            <property name="text">
-                             <string>Random graph</string>
                             </property>
                            </widget>
                           </item>
@@ -492,6 +498,16 @@ QListWidget::item::selected {
                                   </widget>
                                  </item>
                                 </layout>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_rasterband_label">
+                                 <property name="text">
+                                  <string>Raster band [optional]</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QgsRasterBandComboBox" name="create_graph_rasterband_input"/>
                                </item>
                                <item>
                                 <widget class="QLabel" name="create_graph_rastertype_label">
@@ -703,6 +719,26 @@ QListWidget::item::selected {
                             </layout>
                            </widget>
                           </item>
+                          <item row="6" column="1">
+                           <spacer name="verticalSpacer_4">
+                            <property name="orientation">
+                             <enum>Qt::Vertical</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>20</width>
+                              <height>40</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                          <item row="2" column="1">
+                           <widget class="QCheckBox" name="random_graph_checkbox">
+                            <property name="text">
+                             <string>Random graph</string>
+                            </property>
+                           </widget>
+                          </item>
                          </layout>
                         </item>
                        </layout>
@@ -782,31 +818,28 @@ QListWidget::item::selected {
                    </attribute>
                    <layout class="QVBoxLayout" name="verticalLayout_19">
                     <item>
-                     <layout class="QFormLayout" name="formLayout_7">
+                     <layout class="QVBoxLayout" name="verticalLayout_21">
                       <property name="sizeConstraint">
                        <enum>QLayout::SetDefaultConstraint</enum>
                       </property>
-                      <property name="labelAlignment">
-                       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                      </property>
-                      <item row="0" column="1">
+                      <item>
                        <widget class="QLabel" name="ogdf_analysis_job_label">
                         <property name="text">
                          <string>Job name</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="1" column="1">
+                      <item>
                        <widget class="QLineEdit" name="ogdf_analysis_job_input"/>
                       </item>
-                      <item row="2" column="1">
+                      <item>
                        <widget class="QLabel" name="ogdf_analysis_graph_label">
                         <property name="text">
                          <string>Graph Layer or graph file (.graphML)</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="3" column="1">
+                      <item>
                        <layout class="QHBoxLayout" name="horizontalLayout_9">
                         <item>
                          <widget class="QgsMapLayerComboBox" name="ogdf_analysis_graph_input"/>
@@ -820,17 +853,17 @@ QListWidget::item::selected {
                         </item>
                        </layout>
                       </item>
-                      <item row="4" column="1">
+                      <item>
                        <widget class="QLabel" name="ogdf_analysis_analysis_label">
                         <property name="text">
                          <string>Analysis</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="5" column="1">
+                      <item>
                        <widget class="QComboBox" name="ogdf_analysis_analysis_input"/>
                       </item>
-                      <item row="6" column="1">
+                      <item>
                        <widget class="QgsCollapsibleGroupBox" name="mGroupBox_3">
                         <property name="title">
                          <string>Advanced Parameters</string>
@@ -940,6 +973,19 @@ QListWidget::item::selected {
                       </item>
                      </layout>
                     </item>
+                    <item>
+                     <spacer name="verticalSpacer_6">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>20</width>
+                        <height>40</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
                    </layout>
                   </widget>
                   <widget class="QWidget" name="tab_6">
@@ -1020,10 +1066,27 @@ QListWidget::item::selected {
                     <property name="autoScrollMargin">
                      <number>16</number>
                     </property>
+                    <property name="batchSize">
+                     <number>100</number>
+                    </property>
                    </widget>
                   </item>
                   <item row="1" column="1">
                    <widget class="QTextBrowser" name="ogdf_jobs_status_text"/>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QPushButton" name="ogdf_jobs_refresh_btn">
+                    <property name="text">
+                     <string>Refresh</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0" colspan="2">
+                   <widget class="QLabel" name="ogdf_jobs_progressbar_label">
+                    <property name="text">
+                     <string>Progress</string>
+                    </property>
+                   </widget>
                   </item>
                   <item row="4" column="0" colspan="2">
                    <widget class="QProgressBar" name="ogdf_jobs_progressbar">
@@ -1032,7 +1095,10 @@ QListWidget::item::selected {
                     </property>
                    </widget>
                   </item>
-                  <item row="6" column="0">
+                  <item row="6" column="0" colspan="2">
+                   <widget class="QgsFileWidget" name="ogdf_jobs_output"/>
+                  </item>
+                  <item row="5" column="0" colspan="2">
                    <widget class="QLabel" name="ogdf_jobs_output_label">
                     <property name="styleSheet">
                      <string notr="true">m</string>
@@ -1058,9 +1124,6 @@ QListWidget::item::selected {
                    </widget>
                   </item>
                   <item row="7" column="0" colspan="2">
-                   <widget class="QgsFileWidget" name="ogdf_jobs_output"/>
-                  </item>
-                  <item row="5" column="0" colspan="2">
                    <spacer name="verticalSpacer">
                     <property name="orientation">
                      <enum>Qt::Vertical</enum>
@@ -1068,24 +1131,10 @@ QListWidget::item::selected {
                     <property name="sizeHint" stdset="0">
                      <size>
                       <width>20</width>
-                      <height>10</height>
+                      <height>40</height>
                      </size>
                     </property>
                    </spacer>
-                  </item>
-                  <item row="3" column="0">
-                   <widget class="QLabel" name="ogdf_jobs_progressbar_label">
-                    <property name="text">
-                     <string>Progress</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="0">
-                   <widget class="QPushButton" name="ogdf_jobs_refresh_btn">
-                    <property name="text">
-                     <string>Refresh</string>
-                    </property>
-                   </widget>
                   </item>
                  </layout>
                 </item>
@@ -1112,87 +1161,82 @@ QListWidget::item::selected {
                   <property name="title">
                    <string>Server settings</string>
                   </property>
-                  <widget class="QWidget" name="formLayoutWidget_5">
-                   <property name="geometry">
-                    <rect>
-                     <x>10</x>
-                     <y>30</y>
-                     <width>791</width>
-                     <height>101</height>
-                    </rect>
-                   </property>
-                   <layout class="QFormLayout" name="formLayout_5">
-                    <item row="0" column="0">
-                     <widget class="QLabel" name="options_server_host_label">
-                      <property name="text">
-                       <string>Host</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="0" colspan="2">
-                     <widget class="QLineEdit" name="options_server_host_input"/>
-                    </item>
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="options_server_port_label">
-                      <property name="text">
-                       <string>Port</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="0" colspan="2">
-                     <widget class="QSpinBox" name="options_server_port_input">
-                      <property name="maximum">
-                       <number>65535</number>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                  <widget class="QGroupBox" name="options_credentials">
-                   <property name="geometry">
-                    <rect>
-                     <x>10</x>
-                     <y>140</y>
-                     <width>791</width>
-                     <height>171</height>
-                    </rect>
-                   </property>
-                   <property name="title">
-                    <string>Credentials</string>
-                   </property>
-                   <widget class="QWidget" name="formLayoutWidget_4">
-                    <property name="geometry">
-                     <rect>
-                      <x>9</x>
-                      <y>29</y>
-                      <width>771</width>
-                      <height>131</height>
-                     </rect>
-                    </property>
-                    <layout class="QFormLayout" name="formLayout_6">
-                     <item row="0" column="0">
-                      <widget class="QLabel" name="options_credentials_username_label">
-                       <property name="text">
-                        <string>Username</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="0">
-                      <widget class="QLabel" name="options_credentials_password_label">
-                       <property name="text">
-                        <string>Password</string>
-                       </property>
-                      </widget>
+                  <layout class="QFormLayout" name="formLayout_2">
+                   <item row="0" column="0" colspan="2">
+                    <layout class="QFormLayout" name="formLayout_5">
+                     <item row="1" column="0" colspan="2">
+                      <widget class="QLineEdit" name="options_server_host_input"/>
                      </item>
                      <item row="3" column="0" colspan="2">
-                      <widget class="QgsPasswordLineEdit" name="options_credentials_password_input"/>
+                      <widget class="QSpinBox" name="options_server_port_input">
+                       <property name="maximum">
+                        <number>65535</number>
+                       </property>
+                      </widget>
                      </item>
-                     <item row="1" column="0" colspan="2">
-                      <widget class="QLineEdit" name="options_credentials_username_input"/>
+                     <item row="0" column="0" colspan="2">
+                      <widget class="QLabel" name="options_server_host_label">
+                       <property name="text">
+                        <string>Host</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="0" colspan="2">
+                      <widget class="QLabel" name="options_server_port_label">
+                       <property name="text">
+                        <string>Port</string>
+                       </property>
+                      </widget>
                      </item>
                     </layout>
-                   </widget>
-                  </widget>
+                   </item>
+                   <item row="1" column="0" colspan="2">
+                    <widget class="QGroupBox" name="options_credentials">
+                     <property name="title">
+                      <string>Credentials</string>
+                     </property>
+                     <layout class="QVBoxLayout" name="verticalLayout_20">
+                      <item>
+                       <layout class="QFormLayout" name="formLayout_6">
+                        <item row="3" column="0" colspan="2">
+                         <widget class="QgsPasswordLineEdit" name="options_credentials_password_input"/>
+                        </item>
+                        <item row="1" column="0" colspan="2">
+                         <widget class="QLineEdit" name="options_credentials_username_input"/>
+                        </item>
+                        <item row="2" column="0" colspan="2">
+                         <widget class="QLabel" name="options_credentials_password_label">
+                          <property name="text">
+                           <string>Password</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item row="0" column="0" colspan="2">
+                         <widget class="QLabel" name="options_credentials_username_label">
+                          <property name="text">
+                           <string>Username</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item row="2" column="0" colspan="2">
+                    <spacer name="verticalSpacer_5">
+                     <property name="orientation">
+                      <enum>Qt::Vertical</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>20</width>
+                       <height>40</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
                  </widget>
                 </item>
                </layout>
@@ -1249,6 +1293,11 @@ QListWidget::item::selected {
    <class>QgsProjectionSelectionWidget</class>
    <extends>QWidget</extends>
    <header>qgsprojectionselectionwidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsRasterBandComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsrasterbandcombobox.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

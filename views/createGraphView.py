@@ -29,6 +29,9 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_cost_input.setLayer(self.getInputLayer())
         self.dialog.create_graph_input.layerChanged.connect(self.dialog.create_graph_cost_input.setLayer)
 
+        # show raster bands
+        self.dialog.create_graph_raster_input.layerChanged.connect(self.dialog.create_graph_rasterband_input.setLayer)
+
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
             lambda: self._browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
@@ -138,6 +141,9 @@ class CreateGraphView(BaseContentView):
 
     def getRasterLayer(self):
         return self.dialog.create_graph_raster_input.currentLayer()
+
+    def getRasterBand(self):
+        return self.dialog.create_graph_raster_input.currentBand()
 
     def addRasterType(self, type, userData=None):
         self.dialog.create_graph_rastertype_input.addItem(type, userData)
