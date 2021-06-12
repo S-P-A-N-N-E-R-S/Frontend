@@ -22,16 +22,25 @@ class PGGraph(QgsGraph):
         # list of list to hold multiple weight function values
         self.edgeWeights = []        
         self.vertexWeights = []                
+    
     def setDistanceStrategy(self, strategy):
+        """
+        Function is called my the GraphBuilder every time the makeGraph 
+        method is called.
+        
+        :type strategy: String
+        """
         self.distanceStrategy = strategy
-     
-         
+             
     def costOfEdge(self, edgeID, functionIndex = 0):  
         """
         Function to get the weight of an edge. The returned value
-        depends on the set distance strategy
+        depends on the set distance strategy and on the functionIndex.
+        The functionIndex defines the cost function to use if multiple ones
+        are given.
         
         :type edgeID: Integer
+        :type functionIndex: Integer
         :return cost of Edge
         """                  
         # differentiate between edge weights from cost functions and set weights from graph builder        

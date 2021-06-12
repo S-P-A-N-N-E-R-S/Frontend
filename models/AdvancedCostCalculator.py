@@ -9,22 +9,25 @@ from qgis import processing
 import math
 import operator
 import re
+import statistics
+import numpy as np
 
 
-class AdvancedCostCalculator:
+class AdvancedCostCalculator():
     """
     Class to calculate the edge costs of a graph by analysis of a cost function. The cost function
     can use different variables and operators.    
     """
-    def __init__(self, rLayers, vLayer, graph, buildShortestPathNetwork, usePolygons):
+    def __init__(self, rLayers, vLayer, graph, buildShortestPathNetwork, usePolygons, rasterBands):
         """
         Constructor
         
-        :type rLayer: QgsRasterLayer
+        :type rLayer: List of QgsRasterLayer
         :type vLayer: QgsVectorLayer
         :type graph: PGGraph
         :type buildShortestPathNetwork: Boolean
         :type usePolygons: Boolean
+        :type rasterBands: List of Integer [1..numberOfBands]
         """
         self.rLayers = rLayers
         self.vLayerFields = []        
@@ -32,10 +35,10 @@ class AdvancedCostCalculator:
         self.graph = graph
         self.buildShortestPathNetwork = buildShortestPathNetwork
         self.usePolygons = usePolygons        
+        self.rasterBands = rasterBands
         self.operators = ["+","-","*","/","(",")"]
-        self.numberOfWeightFunctions = 0
     
-    def __translate(self, part, edgeID):
+    def __translate(self, part, edgeID, sampledPointsLayers):
         edge = self.graph.edge(edgeID)
         
         # operator or bracket do not need to be translated
@@ -154,9 +157,44 @@ class AdvancedCostCalculator:
                         return str(feature[name])                      
         
         # analysis of raster data
-        elif "raster:" in part:
-            print("TODO")
-        
+        elif "raster[" in part:
+            rasterDataID = int(part.split("[")[1].split("]")[0])
+            pointValuesForEdge = []       
+            bandForRaster = self.rasterBands[rasterDataID]    
+            stringForLookup = "SAMPLE_" + str(bandForRaster)
+            #search for the right edgeID
+            for feature in sampledPointsLayers[rasterDataID].getFeatures():
+                if feature["line_id"] == edgeID:
+                    pointValuesForEdge.append(feature[stringForLookup])
+            
+            # check which analysis should be used        
+            if ":sum" in part:                
+                return str(sum(pointValuesForEdge))
+            elif ":mean" in part:
+                return str(statistics.mean(pointValuesForEdge))
+            elif ":median" in part:
+                return str(statistics.median(pointValuesForEdge))
+            elif ":min" in part:
+                return str(min(pointValuesForEdge))
+            elif ":max" in part:
+                return str(max(pointValuesForEdge))
+            elif ":variance" in part:
+                return str(statistics.variance(pointValuesForEdge))
+            elif ":standDev" in part:
+                return str(statistics.stdev(pointValuesForEdge))
+            elif ":gradientSum" in part:
+                f = np.array(pointValuesForEdge, dtype=float)
+                gradient = np.gradient(f)
+                return str(np.sum(gradient))
+            elif "gradientMin" in part:
+                f = np.array(pointValuesForEdge, dtype=float)
+                gradient = np.gradient(f)
+                return str(np.min(gradient))
+            elif "gradientMax" in part:
+                f = np.array(pointValuesForEdge, dtype=float)
+                gradient = np.gradient(f)
+                return str(np.max(gradient))
+            
         return str("0")
         
     def __evaluateIfs(self, part):
@@ -174,6 +212,30 @@ class AdvancedCostCalculator:
                 return part.split(",")[2].split(")")[0]
         
         return part
+     
+    def __createEdgeLayer(self): 
+        """
+        Creates an edge layer for the graph. This is used to call QGIS-Tools which
+        require vector layers as attributes
+        
+        :return QgsVectorLayer
+        """
+        graphLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")        
+        dpEdgeLayer = graphLayerEdges.dataProvider()
+        dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int),])
+        graphLayerEdges.updateFields() 
+                              
+        graphLayerEdges.setCrs(self.vLayer.crs())  
+         
+        for i in range(self.graph.edgeCount()):
+            newFeature = QgsFeature()
+            fromVertex = self.graph.vertex(self.graph.edge(i).fromVertex()).point()
+            toVertex = self.graph.vertex(self.graph.edge(i).toVertex()).point()
+            newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))                              
+            newFeature.setAttributes([i])
+            dpEdgeLayer.addFeature(newFeature)
+        
+        return graphLayerEdges
         
     def setEdgeCosts(self, costFunction):    
         """
@@ -181,34 +243,46 @@ class AdvancedCostCalculator:
         
         :type costFunction: String
         :return graph with set edge costs
-        """           
-        self.numberOfWeightFunctions += 1   
-        result = []                   
+        """             
+        weights = []          
+        # call QGIS-Tools to get the pixel values for the edges
+        # sampledPointsLayers holds the sampled raster values of all edges
+        sampledPointsLayers = []        
+        if len(self.rLayers) > 0:            
+            edgeLayer = self.__createEdgeLayer()
+            for i in range(len(self.rLayers)):
+                result = processing.run("qgis:generatepointspixelcentroidsalongline", {"INPUT_RASTER": self.rLayers[i], "INPUT_VECTOR": edgeLayer, "OUTPUT": "memory:"})
+                result2 = processing.run("qgis:rastersampling",{"INPUT": result["OUTPUT"], "RASTERCOPY": self.rLayers[i], "COLUMN_PREFIX": "SAMPLE_", "OUTPUT": "memory:"})
+                sampledPointsLayers.append(result2["OUTPUT"])  
+        
+        # since the function value depends on the edge the function needs to be evaluated for every edge separately                                                          
         for i in range(self.graph.edgeCount()):
             costFunction = costFunction.replace(" ", "").replace('"', '')
             
             formulaParts = re.split("\+|-|\*|/", costFunction)
             operators = []
             
+            # get the operators to add them back to the function later
             for symbol in costFunction:
                 if symbol == "+" or symbol == "-" or symbol == "*" or symbol == "/":
                     operators.append(symbol)                        
-            
+                        
+            # call function to translate the  parts
             for j in range(len(formulaParts)):
-                formulaParts[j] = self.__translate(formulaParts[j], i)                             
-            
+                formulaParts[j] = self.__translate(formulaParts[j], i, sampledPointsLayers)                                             
             # after all variables are translated to numbers if conditions can be evaluated
             for j in range(len(formulaParts)):
                 formulaParts[j] = self.__evaluateIfs(str(formulaParts[j]))
             
+            # recreate formula by inserting operators
             translatedFormula = formulaParts[0]   
             for p in range(len(operators)):
                 translatedFormula = translatedFormula + operators[p] + formulaParts[p+1] 
             
-            result.append(eval(translatedFormula))
-            # there are only be numbers, brackets and operators inside the translated formula                                   
+            weights.append(eval(translatedFormula))                                             
         
-        self.graph.edgeWeights.append(result)
+        # append the list
+        self.graph.edgeWeights.append(weights)
                         
         return self.graph    
     
