@@ -40,7 +40,7 @@ class OGDFAnalysisController(BaseController):
             return
 
         host = self.settings.value("protoplugin/host", "")
-        port = int(self.settings.value("protoplugin/port", 80))
+        port = int(self.settings.value("protoplugin/port", 4711))
         # todo: pass authId to client
         authId = self.settings.value("protoplugin/authId")
         if not (host and port):
