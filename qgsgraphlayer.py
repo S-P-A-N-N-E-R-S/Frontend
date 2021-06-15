@@ -235,33 +235,30 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter = self.renderContext().painter()
         painter.setPen(QColor('black'))
 
+        # if isinstance(self.mGraph, PGGraph):
         if isinstance(self.mGraph, QgsGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
                 converter = QgsVertexMarker(iface.mapCanvas())
+                
+                max = self.mGraph.edgeCount()
+                if max < self.mGraph.vertexCount():
+                    max = self.mGraph.vertexCount()
 
-                if self.mGraph.edgeCount() == 0:
-                    # draw only points if no edges exist in graph
-                    for vertexId in range(self.mGraph.vertexCount()):
+                for id in range(max):
+                    # draw vertices
+                    if id < self.mGraph.vertexCount():
+                        point = converter.toCanvasCoordinates(self.mGraph.vertex(id).point())
+                        
+                        painter.setPen(QColor('black'))
+                        painter.drawEllipse(point, 1.0, 1.0)
 
-                        point = converter.toCanvasCoordinates(self.mGraph.vertex(vertexId).point())
-
-                        painter.drawPoint(point)
-
-                else:      
-                    # draw points and edges of graph  
-                    for edgeId in range(self.mGraph.edgeCount()):
-                        # get edge and its vertices
-                        edge = self.mGraph.edge(edgeId)
+                    # draw edges                    
+                    if id < self.mGraph.edgeCount():
+                        edge = self.mGraph.edge(id)
                         toPoint = converter.toCanvasCoordinates(self.mGraph.vertex(edge.toVertex()).point())
                         fromPoint = converter.toCanvasCoordinates(self.mGraph.vertex(edge.fromVertex()).point())
 
-                        # draw vertices (TODO: probably drawn multiple times in this loop)
-                        painter.setPen(QColor('black'))
-                        painter.drawPoint(toPoint)
-                        painter.drawPoint(fromPoint)
-
-                        # draw edges
                         painter.setPen(QColor('green'))
                         painter.drawLine(toPoint, fromPoint)
 
