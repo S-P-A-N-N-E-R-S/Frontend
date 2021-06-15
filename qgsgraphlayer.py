@@ -293,6 +293,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         
         self.mName = name
         self.mGraph = QgsGraph()
+        # self.mGraph = PGGraph()
 
         self.mLayerType = QgsGraphLayerType()
 
@@ -324,6 +325,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         pass 
 
     def setGraph(self, graph):
+        # if isinstance(graph, PGGraph):
         if isinstance(graph, QgsGraph):
             self.mGraph = graph
 
@@ -335,13 +337,16 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
                 fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
                 toVertexField = QgsField("toVertex", QVariant.Double, "double")
+                # costField = QgsField("edgeCost", QVariant.Double, "double")
                 
                 self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
+                # self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField])
                 
                 # self.updateFields()
                 self.mFields.append(edgeIdField)
                 self.mFields.append(fromVertexField)
                 self.mFields.append(toVertexField)
+                # self.mFields.append(costField)
                 
                 for edgeId in range(self.mGraph.edgeCount()):
                     edge = self.mGraph.edge(edgeId)
@@ -352,6 +357,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                     feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
                     feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex()])
+                    # feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mGraph.costOfEdge(edgeId)])
+
                     self.mDataProvider.addFeature(feat)
 
             else:
@@ -392,6 +399,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         # start with empty QgsGraph
         self.mGraph = QgsGraph()
+        # self.mGraph = PGGraph()
 
         # find graph node in xml
         graphNode = node.firstChild()
@@ -416,6 +424,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             if edgeNodes.at(edgeId).isElement():
                 elem = edgeNodes.at(edgeId).toElement()
                 self.mGraph.addEdge(int(elem.attribute("fromVertex")), int(elem.attribute("toVertex")), [strat])
+                # self.mGraph.addEdge(int(elem.attribute("fromVertex")), int(elem.attribute("toVertex"))) # add cost at later state
 
         return True
 
@@ -468,6 +477,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 edgeNode.setAttribute("id", edgeId)
                 edgeNode.setAttribute("toVertex", toVertex)
                 edgeNode.setAttribute("fromVertex", fromVertex)
+                # edgeNode.setAttribute("edgeCost", self.mGraph.costOfEdge(edgeId))
                 edgesNode.appendChild(edgeNode)
                     
         return True
