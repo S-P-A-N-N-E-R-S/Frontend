@@ -35,8 +35,8 @@ class Client():
     def disconnect(self):
         self.socket.close()
 
-    def sendShortPathRequest(self, shortPathRequest):
-        protoBufString = protoParser.createProtoBuf(shortPathRequest)
+    def send(self, request):
+        protoBufString = protoParser.createProtoBuf(request)
 
         return self._sendProtoBufString(protoBufString)
 
@@ -52,14 +52,12 @@ class Client():
 
         return len(msg)
 
-    def readShortPathResponse(self):
-        protoBufString = self._readProtobufString()
+    def recv(self, response):
+        protoBufString = self._recvProtobufString()
 
-        graph = protoParser.parseProtoBuf(protoBufString)
+        protoParser.parseProtoBuf(protoBufString, response)
 
-        return graph
-
-    def _readProtobufString(self):
+    def _recvProtobufString(self):
         rawMsgLength = self._recvAll(LENGTH_FIELD_SIZE)
         if not rawMsgLength:
             raise NetworkClientError("No ProtoBuf length received")
