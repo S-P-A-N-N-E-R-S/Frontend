@@ -352,8 +352,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                     edge = self.mGraph.edge(edgeId)
 
                     feat = QgsFeature()
-                    fromVertex = edge.fromVertex().point()
-                    toVertex = edge.toVertex().point()
+                    fromVertex = self.mGraph.vertex(edge.fromVertex()).point()
+                    toVertex = self.mGraph.vertex(edge.toVertex()).point()
                     feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
                     feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex()])
