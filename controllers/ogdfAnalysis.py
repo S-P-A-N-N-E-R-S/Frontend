@@ -1,6 +1,6 @@
 import os
 
-from qgis.core import QgsSettings
+from qgis.core import QgsSettings, QgsApplication
 
 from .base import BaseController
 from ..models.GraphBuilder import GraphBuilder
@@ -22,8 +22,8 @@ class OGDFAnalysisController(BaseController):
         """
         super().__init__(view)
 
-        # set up client
         self.settings = QgsSettings()
+        self.authManager = QgsApplication.authManager()
 
         # self.view.addAnalysis("t-Spanner")
         # self.view.addAnalysis("minimum spanner")
@@ -39,8 +39,10 @@ class OGDFAnalysisController(BaseController):
         if not graph:
             return
 
-        host = self.settings.value("protoplugin/host", None)
-        port = int(self.settings.value("protoplugin/port", None))
+        host = self.settings.value("protoplugin/host", "")
+        port = int(self.settings.value("protoplugin/port", 4711))
+        # todo: pass authId to client
+        authId = self.settings.value("protoplugin/authId")
         if not (host and port):
             self.view.showError("Please set host and port in options!")
             return None

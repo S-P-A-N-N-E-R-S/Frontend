@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>3</number>
+             <number>4</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -271,9 +271,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>-172</y>
-                         <width>773</width>
-                         <height>806</height>
+                         <y>0</y>
+                         <width>518</width>
+                         <height>862</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1118,7 +1118,7 @@ QListWidget::item::selected {
                      <x>10</x>
                      <y>30</y>
                      <width>791</width>
-                     <height>101</height>
+                     <height>105</height>
                     </rect>
                    </property>
                    <layout class="QFormLayout" name="formLayout_5">
@@ -1154,44 +1154,42 @@ QListWidget::item::selected {
                      <x>10</x>
                      <y>140</y>
                      <width>791</width>
-                     <height>171</height>
+                     <height>151</height>
                     </rect>
                    </property>
                    <property name="title">
-                    <string>Credentials</string>
+                    <string>Authentication</string>
                    </property>
-                   <widget class="QWidget" name="formLayoutWidget_4">
-                    <property name="geometry">
-                     <rect>
-                      <x>9</x>
-                      <y>29</y>
-                      <width>771</width>
-                      <height>131</height>
-                     </rect>
-                    </property>
-                    <layout class="QFormLayout" name="formLayout_6">
-                     <item row="0" column="0">
-                      <widget class="QLabel" name="options_credentials_username_label">
-                       <property name="text">
-                        <string>Username</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="0">
-                      <widget class="QLabel" name="options_credentials_password_label">
-                       <property name="text">
-                        <string>Password</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="3" column="0" colspan="2">
-                      <widget class="QgsPasswordLineEdit" name="options_credentials_password_input"/>
-                     </item>
-                     <item row="1" column="0" colspan="2">
-                      <widget class="QLineEdit" name="options_credentials_username_input"/>
-                     </item>
-                    </layout>
-                   </widget>
+                   <layout class="QVBoxLayout" name="verticalLayout_20">
+                    <item>
+                     <layout class="QFormLayout" name="formLayout_6">
+                      <item row="0" column="0">
+                       <widget class="QLabel" name="options_credentials_username_label">
+                        <property name="text">
+                         <string>Username</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="1" column="0" colspan="2">
+                       <widget class="QLineEdit" name="options_credentials_username_input"/>
+                      </item>
+                      <item row="2" column="0">
+                       <widget class="QLabel" name="options_credentials_password_label">
+                        <property name="text">
+                         <string>Password</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="0" colspan="2">
+                       <widget class="QgsPasswordLineEdit" name="options_credentials_password_input">
+                        <property name="showLockIcon">
+                         <bool>false</bool>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
                   </widget>
                  </widget>
                 </item>
