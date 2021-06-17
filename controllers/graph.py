@@ -19,7 +19,8 @@ class CreateGraphController(BaseController):
         """
         super().__init__(view)
 
-        self.graphTask = None
+        self.maxNumberTasks = 3
+        self.activeGraphTasks = []
 
         self.view.addConnectionType("Nearest neighbor")
         self.view.addConnectionType("Complete")
@@ -40,6 +41,10 @@ class CreateGraphController(BaseController):
         self.view.setSavePathFilter("GraphML (*.graphml );;Shape files (*.shp)")
 
     def createGraph(self):
+        if len(self.activeGraphTasks) >= self.maxNumberTasks:
+            self.view.showWarning("Can not building graph due to task limit of {}!".format(self.maxNumberTasks))
+            return
+
         self.view.showInfo("Start graph building..")
         builder = GraphBuilder()
         builder.setOption("createGraphAsLayers", False)
@@ -119,8 +124,9 @@ class CreateGraphController(BaseController):
             return
 
         # create and run task from function
-        self.graphTask = QgsTask.fromFunction("Make graph task", builder.makeGraphTask, on_finished=self.completed)
-        QgsApplication.taskManager().addTask(self.graphTask)
+        graphTask = QgsTask.fromFunction("Make graph task", builder.makeGraphTask, on_finished=self.completed)
+        self.activeGraphTasks.append(graphTask)
+        QgsApplication.taskManager().addTask(graphTask)
 
     def completed(self, exception, result=None):
         """
@@ -130,6 +136,11 @@ class CreateGraphController(BaseController):
         :return:
         """
         QgsMessageLog.logMessage("Process make graph task results", level=Qgis.Info)
+
+        # first remove all completed or canceled tasks from list
+        self.activeGraphTasks = [task for task in self.activeGraphTasks if task.isActive()]
+        QgsMessageLog.logMessage("Remaining tasks: {}".format(len(self.activeGraphTasks)), level=Qgis.Info)
+
         if exception is None:
             if result is None:
                 QgsMessageLog.logMessage("Task completed with no result", level=Qgis.Warning)
