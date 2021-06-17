@@ -377,12 +377,21 @@ class GraphBuilder:
             self.createEdgeLayer(True)
         
         return self.graph
-        
-        
-        
-        
-        
-    
-    
-        
-       
+
+    def makeGraphTask(self, task):
+        """
+        Task function of makeGraph() to build a graph in the background
+        :param task: own QgsTask instance
+        :return:
+        """
+        QgsMessageLog.logMessage('Started task {}'.format(task.description()), level=Qgis.Info)
+
+        # build graph
+        graph = self.makeGraph()
+
+        # create graph layers
+        vertexLayer = self.createVertexLayer(False)
+        edgeLayer = self.createEdgeLayer(False)
+
+        QgsMessageLog.logMessage("Make graph finished", level=Qgis.Info)
+        return {"graph": graph, "vertexLayer": vertexLayer, "edgeLayer": edgeLayer}

@@ -6,7 +6,8 @@ from ..models.GraphBuilder import GraphBuilder
 from ..models.PGGraph import PGGraph
 from .. import helperFunctions as helper
 
-from qgis.core import QgsVectorLayer, QgsProject
+from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
+from qgis.utils import iface
 
 
 class CreateGraphController(BaseController):
@@ -17,6 +18,8 @@ class CreateGraphController(BaseController):
         :type view: CreateGraphView
         """
         super().__init__(view)
+
+        self.graphTask = None
 
         self.view.addConnectionType("Nearest neighbor")
         self.view.addConnectionType("Complete")
@@ -37,9 +40,9 @@ class CreateGraphController(BaseController):
         self.view.setSavePathFilter("GraphML (*.graphml );;Shape files (*.shp)")
 
     def createGraph(self):
+        self.view.showInfo("Start graph building..")
         builder = GraphBuilder()
         builder.setOption("createGraphAsLayers", False)
-        graph = None
 
         # raster data
         rasterLayer = self.view.getRasterLayer()
@@ -67,55 +70,94 @@ class CreateGraphController(BaseController):
         builder.setOption("speedOption", self.view.getCostField())
         builder.setOption("distanceStrategy", self.view.getDistance()[0])
 
-        # create random graph
+        # set builder options for random graph
         if self.view.isRandom():
             builder.setOption("createRandomGraph", True)
             numVertices = 100
             builder.setRandomOptions("numberOfVertices", numVertices)
             area = "Germany"
             builder.setRandomOptions("area", area)
-            graph = builder.makeGraph()
 
-        # create graph from input layer
-        elif self.view.hasInput():
-            layer = None
-            # if layer as Input
-            if self.view.isInputLayer():
-                layer = self.view.getInputLayer()
-            # if file path as input
+        # set vector layer in builder if input layer exist
+        elif self.view.hasInput() and self.view.isInputLayer():
+            layer = self.view.getInputLayer()
+            # build graph from layer
+            builder.setVectorLayer(layer)
+
+        # if file path as input
+        elif self.view.hasInput() and not self.view.isInputLayer():
+            path = self.view.getInputPath()
+            fileName, extension = os.path.splitext(path)
+            if extension == ".graphml":
+                # create graph from .graphml file
+                graph = PGGraph()
+                graph.readGraphML(path)
+
+                if not graph:
+                    self.view.showError("File can not be parsed!")
+                    return
+
+                # set graph to graph builder
+                builder.setGraph(graph)
+
+                # create graph layers
+                vertexLayer = builder.createVertexLayer(False)
+                edgeLayer = builder.createEdgeLayer(False)
+
+                self.saveGraph(graph, vertexLayer, edgeLayer)
+                self.view.showSuccess("Graph created!")
+                return
             else:
-                path = self.view.getInputPath()
-                fileName, extension = os.path.splitext(path)
-                if extension == ".graphml":
-                    graph = PGGraph()
-                    graph.readGraphML(path)
-
-                    # set graph to graph builder
-                    builder.setGraph(graph)
-                else:
-                    # load shape file
-                    layer = QgsVectorLayer(path, "", "ogr")
-
-            if layer:
+                # load shape file and set this layer in builder
+                layer = QgsVectorLayer(path, "", "ogr")
                 # build graph from layer
                 builder.setVectorLayer(layer)
-
-                graph = builder.makeGraph()
 
         # no input and not random
         else:
             self.view.showWarning("No input and not random graph!")
             return
 
-        if not graph:
-            self.view.showError("Error during graph creation!")
-            return
+        # create and run task from function
+        self.graphTask = QgsTask.fromFunction("Make graph task", builder.makeGraphTask, on_finished=self.completed)
+        QgsApplication.taskManager().addTask(self.graphTask)
 
-        # create graph layers
-        vertexLayer = builder.createVertexLayer(False)
-        edgeLayer = builder.createEdgeLayer(False)
+    def completed(self, exception, result=None):
+        """
+        Processes the make graph task results
+        :param exception: possible exception raised in task
+        :param result: return value of task
+        :return:
+        """
+        QgsMessageLog.logMessage("Process make graph task results", level=Qgis.Info)
+        if exception is None:
+            if result is None:
+                QgsMessageLog.logMessage("Task completed with no result", level=Qgis.Warning)
+            else:
+                graph = result["graph"]
+                vertexLayer = result["vertexLayer"]
+                edgeLayer = result["edgeLayer"]
+                if not graph:
+                    self.view.showError("Error during graph creation!")
+                    return
 
-        # save graph to destination
+                # save graph to destination
+                self.saveGraph(graph, vertexLayer, edgeLayer)
+
+                self.view.showSuccess("Graph created!")
+                iface.messageBar().pushMessage("Success", "Graph created!", level=Qgis.Success)
+        else:
+            QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
+            raise exception
+
+    def saveGraph(self, graph, vertexLayer, edgeLayer):
+        """
+        Saves graph to destination
+        :param graph: PGGraph
+        :param vertexLayer: graph vertices
+        :param edgeLayer: graph edges
+        :return:
+        """
         savePath = self.view.getSavePath()
         if savePath:
             fileName, extension = os.path.splitext(savePath)
@@ -123,15 +165,15 @@ class CreateGraphController(BaseController):
                 graph.writeGraphML(savePath)
             else:
                 # if layer path as .shp
-                vertexLayer = helper.saveLayer(vertexLayer, vertexLayer.name(), "vector", fileName+"_vertices"+extension, extension)
-                edgeLayer = helper.saveLayer(edgeLayer, edgeLayer.name(), "vector", fileName+"_edges"+extension, extension)
+                vertexLayer = helper.saveLayer(vertexLayer, vertexLayer.name(), "vector",
+                                               fileName + "_vertices" + extension, extension)
+                edgeLayer = helper.saveLayer(edgeLayer, edgeLayer.name(), "vector", fileName + "_edges" + extension,
+                                             extension)
 
                 # change layer names
-                vertexLayer.setName(os.path.basename(fileName)+"Vertices")
-                edgeLayer.setName(os.path.basename(fileName)+"Edges")
+                vertexLayer.setName(os.path.basename(fileName) + "Vertices")
+                edgeLayer.setName(os.path.basename(fileName) + "Edges")
 
         # add layer to project
         QgsProject.instance().addMapLayer(vertexLayer)
         QgsProject.instance().addMapLayer(edgeLayer)
-
-        self.view.showSuccess("Graph created!")
