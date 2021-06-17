@@ -3,6 +3,8 @@ from ..controllers.graph import CreateGraphController
 
 from qgis.core import QgsMapLayerProxyModel
 
+from PyQt5.QtCore import QTimer
+
 
 class CreateGraphView(BaseContentView):
 
@@ -72,7 +74,16 @@ class CreateGraphView(BaseContentView):
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input_tools.setDisabled)
 
         self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
+        # immediately disable button and enable after 1 seconds
+        self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
 
+    def _disableButton(self):
+        """
+        Disables the button and enables it after 1 seconds
+        :return:
+        """
+        self.dialog.create_graph_create_btn.setEnabled(False)
+        QTimer.singleShot(1000, lambda: self.dialog.create_graph_create_btn.setEnabled(True))
 
     def hasInput(self):
         return self.dialog.create_graph_input.count() > 0
