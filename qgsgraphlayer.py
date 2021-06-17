@@ -3,8 +3,8 @@ from qgis.core import *
 from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
-from qgis.PyQt.QtCore import QVariant
-from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtCore import QVariant, QPointF
+from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtXml import *
 
 import traceback
@@ -234,6 +234,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
         painter = self.renderContext().painter()
         painter.setPen(QColor('black'))
+        painter.setBrush(QColor('red'))
+        painter.setFont(QFont("arial", 5))
 
         # if isinstance(self.mGraph, PGGraph):
         if isinstance(self.mGraph, QgsGraph):
@@ -251,7 +253,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         point = converter.toCanvasCoordinates(self.mGraph.vertex(id).point())
                         
                         painter.setPen(QColor('black'))
-                        painter.drawEllipse(point, 1.0, 1.0)
+                        painter.drawEllipse(point, 2.0, 2.0)
 
                     # draw edges                    
                     if id < self.mGraph.edgeCount():
@@ -259,8 +261,12 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         toPoint = converter.toCanvasCoordinates(self.mGraph.vertex(edge.toVertex()).point())
                         fromPoint = converter.toCanvasCoordinates(self.mGraph.vertex(edge.fromVertex()).point())
 
-                        painter.setPen(QColor('green'))
+                        painter.setPen(QColor('black'))
                         painter.drawLine(toPoint, fromPoint)
+                        
+                        # add text with edgeCost at line mid point
+                        midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
+                        painter.drawText(midPoint, "1")
 
                 iface.mapCanvas().scene().removeItem(converter)
             except Exception as err:
