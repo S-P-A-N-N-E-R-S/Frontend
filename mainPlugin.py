@@ -160,4 +160,6 @@ class ProtoPlugin:
 
             print(newGraphLayer.dataProvider().dataSourceUri())
 
+            newGraphLayer.exportToShapefile()
+
             print("Done: ", graph.vertexCount(), " vertices added")

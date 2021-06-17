@@ -298,6 +298,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mGraph = QgsGraph()
         # self.mGraph = PGGraph()
 
+        self.hasEdges = False
+
         self.mLayerType = QgsGraphLayerType()
 
         self.mDataProvider = QgsGraphDataProvider("Point")
@@ -333,6 +335,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             self.mGraph = graph
 
             if self.mGraph.edgeCount() != 0:
+                self.hasEdges = True
                 
                 self.mDataProvider.setGeometryToPoint(False)
                 self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri)
@@ -365,6 +368,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                     self.mDataProvider.addFeature(feat)
 
             else:
+                self.hasEdges = False
+
                 self.mDataProvider.setGeometryToPoint(True)
                 self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri)
 
@@ -391,6 +396,28 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     def getGraph(self):
         return self.mGraph
 
+    def exportToShapefile(self):
+        if self.hasEdges:
+            geomType = QgsWkbTypes.LineString
+        else:
+            geomType = QgsWkbTypes.Point
+
+        fileName = self.mName + ".shp"
+
+        writer = QgsVectorFileWriter(fileName, "utf-8", self.fields(),
+                                        geomType, self.mCrs, "ESRI Shapefile")
+
+        if writer.hasError() != QgsVectorFileWriter.NoError:
+            print("ERROR: ", writer.errorMessage())
+            return False
+        
+        for feat in self.mDataProvider.getFeatures():
+            writer.addFeature(feat)
+        
+        del writer
+
+        return True
+
     def readXml(self, node, context):
         """Read QgsGraph (and its subclasses) from the project file.
 
@@ -400,9 +427,9 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         """
         self.setLayerType(QgsGraphLayer.LAYER_TYPE)
 
-        # start with empty QgsGraph
-        self.mGraph = QgsGraph()
-        # self.mGraph = PGGraph()
+        # start with empty QgsGraph / PGGraph
+        graph = QgsGraph()
+        # graph = PGGraph()
 
         # find graph node in xml
         graphNode = node.firstChild()
@@ -412,22 +439,26 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
 
-        # get vertex information and add them to mGraph
+        # get vertex information and add them to graph
         for vertexId in range(vertexNodes.length()):
             if vertexNodes.at(vertexId).isElement():
                 elem = vertexNodes.at(vertexId).toElement()
-                self.mGraph.addVertex(QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y"))))
+                graph.addVertex(QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y"))))
 
         edgesNode = verticesNode.nextSibling()
         edgeNodes = edgesNode.childNodes()
 
-        # get edge information and add them to mGraph
+        # get edge information and add them to graph
         strat = QgsNetworkDistanceStrategy()
         for edgeId in range(edgeNodes.length()):
             if edgeNodes.at(edgeId).isElement():
                 elem = edgeNodes.at(edgeId).toElement()
-                self.mGraph.addEdge(int(elem.attribute("fromVertex")), int(elem.attribute("toVertex")), [strat])
-                # self.mGraph.addEdge(int(elem.attribute("fromVertex")), int(elem.attribute("toVertex"))) # add cost at later state
+                graph.addEdge(int(elem.attribute("fromVertex")), int(elem.attribute("toVertex")), [strat])
+                # graph.addEdge(int(elem.attribute("fromVertex")), int(elem.attribute("toVertex"))) # add cost at later state
+
+        # use setGraph function to also add features
+        # TODO: this makes readXML go over either points or edges twice
+        self.setGraph(graph)
 
         return True
 
