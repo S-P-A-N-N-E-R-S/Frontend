@@ -18,7 +18,7 @@ class GraphBuilder:
     by setting options and layers before calling the makeGraph method.
 
     Options:
-        - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN,ShortestPathNetwork
+        - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN, ShortestPathNetwork
         - neighborNumber: int
         - nnAllowDoubleEdges": True, False
         - clusterNumber": int
@@ -50,7 +50,7 @@ class GraphBuilder:
         self.rasterBands = []
         
         self.__options = {
-            "connectionType": "ClusterNN",            
+            "connectionType": "Nearest neighbor",            
             "neighborNumber": 3,       
             "nnAllowDoubleEdges": False,
             "clusterNumber": 5,
@@ -167,7 +167,7 @@ class GraphBuilder:
     def __createRandomVertices(self):
         for i in range(self.__randomOptions["numberOfVertices"]):
             if self.__randomOptions["area"] == "Germany":
-                self.graph.addVertex(QgsPointXY(random.uniform(6.803,13.480), random.uniform(47.420,55.000))) 
+                self.graph.addVertex(QgsPointXY(random.uniform(6.803,13.480), random.uniform(47.420,55.000)))                
             elif self.__randomOptions["area"] == "France":
                 self.graph.addVertex(QgsPointXY(random.uniform(-3.163,6.426), random.uniform(43.830,50.055)))     
             elif self.__randomOptions["area"] == "Osnabrueck":
@@ -208,24 +208,21 @@ class GraphBuilder:
                 tree = tree.remove([point.x(),point.y(),i])
     
     def __createCluster(self):
-        
-        # change so you only go threow the features ones and stroe in 2d array
+        # if a random graph was created the vLayer has to be set manually        
+        if self.__options["createRandomGraph"] == True:
+            print("TEST")
+            self.vLayer = QgsVectorLayer("Point", "TempVertexLayer", "memory")
+            dpVerticeLayer = self.vLayer.dataProvider()
+            if self.__options["createRandomGraph"] == True:
+                for i in range(self.graph.vertexCount()):
+                    newFeature = QgsFeature()
+                    newFeature.setGeometry(QgsGeometry.fromPointXY(self.graph.vertex(i).point()))  
+                    dpVerticeLayer.addFeature(newFeature)
+            
+        # change so you only go throw the features ones and store in 2d array
         result = processing.run("qgis:kmeansclustering", {"INPUT":self.vLayer, "CLUSTERS": self.__options["clusterNumber"], "OUTPUT": "memory:"})
         layerWithClusterIDS = result["OUTPUT"]
-        """
-        pointClusterOrdering = [[] for i in range(self.__options["clusterNumber"])]
-        featureCounter = 0
-        for feature in layerWithClusterIDS.getFeatures():
-            pointClusterOrdering[feature["CLUSTER_ID"]].append(featureCounter)
-            featureCounter+=1
         
-        for i in range(self.__options["clusterNumber"]):
-            for j in range (len(pointClusterOrdering[i])):
-                for k in range(j,len(pointClusterOrdering[i])):
-                    self.graph.addEdge(pointClusterOrdering[i][j], pointClusterOrdering[i][k])
-        
-        
-        """
         for cluster in range(self.__options["clusterNumber"]):
             allPointsInCluster = []
             featureCounter = 0
@@ -235,7 +232,7 @@ class GraphBuilder:
                 featureCounter+=1
             
             if self.__options["connectionType"] == "ClusterNN":  
-                
+               
                 points = []
                 for i in range(len(allPointsInCluster)):
                     point = self.graph.vertex(allPointsInCluster[i]).point()
@@ -244,19 +241,22 @@ class GraphBuilder:
                 # build kd tree              
                 tree = kdtree.create(points)   
                 count = 0             
-                for i in range(len(allPointsInCluster)):              
-                    if self.__options["connectionType"] == "ClusterComplete":
-                        for j in range(i,len(allPointsInCluster)):                    
-                            self.graph.addEdge(allPointsInCluster[i],allPointsInCluster[j])    
-                    else:
-                        if len(allPointsInCluster)>1:
-                            vertex = self.graph.vertex(allPointsInCluster[i]).point()                    
-                            nearestPoints = tree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],self.__options["neighborNumber"]+1)
-                            for t in range(1,len(nearestPoints)):
-                                neighborPoint = nearestPoints[t][0].data                               
-                                self.graph.addEdge(allPointsInCluster[i],neighborPoint[2]) 
-                            if self.__options["nnAllowDoubleEdges"] == False:                                        
-                                tree = tree.remove([vertex.x(),vertex.y(), allPointsInCluster[i]])                                                                                          
+                for i in range(len(allPointsInCluster)):                                 
+                    if len(allPointsInCluster)>1:
+                        vertex = self.graph.vertex(allPointsInCluster[i]).point()                    
+                        nearestPoints = tree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],self.__options["neighborNumber"]+1)
+                        for t in range(1,len(nearestPoints)):
+                            neighborPoint = nearestPoints[t][0].data                               
+                            self.graph.addEdge(allPointsInCluster[i],neighborPoint[2]) 
+                        if self.__options["nnAllowDoubleEdges"] == False:                                        
+                            tree = tree.remove([vertex.x(),vertex.y(), allPointsInCluster[i]])                                                                                          
+        
+            elif self.__options["connectionType"] == "ClusterComplete":           
+                for i in range(len(allPointsInCluster)-1):   
+                    for j in range(1,len(allPointsInCluster)):
+                         self.graph.addEdge(allPointsInCluster[i],allPointsInCluster[j])                 
+                       
+                   
         
     def __createShortestPathNetwork(self):
         if self.__options["createRandomGraph"] == False:           
@@ -303,8 +303,7 @@ class GraphBuilder:
             newGraph.addEdge(newVertex, nearestVertex)                   
         
         self.graph = newGraph 
-     
-    
+         
     def __createGraphForLineGeometry(self):    
         """
         Method is called if the input consists of lines. Every start and end of
@@ -312,8 +311,7 @@ class GraphBuilder:
         """    
         # get all the lines and set end nodes as vertices and connections as edges
         for feature in self.vLayer.getFeatures():                   
-            geom = feature.geometry()
-            
+            geom = feature.geometry()            
             if QgsWkbTypes.isMultiType(geom.wkbType()):                 
                 for part in geom.asMultiPolyline():
                     for i in range(len(part)):
@@ -329,8 +327,7 @@ class GraphBuilder:
                     id1 = self.graph.addVertex(startVertex)
                     id2 = self.graph.addVertex(endVertex)                    
                     self.graph.addEdge(id1, id2)
-        
-        
+                
         # add points and connection to network if additional points are given   
         # use kd tree to get the nearest point         
         points = []
@@ -517,8 +514,7 @@ class GraphBuilder:
         if self.__options["createGraphAsLayers"] == True:
             self.__createVertexLayer(True)
             self.__createEdgeLayer(True)
-        
-        
+               
         
         return self.graph
         

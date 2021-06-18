@@ -186,15 +186,32 @@ class AdvancedCostCalculator():
                 f = np.array(pointValuesForEdge, dtype=float)
                 gradient = np.gradient(f)
                 return str(np.sum(gradient))
-            elif "gradientMin" in part:
+            elif ":gradientMin" in part:
                 f = np.array(pointValuesForEdge, dtype=float)
                 gradient = np.gradient(f)
                 return str(np.min(gradient))
-            elif "gradientMax" in part:
+            elif ":gradientMax" in part:
                 f = np.array(pointValuesForEdge, dtype=float)
                 gradient = np.gradient(f)
                 return str(np.max(gradient))
-            
+            elif ":ascent" in part:
+                ascent = 0
+                for i in range(len(pointValuesForEdge)-1):
+                    if pointValuesForEdge[i] < pointValuesForEdge[i+1]:
+                        ascent = ascent + (pointsValuesForEdge[i+1] - pointsValuesForEdge[i])
+                return str(ascent)                             
+            elif ":descent" in part:
+                descent = 0
+                for i in range(len(pointValuesForEdge)-1):
+                    if pointValuesForEdge[i] > pointValuesForEdge[i+1]:
+                        descent = descent + (pointsValuesForEdge[i] - pointsValuesForEdge[i+1])
+                return str(descent)        
+            elif ":totalClimb" in part:
+                totalClimb = 0
+                for i in range(len(pointValuesForEdge)-1):
+                    totalClimb = totalClimb + abs(pointsValuesForEdge[i] - pointsValuesForEdge[i+1])
+                return str(totalClimb) 
+                        
         return str("0")
         
     def __evaluateIfs(self, part):

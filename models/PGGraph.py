@@ -20,8 +20,9 @@ class PGGraph(QgsGraph):
         super().__init__()
         self.distanceStrategy = "Euclidean"
         # list of list to hold multiple weight function values
-        self.edgeWeights = []        
-        self.vertexWeights = []                
+        self.edgeWeights = []
+        self.vertexWeights = []
+        
     
     def setDistanceStrategy(self, strategy):
         """
@@ -31,6 +32,16 @@ class PGGraph(QgsGraph):
         :type strategy: String
         """
         self.distanceStrategy = strategy
+     
+    def setCostOfEdge(self, edgeID, cost):
+        """
+        Set cost of a specific edge.
+        
+        :type edgeID: Integer
+        :type cost: Integer
+        """
+        self.edgeWeights[edgeID] = cost
+        
              
     def costOfEdge(self, edgeID, functionIndex = 0):  
         """
@@ -112,8 +123,7 @@ class PGGraph(QgsGraph):
             if self.edge(i).fromVertex() == vertex1 and self.edge(i).toVertex() == vertex2:
                 return True
                
-        return False
-              
+        return False             
                           
     def addEdge(self, vertex1, vertex2):       
         # overload to not use distance strategy
@@ -154,8 +164,7 @@ class PGGraph(QgsGraph):
         file.write("\t</graph>\n")
         file.write("</graphml>")
         file.close()
-    
-    
+       
     def readGraphML(self, path):   
         """
         Read a .graphml file into a PGGraph
