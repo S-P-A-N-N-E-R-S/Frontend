@@ -42,8 +42,9 @@ class CreateGraphController(BaseController):
         self.view.setSavePathFilter("GraphML (*.graphml );;Shape files (*.shp)")
 
     def createGraph(self):
-        if len(self.activeGraphTasks) >= self.maxNumberTasks:
-            self.view.showWarning("Can not building graph due to task limit of {}!".format(self.maxNumberTasks))
+        if len(CreateGraphController.activeGraphTasks) >= CreateGraphController.maxNumberTasks:
+            self.view.showWarning("Can not building graph due to task limit of {}!".format(
+                CreateGraphController.maxNumberTasks))
             return
 
         self.view.showInfo("Start graph building..")
@@ -127,7 +128,7 @@ class CreateGraphController(BaseController):
 
         # create and run task from function
         graphTask = QgsTask.fromFunction("Make graph task", builder.makeGraphTask, on_finished=self.completed)
-        self.activeGraphTasks.append(graphTask)
+        CreateGraphController.activeGraphTasks.append(graphTask)
         QgsApplication.taskManager().addTask(graphTask)
 
     def completed(self, exception, result=None):
@@ -140,8 +141,10 @@ class CreateGraphController(BaseController):
         QgsMessageLog.logMessage("Process make graph task results", level=Qgis.Info)
 
         # first remove all completed or canceled tasks from list
-        self.activeGraphTasks = [task for task in self.activeGraphTasks if task.isActive()]
-        QgsMessageLog.logMessage("Remaining tasks: {}".format(len(self.activeGraphTasks)), level=Qgis.Info)
+        CreateGraphController.activeGraphTasks = [task for task in CreateGraphController.activeGraphTasks
+                                                  if task.isActive()]
+        QgsMessageLog.logMessage("Remaining tasks: {}".format(len(CreateGraphController.activeGraphTasks)),
+                                 level=Qgis.Info)
 
         if exception is None:
             if result is None:
@@ -162,7 +165,8 @@ class CreateGraphController(BaseController):
                 iface.messageBar().pushMessage("Success", "Graph created!", level=Qgis.Success)
                 self.view.insertLogText("Graph created!\n")
 
-            self.view.insertLogText("Remaining graph creation processes : {}\n".format(len(self.activeGraphTasks)))
+            self.view.insertLogText("Remaining graph creation processes : {}\n".format(
+                len(CreateGraphController.activeGraphTasks)))
         else:
             QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
             raise exception
