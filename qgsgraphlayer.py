@@ -396,16 +396,45 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     def getGraph(self):
         return self.mGraph
 
-    def exportToShapefile(self):
+    def exportToFile(self, fileType=0):
+        """Generic function to export GraphLayers features (either points or linestrings) to a file.
+
+        Args:
+            fileType (int, optional): Defines which fileType to export to:
+                                        0 - Shapefile
+                                        1 - Geopackage
+                                        2 - CSV. Defaults to 0.
+
+        Returns:
+            [boolean]: True if export was successfull.
+        """
+        
         if self.hasEdges:
             geomType = QgsWkbTypes.LineString
         else:
             geomType = QgsWkbTypes.Point
 
-        fileName = self.mName + ".shp"
+        fileName = self.mName
+        driver = ""
+
+        if fileType == 0: # Shapefile
+            fileName += ".shp"
+            driver = "ESRI Shapefile"
+
+        elif fileType == 1: # Geopackage
+            print("Export to Geopackage")
+            fileName += ".gpkg"
+            driver = "GPKG" # geopackage is default
+
+        elif fileType == 2: # CSV
+            fileName += ".csv"
+            driver = "CSV"
+        
+        else:
+            return False
 
         writer = QgsVectorFileWriter(fileName, "utf-8", self.fields(),
-                                        geomType, self.mCrs, "ESRI Shapefile")
+                                        geomType, self.mCrs, driver)
 
         if writer.hasError() != QgsVectorFileWriter.NoError:
             print("ERROR: ", writer.errorMessage())
