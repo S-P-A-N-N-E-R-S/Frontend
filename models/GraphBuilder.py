@@ -348,7 +348,7 @@ class GraphBuilder:
             
     def __removeIntersectingEdges(self): 
         # create the current edge layer              
-        currentEdges = self.__createEdgeLayer(False)
+        currentEdges = self.createEdgeLayer(False)
         # call QGIS tool to extract all the edges which cross the polygon
         result2 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.polygonLayer, "OUTPUT": "memory:"})         
         layerWithDelEdges = result2["OUTPUT"]
@@ -512,8 +512,8 @@ class GraphBuilder:
               
         # create the layers for QGIS
         if self.__options["createGraphAsLayers"] == True:
-            self.__createVertexLayer(True)
-            self.__createEdgeLayer(True)
+            self.createVertexLayer(True)
+            self.createEdgeLayer(True)
                
         
         return self.graph
