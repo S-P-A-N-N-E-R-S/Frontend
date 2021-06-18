@@ -6,9 +6,9 @@ from qgis.utils import iface
 from qgis.PyQt.QtCore import QVariant, QPointF
 from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtXml import *
+from qgis.PyQt.QtWidgets import QDialog, QPushButton, QMenu, QBoxLayout, QLabel
 
 import traceback
-from collections import defaultdict
 
 class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
 
@@ -213,6 +213,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
     def setGeometryToPoint(self, points):
         self._points = points
 
+
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
     def __init__(self, layerId, rendererContext, graph):
@@ -278,6 +279,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
         return True
 
+
 class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     """Subclass of PluginLayer to render a QgsGraph (and its subclasses) 
         and to save a QgsGraph (and its subclasses) to the project file.
@@ -310,6 +312,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mDataProvider.setCrs(self.mCrs)
 
         self.setDataSource(self.mDataProvider.dataSourceUri(), self.mName, self.mDataProvider.providerKey(), QgsDataProvider.ProviderOptions())
+
+        self.width = 0
 
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
@@ -464,7 +468,6 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         return True
 
-
     def readXml(self, node, context):
         """Read QgsGraph (and its subclasses) from the project file.
 
@@ -584,6 +587,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mLayerType = layerType
         self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.mLayerType)
 
+
 class QgsGraphLayerType(QgsPluginLayerType):
     """When loading a project containing a QgsGraphLayer, a factory class is needed.
 
@@ -595,3 +599,40 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
     def createLayer(self):
         return QgsGraphLayer()
+
+    def showLayerProperties(self, layer):
+        win = QDialog(iface.mainWindow())
+        win.setVisible(True)
+
+        # QBoxLayout to add widgets to
+        layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+
+        # QLabel with information about the GraphLayer
+        label = QLabel(layer.mName + "\n Vertices: " + str(layer.getGraph().vertexCount()) + "\n Edges: " + str(layer.getGraph().edgeCount()))
+        label.setWordWrap(True)
+        label.setVisible(True)
+        layout.addWidget(label)
+
+        # button for exportToVectorLayer
+        exportVL = QPushButton("Export to VectorLayer")
+        exportVL.setVisible(True)
+        exportVL.clicked.connect(layer.exportToVectorLayer)
+        layout.addWidget(exportVL)
+
+        # button with menu for exportToFile
+        exportFButton = QPushButton("Export To File")
+        exportFButton.setVisible(True)
+
+        exportF = QMenu("Export To File", exportFButton)
+        exportF.addAction("Export To Shapefile", lambda: layer.exportToFile(0))
+        exportF.addAction("Export To Geopackage", lambda: layer.exportToFile(1))
+        exportF.addAction("Export to CSV", lambda: layer.exportToFile(2))
+        exportF.setVisible(True)
+
+        exportFButton.setMenu(exportF)
+        layout.addWidget(exportFButton)
+
+        win.setLayout(layout)
+        win.adjustSize()
+
+        return True
