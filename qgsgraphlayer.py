@@ -447,6 +447,24 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         return True
 
+    def exportToVectorLayer(self):
+        if self.hasEdges:
+            vLayer = QgsVectorLayer("LineString", "GraphEdges", "memory")
+        else:
+            vLayer = QgsVectorLayer("Point", "GraphVertices", "memory")
+
+        vDp = vLayer.dataProvider()
+
+        vDp.addAttributes(self.mFields)
+
+        for feat in self.mDataProvider.getFeatures():
+            vDp.addFeature(feat)
+
+        QgsProject.instance().addMapLayer(vLayer)
+
+        return True
+
+
     def readXml(self, node, context):
         """Read QgsGraph (and its subclasses) from the project file.
 
