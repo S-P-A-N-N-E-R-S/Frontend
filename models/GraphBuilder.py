@@ -368,7 +368,7 @@ class GraphBuilder:
                
         self.graph = newGraph
     
-    def __createVertexLayer(self, addToCanvas):
+    def createVertexLayer(self, addToCanvas):
         """
         Method creates a QgsVectorLayer containing points. The points are the vertices of the graph.
         
@@ -398,7 +398,7 @@ class GraphBuilder:
     
         return graphLayerVertices
        
-    def __createEdgeLayer(self, addToCanvas):
+    def createEdgeLayer(self, addToCanvas):
         """
         Method creates a QgsVectorLayer containing lines. The lines are the edges of the graph. The weights are
         visible by creating labels.
