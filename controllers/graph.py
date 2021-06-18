@@ -47,6 +47,7 @@ class CreateGraphController(BaseController):
             return
 
         self.view.showInfo("Start graph building..")
+        self.view.insertLogText("Start graph building..\n")
         builder = GraphBuilder()
         builder.setOption("createGraphAsLayers", False)
 
@@ -145,6 +146,7 @@ class CreateGraphController(BaseController):
         if exception is None:
             if result is None:
                 QgsMessageLog.logMessage("Task completed with no result", level=Qgis.Warning)
+                self.view.insertLogText("Graph process completed with no result\n")
             else:
                 graph = result["graph"]
                 vertexLayer = result["vertexLayer"]
@@ -158,6 +160,9 @@ class CreateGraphController(BaseController):
 
                 self.view.showSuccess("Graph created!")
                 iface.messageBar().pushMessage("Success", "Graph created!", level=Qgis.Success)
+                self.view.insertLogText("Graph created!\n")
+
+            self.view.insertLogText("Remaining graph creation processes : {}\n".format(len(self.activeGraphTasks)))
         else:
             QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
             raise exception

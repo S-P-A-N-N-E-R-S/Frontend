@@ -5,6 +5,8 @@ from qgis.core import QgsMapLayerProxyModel
 
 from PyQt5.QtCore import QTimer
 
+import time
+
 
 class CreateGraphView(BaseContentView):
 
@@ -197,10 +199,10 @@ class CreateGraphView(BaseContentView):
     # log
 
     def setLogText(self, text):
-        self.dialog.create_graph_log.setPlainText(text)
+        self.dialog.create_graph_log.setPlainText(self._logText(text))
 
     def insertLogText(self, text):
-        self.dialog.create_graph_log.insertPlainText(text)
+        self.dialog.create_graph_log.insertPlainText(self._logText(text))
 
     def setLogHtml(self, text):
         self.dialog.create_graph_log.setHtml(text)
@@ -216,3 +218,6 @@ class CreateGraphView(BaseContentView):
 
     def getLogHtml(self):
         return self.dialog.create_graph_log.toHtml()
+
+    def _logText(self, text):
+        return "{asctime} - {text}".format(asctime=time.asctime(), text=text)
