@@ -12,15 +12,16 @@ from qgis.utils import iface
 
 class CreateGraphController(BaseController):
 
+    # class variables shared by all instances
+    activeGraphTasks = []
+    maxNumberTasks = 3
+
     def __init__(self, view):
         """
         Constructor
         :type view: CreateGraphView
         """
         super().__init__(view)
-
-        self.maxNumberTasks = 3
-        self.activeGraphTasks = []
 
         self.view.addConnectionType("Nearest neighbor")
         self.view.addConnectionType("Complete")
