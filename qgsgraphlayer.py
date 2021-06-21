@@ -8,7 +8,7 @@ from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog
 
-import traceback
+import traceback, random
 
 class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
 
@@ -85,7 +85,6 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
     Args:
         QgsVectorDataProvider ([type]): Extends QgsVectorDataProvider to be able to store fields and features.
-                                        Makes GraphLayer storeable / exportable (TODO)
     """
 
     nextFeatId = 1
@@ -107,7 +106,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         super().__init__(uri)
 
         tempLayer = QgsVectorLayer(uri, "tmp", "memory")
-        self.mCrs = QgsProject.instance().crs()
+        self.mCRS = QgsProject.instance().crs()
         
         self._uri = uri
         self._providerOptions = providerOptions
@@ -133,13 +132,13 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         return self._uri
 
     def setCrs(self, crs):
-        self.mCrs = crs
+        self.mCRS = crs
 
     def crs(self):
-        if self.mCrs == None:
-            return QgsCoordinateReferenceSystem()
+        if self.mCRS == None:
+            return QgsProject.instance().crs()
 
-        return self.mCrs
+        return self.mCRS
 
     def featureSource(self):
         return QgsGraphFeatureSource(self)
@@ -195,10 +194,9 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
     def subsetString(self):
         return self._subsetString
 
-    
     def extent(self):
         # TODO this update of extent maybe in addFeature?
-        for feat in self._features.values():
+        for feat in self._features:
             self._extent.combineExtentWith(feat.geometry().boundingBox())
 
         return self._extent
@@ -216,7 +214,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
-    def __init__(self, layerId, rendererContext, graph):
+    def __init__(self, layerId, rendererContext, graph, crs, showEdgeText=True, randomColor=QColor("red")):
         super().__init__(layerId, rendererContext)
 
         try:
@@ -224,6 +222,12 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
             self.rendererContext = rendererContext
             
             self.mGraph = graph
+
+            self.mCRS = crs
+
+            self.randomColor = randomColor
+
+            self.mShowText = showEdgeText
 
         except Exception as err:
             print(err)
@@ -235,7 +239,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
         painter = self.renderContext().painter()
         painter.setPen(QColor('black'))
-        painter.setBrush(QColor('red'))
+        painter.setBrush(self.randomColor)
         painter.setFont(QFont("arial", 5))
 
         # if isinstance(self.mGraph, PGGraph):
@@ -254,6 +258,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         point = converter.toCanvasCoordinates(self.mGraph.vertex(id).point())
                         
                         painter.setPen(QColor('black'))
+                        # don't draw border of vertices if graph has edges
+                        if self.mGraph.edgeCount() != 0:
+                            painter.setPen(self.randomColor)
                         painter.drawEllipse(point, 2.0, 2.0)
 
                     # draw edges                    
@@ -266,8 +273,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         painter.drawLine(toPoint, fromPoint)
                         
                         # add text with edgeCost at line mid point
-                        midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                        painter.drawText(midPoint, "1")
+                        if self.mShowText:
+                            midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
+                            painter.drawText(midPoint, "1")
 
                 iface.mapCanvas().scene().removeItem(converter)
             except Exception as err:
@@ -278,7 +286,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.restore()
 
         return True
-
 
 class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     """Subclass of PluginLayer to render a QgsGraph (and its subclasses) 
@@ -307,13 +314,23 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mDataProvider = QgsGraphDataProvider("Point")
         self.mFields = QgsFields()
 
-        self.mCrs = QgsProject.instance().crs()
-        self.__crsUri = "crs=" + self.mCrs.authid()
-        self.mDataProvider.setCrs(self.mCrs)
+        if self.crs().isValid():
+            self.mCRS = self.crs()
+        else:
+            self.mCRS = QgsProject.instance().crs()
+            self.setCrs(self.mCRS)
+
+        self.__crsUri = "crs=" + self.mCRS.authid()
+        self.mDataProvider.setCrs(self.mCRS)
 
         self.setDataSource(self.mDataProvider.dataSourceUri(), self.mName, self.mDataProvider.providerKey(), QgsDataProvider.ProviderOptions())
 
-        self.width = 0
+        self.mShowEdgeText = True
+
+        self.randomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+        self.nameChanged.connect(self.updateName)
+        self.crsChanged.connect(self.updateCrs)
 
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
@@ -322,13 +339,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     def fields(self):
         return self.mFields
 
-    def setCrs(self, crs):
-        self.mCrs = crs
-        self.__crsUri = "crs=" + crs.authid()
-        self.mDataProvider.setCrs(crs)
-
     def createMapRenderer(self, rendererContext):
-        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph)
+        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph, self.mCRS, self.mShowEdgeText, self.randomColor)
 
     def setTransformContext(self, ct):
         pass 
@@ -435,7 +447,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         # write features in QgsVectorFileWriter (save features in selected file)
         writer = QgsVectorFileWriter(fileName, "utf-8", self.fields(),
-                                        geomType, self.mCrs, driver)
+                                        geomType, self.mCRS, driver)
 
         if writer.hasError() != QgsVectorFileWriter.NoError:
             print("ERROR: ", writer.errorMessage())
@@ -478,8 +490,15 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         graph = QgsGraph()
         # graph = PGGraph()
 
+        # find srs node in xml
+        srsNode = node.firstChild()
+        while srsNode.nodeName() != "srs":
+            srsNode = srsNode.nextSibling()
+
+        self.mCRS.readXml(srsNode)
+
         # find graph node in xml
-        graphNode = node.firstChild()
+        graphNode = srsNode
         while graphNode.nodeName() != "graphData":
             graphNode = graphNode.nextSibling()
             
@@ -523,6 +542,15 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             node.toElement().setAttribute("type", "plugin")
             node.toElement().setAttribute("name", QgsGraphLayer.LAYER_TYPE)
 
+        # find srs node in xml
+        srsNode = node.firstChild()
+        while srsNode.nodeName() != "srs":
+            srsNode = srsNode.nextSibling()
+        
+        # store crs information in xml
+        srsNode.removeChild(srsNode.firstChild())
+        self.crs().writeXml(srsNode, doc)
+        
         # graphNode saves all graphData
         graphNode = doc.createElement("graphData")
         node.appendChild(graphNode)
@@ -584,6 +612,33 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mLayerType = layerType
         self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.mLayerType)
 
+    def zoomToExtent(self):
+        canvas = iface.mapCanvas()
+        canvas.setExtent(self.mDataProvider.extent())
+
+        canvas.refresh()
+
+    def toggleText(self):
+        self.mShowEdgeText = not self.mShowEdgeText
+        
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
+
+    def updateName(self):
+        self.mName = self.name()
+
+    def updateCrs(self):
+        self.mCRS = self.crs()
+        self.__crsUri = "crs=" + self.crs().authid()
+        self.mDataProvider.setCrs(self.crs())
+
+        # self.triggerRepaint()
+
+    def newRandomColor(self):
+        self.randomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
 
 class QgsGraphLayerType(QgsPluginLayerType):
     """When loading a project containing a QgsGraphLayer, a factory class is needed.
@@ -605,22 +660,43 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
         # QLabel with information about the GraphLayer
-        label = QLabel(layer.mName + "\n Vertices: " + str(layer.getGraph().vertexCount()) + "\n Edges: " + str(layer.getGraph().edgeCount()))
+        label = QLabel(layer.mName +
+                        "\n Vertices: " + str(layer.getGraph().vertexCount()) +
+                        "\n Edges: " + str(layer.getGraph().edgeCount()) +
+                        "\n CRS: " + layer.crs().authid())
         label.setWordWrap(True)
         label.setVisible(True)
         layout.addWidget(label)
 
+        # button to zoom to layers extent
+        zoomExtentButton = QPushButton("Zoom to Layer")
+        zoomExtentButton.setVisible(True)
+        zoomExtentButton.clicked.connect(layer.zoomToExtent)
+        layout.addWidget(zoomExtentButton)
+
+        # button to toggle rendered text (mainly edge costs)
+        toggleTextButton = QPushButton("Toggle Edge Text")
+        toggleTextButton.setVisible(layer.getGraph().edgeCount() != 0) # don't show this button when graph has no edges
+        toggleTextButton.clicked.connect(layer.toggleText)
+        layout.addWidget(toggleTextButton)
+
         # button for exportToVectorLayer
-        exportVL = QPushButton("Export to VectorLayer")
-        exportVL.setVisible(True)
-        exportVL.clicked.connect(layer.exportToVectorLayer)
-        layout.addWidget(exportVL)
+        exportVLButton = QPushButton("Export to VectorLayer")
+        exportVLButton.setVisible(True)
+        exportVLButton.clicked.connect(layer.exportToVectorLayer)
+        layout.addWidget(exportVLButton)
 
         # button for exportToFile
         exportFButton = QPushButton("Export To File")
         exportFButton.clicked.connect(layer.exportToFile)
         exportFButton.setVisible(True)
         layout.addWidget(exportFButton)
+
+        # button to randomize vertex color
+        randomColorButton = QPushButton("Random Vertex Color")
+        randomColorButton.clicked.connect(layer.newRandomColor)
+        randomColorButton.setVisible(True)
+        layout.addWidget(randomColorButton)
 
         win.setLayout(layout)
         win.adjustSize()
