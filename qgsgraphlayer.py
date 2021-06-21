@@ -6,7 +6,7 @@ from qgis.utils import iface
 from qgis.PyQt.QtCore import QVariant, QPointF
 from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtXml import *
-from qgis.PyQt.QtWidgets import QDialog, QPushButton, QMenu, QBoxLayout, QLabel
+from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog
 
 import traceback
 
@@ -400,14 +400,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     def getGraph(self):
         return self.mGraph
 
-    def exportToFile(self, fileType=0):
+    def exportToFile(self):
         """Generic function to export GraphLayers features (either points or linestrings) to a file.
-
-        Args:
-            fileType (int, optional): Defines which fileType to export to:
-                                        0 - Shapefile
-                                        1 - Geopackage
-                                        2 - CSV. Defaults to 0.
 
         Returns:
             [boolean]: True if export was successfull.
@@ -418,25 +412,28 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         else:
             geomType = QgsWkbTypes.Point
 
-        fileName = self.mName
+        # get saveFileName and datatype to export to
+        saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;Geopackage (*.gpkg);;CSV (*.csv)")
+        fileName = saveFileName[0]
+        
         driver = ""
 
-        if fileType == 0: # Shapefile
+        if saveFileName[1] == "Shapefile (*.shp)": # Shapefile
             fileName += ".shp"
             driver = "ESRI Shapefile"
 
-        elif fileType == 1: # Geopackage
-            print("Export to Geopackage")
+        elif saveFileName[1] == "Geopackage (*.gpkg)": # Geopackage
             fileName += ".gpkg"
-            driver = "GPKG" # geopackage is default
+            driver = "GPKG"
 
-        elif fileType == 2: # CSV
+        elif saveFileName[1] == "CSV (*.csv)": # CSV
             fileName += ".csv"
             driver = "CSV"
         
         else:
             return False
 
+        # write features in QgsVectorFileWriter (save features in selected file)
         writer = QgsVectorFileWriter(fileName, "utf-8", self.fields(),
                                         geomType, self.mCrs, driver)
 
@@ -619,17 +616,10 @@ class QgsGraphLayerType(QgsPluginLayerType):
         exportVL.clicked.connect(layer.exportToVectorLayer)
         layout.addWidget(exportVL)
 
-        # button with menu for exportToFile
+        # button for exportToFile
         exportFButton = QPushButton("Export To File")
+        exportFButton.clicked.connect(layer.exportToFile)
         exportFButton.setVisible(True)
-
-        exportF = QMenu("Export To File", exportFButton)
-        exportF.addAction("Export To Shapefile", lambda: layer.exportToFile(0))
-        exportF.addAction("Export To Geopackage", lambda: layer.exportToFile(1))
-        exportF.addAction("Export to CSV", lambda: layer.exportToFile(2))
-        exportF.setVisible(True)
-
-        exportFButton.setMenu(exportF)
         layout.addWidget(exportFButton)
 
         win.setLayout(layout)
