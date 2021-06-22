@@ -4,11 +4,11 @@ from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QVariant, QPointF
-from qgis.PyQt.QtGui import QColor, QFont
+from qgis.PyQt.QtGui import QColor, QFont, QPainterPath
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog
 
-import traceback, random
+import traceback, random, math
 
 class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
 
@@ -214,7 +214,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
-    def __init__(self, layerId, rendererContext, graph, crs, showEdgeText=True, randomColor=QColor("red"), transform=QgsCoordinateTransform()):
+    def __init__(self, layerId, rendererContext, graph, crs, showEdgeText=True, showDirection=True, randomColor=QColor("red"), transform=QgsCoordinateTransform()):
         super().__init__(layerId, rendererContext)
 
         try:
@@ -228,12 +228,13 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
             self.randomColor = randomColor
 
             self.mShowText = showEdgeText
+            self.mShowDirection = showDirection
 
             self.mTransform = transform
 
         except Exception as err:
             print(err)
-    
+
     def render(self):
         return self.__drawGraph()
 
@@ -243,6 +244,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setPen(QColor('black'))
         painter.setBrush(self.randomColor)
         painter.setFont(QFont("arial", 5))
+        # painter.setRenderHint(painter.Antialiasing)
 
         # if isinstance(self.mGraph, PGGraph):
         if isinstance(self.mGraph, QgsGraph):
@@ -268,16 +270,27 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         # don't draw border of vertices if graph has edges
                         if self.mGraph.edgeCount() != 0:
                             painter.setPen(self.randomColor)
-                        painter.drawEllipse(point, 2.0, 2.0)
+                        painter.drawEllipse(point, 3.0, 3.0)
 
                     # draw edges                    
                     if id < self.mGraph.edgeCount():
                         edge = self.mGraph.edge(id)
-                        toPoint = converter.toCanvasCoordinates(self.mGraph.vertex(edge.toVertex()).point())
-                        fromPoint = converter.toCanvasCoordinates(self.mGraph.vertex(edge.fromVertex()).point())
+                        toPoint = self.mGraph.vertex(edge.toVertex()).point()
+                        fromPoint = self.mGraph.vertex(edge.fromVertex()).point()
+
+                        if self.mTransform.isValid():
+                            toPoint = self.mTransform.transform(toPoint)
+                            fromPoint = self.mTransform.transform(fromPoint)
+
+                        toPoint = converter.toCanvasCoordinates(toPoint)
+                        fromPoint = converter.toCanvasCoordinates(fromPoint)
 
                         painter.setPen(QColor('black'))
                         painter.drawLine(toPoint, fromPoint)
+
+                        if self.mShowDirection:
+                            arrowHead = self.__createArrowHead(toPoint, fromPoint)
+                            painter.drawPath(arrowHead)
                         
                         # add text with edgeCost at line mid point
                         if self.mShowText:
@@ -293,6 +306,30 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.restore()
 
         return True
+
+    def __createArrowHead(self, toPoint, fromPoint):
+        # create an arrowhead path (used for directed edges)
+        arrowHead = QPainterPath(toPoint)
+        if toPoint.y() != fromPoint.y():
+            m = (toPoint.x() - fromPoint.x()) / (toPoint.y() - fromPoint.y())
+            angle = math.degrees(math.atan(m))
+        else:
+            angle = 0 
+
+        # rotate first arrwHeadHalf (-10, 0)
+        firstX = math.cos(0.5 * angle) * (-10)
+        firstY = math.sin(0.5 * angle) * (-10)
+
+        # rotate second arrowHeadHalf (0, 10)
+        secondX = -math.sin( 0.5 * angle) * 10
+        secondY = math.cos(0.5 * angle) * 10
+        
+        arrowHead.lineTo(toPoint.x() + firstX, toPoint.y() + firstY)
+        arrowHead.moveTo(toPoint.x(), toPoint.y())
+        arrowHead.lineTo(toPoint.x() + secondX, toPoint.y() + secondY)
+
+        return arrowHead
+
 
 class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     """Subclass of PluginLayer to render a QgsGraph (and its subclasses) 
@@ -332,7 +369,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         self.setDataSource(self.mDataProvider.dataSourceUri(), self.mName, self.mDataProvider.providerKey(), QgsDataProvider.ProviderOptions())
 
-        self.mShowEdgeText = True
+        self.mShowEdgeText = False
+        self.mShowDirection = False
 
         self.randomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
@@ -340,7 +378,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.crsChanged.connect(self.updateCrs)
 
         self.mTransform = QgsCoordinateTransform() # default is invalid
-
+        
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
         return self.mDataProvider
@@ -349,7 +387,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mFields
 
     def createMapRenderer(self, rendererContext):
-        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph, self.mCRS, self.mShowEdgeText, self.randomColor, self.mTransform)
+        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph, self.mCRS,
+                                    self.mShowEdgeText, self.mShowDirection, self.randomColor, self.mTransform)
 
     def setTransformContext(self, ct):
         pass 
@@ -483,7 +522,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             vDp.addFeature(feat)
 
         vLayer.setCrs(self.mCRS)
-        
+
         QgsProject.instance().addMapLayer(vLayer)
 
         return True
@@ -658,6 +697,12 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.triggerRepaint()
         iface.mapCanvas().refresh()
 
+    def toggleDirection(self):
+        self.mShowDirection = not self.mShowDirection
+
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
+
 class QgsGraphLayerType(QgsPluginLayerType):
     """When loading a project containing a QgsGraphLayer, a factory class is needed.
 
@@ -697,6 +742,12 @@ class QgsGraphLayerType(QgsPluginLayerType):
         toggleTextButton.setVisible(layer.getGraph().edgeCount() != 0) # don't show this button when graph has no edges
         toggleTextButton.clicked.connect(layer.toggleText)
         layout.addWidget(toggleTextButton)
+
+        # button to toggle drawing of arrowHead to show edge direction
+        toggleDirectionButton = QPushButton("Toggle Direction")
+        toggleDirectionButton.setVisible(layer.getGraph().edgeCount() != 0)
+        toggleDirectionButton.clicked.connect(layer.toggleDirection)
+        layout.addWidget(toggleDirectionButton)
 
         # button for exportToVectorLayer
         exportVLButton = QPushButton("Export to VectorLayer")
