@@ -23,12 +23,15 @@ class ProtoPlugin:
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu("&Proto Plugin", self.action)
 
+        # important to keep
         QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
 
+        # important to keep
         QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
                                                                             QgsGraphDataProvider.description(),
                                                                             QgsGraphDataProvider.createProvider()))
 
+        # important to keep
         # re-read and therefore reload plugin layers after adding QgsGraphLayerType to PluginLayerRegistry
         self.reloadPluginLayers()
 
@@ -36,6 +39,7 @@ class ProtoPlugin:
         self.iface.removePluginMenu("&Proto Plugin", self.action)
         self.iface.removeToolBarIcon(self.action)
 
+        # important to keep
         QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
 
 
@@ -43,6 +47,7 @@ class ProtoPlugin:
         print("ProtoPlugin: Run Called!")
         self.createGraph()
 
+    # important to keep
     def reloadPluginLayers(self):
         """Re-reads and reloads plugin layers
         """
@@ -68,6 +73,7 @@ class ProtoPlugin:
         #     if remLayer.type() == None:
         #         QgsProject.instance().removeMapLayer(remLayer)
 
+    # semi-important to keep
     def addLayer(self, layerType):
         layer = QgsGraphLayer()
         layer.setLayerType(layerType)
