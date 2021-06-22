@@ -214,7 +214,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
-    def __init__(self, layerId, rendererContext, graph, crs, showEdgeText=True, randomColor=QColor("red")):
+    def __init__(self, layerId, rendererContext, graph, crs, showEdgeText=True, randomColor=QColor("red"), transform=QgsCoordinateTransform()):
         super().__init__(layerId, rendererContext)
 
         try:
@@ -228,6 +228,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
             self.randomColor = randomColor
 
             self.mShowText = showEdgeText
+
+            self.mTransform = transform
 
         except Exception as err:
             print(err)
@@ -255,7 +257,12 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                 for id in range(max):
                     # draw vertices
                     if id < self.mGraph.vertexCount():
-                        point = converter.toCanvasCoordinates(self.mGraph.vertex(id).point())
+                        point = self.mGraph.vertex(id).point()
+
+                        if self.mTransform.isValid():
+                            point = self.mTransform.transform(point)
+
+                        point = converter.toCanvasCoordinates(point)
                         
                         painter.setPen(QColor('black'))
                         # don't draw border of vertices if graph has edges
@@ -332,6 +339,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.nameChanged.connect(self.updateName)
         self.crsChanged.connect(self.updateCrs)
 
+        self.mTransform = QgsCoordinateTransform() # default is invalid
+
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
         return self.mDataProvider
@@ -340,7 +349,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mFields
 
     def createMapRenderer(self, rendererContext):
-        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph, self.mCRS, self.mShowEdgeText, self.randomColor)
+        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph, self.mCRS, self.mShowEdgeText, self.randomColor, self.mTransform)
 
     def setTransformContext(self, ct):
         pass 
@@ -473,6 +482,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         for feat in self.mDataProvider.getFeatures():
             vDp.addFeature(feat)
 
+        vLayer.setCrs(self.mCRS)
+        
         QgsProject.instance().addMapLayer(vLayer)
 
         return True
@@ -614,7 +625,9 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
     def zoomToExtent(self):
         canvas = iface.mapCanvas()
-        canvas.setExtent(self.mDataProvider.extent())
+        extent = self.mDataProvider.extent()
+
+        canvas.setExtent(self.mTransform.transform(self.mDataProvider.extent()))
 
         canvas.refresh()
 
@@ -632,7 +645,12 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
 
-        # self.triggerRepaint()
+        # transform drawn coordinates -> coordinates stay the same in graph and features
+        destCRS = iface.mapCanvas().mapSettings().destinationCrs()
+        self.mTransform = QgsCoordinateTransform(self.mCRS, destCRS, QgsProject.instance())
+
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
 
     def newRandomColor(self):
         self.randomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
