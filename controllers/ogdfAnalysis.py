@@ -49,10 +49,12 @@ class OGDFAnalysisController(BaseController):
 
         with Client(host, port) as client:
             shortPathRequest = ShortPathRequest(graph, startNodeIndex, endNodeIndex)
-            msgLength = client.sendShortPathRequest(shortPathRequest)
+            _msgLength = client.send(shortPathRequest)
 
             try:
-                response = client.readShortPathResponse(ShortPathResponse(PGGraph()))
+                # receive response
+                response = ShortPathResponse(PGGraph())
+                client.recv(response)
             except NetworkClientError as e:
                 self.view.showError(str(e))
 
