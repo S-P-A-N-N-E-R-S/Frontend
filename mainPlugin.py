@@ -7,7 +7,7 @@ from qgis.gui import *
 from qgis.analysis import *
 
 
-from .qgsgraphlayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
+from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
 
 class ProtoPlugin:
 
