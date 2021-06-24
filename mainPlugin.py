@@ -2,6 +2,10 @@ from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
 from qgis.PyQt.QtXml import *
 
+from qgis.core import *
+from qgis.gui import *
+from qgis.analysis import *
+
 from .views.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath, getPluginPath
 
@@ -150,4 +154,3 @@ class ProtoPlugin:
 
 
         return layer
-        
