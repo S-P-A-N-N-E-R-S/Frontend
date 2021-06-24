@@ -9,6 +9,8 @@ from qgis.analysis import *
 
 from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
 
+import os
+
 class ProtoPlugin:
 
     def __init__(self, iface):
@@ -51,8 +53,26 @@ class ProtoPlugin:
     def reloadPluginLayers(self):
         """Re-reads and reloads plugin layers
         """
-        # read project file as QDomDocument
-        with open(QgsProject.instance().absoluteFilePath(), 'r') as projectFile:
+        # if project is empty
+        if QgsProject.instance().baseName() == "":
+            return False
+
+        wasZipped = False
+        if not QgsProject.instance().isZipped():
+            readFileName = QgsProject.instance().absoluteFilePath()
+        else:
+            # temporarily unzip qgz to qgs
+            directory = QgsProject.instance().absolutePath() + "/" + QgsProject.instance().baseName()
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            QgsZipUtils.unzip(QgsProject.instance().absoluteFilePath(), directory)
+
+            readFileName = directory + "/" + QgsProject.instance().baseName() + ".qgs"
+
+            wasZipped = True
+
+        # read def. not zipped project file
+        with open(readFileName, 'r') as projectFile:
             projectDocument = QDomDocument()
             projectDocument.setContent(projectFile.read())
 
@@ -67,11 +87,11 @@ class ProtoPlugin:
                     # re-read plugin layer from node
                     QgsProject.instance().readLayer(mapLayerNode)
 
-        # readLayer() adds a new layer but does not remove not correctly loaded layer
-        # TODO: find a way to remove those layers -> following mapLayers() doesnt return those layers
-        # for remLayer in QgsProject.instance().mapLayers():
-        #     if remLayer.type() == None:
-        #         QgsProject.instance().removeMapLayer(remLayer)
+        # delete unzipped directory
+        if wasZipped:
+            os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
+            os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
+            os.rmdir(directory)
 
     # semi-important to keep
     def addLayer(self, layerType):

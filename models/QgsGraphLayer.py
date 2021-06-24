@@ -17,23 +17,19 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
     def __init__(self, layerId, rendererContext, graph, crs, showEdgeText=True, showDirection=True, randomColor=QColor("red"), transform=QgsCoordinateTransform()):
         super().__init__(layerId, rendererContext)
 
-        try:
-            self.layerId = layerId
-            self.rendererContext = rendererContext
-            
-            self.mGraph = graph
+        self.layerId = layerId
+        self.rendererContext = rendererContext
+        
+        self.mGraph = graph
 
-            self.mCRS = crs
+        self.mCRS = crs
 
-            self.randomColor = randomColor
+        self.randomColor = randomColor
 
-            self.mShowText = showEdgeText
-            self.mShowDirection = showDirection
+        self.mShowText = showEdgeText
+        self.mShowDirection = showDirection
 
-            self.mTransform = transform
-
-        except Exception as err:
-            print(err)
+        self.mTransform = transform
 
     def render(self):
         return self.__drawGraph()
