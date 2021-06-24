@@ -38,58 +38,62 @@ class AdvancedCostCalculator():
         self.rasterBands = rasterBands
         self.operators = ["+","-","*","/","(",")"]
     
-    def __translate(self, part, edgeID, sampledPointsLayers):
-        edge = self.graph.edge(edgeID)
-        
+    def __translate(self, part, edgeID, sampledPointsLayer):
+        edge = self.graph.edge(edgeID)       
         # operator or bracket do not need to be translated
         if part in self.operators or part.isnumeric():                       
             return str(part)          
-        
+       
         # normal distance metrics
-        if "euclidean" == part:
+        if "euclidean" in part:
             return str(self.graph.euclideanDist(edgeID))
         
-        elif "manhattan" == part:
+        elif "manhattan" in part:
             return str(self.graph.manhattanDist(edgeID))
         
-        elif "geodesic" == part:
+        elif "geodesic" in part:
             return str(self.graph.geodesicDist(edgeID))
                         
         # translate if part
         elif "if" in part:            
-            expression = part.split(",")[0].split("(")[1]
-            if "<" in expression:
-                comparator = "<"
-            elif ">" in expression:
-                comparator = ">"
-            elif "!=" in expression:
-                comparator = "!="
-            elif "==" in expression:
-                comparator = "=="
-            elif ">=" in expression:
-                comparator = ">="
-            elif "<=" in expression:
-                comparator = "<="       
+            expression = part.split(",")[0].split("[",1)[1]
+            variables = re.split("and|or|not|<|>|==|!=", expression) 
+            varTranslations = []        
             
-            # recursive calls
-            v1 = self.__translate(expression.split(comparator)[0], edgeID)           
-            v2 = self.__translate(expression.split(comparator)[1].split(",")[0], edgeID)            
-            v3 = self.__translate(part.split(",")[1], edgeID)
-            v4 = self.__translate(part.split(",")[2].split(")")[0], edgeID)
-           
-            return "if" + "(" + str(v1) + comparator + str(v2)+ "," + str(v3) + "," + str(v4) + ")"
+            for i in range (len(variables)):
+                variables[i] = variables[i].replace("=", "")
+                                       
+            for var in variables:
+                varTranslations.append(self.__translate(var, edgeID, sampledPointsLayer))                                            
+            
+            counter = 0
+            for var in variables:             
+                expression = expression.replace(var, str(varTranslations[counter]))  
+                counter+=1                                     
+            
+            #print(part.split(",")[1])
+            #print(part.split(",")[2].split("]")[0])
+            
+            v1 = self.__translate(part.split(",")[1], edgeID, sampledPointsLayer)
+            v2 = self.__translate(part.split(",")[2][:-1], edgeID, sampledPointsLayer)            
+            expression = expression.replace("and", " and ")
+            expression = expression.replace("or", " or ")
+            expression = expression.replace("not", " not ")
+                                    
+            # expression and variables to set are translated
+            return "if" + "[" + expression + "," + str(v1) + "," + str(v2) + "]"
         
         # python math method
         elif "math." in part:           
             mathOperation = part.split(".")[1].split("(")[0]
             if "," in part:          
                 # recursive calls               
-                var1 = self.__translate(part.split("(")[1].split(",")[0], edgeID)
-                var2 = self.__translate(part.split(")")[0].split(",")[1], edgeID)
+                var1 = self.__translate(part.split("(")[1].split(",")[0], edgeID, sampledPointsLayer)
+                var2 = self.__translate(part.split(")")[0].split(",")[1], edgeID, sampledPointsLayer)
                 return "math." + mathOperation + "(" + var1 + "," + var2 + ")" 
             else:
                 # recursive call             
-                var = self.__translate(part.split(")")[0].split(",")[1])
+                var = self.__translate(part.split(")")[0].split(",")[1], edgeID, sampledPointsLayer)
                 return "math." + mathOperation + "(" + var + ")"    
         
         # get specified field information from feature
@@ -163,7 +167,7 @@ class AdvancedCostCalculator():
             bandForRaster = self.rasterBands[rasterDataID]    
             stringForLookup = "SAMPLE_" + str(bandForRaster)
             #search for the right edgeID
-            for feature in sampledPointsLayers[rasterDataID].getFeatures():
+            for feature in sampledPointsLayer[rasterDataID].getFeatures():
                 if feature["line_id"] == edgeID:
                     pointValuesForEdge.append(feature[stringForLookup])
             
@@ -198,18 +202,18 @@ class AdvancedCostCalculator():
                 ascent = 0
                 for i in range(len(pointValuesForEdge)-1):
                     if pointValuesForEdge[i] < pointValuesForEdge[i+1]:
-                        ascent = ascent + (pointsValuesForEdge[i+1] - pointsValuesForEdge[i])
+                        ascent = ascent + (pointValuesForEdge[i+1] - pointValuesForEdge[i])
                 return str(ascent)                             
             elif ":descent" in part:
                 descent = 0
                 for i in range(len(pointValuesForEdge)-1):
                     if pointValuesForEdge[i] > pointValuesForEdge[i+1]:
-                        descent = descent + (pointsValuesForEdge[i] - pointsValuesForEdge[i+1])
+                        descent = descent + (pointsValuesForEdge[i] - pointValuesForEdge[i+1])
                 return str(descent)        
             elif ":totalClimb" in part:
                 totalClimb = 0
                 for i in range(len(pointValuesForEdge)-1):
-                    totalClimb = totalClimb + abs(pointsValuesForEdge[i] - pointsValuesForEdge[i+1])
+                    totalClimb = totalClimb + abs(pointValuesForEdge[i] - pointValuesForEdge[i+1])
                 return str(totalClimb) 
                         
         return str("0")
@@ -221,12 +225,14 @@ class AdvancedCostCalculator():
         
         :type part: String
         """      
-        if "if" in part:           
-            expression = part.split(",")[0].split("(")[1]
+        
+        if "if" in part:                 
+            expression = part.split(",")[0].split("[",1)[1]                    
             if eval(expression) == True:
+                
                 return part.split(",")[1]
             else:
-                return part.split(",")[2].split(")")[0]
+                return part.split(",")[2].split("]")[0]
         
         return part
      
@@ -272,30 +278,32 @@ class AdvancedCostCalculator():
                 result2 = processing.run("qgis:rastersampling",{"INPUT": result["OUTPUT"], "RASTERCOPY": self.rLayers[i], "COLUMN_PREFIX": "SAMPLE_", "OUTPUT": "memory:"})
                 sampledPointsLayers.append(result2["OUTPUT"])  
         
+        costFunction = costFunction.replace(" ", "").replace('"', '')       
+            
+        formulaParts = re.split("\+|-|\*|/", costFunction)
+        variables = []
+        
+        for i in range(len(formulaParts)):
+            formulaParts[i] = formulaParts[i].replace("(","").replace(")","")
+            variables.append(formulaParts[i])
+                                                   
         # since the function value depends on the edge the function needs to be evaluated for every edge separately                                                          
-        for i in range(self.graph.edgeCount()):
-            costFunction = costFunction.replace(" ", "").replace('"', '')
-            
-            formulaParts = re.split("\+|-|\*|/", costFunction)
-            operators = []
-            
-            # get the operators to add them back to the function later
-            for symbol in costFunction:
-                if symbol == "+" or symbol == "-" or symbol == "*" or symbol == "/":
-                    operators.append(symbol)                        
-                        
-            # call function to translate the  parts
-            for j in range(len(formulaParts)):
-                formulaParts[j] = self.__translate(formulaParts[j], i, sampledPointsLayers)                                             
+        for i in range(self.graph.edgeCount()):   
+            translatedParts = []                                                       
+            # call function to translate the  parts            
+            for j in range(len(formulaParts)):                                            
+                translatedParts.append(self.__translate(formulaParts[j], i, sampledPointsLayers))                                                                         
             # after all variables are translated to numbers if conditions can be evaluated
             for j in range(len(formulaParts)):
-                formulaParts[j] = self.__evaluateIfs(str(formulaParts[j]))
+                translatedParts[j] = self.__evaluateIfs(str(translatedParts[j]))
             
-            # recreate formula by inserting operators
-            translatedFormula = formulaParts[0]   
-            for p in range(len(operators)):
-                translatedFormula = translatedFormula + operators[p] + formulaParts[p+1] 
+            counter = 0                       
+            translatedFormula = costFunction
+            for var in variables:               
+                translatedFormula = translatedFormula.replace(var,str(translatedParts[counter]))
+                counter+=1
             
+            print(translatedFormula)           
             weights.append(eval(translatedFormula))                                             
         
         # append the list

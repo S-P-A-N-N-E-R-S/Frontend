@@ -51,8 +51,8 @@ class GraphBuilder:
         
         self.__options = {
             "connectionType": "Nearest neighbor",            
-            "neighborNumber": 3,       
-            "nnAllowDoubleEdges": False,
+            "neighborNumber": 2,       
+            "nnAllowDoubleEdges": True,
             "clusterNumber": 5,
             "edgeDirection": "Directed",
             "distanceStrategy": "Euclidean",
@@ -60,6 +60,7 @@ class GraphBuilder:
             "createGraphAsLayers": True,
             "createRandomGraph": True,          
             "usePolygons": False,   
+            "useAdditionalPoints": False
                            
         }
         
@@ -90,6 +91,7 @@ class GraphBuilder:
         if vectorLayer.geometryType() != QgsWkbTypes.PointGeometry:
             raise TypeError("Not a point geometry") 
         
+        self.__options["useAdditionalPoints"] = True
         self.additionalPointLayer = vectorLayer
         
     def setAdditionalLineLayer(self, vectorLayer):
@@ -117,7 +119,7 @@ class GraphBuilder:
         self.__options["createRandomGraph"] = False
         self.vLayer = vectorLayer    
                 
-    def setRasterLayer(self, rasterLayer, band):
+    def setRasterLayer(self, rasterLayer, band = 1):
         """
         Set raster data to be used in the AdvancedCostCalculator class.
         
@@ -136,30 +138,26 @@ class GraphBuilder:
         :return Boolean
         """  
         self.__options["distanceStrategy"] = "Advanced"
-        costFunction = function.replace(" ", "").replace('"', '')            
+        costFunction = function.replace(" ", "").replace('"', '').replace("(","").replace(")","")          
         formulaParts = re.split("\+|-|\*|/", costFunction)
         possibleMetrics = ["euclidean", "manhattan", "geodesic"]
         possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance", 
                                   "standDev", "gradientSum", "gradientMin", "gradientMax"]
-        
+                  
         for i in range(len(formulaParts)):            
             var = formulaParts[i]
-            if not (var in possibleMetrics or var.isnumeric() or "if" in var or "field:" in var or "math." in var or "raster[" in var):
-                return False
-            if "raster["  in var:
-                analysisType = var.split("]:")[1]
-                if not analysisType in possibleRasterAnalysis:
-                    return False
+            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if" in var or "field:" in var or "math." in var or "raster[" in var):                
+                return False                       
                                 
         self.costFunctions.append(function)
         return True
     
-    def setOption(self, optionsType, value):
-        if not optionsType in self.__options:
+    def setOption(self, optionType, value):
+        if not optionType in self.__options:
             raise KeyError("Option not found")                
-        self.__options[optionsType] = value
+        self.__options[optionType] = value
     
-    def setRandomOptions(self, optionType, value):
+    def setRandomOption(self, optionType, value):
         if not optionType in self.__randomOptions:
             raise KeyError("Option not found")
         self.__randomOptions[optionType] = value        
@@ -329,21 +327,22 @@ class GraphBuilder:
                     self.graph.addEdge(id1, id2)
                 
         # add points and connection to network if additional points are given   
-        # use kd tree to get the nearest point         
-        points = []
-        for i in range(self.graph.vertexCount()):
-            point = self.graph.vertex(i).point()
-            points.append([point.x(),point.y(),i])       
-        
-        # build kd tree              
-        tree = kdtree.create(points)
-        counter = 0               
-        for feature in self.additionalPointLayer.getFeatures():
-            counter+=1         
-            geom = feature.geometry()
-            pointID = self.graph.addVertex(geom.asPoint())            
-            nearestPointID = tree.search_knn([self.graph.vertex(pointID).point().x(),self.graph.vertex(pointID).point().y(), counter],2)[1][0].data[2]              
-            self.graph.addEdge(pointID, nearestPointID) 
+        # use kd tree to get the nearest point   
+        if self.__options["useAdditionalPoints"] == True:      
+            points = []
+            for i in range(self.graph.vertexCount()):
+                point = self.graph.vertex(i).point()
+                points.append([point.x(),point.y(),i])       
+            
+            # build kd tree              
+            tree = kdtree.create(points)
+            counter = 0               
+            for feature in self.additionalPointLayer.getFeatures():
+                counter+=1         
+                geom = feature.geometry()
+                pointID = self.graph.addVertex(geom.asPoint())            
+                nearestPointID = tree.search_knn([self.graph.vertex(pointID).point().x(),self.graph.vertex(pointID).point().y(), counter],2)[1][0].data[2]              
+                self.graph.addEdge(pointID, nearestPointID) 
                                        
             
     def __removeIntersectingEdges(self): 
@@ -462,7 +461,8 @@ class GraphBuilder:
         methods are called accordingly.   
         
         :return PGGraph    
-        """               
+        """    
+        self.graph = PGGraph()           
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
                                                                
