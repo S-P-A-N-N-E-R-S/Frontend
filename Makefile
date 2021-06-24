@@ -41,18 +41,11 @@ SOURCES = \
 
 PLUGINNAME = proto_plugin
 
-PY_FILES = \
-	__init__.py \
-	mainPlugin.py
+PY_FILES = __init__.py mainPlugin.py helperFunctions.py
+DIRECTORIES = controllers models resources views network
+EXTRAS = metadata.txt
 
-# todo need to be added
-UI_FILES = user_interface.ui
-
-EXTRAS = metadata.txt icon.png
-
-EXTRA_DIRS =
-
-COMPILED_RESOURCE_FILES = resources.py
+# COMPILED_RESOURCE_FILES = resources.py
 
 PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 
@@ -71,7 +64,7 @@ QGISDIR=.local/share/QGIS/QGIS3/profiles/default
 # Normally you would not need to edit below here
 #################################################
 
-RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
+# RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
 
 .PHONY: default
 default:
@@ -82,18 +75,15 @@ default:
 	@echo You can install pb_tool using: pip install pb_tool
 	@echo See https://g-sherman.github.io/plugin_build_tool/ for info.
 
-compile: $(COMPILED_RESOURCE_FILES) uicompile
+# compile: $(COMPILED_RESOURCE_FILES)
 
-uicompile:
-	$(foreach UI_FILE, $(UI_FILES), pyuic5 -o $(basename $(UI_FILE)).py $(UI_FILE))
-
-%.py : %.qrc $(RESOURCES_SRC)
-	pyrcc5 -o $*.py  $<
+#%.py : %.qrc $(RESOURCES_SRC)
+#	pyrcc5 -o $*.py  $<
 
 %.qm : %.ts
 	$(LRELEASE) $<
 
-deploy: compile
+deploy:
 	@echo
 	@echo "------------------------------------------"
 	@echo "Deploying plugin to your .qgis2 directory."
@@ -103,24 +93,12 @@ deploy: compile
 	# $HOME/$(QGISDIR)/python/plugins
 	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(PY_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(UI_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(COMPILED_RESOURCE_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	$(foreach dir, $(DIRECTORIES), if [ -d "$(dir)" ]; then cp -vfr $(dir) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME); fi;)
 	cp -vf $(EXTRAS) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	#cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) 			# Translation files
 	#cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
 	# Copy extra directories if any
 	#(foreach EXTRA_DIR,(EXTRA_DIRS), cp -R (EXTRA_DIR) (HOME)/(QGISDIR)/python/plugins/(PLUGINNAME)/;)
-
-
-# The dclean target removes compiled python files from plugin directory
-# also deletes any .git entry
-dclean:
-	@echo
-	@echo "-----------------------------------"
-	@echo "Removing any compiled python files."
-	@echo "-----------------------------------"
-	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname "*.pyc" -delete
-	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname ".git" -prune -exec rm -Rf {} \;
 
 
 derase:
@@ -130,17 +108,21 @@ derase:
 	@echo "-------------------------"
 	rm -Rf $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 
-zip: deploy dclean
+zip:
 	@echo
 	@echo "---------------------------"
 	@echo "Creating plugin zip bundle."
 	@echo "---------------------------"
-	# The zip target deploys the plugin and creates a zip file with the deployed
-	# content. You can then upload the zip file on http://plugins.qgis.org
 	rm -f $(PLUGINNAME).zip
-	cd $(HOME)/$(QGISDIR)/python/plugins; zip -9r $(CURDIR)/$(PLUGINNAME).zip $(PLUGINNAME)
+	rm -fr temp_zip
+	mkdir -p temp_zip/$(PLUGINNAME)
+	cp -vf $(PY_FILES)  temp_zip/$(PLUGINNAME)
+	$(foreach dir, $(DIRECTORIES), if [ -d "$(dir)" ]; then cp -vfr $(dir) temp_zip/$(PLUGINNAME); fi;)
+	cp -vf $(EXTRAS) temp_zip/$(PLUGINNAME)
+	cd temp_zip; zip $(CURDIR)/$(PLUGINNAME).zip -r $(PLUGINNAME)
+	rm -fr temp_zip
 
-package: compile
+package:
 	# Create a zip package of the plugin named $(PLUGINNAME).zip.
 	# This requires use of git (your plugin development directory must be a
 	# git repository).
@@ -151,15 +133,8 @@ package: compile
 	@echo "Exporting plugin to zip package.	"
 	@echo "------------------------------------"
 	rm -f $(PLUGINNAME).zip
-	git archive --prefix=$(PLUGINNAME)/ -o $(PLUGINNAME).zip $(VERSION)
+	git archive --prefix=$(PLUGINNAME)/ -o $(PLUGINNAME).zip HEAD
 	echo "Created package: $(PLUGINNAME).zip"
-
-clean:
-	@echo
-	@echo "------------------------------------"
-	@echo "Removing uic and rcc generated files"
-	@echo "------------------------------------"
-	rm $(COMPILED_UI_FILES) $(COMPILED_RESOURCE_FILES)
 
 pylint:
 	@echo
