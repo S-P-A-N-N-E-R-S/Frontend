@@ -1,10 +1,11 @@
 import os
 
-from qgis.core import QgsSettings, QgsApplication
+from qgis.core import QgsSettings, QgsApplication, QgsProject
 
 from .base import BaseController
 from ..models.GraphBuilder import GraphBuilder
 from ..models.PGGraph import PGGraph
+from ..models.QgsGraphLayer import QgsGraphLayer
 
 # client imports
 from ..network.client import Client
@@ -59,8 +60,10 @@ class OGDFAnalysisController(BaseController):
         # show graph in qgis
         builder = GraphBuilder()
         builder.setGraph(response.graph)
-        vertexLayer = builder.createVertexLayer(True)
-        edgeLayer = builder.createEdgeLayer(True)
+        graphLayer = builder.createGraphLayer(False)
+        graphLayer.setName("ResultGraphLayer")
+        QgsProject.instance().addMapLayer(graphLayer)
+        self.view.showSuccess("Analysis complete!")
 
     def __getGraph(self):
         if not self.view.hasInput():
@@ -68,8 +71,12 @@ class OGDFAnalysisController(BaseController):
             return None
 
         if self.view.isInputLayer():
-            # todo: graph layer handling
-            layer = self.view.getInputLayer()
+            # return graph from graph layer
+            graphLayer = self.view.getInputLayer()
+            if not isinstance(graphLayer, QgsGraphLayer):
+                self.view.showError("The selected layer is not a graph layer!")
+                return None
+            return graphLayer.getGraph()
         else:
             # if file path as input
             path = self.view.getInputPath()

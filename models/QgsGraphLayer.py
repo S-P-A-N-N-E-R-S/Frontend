@@ -11,6 +11,7 @@ from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileD
 import random, math
 
 from .QgsGraphDataProvider import QgsGraphDataProvider
+from .PGGraph import PGGraph
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
@@ -190,8 +191,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         pass 
 
     def setGraph(self, graph):
-        # if isinstance(graph, PGGraph):
-        if isinstance(graph, QgsGraph):
+        if isinstance(graph, PGGraph):
             self.mGraph = graph
 
             if self.mGraph.edgeCount() != 0:
@@ -304,7 +304,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         return True
 
-    def exportToVectorLayer(self):
+    def createVectorLayer(self):
         if self.hasEdges:
             vLayer = QgsVectorLayer("LineString", "GraphEdges", "memory")
         else:
@@ -318,6 +318,11 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             vDp.addFeature(feat)
 
         vLayer.setCrs(self.mCRS)
+
+        return vLayer
+
+    def exportToVectorLayer(self):
+        vLayer = self.createVectorLayer()
 
         QgsProject.instance().addMapLayer(vLayer)
 

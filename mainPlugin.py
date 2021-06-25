@@ -143,14 +143,3 @@ class ProtoPlugin:
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
             os.rmdir(directory)
-
-    def addLayer(self, layerType):
-        layer = QgsGraphLayer()
-        layer.setLayerType(layerType)
-
-        if layer.isValid():
-            # coordRefSys = layerType.coordRefSys(self.iface.mapCanvas().mapSettings().destinationCrs())
-            QgsProject.instance().addMapLayer(layer)
-
-
-        return layer
