@@ -60,6 +60,7 @@ class CreateGraphController(BaseController):
         self.view.insertLogText("Start graph building..\n")
         builder = GraphBuilder()
         builder.setOption("createGraphAsLayers", False)
+        graphName = "New"   # default name
 
         # raster data
         rasterLayer = self.view.getRasterLayer()
@@ -89,6 +90,7 @@ class CreateGraphController(BaseController):
 
         # set builder options for random graph
         if self.view.isRandom():
+            graphName = "Random"
             builder.setOption("createRandomGraph", True)
             numVertices = 100
             builder.setRandomOptions("numberOfVertices", numVertices)
@@ -98,6 +100,7 @@ class CreateGraphController(BaseController):
         # set vector layer in builder if input layer exist
         elif self.view.hasInput() and self.view.isInputLayer():
             layer = self.view.getInputLayer()
+            graphName = layer.name()
             # build graph from layer
             builder.setVectorLayer(layer)
 
@@ -105,6 +108,7 @@ class CreateGraphController(BaseController):
         elif self.view.hasInput() and not self.view.isInputLayer():
             path = self.view.getInputPath()
             fileName, extension = os.path.splitext(path)
+            graphName = os.path.basename(fileName)
             if extension == ".graphml":
                 # create graph from .graphml file
                 graph = PGGraph()
@@ -117,11 +121,10 @@ class CreateGraphController(BaseController):
                 # set graph to graph builder
                 builder.setGraph(graph)
 
-                # create graph layers
-                vertexLayer = builder.createVertexLayer(False)
-                edgeLayer = builder.createEdgeLayer(False)
+                # create graph layer
+                graphLayer = builder.createGraphLayer(False)
 
-                self.saveGraph(graph, vertexLayer, edgeLayer)
+                self.saveGraph(graph, graphLayer)
                 self.view.showSuccess("Graph created!")
                 return
             else:
@@ -167,14 +170,13 @@ class CreateGraphController(BaseController):
                 self.view.insertLogText("Graph process completed with no result\n")
             else:
                 graph = result["graph"]
-                vertexLayer = result["vertexLayer"]
-                edgeLayer = result["edgeLayer"]
+                graphLayer = result["graphLayer"]
                 if not graph:
                     self.view.showError("Error during graph creation!")
                     return
 
                 # save graph to destination
-                self.saveGraph(graph, vertexLayer, edgeLayer)
+                self.saveGraph(graph, graphLayer)
 
                 self.view.showSuccess("Graph created!")
                 iface.messageBar().pushMessage("Success", "Graph created!", level=Qgis.Success)
@@ -186,7 +188,7 @@ class CreateGraphController(BaseController):
             QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
             raise exception
 
-    def saveGraph(self, graph, vertexLayer, edgeLayer):
+    def saveGraph(self, graph, graphLayer):
         """
         Saves graph to destination
         :param graph: PGGraph
@@ -197,22 +199,23 @@ class CreateGraphController(BaseController):
         savePath = self.view.getSavePath()
         if savePath:
             fileName, extension = os.path.splitext(savePath)
+            graphName = os.path.basename(fileName)
             if extension == ".graphml":
                 graph.writeGraphML(savePath)
             else:
                 # if layer path as .shp
-                vertexLayer = helper.saveLayer(vertexLayer, vertexLayer.name(), "vector",
-                                               fileName + "_vertices" + extension, extension)
-                edgeLayer = helper.saveLayer(edgeLayer, edgeLayer.name(), "vector", fileName + "_edges" + extension,
-                                             extension)
+                # create vector layer from graph layer
+                vectorLayer = graphLayer.createVectorLayer()
 
-                # change layer names
-                vertexLayer.setName(os.path.basename(fileName) + "Vertices")
-                edgeLayer.setName(os.path.basename(fileName) + "Edges")
+                # save vector layer to path
+                vectorLayer = helper.saveLayer(vectorLayer, vectorLayer.name(), "vector", savePath, extension)
 
-        # add layer to project
-        QgsProject.instance().addMapLayer(vertexLayer)
-        QgsProject.instance().addMapLayer(edgeLayer)
+                # add vector layer to project
+                QgsProject.instance().addMapLayer(vectorLayer)
+
+        # add graph layer to project
+        graphLayer.setName(graphName + "GraphLayer")
+        QgsProject.instance().addMapLayer(graphLayer)
 
     def discardTask(self, taskId):
         """

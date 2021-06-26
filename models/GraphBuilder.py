@@ -4,6 +4,7 @@ from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 from .PGGraph import PGGraph
+from .QgsGraphLayer import QgsGraphLayer
 from random import *
 from qgis import processing
 import math
@@ -369,6 +370,26 @@ class GraphBuilder:
             QgsProject.instance().addMapLayer(graphLayerEdges)
        
         return graphLayerEdges
+
+    def createGraphLayer(self, addToCanvas):
+        """
+        Create graph layer from created graph
+        :param addToCanvas:
+        :return:
+        """
+        graphLayer = QgsGraphLayer()
+
+        if self.__options["createRandomGraph"] == False:
+            graphLayer.setCrs(self.vLayer.crs())
+        else:
+            graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+
+        graphLayer.setGraph(self.graph)
+
+        if addToCanvas == True:
+            QgsProject.instance().addMapLayer(graphLayer)
+
+        return graphLayer
 
     #returns the graph    
     def makeGraph(self):
