@@ -429,7 +429,7 @@ class GraphBuilder:
         
         return self.graph
 
-    def makeGraphTask(self, task):
+    def makeGraphTask(self, task, graphName=""):
         """
         Task function of makeGraph() to build a graph in the background
         :param task: own QgsTask instance
@@ -442,9 +442,8 @@ class GraphBuilder:
         # build graph
         graph = self.makeGraph()
 
-        # create graph layers
-        vertexLayer = self.createVertexLayer(False)
-        edgeLayer = self.createEdgeLayer(False)
+        # create graph layer
+        graphLayer = self.createGraphLayer(False)
 
         if self.task.isCanceled():
             # if task is canceled by User or QGIS
@@ -454,4 +453,4 @@ class GraphBuilder:
         else:
             QgsMessageLog.logMessage("Make graph finished", level=Qgis.Info)
             self.task = None
-            return {"graph": graph, "vertexLayer": vertexLayer, "edgeLayer": edgeLayer}
+            return {"graph": graph, "graphLayer": graphLayer, "graphName": graphName}

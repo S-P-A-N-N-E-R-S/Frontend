@@ -124,7 +124,7 @@ class CreateGraphController(BaseController):
                 # create graph layer
                 graphLayer = builder.createGraphLayer(False)
 
-                self.saveGraph(graph, graphLayer)
+                self.saveGraph(graph, graphLayer, graphName)
                 self.view.showSuccess("Graph created!")
                 return
             else:
@@ -138,8 +138,15 @@ class CreateGraphController(BaseController):
             self.view.showWarning("No input and not random graph!")
             return
 
+        # set name to save path basename
+        savePath = self.view.getSavePath()
+        if savePath:
+            fileName, extension = os.path.splitext(savePath)
+            graphName = os.path.basename(fileName)
+
         # create and run task from function
-        graphTask = QgsTask.fromFunction("Make graph task", builder.makeGraphTask, on_finished=self.completed)
+        graphTask = QgsTask.fromFunction("Building graph: {}".format(graphName), builder.makeGraphTask,
+                                         graphName=graphName, on_finished=self.completed)
         taskId = QgsApplication.taskManager().addTask(graphTask)
         CreateGraphController.activeGraphTasks.append((graphTask, taskId))
 
@@ -171,12 +178,13 @@ class CreateGraphController(BaseController):
             else:
                 graph = result["graph"]
                 graphLayer = result["graphLayer"]
+                graphName = result["graphName"]
                 if not graph:
                     self.view.showError("Error during graph creation!")
                     return
 
                 # save graph to destination
-                self.saveGraph(graph, graphLayer)
+                self.saveGraph(graph, graphLayer, graphName)
 
                 self.view.showSuccess("Graph created!")
                 iface.messageBar().pushMessage("Success", "Graph created!", level=Qgis.Success)
@@ -188,7 +196,7 @@ class CreateGraphController(BaseController):
             QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
             raise exception
 
-    def saveGraph(self, graph, graphLayer):
+    def saveGraph(self, graph, graphLayer, graphName=""):
         """
         Saves graph to destination
         :param graph: PGGraph
@@ -199,7 +207,6 @@ class CreateGraphController(BaseController):
         savePath = self.view.getSavePath()
         if savePath:
             fileName, extension = os.path.splitext(savePath)
-            graphName = os.path.basename(fileName)
             if extension == ".graphml":
                 graph.writeGraphML(savePath)
             else:
