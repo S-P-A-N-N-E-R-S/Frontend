@@ -10,6 +10,10 @@ from PyQt5.QtGui import QIcon
 
 import time
 
+from PyQt5.QtCore import QTimer
+
+import time
+
 
 class CreateGraphView(BaseContentView):
 
