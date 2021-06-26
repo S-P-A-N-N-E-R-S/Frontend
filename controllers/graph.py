@@ -12,8 +12,9 @@ from qgis.utils import iface
 
 class CreateGraphController(BaseController):
 
-    # class variables shared by all instances
+    # class variable contains list of taskTuples: (task, taskId)
     activeGraphTasks = []
+    # allowed number of parallel tasks
     maxNumberTasks = 3
 
     def __init__(self, view):
@@ -40,6 +41,14 @@ class CreateGraphController(BaseController):
 
         # set save path formats
         self.view.setSavePathFilter("GraphML (*.graphml );;Shape files (*.shp)")
+
+        # load possibly available active tasks into table and reconnect slots
+        self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
+        for taskTuple in CreateGraphController.activeGraphTasks:
+            task, taskId = taskTuple
+            task.statusChanged.connect(
+                lambda: self.view.updateTaskInTable(task, taskId)
+            )
 
     def createGraph(self):
         if len(CreateGraphController.activeGraphTasks) >= CreateGraphController.maxNumberTasks:
@@ -128,8 +137,14 @@ class CreateGraphController(BaseController):
 
         # create and run task from function
         graphTask = QgsTask.fromFunction("Make graph task", builder.makeGraphTask, on_finished=self.completed)
-        CreateGraphController.activeGraphTasks.append(graphTask)
-        QgsApplication.taskManager().addTask(graphTask)
+        taskId = QgsApplication.taskManager().addTask(graphTask)
+        CreateGraphController.activeGraphTasks.append((graphTask, taskId))
+
+        # add task to table
+        self.view.addTaskToTable(graphTask, taskId)
+        graphTask.statusChanged.connect(
+            lambda: self.view.updateTaskInTable(graphTask, taskId)  # update task if status changed
+        )
 
     def completed(self, exception, result=None):
         """
@@ -142,7 +157,7 @@ class CreateGraphController(BaseController):
 
         # first remove all completed or canceled tasks from list
         CreateGraphController.activeGraphTasks = [task for task in CreateGraphController.activeGraphTasks
-                                                  if task.isActive()]
+                                                  if task[0].isActive()]
         QgsMessageLog.logMessage("Remaining tasks: {}".format(len(CreateGraphController.activeGraphTasks)),
                                  level=Qgis.Info)
 
@@ -198,3 +213,15 @@ class CreateGraphController(BaseController):
         # add layer to project
         QgsProject.instance().addMapLayer(vertexLayer)
         QgsProject.instance().addMapLayer(edgeLayer)
+
+    def discardTask(self, taskId):
+        """
+        Cancels an active task and removes it from the task table
+        :return:
+        """
+        self.view.removeTaskInTable(taskId)
+        # cancel active task if available
+        for activeTaskTuple in CreateGraphController.activeGraphTasks:
+            activeTask, activeTaskId = activeTaskTuple
+            if activeTaskId == taskId:
+                activeTask.cancel()

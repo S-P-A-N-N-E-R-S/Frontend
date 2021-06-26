@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>4</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -268,9 +268,9 @@ QListWidget::item::selected {
                 <item>
                  <widget class="QTabWidget" name="tabWidget">
                   <property name="currentIndex">
-                   <number>0</number>
+                   <number>1</number>
                   </property>
-                  <widget class="QWidget" name="create_graph_params">
+                  <widget class="QWidget" name="create_graph_tab">
                    <attribute name="title">
                     <string>Parameters</string>
                    </attribute>
@@ -747,25 +747,69 @@ QListWidget::item::selected {
                     </item>
                    </layout>
                   </widget>
-                  <widget class="QWidget" name="tab_4">
+                  <widget class="QWidget" name="graph_tasks_tab">
+                   <attribute name="title">
+                    <string>Graph Tasks</string>
+                   </attribute>
+                   <layout class="QVBoxLayout" name="verticalLayout_16">
+                    <item>
+                     <layout class="QFormLayout" name="formLayout_3">
+                      <item row="0" column="0" colspan="2">
+                       <widget class="QTableWidget" name="graph_tasks_table">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>200</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="editTriggers">
+                         <set>QAbstractItemView::NoEditTriggers</set>
+                        </property>
+                        <property name="selectionMode">
+                         <enum>QAbstractItemView::NoSelection</enum>
+                        </property>
+                        <property name="selectionBehavior">
+                         <enum>QAbstractItemView::SelectRows</enum>
+                        </property>
+                        <attribute name="horizontalHeaderStretchLastSection">
+                         <bool>false</bool>
+                        </attribute>
+                        <attribute name="verticalHeaderCascadingSectionResizes">
+                         <bool>false</bool>
+                        </attribute>
+                        <attribute name="verticalHeaderShowSortIndicator" stdset="0">
+                         <bool>false</bool>
+                        </attribute>
+                        <attribute name="verticalHeaderStretchLastSection">
+                         <bool>false</bool>
+                        </attribute>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="graph_log_tab">
                    <attribute name="title">
                     <string>Log</string>
                    </attribute>
-                   <widget class="QWidget" name="verticalLayoutWidget_2">
-                    <property name="geometry">
-                     <rect>
-                      <x>10</x>
-                      <y>10</y>
-                      <width>791</width>
-                      <height>641</height>
-                     </rect>
-                    </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_3">
-                     <item>
-                      <widget class="QTextBrowser" name="create_graph_log"/>
-                     </item>
-                    </layout>
-                   </widget>
+                   <layout class="QVBoxLayout" name="verticalLayout_23">
+                    <item>
+                     <widget class="QTextBrowser" name="create_graph_log"/>
+                    </item>
+                   </layout>
                   </widget>
                  </widget>
                 </item>
