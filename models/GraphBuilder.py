@@ -3,7 +3,7 @@ from qgis.gui import *
 from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
-from .PGGraph import PGGraph
+from .ExtGraph import ExtGraph
 from .AdvancedCostCalculator import AdvancedCostCalculator
 import random
 from qgis import processing
@@ -18,7 +18,7 @@ class GraphBuilder:
     by setting options and layers before calling the makeGraph method.
 
     Options:
-        - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN, ShortestPathNetwork
+        - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN
         - neighborNumber: int
         - nnAllowDoubleEdges": True, False
         - clusterNumber": int
@@ -26,7 +26,7 @@ class GraphBuilder:
         - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced
         - createGraphAsLayers: False, True
         - createRandomGraph: False, True        
-        - usePolygons: False, True
+        - usePolygonsAsForbidden: False, True
     
     Random options:
         - numberOfVertices: int
@@ -40,28 +40,28 @@ class GraphBuilder:
         Initial setting for the GraphBuilder. If no additional options or layers are set, a random
         graph with a nearest neighbor connection is generated.
         """
-        self.graph = PGGraph()        
+        self.graph = ExtGraph()        
         self.vLayer = QgsVectorLayer()
         self.rLayers = []
-        self.polygonLayer = QgsVectorLayer()
+        self.forbiddenAreas = QgsVectorLayer()
         self.additionalLineLayer = QgsVectorLayer()
         self.additionalPointLayer = QgsVectorLayer()
         self.costFunctions = []
         self.rasterBands = []
+        self.polygonsForCostFunction = QgsVectorLayer()
         
         self.__options = {
             "connectionType": "Nearest neighbor",            
             "neighborNumber": 2,       
-            "nnAllowDoubleEdges": True,
+            "nnAllowDoubleEdges": False,
             "clusterNumber": 5,
             "edgeDirection": "Directed",
             "distanceStrategy": "Euclidean",
             "useRasterData": False,
             "createGraphAsLayers": True,
             "createRandomGraph": True,          
-            "usePolygons": False,   
-            "useAdditionalPoints": False
-                           
+            "usePolygonsAsForbidden": False,  
+            "useAdditionalPoints": False                           
         }
         
         self.__randomOptions = {
@@ -69,7 +69,14 @@ class GraphBuilder:
             "area": "Germany"    
         }
     
-    def setPolygonLayer(self, vectorLayer):
+    def setPolygonsForCostFunction(self, vectorLayer):
+        if vectorLayer.geometryType() != QgsWkbTypes.PolygonGeometry:
+            raise TypeError("Not a polygon geometry") 
+        
+        self.__options["usePolygonsInCostFunction"] = True
+        self.polygonsForCostFunction = vectorLayer
+    
+    def setForbiddenAreas(self, vectorLayer):
         """
         All edges crossing the polygon will be deleted from the graph
         
@@ -78,8 +85,7 @@ class GraphBuilder:
         if vectorLayer.geometryType() != QgsWkbTypes.PolygonGeometry:
             raise TypeError("Not a polygon geometry")                     
         
-        self.__options["usePolygons"] = True
-        self.polygonLayer = vectorLayer
+        self.forbiddenAreas = vectorLayer
     
     def setAdditionalPointLayer(self, vectorLayer): 
         """
@@ -94,18 +100,6 @@ class GraphBuilder:
         self.__options["useAdditionalPoints"] = True
         self.additionalPointLayer = vectorLayer
         
-    def setAdditionalLineLayer(self, vectorLayer):
-        """
-        Additional network for given point layer. The points will be connected by the 
-        shortest path in the network.
-        
-        :type vectorLayer: QgsVectorLayer containing lines
-        """
-        if vectorLayer.geometryType() != QgsWkbTypes.LineGeometry:
-            raise TypeError("Not a line geometry") 
-        
-        self.__options["connectionType"] = "ShortestPathNetwork"
-        self.additionalLineLayer = vectorLayer
         
     def setVectorLayer(self, vectorLayer):
         """
@@ -146,11 +140,14 @@ class GraphBuilder:
                   
         for i in range(len(formulaParts)):            
             var = formulaParts[i]
-            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if" in var or "field:" in var or "math." in var or "raster[" in var):                
+            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random[" in var):                
                 return False                       
                                 
         self.costFunctions.append(function)
         return True
+    
+    def getCostFunction(self, index):
+        return self.costFunctions[index]
     
     def setOption(self, optionType, value):
         if not optionType in self.__options:
@@ -208,7 +205,7 @@ class GraphBuilder:
     def __createCluster(self):
         # if a random graph was created the vLayer has to be set manually        
         if self.__options["createRandomGraph"] == True:
-            print("TEST")
+            
             self.vLayer = QgsVectorLayer("Point", "TempVertexLayer", "memory")
             dpVerticeLayer = self.vLayer.dataProvider()
             if self.__options["createRandomGraph"] == True:
@@ -255,7 +252,7 @@ class GraphBuilder:
                          self.graph.addEdge(allPointsInCluster[i],allPointsInCluster[j])                 
                        
                    
-        
+    """    
     def __createShortestPathNetwork(self):
         if self.__options["createRandomGraph"] == False:           
             crs = self.vLayer.crs().authid()
@@ -263,7 +260,7 @@ class GraphBuilder:
             crs = "EPSG:4326" 
         
         endNodes = []
-        newGraph = PGGraph()
+        newGraph = ExtGraph()
         for i in range(self.graph.vertexCount()-1):   
             help = 0                                   
             for j in range(i+1, self.graph.vertexCount()):    
@@ -301,7 +298,7 @@ class GraphBuilder:
             newGraph.addEdge(newVertex, nearestVertex)                   
         
         self.graph = newGraph 
-         
+    """    
     def __createGraphForLineGeometry(self):    
         """
         Method is called if the input consists of lines. Every start and end of
@@ -349,11 +346,11 @@ class GraphBuilder:
         # create the current edge layer              
         currentEdges = self.createEdgeLayer(False)
         # call QGIS tool to extract all the edges which cross the polygon
-        result2 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.polygonLayer, "OUTPUT": "memory:"})         
-        layerWithDelEdges = result2["OUTPUT"]
+        result1 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.forbiddenAreas, "OUTPUT": "memory:"})         
+        layerWithDelEdges = result1["OUTPUT"]
         
         # copy the result of the QGIS tool into a new graph
-        newGraph = PGGraph()
+        newGraph = ExtGraph()
         for feature in layerWithDelEdges.getFeatures():                   
             geom = feature.geometry()
                                             
@@ -460,9 +457,9 @@ class GraphBuilder:
         If this method is called the creation of the graph starts. The set options are read and 
         methods are called accordingly.   
         
-        :return PGGraph    
+        :return ExtGraph    
         """    
-        self.graph = PGGraph()           
+        self.graph = ExtGraph()           
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
                                                                
@@ -470,7 +467,7 @@ class GraphBuilder:
             self.__createRandomVertices()        
         else:          
             if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
-                self.__createVerticesForPoints()                   
+                self.__createVerticesForPoints()                          
         
         # create vertices
         if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry or self.__options["createRandomGraph"] == True:                          
@@ -479,9 +476,7 @@ class GraphBuilder:
             elif self.__options["connectionType"] == "Nearest neighbor":
                 self.__createNearestNeighbor()   
             elif self.__options["connectionType"] == "ClusterComplete" or self.__options["connectionType"] == "ClusterNN":
-                self.__createCluster()                 
-            elif self.__options["connectionType"] == "ShortestPathNetwork":
-                self.__createShortestPathNetwork()                                               
+                self.__createCluster()                                                            
         
         # user gives lines as input
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:      
@@ -495,18 +490,16 @@ class GraphBuilder:
                 self.graph.addEdge(edge.toVertex(), edge.fromVertex())  
         
         # remove edges that cross the polygons                    
-        if self.__options["usePolygons"] == True:
+        if self.__options["usePolygonsAsForbidden"] == True:
             self.__removeIntersectingEdges()        
                   
         # call AdvancedCostCalculations methods
-        if self.__options["distanceStrategy"] == "Advanced":
-            if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.__options["connectionType"] == "ShortestPathNetwork":
-                costCalculator = AdvancedCostCalculator(self.rLayers, self.additionalLineLayer, self.graph, True, self.__options["usePolygons"], self.rasterBands)                     
-            else:                
-                costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, False, self.__options["usePolygons"],self.rasterBands)            
+        if self.__options["distanceStrategy"] == "Advanced":                             
+            # create AdvancedCostCalculator object with the necessary parameters 
+            costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)            
             
             # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
-            # the costCalculator returns a PGGraph where costs are assigned multiple weights if more then one cost function is defined
+            # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
             for func in self.costFunctions:                
                 self.graph = costCalculator.setEdgeCosts(func)  
               
@@ -514,8 +507,7 @@ class GraphBuilder:
         if self.__options["createGraphAsLayers"] == True:
             self.createVertexLayer(True)
             self.createEdgeLayer(True)
-               
-        
+                       
         return self.graph
         
         

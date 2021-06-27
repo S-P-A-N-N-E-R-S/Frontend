@@ -6,7 +6,7 @@ import math
 from random import *
 
 
-class PGGraph(QgsGraph):
+class ExtGraph(QgsGraph):
     """
     Class extends the QgsGraph by adding a function costOfEdge
     which returns the distance between the two endpoint of an edge.
@@ -33,14 +33,15 @@ class PGGraph(QgsGraph):
         """
         self.distanceStrategy = strategy
      
-    def setCostOfEdge(self, edgeID, cost):
+    def setCostOfEdge(self, edgeID, functionIndex, cost):
         """
         Set cost of a specific edge.
         
+        :type functionIndex: Integer
         :type edgeID: Integer
         :type cost: Integer
         """
-        self.edgeWeights[edgeID] = cost
+        self.edgeWeights[functionIndex][edgeID] = cost
         
              
     def costOfEdge(self, edgeID, functionIndex = 0):  
@@ -167,7 +168,7 @@ class PGGraph(QgsGraph):
        
     def readGraphML(self, path):   
         """
-        Read a .graphml file into a PGGraph
+        Read a .graphml file into a ExtGraph
         
         :type path: String
         """     
