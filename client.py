@@ -52,6 +52,7 @@ class Client():
 
         return len(msg)
 
+
     def recv(self, response):
         protoBufString = self._recvProtobufString()
 

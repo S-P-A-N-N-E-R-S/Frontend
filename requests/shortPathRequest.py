@@ -1,4 +1,4 @@
-from ..protocol.protos import GraphData_pb2
+from ..protocol.build import container_pb2, shortest_path_pb2
 
 
 class ShortPathRequest():
@@ -8,10 +8,10 @@ class ShortPathRequest():
         self.startIndex = startIndex
         self.endIndex = endIndex
 
-        self.type = GraphData_pb2.RequestContainer.RequestType.SHORTEST_PATH
+        self.type = container_pb2.RequestContainer.RequestType.SHORTEST_PATH
 
     def toProtoBuf(self):
-        request = GraphData_pb2.ShortPathRequest()
+        request = shortest_path_pb2.ShortestPathRequest()
         request.startIndex = self.startIndex
         request.endIndex = self.endIndex
 
@@ -22,8 +22,11 @@ class ShortPathRequest():
 
             protoVertex = request.graph.vertexList.add()
             protoVertex.uid = vertexIdx
-            protoVertex.x = point.x()
-            protoVertex.y = point.y()
+
+            vertexCoordinates = request.vertexCoordinates
+            vertexCoordinates[vertexIdx].x = point.x()
+            vertexCoordinates[vertexIdx].y = point.y()
+            #TODO Include possible z coordinates in protobuf
 
         for edgeIdx in range(self.graph.edgeCount()):
             edge = self.graph.edge(edgeIdx)
@@ -32,6 +35,7 @@ class ShortPathRequest():
             protoEdge.uid = edgeIdx
             protoEdge.inVertexUid = edge.fromVertex()
             protoEdge.outVertexUid = edge.toVertex()
-            protoEdge.attributes["cost"] = str(self.graph.costOfEdge(edgeIdx))
+
+            request.edgeCost[edgeIdx] = self.graph.costOfEdge(edgeIdx)
 
         return request

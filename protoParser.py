@@ -1,9 +1,9 @@
 from .exceptions import ParseError
-from .protocol.protos import GraphData_pb2
+from .protocol.build import container_pb2
 
 
 def createProtoBuf(request):
-    protoBuf = GraphData_pb2.RequestContainer()
+    protoBuf = container_pb2.RequestContainer()
 
     try:
         requestMessage = request.toProtoBuf()
@@ -16,17 +16,17 @@ def createProtoBuf(request):
 
 
 def parseProtoBuf(protoBufString, response):
-    protoBuf = GraphData_pb2.ResponseContainer()
+    protoBuf = container_pb2.ResponseContainer()
     protoBuf.ParseFromString(protoBufString)
 
-    if protoBuf.status == GraphData_pb2.ResponseContainer.StatusCode.OK:
+    if protoBuf.status == container_pb2.ResponseContainer.StatusCode.OK:
 
         try:
             response.parseProtoBuf(protoBuf)
         except NameError as nameError:
             raise ParseError("Method not defined") from nameError
 
-    elif protoBuf.status == GraphData_pb2.ResponseContainer.StatusCode.ERROR:
+    elif protoBuf.status == container_pb2.ResponseContainer.StatusCode.ERROR:
         raise ParseError("Server responded with error")
 
     else:
