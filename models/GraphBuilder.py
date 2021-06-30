@@ -65,6 +65,9 @@ class GraphBuilder:
         self.rLayer = QgsRasterLayer()
         self.polygonLayer = QgsVectorLayer()
         self.additionalLineLayer = QgsVectorLayer()
+
+        # is set if graph builder is running as task
+        self.task = None
         
         self.__options = {
             "connectionType": "Nearest neighbor",            
@@ -115,19 +118,25 @@ class GraphBuilder:
     
     def createRandomVertices(self):
         for i in range(self.__randomOptions["numberOfVertices"]):
+            if self.task is not None and self.task.isCanceled():
+                break
             if self.__randomOptions["area"] == "Germany":
-                self.graph.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884))) 
-    
+                self.graph.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884)))
+
     def createVerticesForPoints(self):
-       
-        
+
+
         for feat in self.vLayer.getFeatures():
-            geom = feat.geometry()                
+            if self.task is not None and self.task.isCanceled():
+                break
+            geom = feat.geometry()
             self.graph.addVertex(geom.asPoint())
             
     def createComplete(self):
         for i in range(self.graph.vertexCount()):
-            for j in range(i+1, self.graph.vertexCount()):                                                                              
+            for j in range(i+1, self.graph.vertexCount()):
+                if self.task is not None and self.task.isCanceled():
+                    return
                 self.graph.addEdge(i, j)
                         
             
@@ -137,7 +146,9 @@ class GraphBuilder:
         for i in range(self.graph.vertexCount()):
             distances = []
             maxDistanceValue = 0
-            for j in range(self.graph.vertexCount()):               
+            for j in range(self.graph.vertexCount()):
+                if self.task is not None and self.task.isCanceled():
+                    return
                 distanceP2P = self.graph.distanceP2P(i,j)
                 distances.append(distanceP2P)    
                 if(distanceP2P > maxDistanceValue):
@@ -173,7 +184,9 @@ class GraphBuilder:
         
         endNodes = []
         newGraph = PGGraph()
-        for i in range(self.graph.vertexCount()-1):   
+        for i in range(self.graph.vertexCount()-1):
+            if self.task is not None and self.task.isCanceled():
+                return
             help = 0                                   
             for j in range(i+1, self.graph.vertexCount()):    
                 point1Coordinates = str(self.graph.vertex(i).point().x()) + "," + str(self.graph.vertex(i).point().y()) + " [" + crs +"]"
@@ -197,6 +210,8 @@ class GraphBuilder:
                                                                                                                                                                                                                                                                                             
                 
         for i in range(self.graph.vertexCount()):
+            if self.task is not None and self.task.isCanceled():
+                return
             nearestVertex = 0
             newVertex = newGraph.addVertex(self.graph.vertex(i).point())
             distanceP2PMin = newGraph.distanceP2P(newVertex, newGraph.findVertex(endNodes[0]))                     
@@ -214,7 +229,9 @@ class GraphBuilder:
      
     
     def createGraphForLineGeometry(self):
-        for feature in self.vLayer.getFeatures():                   
+        for feature in self.vLayer.getFeatures():
+            if self.task is not None and self.task.isCanceled():
+                return
             geom = feature.geometry()
             
             if QgsWkbTypes.isMultiType(geom.wkbType()):
@@ -235,13 +252,17 @@ class GraphBuilder:
                     self.graph.addEdge(id1, id2)
                    
     
-    def removeIntersectingEdges(self):               
+    def removeIntersectingEdges(self):
+        if self.task is not None and self.task.isCanceled():
+            return
         currentEdges = self.createEdgeLayer(False)
         result2 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.polygonLayer, "OUTPUT": "memory:"})         
         layerWithDelEdges = result2["OUTPUT"]
         
         newGraph = PGGraph()
-        for feature in layerWithDelEdges.getFeatures():                   
+        for feature in layerWithDelEdges.getFeatures():
+            if self.task is not None and self.task.isCanceled():
+                return
             geom = feature.geometry()
                                             
             vertices = geom.asPolyline()                       
@@ -256,6 +277,8 @@ class GraphBuilder:
         self.graph = newGraph
     
     def createVertexLayer(self, addToCanvas):
+        if self.task is not None and self.task.isCanceled():
+            return
         graphLayerVertices = QgsVectorLayer("Point", "GraphVertices", "memory")
         dpVerticeLayer = graphLayerVertices.dataProvider()
         dpVerticeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("X", QVariant.Double), QgsField("Y", QVariant.Double)])
@@ -269,6 +292,8 @@ class GraphBuilder:
     
         #add the vertices and edges to the layers
         for i in range(self.graph.vertexCount()):
+            if self.task is not None and self.task.isCanceled():
+                return
             newFeature = QgsFeature()
             newFeature.setGeometry(QgsGeometry.fromPointXY(self.graph.vertex(i).point()))  
             newFeature.setAttributes([i, self.graph.vertex(i).point().x(), self.graph.vertex(i).point().y()])
@@ -282,7 +307,8 @@ class GraphBuilder:
     
     # create the two layers that represent the graph
     def createEdgeLayer(self, addToCanvas):
-        
+        if self.task is not None and self.task.isCanceled():
+            return
         graphLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")
         
         dpEdgeLayer = graphLayerEdges.dataProvider()
@@ -299,6 +325,8 @@ class GraphBuilder:
         
         
         for i in range(self.graph.edgeCount()):
+            if self.task is not None and self.task.isCanceled():
+                return
             newFeature = QgsFeature()
             fromVertex = self.graph.vertex(self.graph.edge(i).fromVertex()).point()
             toVertex = self.graph.vertex(self.graph.edge(i).toVertex()).point()
@@ -382,6 +410,8 @@ class GraphBuilder:
             self.createGraphForLineGeometry()
                       
         if self.__options["edgeDirection"] == "Undirected":
+            if self.task is not None and self.task.isCanceled():
+                return
             eCount = self.graph.edgeCount()
             for i in range(eCount):
                 edge = self.graph.edge(i)
@@ -398,12 +428,29 @@ class GraphBuilder:
             self.createEdgeLayer(True)
         
         return self.graph
-        
-        
-        
-        
-        
-    
-    
-        
-       
+
+    def makeGraphTask(self, task, graphName=""):
+        """
+        Task function of makeGraph() to build a graph in the background
+        :param task: own QgsTask instance
+        :return:
+        """
+        QgsMessageLog.logMessage('Started task {}'.format(task.description()), level=Qgis.Info)
+        # save task in instance for usage in other methods
+        self.task = task
+
+        # build graph
+        graph = self.makeGraph()
+
+        # create graph layer
+        graphLayer = self.createGraphLayer(False)
+
+        if self.task.isCanceled():
+            # if task is canceled by User or QGIS
+            QgsMessageLog.logMessage('Task {} cancelled'.format(task.description()), level=Qgis.Info)
+            self.task = None
+            return None
+        else:
+            QgsMessageLog.logMessage("Make graph finished", level=Qgis.Info)
+            self.task = None
+            return {"graph": graph, "graphLayer": graphLayer, "graphName": graphName}

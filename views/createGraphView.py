@@ -1,7 +1,18 @@
 from .baseContentView import BaseContentView
 from ..controllers.graph import CreateGraphController
+from ..helperFunctions import getImagePath
 
-from qgis.core import QgsMapLayerProxyModel
+from qgis.core import QgsMapLayerProxyModel, QgsTask
+
+from PyQt5.QtCore import QTimer, Qt, QSize
+from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton
+from PyQt5.QtGui import QIcon
+
+import time
+
+from PyQt5.QtCore import QTimer
+
+import time
 
 
 class CreateGraphView(BaseContentView):
@@ -9,7 +20,6 @@ class CreateGraphView(BaseContentView):
     def __init__(self, dialog):
         super().__init__(dialog)
         self.name = "create graph"
-        self.controller = CreateGraphController(self)
 
         # set up layer inputs
         self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer)
@@ -36,6 +46,15 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_input_tools.clicked.connect(
             lambda: self._browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
         )
+
+        # set up tasks table
+        self.dialog.graph_tasks_table.setColumnCount(4)
+        self.dialog.graph_tasks_table.setColumnWidth(0, 100)
+        self.dialog.graph_tasks_table.setColumnWidth(2, 100)
+        self.dialog.graph_tasks_table.setColumnWidth(3, 60)
+        # stretch remaining column
+        self.dialog.graph_tasks_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.dialog.graph_tasks_table.setHorizontalHeaderLabels(["Task Id", "Description", "State", "Discard"])
 
         # hide all unused inputs
         self.dialog.create_graph_cost_label.hide()
@@ -71,8 +90,20 @@ class CreateGraphView(BaseContentView):
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input.setDisabled)
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input_tools.setDisabled)
 
-        self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
+        # set up controller
+        self.controller = CreateGraphController(self)
 
+        self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
+        # immediately disable button and enable after 1 seconds
+        self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
+
+    def _disableButton(self):
+        """
+        Disables the button and enables it after 1 seconds
+        :return:
+        """
+        self.dialog.create_graph_create_btn.setEnabled(False)
+        QTimer.singleShot(1000, lambda: self.dialog.create_graph_create_btn.setEnabled(True))
 
     def hasInput(self):
         return self.dialog.create_graph_input.count() > 0
@@ -183,13 +214,97 @@ class CreateGraphView(BaseContentView):
     def getAdditionalLineLayer(self):
         return self.dialog.create_graph_additionalline_input.currentLayer()
 
+    # task overview
+
+    def __getTaskStatus(self, status):
+        """
+        Return the task status as string
+        :param status: int
+        :return:
+        """
+        statusDict = {
+            QgsTask.Queued: "queued",
+            QgsTask.OnHold: "onHold",
+            QgsTask.Running: "running",
+            QgsTask.Complete: "complete",
+            QgsTask.Terminated: "terminated",
+        }
+        return statusDict.get(status, "unknown")
+
+    def __setTableRow(self, row, task, taskId):
+        taskIdItem = QTableWidgetItem(str(taskId))
+        descriptionItem = QTableWidgetItem(task.description())
+        statusItem = QTableWidgetItem(self.__getTaskStatus(task.status()))
+        self.dialog.graph_tasks_table.setItem(row, 0, taskIdItem)
+        self.dialog.graph_tasks_table.setItem(row, 1, descriptionItem)
+        self.dialog.graph_tasks_table.setItem(row, 2, statusItem)
+
+        # Add cancel button
+        cancelButton = QPushButton(QIcon(getImagePath("close.svg")), "")
+        cancelButton.setFlat(True)
+        cancelButton.setIconSize(QSize(25, 25))
+        cancelButton.clicked.connect(lambda: self.controller.discardTask(taskId))
+        self.dialog.graph_tasks_table.setCellWidget(row, 3, cancelButton)
+
+    def loadTasksTable(self, tasks):
+        """
+        Loads task table with passed tasks
+        :param tasks: list of taskTuples: (task, taskId)
+        :return:
+        """
+        self.dialog.graph_tasks_table.clearContents()
+        self.dialog.graph_tasks_table.setRowCount(len(tasks))
+        row = 0
+        for tuple in tasks:
+            task, taskId = tuple
+            self.__setTableRow(row, task, taskId)
+            row += 1
+
+    def addTaskToTable(self, task, taskId):
+        """
+        Adds a task to end of table
+        :param task:
+        :param taskId:
+        :return:
+        """
+        row = 0
+        self.dialog.graph_tasks_table.insertRow(row)
+        self.__setTableRow(row, task, taskId)
+
+    def updateTaskInTable(self, task, taskId):
+        """
+        Update task by given taskId
+        :param task:
+        :param taskId:
+        :return:
+        """
+        matchItems = self.dialog.graph_tasks_table.findItems(str(taskId), Qt.MatchExactly)
+        for item in matchItems:
+            # if id column
+            if self.dialog.graph_tasks_table.column(item) == 0:
+                row = self.dialog.graph_tasks_table.row(item)
+                self.__setTableRow(row, task, taskId)
+
+    def removeTaskInTable(self, taskId):
+        """
+        Removes task by given id
+        :param taskId:
+        :return:
+        """
+        matchItems = self.dialog.graph_tasks_table.findItems(str(taskId), Qt.MatchExactly)
+        for item in matchItems:
+            # if id column
+            if self.dialog.graph_tasks_table.column(item) == 0:
+                row = self.dialog.graph_tasks_table.row(item)
+                self.dialog.graph_tasks_table.removeRow(row)
+
     # log
 
     def setLogText(self, text):
-        self.dialog.create_graph_log.setPlainText(text)
+        self.dialog.create_graph_log.setPlainText(self._logText(text))
 
     def insertLogText(self, text):
-        self.dialog.create_graph_log.insertPlainText(text)
+        self.dialog.create_graph_log.insertPlainText(self._logText(text))
 
     def setLogHtml(self, text):
         self.dialog.create_graph_log.setHtml(text)
@@ -205,3 +320,6 @@ class CreateGraphView(BaseContentView):
 
     def getLogHtml(self):
         return self.dialog.create_graph_log.toHtml()
+
+    def _logText(self, text):
+        return "{asctime} - {text}".format(asctime=time.asctime(), text=text)
