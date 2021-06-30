@@ -10,6 +10,7 @@ import math
 import operator
 import re
 import statistics
+import time
 import numpy as np
 
 
@@ -112,28 +113,13 @@ class AdvancedCostCalculator():
                 return "math." + mathOperation + "(" + var + ")"    
         
         # get specified field information from feature
-        elif "field:" in part:           
+        elif "field:" in part:                       
             name = part.split(":")[1]
-            if self.vLayer.geometryType() == QgsWkbTypes.LineGeometry and not self.usePolygons:  
-                count = 0
-                for feature in self.vLayer.getFeatures():
-                    geom = feature.geometry()                                     
-                    # check if geom and edgeID match
-                    if QgsWkbTypes.isMultiType(geom.wkbType()):                 
-                        for part in geom.asMultiPolyline():
-                            for i in range(1,len(part)):                                                                                                                                                              
-                                    if count == edgeID:                                                                                                     
-                                        return str(feature[name])
-                                    count+=1                                            
-                    else:                        
-                        vertices = geom.asPolyline()                       
-                        for i in range(len(vertices)-1):                                                                                             
-                            if count == edgeID:
-                                return str(feature[name])
-                            count+=1
             
+            if self.vLayer.geometryType() == QgsWkbTypes.LineGeometry and not self.usePolygons:                                        
+                return (self.graph.featureMatchings[edgeID])[name]
+                                    
             # if polygons are used edges get deleted thus its not possible to just iterate the edges
-            # same if you use points and the vLayer represents the additional line layer for the network 
             elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry and self.usePolygons:                                           
                 for feature in self.vLayer.getFeatures():
                     geom = feature.geometry()
@@ -303,6 +289,7 @@ class AdvancedCostCalculator():
             if "crossesPolygon" in costFunction:
                 polygonResult = processing.run("native:extractbylocation", {"INPUT": edgeLayer, "PREDICATE": 7, "INTERSECT": self.polygons, "OUTPUT": "memory:"})
                 edgesCrossingPolygons = polygonResult["OUTPUT"]
+            
         
         costFunction = costFunction.replace(" ", "").replace('"', '')                  
         formulaParts = re.split("\+|-|\*|/", costFunction)
@@ -344,7 +331,7 @@ class AdvancedCostCalculator():
             #print(translatedFormula)
                       
             weights.append(eval(translatedFormula))                                             
-        
+            
         # append the list
         self.graph.edgeWeights.append(weights)
                         

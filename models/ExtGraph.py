@@ -22,6 +22,8 @@ class ExtGraph(QgsGraph):
         # list of list to hold multiple weight function values
         self.edgeWeights = []
         self.vertexWeights = []
+        # holds the feature IDs if lines where used to create graph
+        self.featureMatchings = []
         
     
     def setDistanceStrategy(self, strategy):

@@ -313,6 +313,7 @@ class GraphBuilder:
                         addedID = self.graph.addVertex(part[i]) 
                         if i!=0:                               
                             self.graph.addEdge(addedID-1, addedID)
+                            self.graph.featureMatchings.append(feature)
                                                                          
             else:                        
                 vertices = geom.asPolyline()                       
@@ -322,6 +323,7 @@ class GraphBuilder:
                     id1 = self.graph.addVertex(startVertex)
                     id2 = self.graph.addVertex(endVertex)                    
                     self.graph.addEdge(id1, id2)
+                    self.graph.featureMatchings.append(feature)
                 
         # add points and connection to network if additional points are given   
         # use kd tree to get the nearest point   
