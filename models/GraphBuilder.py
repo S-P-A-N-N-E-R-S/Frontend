@@ -500,10 +500,11 @@ class GraphBuilder:
         """
         graphLayer = QgsGraphLayer()
 
-        if self.__options["createRandomGraph"] == False:
-            graphLayer.setCrs(self.vLayer.crs())
-        else:
-            graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+        # todo: currently the setCrs method leads to crashes
+        # if self.__options["createRandomGraph"] == False:
+        #     graphLayer.setCrs(self.vLayer.crs())
+        # else:
+        #     graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         graphLayer.setGraph(self.graph)
 

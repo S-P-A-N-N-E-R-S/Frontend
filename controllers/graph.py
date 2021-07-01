@@ -6,7 +6,7 @@ from ..models.GraphBuilder import GraphBuilder
 from ..models.ExtGraph import ExtGraph
 from .. import helperFunctions as helper
 
-from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
+from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis, QgsCoordinateReferenceSystem
 from qgis.utils import iface
 
 
@@ -72,17 +72,17 @@ class CreateGraphController(BaseController):
         # polygon data
         polygonLayer = self.view.getPolygonLayer()
         if polygonLayer:
-            builder.setPolygonLayer(polygonLayer)
+            builder.setForbiddenAreas(polygonLayer)
 
         # poi layer
         poiLayer = self.view.getPOILayer()
         if poiLayer and self.view.getConnectionType()[0] == "ShortestPathNetwork":
-            builder.setAdditionalLineLayer(poiLayer)
+            builder.setAdditionalPointLayer(poiLayer)
 
         # additional line layer
-        additionalLineLayer = self.view.getAdditionalLineLayer()
-        if additionalLineLayer:
-            builder.setAdditionalLineLayer(additionalLineLayer)
+        # additionalLineLayer = self.view.getAdditionalLineLayer()
+        # if additionalLineLayer:
+        #     builder.setAdditionalLineLayer(additionalLineLayer)
 
         # set options
         builder.setOption("connectionType", self.view.getConnectionType()[0])
@@ -119,7 +119,7 @@ class CreateGraphController(BaseController):
                     return
 
                 # set graph to graph builder
-                builder.setGraph(graph)
+                builder.graph = graph
 
                 # create graph layer
                 graphLayer = builder.createGraphLayer(False)
@@ -200,8 +200,8 @@ class CreateGraphController(BaseController):
         """
         Saves graph to destination
         :param graph: ExtGraph
-        :param vertexLayer: graph vertices
-        :param edgeLayer: graph edges
+        :param graphLayer:
+        :param graphName:
         :return:
         """
         savePath = self.view.getSavePath()
