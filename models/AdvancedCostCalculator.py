@@ -19,7 +19,7 @@ class AdvancedCostCalculator():
     Class to calculate the edge costs of a graph by analysis of a cost function. The cost function
     can use different variables and operators.    
     """
-    def __init__(self, rLayers, vLayer, graph, polygons,usePolygons, rasterBands):
+    def __init__(self, rLayers, vLayer, graph, polygons, usePolygons, rasterBands):
         """
         Constructor
         
@@ -114,8 +114,7 @@ class AdvancedCostCalculator():
         
         # get specified field information from feature
         elif "field:" in part:                       
-            name = part.split(":")[1]
-            
+            name = part.split(":")[1]            
             if self.vLayer.geometryType() == QgsWkbTypes.LineGeometry and not self.usePolygons:                                        
                 return (self.graph.featureMatchings[edgeID])[name]
                                     
@@ -126,20 +125,20 @@ class AdvancedCostCalculator():
                     if QgsWkbTypes.isMultiType(geom.wkbType()):  
                          for part in geom.asMultiPolyline():
                             for i in range(1,len(part)):                               
-                                    if part[i-1] == self.graph.vertex(edge.fromVertex()).point() and part[i] == self.graph.vertex(edge.toVertex()).point():
-                                        return str(feature[name])
+                                if part[i-1] == self.graph.vertex(edge.fromVertex()).point() and part[i] == self.graph.vertex(edge.toVertex()).point():
+                                    return str(feature[name])
                     else:
                         vertices = geom.asPolyline()                       
                         for i in range(len(vertices)-1):    
-                            if vertices[i] == self.graph.vertex(edge.fromVertex()).point() and vertices[i+1] == self.graph(edge.toVertex()).point():
+                            if vertices[i] == self.graph.vertex(edge.fromVertex()).point() and vertices[i+1] == self.graph.vertex(edge.toVertex()).point():
                                 return str(feature[name]) 
             
             # use information from points to set the edge weights
             # only incoming edges are considered         
-            elif self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:               
+            elif self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:                             
                 for feature in self.vLayer.getFeatures():
                     geom = feature.geometry()
-                    if self.graph.vertex(edge.toVertex()).point() == geom.asPoint():
+                    if self.graph.vertex(edge.toVertex()).point() == geom.asPoint():                        
                         return str(feature[name])                      
         
         # analysis of raster data
@@ -193,7 +192,7 @@ class AdvancedCostCalculator():
                 descent = 0
                 for i in range(len(pointValuesForEdge)-1):
                     if pointValuesForEdge[i] > pointValuesForEdge[i+1]:
-                        descent = descent + (pointsValuesForEdge[i] - pointValuesForEdge[i+1])
+                        descent = descent + (pointValuesForEdge[i] - pointValuesForEdge[i+1])
                 return str(descent)        
             elif ":totalClimb" in part:
                 totalClimb = 0
@@ -332,7 +331,7 @@ class AdvancedCostCalculator():
                       
             weights.append(eval(translatedFormula))                                             
             
-        # append the list
+        # append the list        
         self.graph.edgeWeights.append(weights)
                         
         return self.graph    

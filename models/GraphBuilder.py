@@ -85,6 +85,7 @@ class GraphBuilder:
         if vectorLayer.geometryType() != QgsWkbTypes.PolygonGeometry:
             raise TypeError("Not a polygon geometry")                     
         
+        self.__options["usePolygonsAsForbidden"] = True
         self.forbiddenAreas = vectorLayer
     
     def setAdditionalPointLayer(self, vectorLayer): 
@@ -119,7 +120,7 @@ class GraphBuilder:
         
         :type QgsRasterLayer
         """
-        self.__options["useRasterData"] = True;
+        self.__options["useRasterData"] = True
         self.rasterBands.append(band)
         self.rLayers.append(rasterLayer)
     
@@ -208,11 +209,11 @@ class GraphBuilder:
             
             self.vLayer = QgsVectorLayer("Point", "TempVertexLayer", "memory")
             dpVerticeLayer = self.vLayer.dataProvider()
-            if self.__options["createRandomGraph"] == True:
-                for i in range(self.graph.vertexCount()):
-                    newFeature = QgsFeature()
-                    newFeature.setGeometry(QgsGeometry.fromPointXY(self.graph.vertex(i).point()))  
-                    dpVerticeLayer.addFeature(newFeature)
+            
+            for i in range(self.graph.vertexCount()):
+                newFeature = QgsFeature()
+                newFeature.setGeometry(QgsGeometry.fromPointXY(self.graph.vertex(i).point()))  
+                dpVerticeLayer.addFeature(newFeature)
             
         # change so you only go throw the features ones and store in 2d array
         result = processing.run("qgis:kmeansclustering", {"INPUT":self.vLayer, "CLUSTERS": self.__options["clusterNumber"], "OUTPUT": "memory:"})
@@ -346,7 +347,7 @@ class GraphBuilder:
             
     def __removeIntersectingEdges(self): 
         # create the current edge layer              
-        currentEdges = self.createEdgeLayer(False)
+        currentEdges = self.createEdgeLayer(False,True)
         # call QGIS tool to extract all the edges which cross the polygon
         result1 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.forbiddenAreas, "OUTPUT": "memory:"})         
         layerWithDelEdges = result1["OUTPUT"]
@@ -363,8 +364,10 @@ class GraphBuilder:
                 id1 = newGraph.addVertex(startVertex)
                 id2 = newGraph.addVertex(endVertex)                    
                 newGraph.addEdge(id1, id2)
-               
+        
+        newGraph.setDistanceStrategy(self.graph.distanceStrategy)       
         self.graph = newGraph
+        
     
     def createVertexLayer(self, addToCanvas):
         """
@@ -396,7 +399,7 @@ class GraphBuilder:
     
         return graphLayerVertices
        
-    def createEdgeLayer(self, addToCanvas):
+    def createEdgeLayer(self, addToCanvas, skipEdgeCosts=False):
         """
         Method creates a QgsVectorLayer containing lines. The lines are the edges of the graph. The weights are
         visible by creating labels.
@@ -417,8 +420,12 @@ class GraphBuilder:
             newFeature = QgsFeature()
             fromVertex = self.graph.vertex(self.graph.edge(i).fromVertex()).point()
             toVertex = self.graph.vertex(self.graph.edge(i).toVertex()).point()
-            newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))                              
-            newFeature.setAttributes([i, self.graph.edge(i).fromVertex(), self.graph.edge(i).toVertex(), self.graph.costOfEdge(i)])
+            newFeature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))  
+            if skipEdgeCosts == True:
+                newFeature.setAttributes([i, self.graph.edge(i).fromVertex(), self.graph.edge(i).toVertex(), 0])
+            else:
+                newFeature.setAttributes([i, self.graph.edge(i).fromVertex(), self.graph.edge(i).toVertex(), self.graph.costOfEdge(i)])    
+            
             dpEdgeLayer.addFeature(newFeature)
 
         if addToCanvas == True:        
@@ -464,7 +471,7 @@ class GraphBuilder:
         self.graph = ExtGraph()           
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
-                                                               
+                                                              
         if self.__options["createRandomGraph"] == True:
             self.__createRandomVertices()        
         else:          

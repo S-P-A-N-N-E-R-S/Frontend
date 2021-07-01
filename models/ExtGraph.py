@@ -70,6 +70,7 @@ class ExtGraph(QgsGraph):
         
         #if the type is advanced the distances are set by the GraphBuilder directly
         elif self.distanceStrategy == "Advanced":
+            
             return self.edgeWeights[functionIndex][edgeID]
         
         else:
@@ -100,7 +101,7 @@ class ExtGraph(QgsGraph):
         deltaLambda = math.radians(toPoint.x()-fromPoint.x())
         a = math.sin(deltaPhi/2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(deltaLambda / 2.0) ** 2    
         c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))       
-        return radius*c;
+        return radius*c
            
     def distanceP2P(self, vertex1, vertex2):
         """
