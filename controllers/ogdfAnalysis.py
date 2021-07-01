@@ -1,14 +1,16 @@
 import os
 
-from qgis.core import QgsSettings
+from qgis.core import QgsSettings, QgsApplication, QgsProject
 
 from .base import BaseController
 from ..models.GraphBuilder import GraphBuilder
 from ..models.PGGraph import PGGraph
+from ..models.QgsGraphLayer import QgsGraphLayer
 
 # client imports
 from ..network.client import Client
 from ..network.requests.shortPathRequest import ShortPathRequest
+from ..network.responses.shortPathResponse import ShortPathResponse
 from ..network.exceptions import NetworkClientError
 
 
@@ -21,8 +23,8 @@ class OGDFAnalysisController(BaseController):
         """
         super().__init__(view)
 
-        # set up client
         self.settings = QgsSettings()
+        self.authManager = QgsApplication.authManager()
 
         # self.view.addAnalysis("t-Spanner")
         # self.view.addAnalysis("minimum spanner")
@@ -38,26 +40,32 @@ class OGDFAnalysisController(BaseController):
         if not graph:
             return
 
-        host = self.settings.value("protoplugin/host", None)
-        port = int(self.settings.value("protoplugin/port", None))
+        host = self.settings.value("protoplugin/host", "")
+        port = int(self.settings.value("protoplugin/port", 4711))
+        # todo: pass authId to client
+        authId = self.settings.value("protoplugin/authId")
         if not (host and port):
             self.view.showError("Please set host and port in options!")
             return None
 
         with Client(host, port) as client:
             shortPathRequest = ShortPathRequest(graph, startNodeIndex, endNodeIndex)
-            msgLength = client.sendShortPathRequest(shortPathRequest)
+            _msgLength = client.send(shortPathRequest)
 
             try:
-                graph = client.readShortPathResponse()
+                # receive response
+                response = ShortPathResponse(PGGraph())
+                client.recv(response)
             except NetworkClientError as e:
                 self.view.showError(str(e))
 
         # show graph in qgis
         builder = GraphBuilder()
-        builder.setGraph(graph)
-        vertexLayer = builder.createVertexLayer(True)
-        edgeLayer = builder.createEdgeLayer(True)
+        builder.setGraph(response.graph)
+        graphLayer = builder.createGraphLayer(False)
+        graphLayer.setName("ResultGraphLayer")
+        QgsProject.instance().addMapLayer(graphLayer)
+        self.view.showSuccess("Analysis complete!")
 
     def __getGraph(self):
         if not self.view.hasInput():
@@ -65,8 +73,12 @@ class OGDFAnalysisController(BaseController):
             return None
 
         if self.view.isInputLayer():
-            # todo: graph layer handling
-            layer = self.view.getInputLayer()
+            # return graph from graph layer
+            graphLayer = self.view.getInputLayer()
+            if not isinstance(graphLayer, QgsGraphLayer):
+                self.view.showError("The selected layer is not a graph layer!")
+                return None
+            return graphLayer.getGraph()
         else:
             # if file path as input
             path = self.view.getInputPath()

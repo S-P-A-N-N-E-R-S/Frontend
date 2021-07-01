@@ -129,9 +129,9 @@ class ExtGraph(QgsGraph):
                
         return False             
                           
-    def addEdge(self, vertex1, vertex2):       
+    def addEdge(self, vertex1, vertex2, strats=[]):
         # overload to not use distance strategy
-        super().addEdge(vertex1, vertex2, [])               
+        super().addEdge(vertex1, vertex2, strats)
         
     def writeGraphML(self, path):
         """

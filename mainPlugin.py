@@ -1,9 +1,18 @@
 from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
+from qgis.PyQt.QtXml import *
+
+from qgis.core import *
+from qgis.gui import *
+from qgis.analysis import *
 
 from .views.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath, getPluginPath
 
+
+from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
+
+import os
 
 class ProtoPlugin:
 
@@ -47,6 +56,15 @@ class ProtoPlugin:
         self.defaultAction.setStatusTip("Create example data")
 
     def initGui(self):
+        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
+
+        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
+                                                                            QgsGraphDataProvider.description(),
+                                                                            QgsGraphDataProvider.createProvider()))
+
+        # re-read and therefore reload plugin layers after adding QgsGraphLayerType to PluginLayerRegistry
+        self.reloadPluginLayers()
+
         # create menu
         menu = QMenu("Proto Plugin")
         menu.setIcon(QIcon(getImagePath("icon.png")))
@@ -80,3 +98,48 @@ class ProtoPlugin:
         # remove menu entry
         plugin_menu = self.iface.pluginMenu()
         plugin_menu.removeAction(self.menuAction)
+
+        QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
+
+    def reloadPluginLayers(self):
+        """Re-reads and reloads plugin layers
+        """
+        # if project is empty
+        if QgsProject.instance().baseName() == "":
+            return False
+
+        wasZipped = False
+        if not QgsProject.instance().isZipped():
+            readFileName = QgsProject.instance().absoluteFilePath()
+        else:
+            # temporarily unzip qgz to qgs
+            directory = QgsProject.instance().absolutePath() + "/" + QgsProject.instance().baseName()
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            QgsZipUtils.unzip(QgsProject.instance().absoluteFilePath(), directory)
+
+            readFileName = directory + "/" + QgsProject.instance().baseName() + ".qgs"
+
+            wasZipped = True
+
+        # read def. not zipped project file
+        with open(readFileName, 'r') as projectFile:
+            projectDocument = QDomDocument()
+            projectDocument.setContent(projectFile.read())
+
+            # for every maplayer node in project file
+            mapLayerNodeList = projectDocument.elementsByTagName("maplayer")
+            for mapLayerNodeId in range(mapLayerNodeList.count()):
+                mapLayerNode = mapLayerNodeList.at(mapLayerNodeId)
+
+                # check if maplayer is a plugin layer
+                mapLayerElem = mapLayerNode.toElement()
+                if mapLayerElem.attribute("type") == "plugin":
+                    # re-read plugin layer from node
+                    QgsProject.instance().readLayer(mapLayerNode)
+
+        # delete unzipped directory
+        if wasZipped:
+            os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
+            os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
+            os.rmdir(directory)

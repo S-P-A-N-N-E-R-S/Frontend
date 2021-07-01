@@ -41,16 +41,9 @@ SOURCES = \
 
 PLUGINNAME = proto_plugin
 
-PY_FILES = \
-	__init__.py \
-	mainPlugin.py
-
-# todo need to be added
-UI_FILES = user_interface.ui
-
-EXTRAS = metadata.txt icon.png
-
-EXTRA_DIRS =
+PY_FILES = __init__.py mainPlugin.py helperFunctions.py
+DIRECTORIES = controllers models resources views network
+EXTRAS = metadata.txt
 
 # COMPILED_RESOURCE_FILES = resources.py
 
@@ -100,24 +93,12 @@ deploy:
 	# $HOME/$(QGISDIR)/python/plugins
 	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(PY_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(UI_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(COMPILED_RESOURCE_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	$(foreach dir, $(DIRECTORIES), if [ -d "$(dir)" ]; then cp -vfr $(dir) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME); fi;)
 	cp -vf $(EXTRAS) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	#cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) 			# Translation files
 	#cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
 	# Copy extra directories if any
 	#(foreach EXTRA_DIR,(EXTRA_DIRS), cp -R (EXTRA_DIR) (HOME)/(QGISDIR)/python/plugins/(PLUGINNAME)/;)
-
-
-# The dclean target removes compiled python files from plugin directory
-# also deletes any .git entry
-dclean:
-	@echo
-	@echo "-----------------------------------"
-	@echo "Removing any compiled python files."
-	@echo "-----------------------------------"
-	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname "*.pyc" -delete
-	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname ".git" -prune -exec rm -Rf {} \;
 
 
 derase:
@@ -127,17 +108,21 @@ derase:
 	@echo "-------------------------"
 	rm -Rf $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 
-zip: deploy dclean
+zip:
 	@echo
 	@echo "---------------------------"
 	@echo "Creating plugin zip bundle."
 	@echo "---------------------------"
-	# The zip target deploys the plugin and creates a zip file with the deployed
-	# content. You can then upload the zip file on http://plugins.qgis.org
 	rm -f $(PLUGINNAME).zip
-	cd $(HOME)/$(QGISDIR)/python/plugins; zip -9r $(CURDIR)/$(PLUGINNAME).zip $(PLUGINNAME)
+	rm -fr temp_zip
+	mkdir -p temp_zip/$(PLUGINNAME)
+	cp -vf $(PY_FILES)  temp_zip/$(PLUGINNAME)
+	$(foreach dir, $(DIRECTORIES), if [ -d "$(dir)" ]; then cp -vfr $(dir) temp_zip/$(PLUGINNAME); fi;)
+	cp -vf $(EXTRAS) temp_zip/$(PLUGINNAME)
+	cd temp_zip; zip $(CURDIR)/$(PLUGINNAME).zip -r $(PLUGINNAME)
+	rm -fr temp_zip
 
-package: compile
+package:
 	# Create a zip package of the plugin named $(PLUGINNAME).zip.
 	# This requires use of git (your plugin development directory must be a
 	# git repository).
@@ -148,15 +133,8 @@ package: compile
 	@echo "Exporting plugin to zip package.	"
 	@echo "------------------------------------"
 	rm -f $(PLUGINNAME).zip
-	git archive --prefix=$(PLUGINNAME)/ -o $(PLUGINNAME).zip $(VERSION)
+	git archive --prefix=$(PLUGINNAME)/ -o $(PLUGINNAME).zip HEAD
 	echo "Created package: $(PLUGINNAME).zip"
-
-clean:
-	@echo
-	@echo "------------------------------------"
-	@echo "Removing uic and rcc generated files"
-	@echo "------------------------------------"
-	rm $(COMPILED_UI_FILES) $(COMPILED_RESOURCE_FILES)
 
 pylint:
 	@echo

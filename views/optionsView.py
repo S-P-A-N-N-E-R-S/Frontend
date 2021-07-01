@@ -9,6 +9,16 @@ class OptionsView(BaseContentView):
         self.name = "options"
         self.controller = OptionsController(self)
 
+        # hide all unused inputs
+        self.dialog.ogdf_analysis_job_label.hide()
+        self.dialog.ogdf_analysis_job_input.hide()
+
+        self.dialog.ogdf_analysis_crs_label.hide()
+        self.dialog.ogdf_analysis_crs_input.hide()
+
+        self.dialog.ogdf_analysis_stretch_label.hide()
+        self.dialog.ogdf_analysis_stretch_input.hide()
+
         self.dialog.options_save_btn.clicked.connect(self.controller.saveOptions)
 
     def getHost(self):
@@ -23,7 +33,7 @@ class OptionsView(BaseContentView):
     def setPort(self, port):
         self.dialog.options_server_port_input.setValue(port)
 
-    # credentials
+    # authentication
 
     def getUsername(self):
         return self.dialog.options_credentials_username_input.text()
@@ -33,3 +43,6 @@ class OptionsView(BaseContentView):
 
     def getPassword(self):
         return self.dialog.options_credentials_password_input.text()
+
+    def setPasswordPlaceholder(self, text):
+        self.dialog.options_credentials_password_input.setPlaceholderText(text)
