@@ -3,7 +3,7 @@ import os
 from .base import BaseController
 
 from ..models.GraphBuilder import GraphBuilder
-from ..models.PGGraph import PGGraph
+from ..models.ExtGraph import ExtGraph
 from .. import helperFunctions as helper
 
 from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
@@ -26,11 +26,13 @@ class CreateGraphController(BaseController):
 
         self.view.addConnectionType("Nearest neighbor")
         self.view.addConnectionType("Complete")
-        self.view.addConnectionType("ShortestPathNetwork")
+        self.view.addConnectionType("ClusterComplete")
+        self.view.addConnectionType("ClusterNN")
 
         self.view.addDistance("Euclidean")
-        self.view.addDistance("Manhatten")
-        self.view.addDistance("Speed")
+        self.view.addDistance("Manhattan")
+        self.view.addDistance("Geodesic")
+        self.view.addDistance("Advanced")
 
         self.view.addRasterType("elevation")
         self.view.addRasterType("prohibited area")
@@ -85,7 +87,6 @@ class CreateGraphController(BaseController):
         # set options
         builder.setOption("connectionType", self.view.getConnectionType()[0])
         builder.setOption("edgeDirection", "Directed")
-        builder.setOption("speedOption", self.view.getCostField())
         builder.setOption("distanceStrategy", self.view.getDistance()[0])
 
         # set builder options for random graph
@@ -93,9 +94,8 @@ class CreateGraphController(BaseController):
             graphName = "Random"
             builder.setOption("createRandomGraph", True)
             numVertices = 100
-            builder.setRandomOptions("numberOfVertices", numVertices)
-            area = "Germany"
-            builder.setRandomOptions("area", area)
+            builder.setRandomOption("numberOfVertices", numVertices)
+            builder.setRandomOption("area", "Germany")
 
         # set vector layer in builder if input layer exist
         elif self.view.hasInput() and self.view.isInputLayer():
@@ -111,7 +111,7 @@ class CreateGraphController(BaseController):
             graphName = os.path.basename(fileName)
             if extension == ".graphml":
                 # create graph from .graphml file
-                graph = PGGraph()
+                graph = ExtGraph()
                 graph.readGraphML(path)
 
                 if not graph:
@@ -199,7 +199,7 @@ class CreateGraphController(BaseController):
     def saveGraph(self, graph, graphLayer, graphName=""):
         """
         Saves graph to destination
-        :param graph: PGGraph
+        :param graph: ExtGraph
         :param vertexLayer: graph vertices
         :param edgeLayer: graph edges
         :return:

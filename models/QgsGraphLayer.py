@@ -11,7 +11,7 @@ from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileD
 import random, math
 
 from .QgsGraphDataProvider import QgsGraphDataProvider
-from .PGGraph import PGGraph
+from .ExtGraph import ExtGraph
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
@@ -43,7 +43,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setFont(QFont("arial", 5))
         # painter.setRenderHint(painter.Antialiasing)
 
-        # if isinstance(self.mGraph, PGGraph):
+        # if isinstance(self.mGraph, ExtGraph):
         if isinstance(self.mGraph, QgsGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
@@ -146,7 +146,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         
         self.mName = name
         self.mGraph = QgsGraph()
-        # self.mGraph = PGGraph()
+        # self.mGraph = ExtGraph()
 
         self.hasEdges = False
 
@@ -191,7 +191,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         pass 
 
     def setGraph(self, graph):
-        if isinstance(graph, PGGraph):
+        if isinstance(graph, ExtGraph):
             self.mGraph = graph
 
             if self.mGraph.edgeCount() != 0:
@@ -337,9 +337,9 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         """
         self.setLayerType(QgsGraphLayer.LAYER_TYPE)
 
-        # start with empty QgsGraph / PGGraph
+        # start with empty QgsGraph / ExtGraph
         graph = QgsGraph()
-        # graph = PGGraph()
+        # graph = ExtGraph()
 
         # find srs node in xml
         srsNode = node.firstChild()
@@ -411,7 +411,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         graphNode.appendChild(verticesNode)
 
         # edgeNode saves all edges with its vertices ids
-        # TODO: also save cost information stored in PGGraph (merge necessary beforehand)
+        # TODO: also save cost information stored in ExtGraph (merge necessary beforehand)
         edgesNode = doc.createElement("edges")
         graphNode.appendChild(edgesNode)
 

@@ -4,7 +4,7 @@ from qgis.core import QgsSettings, QgsApplication, QgsProject
 
 from .base import BaseController
 from ..models.GraphBuilder import GraphBuilder
-from ..models.PGGraph import PGGraph
+from ..models.ExtGraph import ExtGraph
 from ..models.QgsGraphLayer import QgsGraphLayer
 
 # client imports
@@ -54,7 +54,7 @@ class OGDFAnalysisController(BaseController):
 
             try:
                 # receive response
-                response = ShortPathResponse(PGGraph())
+                response = ShortPathResponse(ExtGraph())
                 client.recv(response)
             except NetworkClientError as e:
                 self.view.showError(str(e))
@@ -84,6 +84,6 @@ class OGDFAnalysisController(BaseController):
             path = self.view.getInputPath()
             fileName, extension = os.path.splitext(path)
             if extension == ".graphml":
-                graph = PGGraph()
+                graph = ExtGraph()
                 graph.readGraphML(path)
                 return graph
