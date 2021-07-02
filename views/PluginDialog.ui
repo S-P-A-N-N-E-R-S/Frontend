@@ -284,9 +284,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>0</y>
+                         <y>-513</y>
                          <width>773</width>
-                         <height>921</height>
+                         <height>1197</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -372,6 +372,56 @@ QListWidget::item::selected {
                                 <enum>QLayout::SetDefaultConstraint</enum>
                                </property>
                                <item>
+                                <widget class="QLabel" name="create_graph_random_label">
+                                 <property name="text">
+                                  <string>Random</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                                 <item>
+                                  <widget class="QSpinBox" name="create_graph_randomNumber_input">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
+                                   <property name="prefix">
+                                    <string>Number vertices: </string>
+                                   </property>
+                                   <property name="maximum">
+                                    <number>1000000</number>
+                                   </property>
+                                   <property name="value">
+                                    <number>100</number>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                 <item>
+                                  <widget class="QLabel" name="create_graph_randomarea_label">
+                                   <property name="text">
+                                    <string>Area:</string>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                 <item>
+                                  <widget class="QComboBox" name="create_graph_randomarea_input">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
+                                   <property name="placeholderText">
+                                    <string/>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                </layout>
+                               </item>
+                               <item>
                                 <widget class="QLabel" name="create_graph_connectiontype_label">
                                  <property name="text">
                                   <string>Connection type (if point layer or random)</string>
@@ -386,9 +436,73 @@ QListWidget::item::selected {
                                 </widget>
                                </item>
                                <item>
+                                <widget class="QLabel" name="create_graph_numberneighbor_label">
+                                 <property name="text">
+                                  <string>Nearest Neighbor</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <layout class="QHBoxLayout" name="horizontalLayout_6">
+                                 <item>
+                                  <widget class="QSpinBox" name="create_graph_numberneighbor_input">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
+                                   <property name="prefix">
+                                    <string>Number: </string>
+                                   </property>
+                                   <property name="maximum">
+                                    <number>10</number>
+                                   </property>
+                                   <property name="value">
+                                    <number>2</number>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                 <item>
+                                  <widget class="QCheckBox" name="create_graph_allowdoubleedges_checkbox">
+                                   <property name="text">
+                                    <string>Allow double edges</string>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                </layout>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_clusternumber_label">
+                                 <property name="text">
+                                  <string>Cluster Number</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QSpinBox" name="create_graph_clusternumber_input">
+                                 <property name="maximum">
+                                  <number>100</number>
+                                 </property>
+                                 <property name="value">
+                                  <number>5</number>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_edgedirection_label">
+                                 <property name="text">
+                                  <string>Edge direction</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QComboBox" name="create_graph_edgedirection_input"/>
+                               </item>
+                               <item>
                                 <widget class="QLabel" name="create_graph_distance_label">
                                  <property name="text">
-                                  <string>Distance</string>
+                                  <string>Distance strategy</string>
                                  </property>
                                 </widget>
                                </item>
@@ -485,29 +599,83 @@ QListWidget::item::selected {
                                 <layout class="QHBoxLayout" name="horizontalLayout_14">
                                  <item>
                                   <widget class="QgsMapLayerComboBox" name="create_graph_raster_input">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
                                    <property name="allowEmptyLayer">
                                     <bool>true</bool>
                                    </property>
                                   </widget>
                                  </item>
                                  <item>
-                                  <widget class="QToolButton" name="create_graph_raster_input_tools">
+                                  <widget class="QgsRasterBandComboBox" name="create_graph_rasterband_input">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
+                                   <property name="minimumSize">
+                                    <size>
+                                     <width>150</width>
+                                     <height>0</height>
+                                    </size>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                 <item>
+                                  <widget class="QPushButton" name="create_graph_raster_plus_btn">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
+                                   <property name="minimumSize">
+                                    <size>
+                                     <width>0</width>
+                                     <height>0</height>
+                                    </size>
+                                   </property>
+                                   <property name="maximumSize">
+                                    <size>
+                                     <width>25</width>
+                                     <height>16777215</height>
+                                    </size>
+                                   </property>
+                                   <property name="sizeIncrement">
+                                    <size>
+                                     <width>0</width>
+                                     <height>0</height>
+                                    </size>
+                                   </property>
+                                   <property name="baseSize">
+                                    <size>
+                                     <width>0</width>
+                                     <height>0</height>
+                                    </size>
+                                   </property>
+                                   <property name="styleSheet">
+                                    <string notr="true"/>
+                                   </property>
                                    <property name="text">
-                                    <string>...</string>
+                                    <string>➕</string>
+                                   </property>
+                                   <property name="autoDefault">
+                                    <bool>true</bool>
+                                   </property>
+                                   <property name="default">
+                                    <bool>false</bool>
+                                   </property>
+                                   <property name="flat">
+                                    <bool>false</bool>
                                    </property>
                                   </widget>
                                  </item>
                                 </layout>
-                               </item>
-                               <item>
-                                <widget class="QLabel" name="create_graph_rasterband_label">
-                                 <property name="text">
-                                  <string>Raster band [optional]</string>
-                                 </property>
-                                </widget>
-                               </item>
-                               <item>
-                                <widget class="QgsRasterBandComboBox" name="create_graph_rasterband_input"/>
                                </item>
                                <item>
                                 <widget class="QLabel" name="create_graph_rastertype_label">
@@ -643,25 +811,36 @@ QListWidget::item::selected {
                                 </layout>
                                </item>
                                <item>
-                                <widget class="QLabel" name="create_graph_polygon_label">
+                                <widget class="QLabel" name="create_graph_polycost_label">
                                  <property name="text">
-                                  <string>Polygon data [optional]</string>
+                                  <string>Polygon cost layer [optional] (for advanced costs)</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <layout class="QHBoxLayout" name="horizontalLayout_5">
+                                 <item>
+                                  <widget class="QgsMapLayerComboBox" name="create_graph_polycost_input">
+                                   <property name="allowEmptyLayer">
+                                    <bool>true</bool>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                </layout>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_forbiddenarea_label">
+                                 <property name="text">
+                                  <string>Forbidden areas [optional] (only polygon layer)</string>
                                  </property>
                                 </widget>
                                </item>
                                <item>
                                 <layout class="QHBoxLayout" name="horizontalLayout_16">
                                  <item>
-                                  <widget class="QgsMapLayerComboBox" name="create_graph_polygon_input">
+                                  <widget class="QgsMapLayerComboBox" name="create_graph_forbiddenarea_input">
                                    <property name="allowEmptyLayer">
                                     <bool>true</bool>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                 <item>
-                                  <widget class="QToolButton" name="create_graph_polygon_input_tools">
-                                   <property name="text">
-                                    <string>...</string>
                                    </property>
                                   </widget>
                                  </item>
@@ -678,18 +857,28 @@ QListWidget::item::selected {
                                 <widget class="QComboBox" name="create_graph_polygontype_input"/>
                                </item>
                                <item>
-                                <widget class="QLabel" name="create_graph_additionalline_label">
+                                <widget class="QLabel" name="create_graph_additionalpoint_label">
                                  <property name="text">
-                                  <string>Additional line layer (only for ShortestPathNetwork)</string>
+                                  <string>Additional point layer (only line layer)</string>
                                  </property>
                                 </widget>
                                </item>
                                <item>
-                                <widget class="QgsMapLayerComboBox" name="create_graph_additionalline_input">
+                                <widget class="QgsMapLayerComboBox" name="create_graph_additionalpoint_input">
                                  <property name="allowEmptyLayer">
                                   <bool>true</bool>
                                  </property>
                                 </widget>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_costfunction_label">
+                                 <property name="text">
+                                  <string>Advanced cost function</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QLineEdit" name="create_graph_costfunction_input"/>
                                </item>
                                <item>
                                 <widget class="QLabel" name="create_graph_crs_label">

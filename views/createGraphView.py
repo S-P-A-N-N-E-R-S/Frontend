@@ -23,17 +23,18 @@ class CreateGraphView(BaseContentView):
 
         # set up layer inputs
         self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer)
-        # self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer | QgsMapLayerProxyModel.RasterLayer | QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_poi_input.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        self.dialog.create_graph_polygon_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-        self.dialog.create_graph_additionalline_input.setFilters(QgsMapLayerProxyModel.LineLayer)
+        self.dialog.create_graph_polycost_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.dialog.create_graph_forbiddenarea_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.dialog.create_graph_additionalpoint_input.setFilters(QgsMapLayerProxyModel.PointLayer)
 
         # set null layer as default
         self.dialog.create_graph_poi_input.setCurrentIndex(0)
         self.dialog.create_graph_raster_input.setCurrentIndex(0)
-        self.dialog.create_graph_polygon_input.setCurrentIndex(0)
-        self.dialog.create_graph_additionalline_input.setCurrentIndex(0)
+        self.dialog.create_graph_polycost_input.setCurrentIndex(0)
+        self.dialog.create_graph_forbiddenarea_input.setCurrentIndex(0)
+        self.dialog.create_graph_additionalpoint_input.setCurrentIndex(0)
 
         # show layer fields
         self.dialog.create_graph_cost_input.setLayer(self.getInputLayer())
@@ -146,11 +147,35 @@ class CreateGraphView(BaseContentView):
 
     # advanced parameters
 
+    def getRandomVerticesNumber(self):
+        return self.dialog.create_graph_randomNumber_input.value()
+
+    def addRandomArea(self, area, userData=None):
+        self.dialog.create_graph_randomarea_input.addItem(area, userData)
+
+    def getRandomArea(self):
+        return self.dialog.create_graph_randomarea_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+
     def addConnectionType(self, type, userData=None):
         self.dialog.create_graph_connectiontype_input.addItem(type, userData)
 
     def getConnectionType(self):
         return self.dialog.create_graph_connectiontype_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+
+    def getNeighborNumber(self):
+        return self.dialog.create_graph_numberneighbor_input.value()
+
+    def isDoubleEdgesAllowed(self):
+        return self.dialog.create_graph_allowdoubleedges_checkbox.isChecked()
+
+    def getClusterNumber(self):
+        return self.dialog.create_graph_clusternumber_input.value()
+
+    def addEdgeDirection(self, direction, userData=None):
+        self.dialog.create_graph_edgedirection_input.addItem(direction, userData)
+
+    def getEdgeDirection(self):
+        return self.dialog.create_graph_edgedirection_input.currentText(), self.dialog.create_graph_edgedirection_input.currentData()
 
     def addDistance(self, distance, userData=None):
         self.dialog.create_graph_distance_input.addItem(distance, userData)
@@ -183,10 +208,10 @@ class CreateGraphView(BaseContentView):
         return self.dialog.create_graph_rastertype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
 
     def getRasterMinimum(self):
-        return self.dialog.create_graph_rastermin_input.int()
+        return self.dialog.create_graph_rastermin_input.value()
 
     def getRasterMaximum(self):
-        return self.dialog.create_graph_rastermax_input.int()
+        return self.dialog.create_graph_rastermax_input.value()
 
     def isRasterRangeModeSelected(self):
         return True if self.getRasterRangeMode() else False
@@ -199,8 +224,11 @@ class CreateGraphView(BaseContentView):
         # if both not checked
         return False
 
-    def getPolygonLayer(self):
-        return self.dialog.create_graph_polygon_input.currentLayer()
+    def getPolygonCostLayer(self):
+        return self.dialog.create_graph_polycost_input.currentLayer()
+
+    def getForbiddenAreaLayer(self):
+        return self.dialog.create_graph_forbiddenarea_input.currentLayer()
 
     def addPolygonType(self, type, userData=None):
         self.dialog.create_graph_polygontype_input.addItem(type, userData)
@@ -208,11 +236,14 @@ class CreateGraphView(BaseContentView):
     def getPolygonType(self):
         return self.dialog.create_graph_polygontype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
 
+    def getAdditionalPointLayer(self):
+        return self.dialog.create_graph_additionalpoint_input.currentLayer()
+
+    def getCostFunction(self):
+        return self.dialog.create_graph_costfunction_input.text()
+
     def getCRS(self):
         return self.dialog.create_graph_crs_input.crs()
-
-    def getAdditionalLineLayer(self):
-        return self.dialog.create_graph_additionalline_input.currentLayer()
 
     # task overview
 

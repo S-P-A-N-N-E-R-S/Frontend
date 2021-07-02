@@ -6,7 +6,7 @@ from ..models.GraphBuilder import GraphBuilder
 from ..models.ExtGraph import ExtGraph
 from .. import helperFunctions as helper
 
-from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis, QgsCoordinateReferenceSystem
+from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
 from qgis.utils import iface
 
 
@@ -24,10 +24,21 @@ class CreateGraphController(BaseController):
         """
         super().__init__(view)
 
+        self.view.addRandomArea("Germany")
+        self.view.addRandomArea("France")
+        self.view.addRandomArea("Osnabrueck")
+        self.view.addRandomArea("United States")
+        self.view.addRandomArea("Rome")
+        self.view.addRandomArea("Australia")
+
+        self.view.addConnectionType("None")
         self.view.addConnectionType("Nearest neighbor")
         self.view.addConnectionType("Complete")
         self.view.addConnectionType("ClusterComplete")
         self.view.addConnectionType("ClusterNN")
+
+        self.view.addEdgeDirection("Directed")
+        self.view.addEdgeDirection("Undirected")
 
         self.view.addDistance("Euclidean")
         self.view.addDistance("Manhattan")
@@ -66,36 +77,46 @@ class CreateGraphController(BaseController):
 
         # raster data
         rasterLayer = self.view.getRasterLayer()
-        if rasterLayer:
-            builder.setRasterLayer(rasterLayer)
+        rasterBand = self.view.getRasterLayer()
+        if rasterLayer and rasterBand:
+            builder.setRasterLayer(rasterLayer, rasterBand)
 
-        # polygon data
-        polygonLayer = self.view.getPolygonLayer()
-        if polygonLayer:
-            builder.setForbiddenAreas(polygonLayer)
+        # polygon cost layer
+        polygonCostLayer = self.view.getPolygonCostLayer()
+        if polygonCostLayer:
+            builder.setPolygonsForCostFunction(polygonCostLayer)
 
-        # poi layer
-        poiLayer = self.view.getPOILayer()
-        if poiLayer and self.view.getConnectionType()[0] == "ShortestPathNetwork":
-            builder.setAdditionalPointLayer(poiLayer)
+        # polygon forbidden area
+        forbiddenAreaLayer = self.view.getForbiddenAreaLayer()
+        if forbiddenAreaLayer:
+            builder.setForbiddenAreas(forbiddenAreaLayer)
 
-        # additional line layer
-        # additionalLineLayer = self.view.getAdditionalLineLayer()
-        # if additionalLineLayer:
-        #     builder.setAdditionalLineLayer(additionalLineLayer)
+        # additional point layer
+        additionalPointLayer = self.view.getAdditionalPointLayer()
+        if additionalPointLayer:
+            builder.setAdditionalPointLayer(additionalPointLayer)
+
+        # set advanced cost function
+        costFunction = self.view.getCostFunction()
+        if costFunction:
+            if not builder.setCostFunction(costFunction):
+                self.view.showWarning("Advanced cost function can not be set!")
+
 
         # set options
         builder.setOption("connectionType", self.view.getConnectionType()[0])
-        builder.setOption("edgeDirection", "Directed")
+        builder.setOption("neighborNumber", self.view.getNeighborNumber())
+        builder.setOption("nnAllowDoubleEdges", self.view.isDoubleEdgesAllowed())
+        builder.setOption("clusterNumber", self.view.getClusterNumber())
+        builder.setOption("edgeDirection", self.view.getEdgeDirection()[0])
         builder.setOption("distanceStrategy", self.view.getDistance()[0])
 
         # set builder options for random graph
         if self.view.isRandom():
             graphName = "Random"
             builder.setOption("createRandomGraph", True)
-            numVertices = 100
-            builder.setRandomOption("numberOfVertices", numVertices)
-            builder.setRandomOption("area", "Germany")
+            builder.setRandomOption("numberOfVertices", self.view.getRandomVerticesNumber())
+            builder.setRandomOption("area", self.view.getRandomArea()[0])
 
         # set vector layer in builder if input layer exist
         elif self.view.hasInput() and self.view.isInputLayer():
