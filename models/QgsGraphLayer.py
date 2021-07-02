@@ -460,8 +460,10 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         canvas = iface.mapCanvas()
         extent = self.mDataProvider.extent()
 
-        canvas.setExtent(self.mTransform.transform(self.mDataProvider.extent()))
+        if self.mTransform.isValid():
+            extent = self.mTransform.transform(self.mDataProvider.extent())
 
+        canvas.setExtent(extent)
         canvas.refresh()
 
     def toggleText(self):
