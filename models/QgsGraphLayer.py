@@ -15,7 +15,7 @@ from .PGGraph import PGGraph
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
-    def __init__(self, layerId, rendererContext, graph, crs, showEdgeText=True, showDirection=True, showLines=True,
+    def __init__(self, layerId, rendererContext, graph, showEdgeText=True, showDirection=True, showLines=True,
                 randomColor=QColor("red"), transform=QgsCoordinateTransform()):
         super().__init__(layerId, rendererContext)
 
@@ -23,8 +23,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         self.rendererContext = rendererContext
         
         self.mGraph = graph
-
-        self.mCRS = crs
 
         self.randomColor = randomColor
 
@@ -155,14 +153,11 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mDataProvider = QgsGraphDataProvider("Point")
         self.mFields = QgsFields()
 
-        if self.crs().isValid():
-            self.mCRS = self.crs()
-        else:
-            self.mCRS = QgsProject.instance().crs()
-            self.setCrs(self.mCRS)
+        if not self.crs().isValid():
+            self.setCrs(QgsProject.instance().crs())
 
-        self.__crsUri = "crs=" + self.mCRS.authid()
-        self.mDataProvider.setCrs(self.mCRS)
+        self.__crsUri = "crs=" + self.crs().authid()
+        self.mDataProvider.setCrs(self.crs())
 
         self.setDataSource(self.mDataProvider.dataSourceUri(), self.mName, self.mDataProvider.providerKey(), QgsDataProvider.ProviderOptions())
 
@@ -185,8 +180,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mFields
 
     def createMapRenderer(self, rendererContext):
-        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph, self.mCRS,
-                                    self.mShowEdgeText, self.mShowDirection, self.mShowLines, self.randomColor, self.mTransform)
+        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph, self.mShowEdgeText,
+                                    self.mShowDirection, self.mShowLines, self.randomColor, self.mTransform)
 
     def setTransformContext(self, ct):
         pass 
@@ -292,7 +287,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         # write features in QgsVectorFileWriter (save features in selected file)
         writer = QgsVectorFileWriter(fileName, "utf-8", self.fields(),
-                                        geomType, self.mCRS, driver)
+                                        geomType, self.crs(), driver)
 
         if writer.hasError() != QgsVectorFileWriter.NoError:
             print("ERROR: ", writer.errorMessage())
@@ -318,7 +313,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         for feat in self.mDataProvider.getFeatures():
             vDp.addFeature(feat)
 
-        vLayer.setCrs(self.mCRS)
+        vLayer.setCrs(self.crs())
 
         return vLayer
 
@@ -346,7 +341,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         while srsNode.nodeName() != "srs":
             srsNode = srsNode.nextSibling()
 
-        self.mCRS.readXml(srsNode)
+        self.crs().readXml(srsNode)
 
         # find graph node in xml
         graphNode = srsNode
@@ -366,7 +361,6 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         edgeNodes = edgesNode.childNodes()
 
         # get edge information and add them to graph
-        strat = QgsNetworkDistanceStrategy()
         for edgeId in range(edgeNodes.length()):
             if edgeNodes.at(edgeId).isElement():
                 elem = edgeNodes.at(edgeId).toElement()
@@ -480,13 +474,12 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mName = self.name()
 
     def updateCrs(self):
-        self.mCRS = self.crs()
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
 
         # transform drawn coordinates -> coordinates stay the same in graph and features
         destCRS = iface.mapCanvas().mapSettings().destinationCrs()
-        self.mTransform = QgsCoordinateTransform(self.mCRS, destCRS, QgsProject.instance())
+        self.mTransform = QgsCoordinateTransform(self.crs(), destCRS, QgsProject.instance())
 
         self.triggerRepaint()
         iface.mapCanvas().refresh()
