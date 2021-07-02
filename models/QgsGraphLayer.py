@@ -277,7 +277,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             geomType = QgsWkbTypes.Point
 
         # get saveFileName and datatype to export to
-        saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;Geopackage (*.gpkg);;CSV (*.csv)")
+        saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;Geopackage (*.gpkg);;CSV (*.csv);; graphML (*.graphML);;GeoJSON (*.geojson)")
         fileName = saveFileName[0]
         
         driver = ""
@@ -294,6 +294,14 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             fileName += ".csv"
             driver = "CSV"
         
+        elif saveFileName[1] == "graphML (*.graphML)":
+            fileName += ".graphML"
+            self.mGraph.writeGraphML(fileName)
+            return True
+
+        elif saveFileName[1] == "GeoJSON (*.geojson)":
+            fileName += ".geojson"
+            driver = "GeoJSON"
         else:
             return False
 
