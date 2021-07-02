@@ -4,6 +4,7 @@ from .base import BaseController
 
 from ..models.GraphBuilder import GraphBuilder
 from ..models.ExtGraph import ExtGraph
+from ..models.QgsGraphLayer import QgsGraphLayer
 from .. import helperFunctions as helper
 
 from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
@@ -166,8 +167,9 @@ class CreateGraphController(BaseController):
             graphName = os.path.basename(fileName)
 
         # create and run task from function
+        graphLayer = QgsGraphLayer()
         graphTask = QgsTask.fromFunction("Building graph: {}".format(graphName), builder.makeGraphTask,
-                                         graphName=graphName, on_finished=self.completed)
+                                         graphLayer=graphLayer, graphName=graphName, on_finished=self.completed)
         taskId = QgsApplication.taskManager().addTask(graphTask)
         CreateGraphController.activeGraphTasks.append((graphTask, taskId))
 
