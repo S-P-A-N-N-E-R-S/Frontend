@@ -41,6 +41,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setPen(QColor('black'))
         painter.setBrush(self.randomColor)
         painter.setFont(QFont("arial", 5))
+        painter.save()
         # painter.setRenderHint(painter.Antialiasing)
 
         if isinstance(self.mGraph, PGGraph):
@@ -188,9 +189,10 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
     def setGraph(self, graph):
         if isinstance(graph, PGGraph):
-            self.mGraph = graph
+            # create an actual new PGGraph from graph
+            self.mGraph = PGGraph()
 
-            if self.mGraph.edgeCount() != 0:
+            if graph.edgeCount() != 0:
                 self.hasEdges = True
                 
                 self.mDataProvider.setGeometryToPoint(False)
@@ -210,18 +212,26 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 self.mFields.append(toVertexField)
                 self.mFields.append(costField)
                 
-                for edgeId in range(self.mGraph.edgeCount()):
-                    edge = self.mGraph.edge(edgeId)
+                # add vertices to new PGGraph (have to be added to PGGraph before edges do -> inefficient)
+                for vertexId in range(graph.vertexCount()):
+                    vertex = graph.vertex(vertexId)
+                    
+                    self.mGraph.addVertex(vertex.point())
+
+                # add edges to new PGGraph and create corresponding features
+                for edgeId in range(graph.edgeCount()):
+                    edge = graph.edge(edgeId)
 
                     feat = QgsFeature()
-                    fromVertex = self.mGraph.vertex(edge.fromVertex()).point()
-                    toVertex = self.mGraph.vertex(edge.toVertex()).point()
+                    fromVertex = graph.vertex(edge.fromVertex()).point()
+                    toVertex = graph.vertex(edge.toVertex()).point()
                     feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-                    # feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex()])
-                    feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mGraph.costOfEdge(edgeId)])
+                    feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), graph.costOfEdge(edgeId)])
 
                     self.mDataProvider.addFeature(feat)
+
+                    self.mGraph.addEdge(edge.fromVertex(), edge.toVertex())
 
             else:
                 self.hasEdges = False
@@ -240,14 +250,16 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 self.mFields.append(xField)
                 self.mFields.append(yField)
 
-                for vertexId in range(self.mGraph.vertexCount()):
-                    vertex = self.mGraph.vertex(vertexId).point()
+                for vertexId in range(graph.vertexCount()):
+                    vertex = graph.vertex(vertexId).point()
 
                     feat = QgsFeature()
                     feat.setGeometry(QgsGeometry.fromPointXY(vertex))
 
                     feat.setAttributes([vertexId, vertex.x(), vertex.y()])
                     self.mDataProvider.addFeature(feat)
+
+                    self.mGraph.addVertex(graph.vertexId.point())
 
     def getGraph(self):
         return self.mGraph
