@@ -3,9 +3,10 @@ from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath
 
 from qgis.core import QgsMapLayerProxyModel, QgsTask
+from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox
 
 from PyQt5.QtCore import QTimer, Qt, QSize
-from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton
+from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton, QHBoxLayout, QSizePolicy
 from PyQt5.QtGui import QIcon
 
 import time
@@ -47,6 +48,9 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_input_tools.clicked.connect(
             lambda: self._browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
         )
+
+        # set up add raster data button
+        self.dialog.create_graph_raster_plus_btn.clicked.connect(self._addRasterDataInput)
 
         # set up tasks table
         self.dialog.graph_tasks_table.setColumnCount(4)
@@ -97,6 +101,51 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
         # immediately disable button and enable after 1 seconds
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
+
+    def _addRasterDataInput(self):
+        """
+        Appends a new raster band input line
+        :return:
+        """
+        #  change add button to remove button
+        lastLayout = self.dialog.create_graph_rasterdata_layout.itemAt(self.dialog.create_graph_rasterdata_layout.count()-1)
+        button = lastLayout.itemAt(lastLayout.count()-1).widget()
+        button.setText("➖")
+        button.clicked.disconnect()
+        button.clicked.connect(lambda: self._removeRasterDataInput(lastLayout))
+
+        layerComboBox = QgsMapLayerComboBox()
+        layerComboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        layerComboBox.setAllowEmptyLayer(True)
+        layerComboBox.setCurrentIndex(0)
+        layerComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
+
+        bandComboBox = QgsRasterBandComboBox()
+        bandComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
+        bandComboBox.setMinimumSize(150, 0)
+        layerComboBox.layerChanged.connect(bandComboBox.setLayer)
+
+        addButton = QPushButton("➕")
+        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        addButton.setMaximumSize(25, 25)
+        addButton.clicked.connect(self._addRasterDataInput)
+
+        layout = QHBoxLayout()
+        layout.addWidget(layerComboBox)
+        layout.addWidget(bandComboBox)
+        layout.addWidget(addButton)
+
+        self.dialog.create_graph_rasterdata_layout.addLayout(layout)
+
+    def _removeRasterDataInput(self, inputLayout):
+        """
+        Removes the passed input layout
+        :param inputLayout: input layout
+        :return:
+        """
+        for i in reversed(range(inputLayout.count())):
+            inputLayout.itemAt(i).widget().deleteLater()
+        self.dialog.create_graph_rasterdata_layout.removeItem(inputLayout)
 
     def _disableButton(self):
         """
@@ -195,11 +244,18 @@ class CreateGraphView(BaseContentView):
     def getPOILayer(self):
         return self.dialog.create_graph_poi_input.currentLayer()
 
-    def getRasterLayer(self):
-        return self.dialog.create_graph_raster_input.currentLayer()
-
-    def getRasterBand(self):
-        return self.dialog.create_graph_raster_input.currentBand()
+    def getRasterData(self):
+        """
+        Collects all user selected raster layer and corresponding bands
+        :return: Array of raster inputs and each input is a tuple: (layer, band)
+        """
+        rasterData = []
+        for i in range(self.dialog.create_graph_rasterdata_layout.count()):
+            inputLayout = self.dialog.create_graph_rasterdata_layout.itemAt(i)
+            rasterLayer = inputLayout.itemAt(0).widget().currentLayer()
+            rasterBand = inputLayout.itemAt(1).widget().currentBand()
+            rasterData.append((rasterLayer, rasterBand))
+        return rasterData
 
     def addRasterType(self, type, userData=None):
         self.dialog.create_graph_rastertype_input.addItem(type, userData)

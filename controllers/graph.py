@@ -77,10 +77,10 @@ class CreateGraphController(BaseController):
         graphName = "New"   # default name
 
         # raster data
-        rasterLayer = self.view.getRasterLayer()
-        rasterBand = self.view.getRasterLayer()
-        if rasterLayer and rasterBand:
-            builder.setRasterLayer(rasterLayer, rasterBand)
+        for rasterInput in self.view.getRasterData():
+            rasterLayer, rasterBand = rasterInput
+            if rasterLayer and rasterBand:
+                builder.setRasterLayer(rasterLayer, rasterBand)
 
         # polygon cost layer
         polygonCostLayer = self.view.getPolygonCostLayer()
@@ -102,7 +102,6 @@ class CreateGraphController(BaseController):
         if costFunction:
             if not builder.setCostFunction(costFunction):
                 self.view.showWarning("Advanced cost function can not be set!")
-
 
         # set options
         builder.setOption("connectionType", self.view.getConnectionType()[0])
