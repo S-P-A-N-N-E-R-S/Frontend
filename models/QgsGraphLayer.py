@@ -259,7 +259,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                     feat.setAttributes([vertexId, vertex.x(), vertex.y()])
                     self.mDataProvider.addFeature(feat)
 
-                    self.mGraph.addVertex(graph.vertexId.point())
+                    self.mGraph.addVertex(vertex)
 
     def getGraph(self):
         return self.mGraph
@@ -354,7 +354,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.setLayerType(QgsGraphLayer.LAYER_TYPE)
 
         # start with empty PGGraph
-        graph = PGGraph()
+        self.mGraph = PGGraph()
 
         # find srs node in xml
         srsNode = node.firstChild()
@@ -371,25 +371,80 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
 
+        edgesNode = verticesNode.nextSibling()
+        edgeNodes = edgesNode.childNodes()
+
+        self.hasEdges = edgeNodes.length() != 0
+        
+        # prepare fields and features
+        if self.hasEdges:
+            self.mDataProvider.setGeometryToPoint(False)
+            self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri)
+
+            edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
+            fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
+            toVertexField = QgsField("toVertex", QVariant.Double, "double")
+            costField = QgsField("edgeCost", QVariant.Double, "double")
+            
+            # self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
+            self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField])
+            
+            # self.updateFields()
+            self.mFields.append(edgeIdField)
+            self.mFields.append(fromVertexField)
+            self.mFields.append(toVertexField)
+            self.mFields.append(costField)
+        
+        else:
+            self.mDataProvider.setGeometryToPoint(True)
+            self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri)
+
+            vertexIdField = QgsField("vertexId", QVariant.Int, "integer")
+            xField = QgsField("x", QVariant.Double, "double")
+            yField = QgsField("y", QVariant.Double, "double")
+
+            self.mDataProvider.addAttributes([vertexIdField, xField, yField])
+            
+            # self.updateFields()
+            self.mFields.append(vertexIdField)
+            self.mFields.append(xField)
+            self.mFields.append(yField)
+
+
         # get vertex information and add them to graph
         for vertexId in range(vertexNodes.length()):
             if vertexNodes.at(vertexId).isElement():
                 elem = vertexNodes.at(vertexId).toElement()
-                graph.addVertex(QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y"))))
+                vertex = QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y")))
+                self.mGraph.addVertex(vertex)
+                
+                if not self.hasEdges:
+                    # add feature for each vertex
+                    feat = QgsFeature()
+                    feat.setGeometry(QgsGeometry.fromPointXY(vertex))
 
-        edgesNode = verticesNode.nextSibling()
-        edgeNodes = edgesNode.childNodes()
+                    feat.setAttributes([vertexId, vertex.x(), vertex.y()])
+                    self.mDataProvider.addFeature(feat)
+
 
         # get edge information and add them to graph
         for edgeId in range(edgeNodes.length()):
             if edgeNodes.at(edgeId).isElement():
                 elem = edgeNodes.at(edgeId).toElement()
                 # TODO: read cost (has to be casted to float when read)
-                graph.addEdge(int(elem.attribute("fromVertex")), int(elem.attribute("toVertex"))) # add cost at later state
+                fromVertexId = int(elem.attribute("fromVertex"))
+                toVertexId = int(elem.attribute("toVertex"))
+                self.mGraph.addEdge(fromVertexId, toVertexId) # add cost at later state
 
-        # use setGraph function to also add features
-        # TODO: this makes readXML go over either points or edges twice
-        self.setGraph(graph)
+                # add feature for each edge
+                feat = QgsFeature()
+                fromVertex = self.mGraph.vertex(fromVertexId).point()
+                toVertex = self.mGraph.vertex(toVertexId).point()
+                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+
+                feat.setAttributes([edgeId, fromVertexId, toVertexId, self.mGraph.costOfEdge(edgeId)])
+
+                self.mDataProvider.addFeature(feat)                
 
         return True
 
