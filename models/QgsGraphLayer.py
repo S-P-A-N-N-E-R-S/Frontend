@@ -15,22 +15,26 @@ from .PGGraph import PGGraph
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
-    def __init__(self, layerId, rendererContext, graph, showEdgeText=True, showDirection=True, showLines=True,
-                randomColor=QColor("red"), transform=QgsCoordinateTransform()):
+    def __init__(self, layerId, rendererContext):
         super().__init__(layerId, rendererContext)
 
         self.layerId = layerId
+        mapLayers = QgsProject.instance().mapLayers()
+        for layer in mapLayers.values():
+            if layer.id() == self.layerId:
+                self.mLayer = layer
+
         self.rendererContext = rendererContext
         
-        self.mGraph = graph
+        self.mGraph = self.mLayer.getGraph()
 
-        self.randomColor = randomColor
+        self.mRandomColor = self.mLayer.mRandomColor
 
-        self.mShowText = showEdgeText
-        self.mShowDirection = showDirection
-        self.mShowLines = showLines
+        self.mShowText = self.mLayer.mShowEdgeText
+        self.mShowDirection = self.mLayer.mShowDirection
+        self.mShowLines = self.mLayer.mShowLines
 
-        self.mTransform = transform
+        self.mTransform = self.mLayer.mTransform
 
     def render(self):
         return self.__drawGraph()
@@ -39,7 +43,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
         painter = self.renderContext().painter()
         painter.setPen(QColor('black'))
-        painter.setBrush(self.randomColor)
+        painter.setBrush(self.mRandomColor)
         painter.setFont(QFont("arial", 5))
         painter.save()
         # painter.setRenderHint(painter.Antialiasing)
@@ -105,7 +109,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         return True
 
     def __createArrowHead(self, toPoint, fromPoint):
-        # create an arrowhead path (used for directed edges)
+        # create an arrowHead path (used for directed edges)
         arrowHead = QPainterPath(toPoint)
         if toPoint.y() != fromPoint.y():
             m = (toPoint.x() - fromPoint.x()) / (toPoint.y() - fromPoint.y())
@@ -113,7 +117,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         else:
             angle = 0 
 
-        # rotate first arrwHeadHalf (-10, 0)
+        # rotate first arrowHeadHalf (-10, 0)
         firstX = math.cos(0.5 * angle) * (-10)
         firstY = math.sin(0.5 * angle) * (-10)
 
@@ -166,7 +170,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mShowDirection = False
         self.mShowLines = False
 
-        self.randomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        self.mRandomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         self.nameChanged.connect(self.updateName)
         self.crsChanged.connect(self.updateCrs)
@@ -181,8 +185,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mFields
 
     def createMapRenderer(self, rendererContext):
-        return QgsGraphLayerRenderer(self.id(), rendererContext, self.mGraph, self.mShowEdgeText,
-                                    self.mShowDirection, self.mShowLines, self.randomColor, self.mTransform)
+        return QgsGraphLayerRenderer(self.id(), rendererContext)
 
     def setTransformContext(self, ct):
         pass 
@@ -562,7 +565,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         iface.mapCanvas().refresh()
 
     def newRandomColor(self):
-        self.randomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        self.mRandomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         self.triggerRepaint()
         iface.mapCanvas().refresh()
