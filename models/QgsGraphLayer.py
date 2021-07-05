@@ -70,7 +70,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         painter.setPen(QColor('black'))
                         # don't draw border of vertices if graph has edges
                         if self.mGraph.edgeCount() != 0:
-                            painter.setPen(self.randomColor)
+                            painter.setPen(self.mRandomColor)
                         painter.drawEllipse(point, 3.0, 3.0)
 
                     # draw edges                    
