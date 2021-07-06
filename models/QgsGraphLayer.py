@@ -1,16 +1,16 @@
-from qgis.analysis import QgsGraph, QgsNetworkDistanceStrategy
 from qgis.core import *
 from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
-from qgis.PyQt.QtCore import QVariant, QPointF
-from qgis.PyQt.QtGui import QColor, QFont, QPainterPath
+from qgis.PyQt.QtCore import QVariant, QPointF, Qt
+from qgis.PyQt.QtGui import QColor, QFont, QPainterPath, QCursor
 from qgis.PyQt.QtXml import *
-from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog, QFrame
+from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog, QFrame, QApplication
 
 import random, math
 
 from .QgsGraphDataProvider import QgsGraphDataProvider
+from .QgsGraphMapTool import QgsGraphMapTool
 from .PGGraph import PGGraph
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
@@ -176,6 +176,10 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.crsChanged.connect(self.updateCrs)
 
         self.mTransform = QgsCoordinateTransform() # default is invalid
+
+        self.mMapTool = QgsGraphMapTool(iface.mapCanvas(), self)
+
+        self.isEditing = False
         
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
@@ -559,7 +563,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         # transform drawn coordinates -> coordinates stay the same in graph and features
         destCRS = iface.mapCanvas().mapSettings().destinationCrs()
-        self.mTransform = QgsCoordinateTransform(self.crs(), destCRS, QgsProject.instance())
+        if destCRS.authid() != self.crs().authid():
+            self.mTransform = QgsCoordinateTransform(self.crs(), destCRS, QgsProject.instance())
 
         self.triggerRepaint()
         iface.mapCanvas().refresh()
@@ -582,6 +587,24 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.triggerRepaint()
         iface.mapCanvas().refresh()
 
+    def toggleEdit(self):
+        self.isEditing = not self.isEditing
+
+        if self.isEditing:
+            QApplication.setOverrideCursor(Qt.CrossCursor)
+            self.oldMapTool = iface.mapCanvas().mapTool()
+            iface.mapCanvas().setMapTool(self.mMapTool)
+
+        else:
+            QApplication.restoreOverrideCursor()
+            iface.mapCanvas().setMapTool(self.oldMapTool)
+
+    def isEditable(self):
+        return True
+
+    def supportsEditing(self):
+        return True
+        
 class QgsGraphLayerType(QgsPluginLayerType):
     """When loading a project containing a QgsGraphLayer, a factory class is needed.
 
@@ -679,6 +702,18 @@ class QgsGraphLayerType(QgsPluginLayerType):
         randomColorButton.clicked.connect(layer.newRandomColor)
         randomColorButton.setVisible(True)
         layout.addWidget(randomColorButton)
+
+        editSeparator = QFrame()
+        editSeparator.setFrameShape(QFrame.HLine | QFrame.Plain)
+        editSeparator.setLineWidth(1)
+        layout.addWidget(editSeparator)
+
+        # button to enable editing
+        editButton = QPushButton("Toggle Editing")
+        editButton.clicked.connect(layer.toggleEdit)
+        editButton.setVisible(True)
+        layout.addWidget(editButton)
+
 
         win.setLayout(layout)
         win.adjustSize()
