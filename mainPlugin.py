@@ -21,6 +21,12 @@ class ProtoPlugin:
         :type iface: QgisInterface
         """
         self.iface = iface
+
+        # keep track of layers
+        self.mLayers = {}
+        QgsProject.instance().layersAdded.connect(self.layersAdded)
+        QgsProject.instance().layersRemoved.connect(self.layersRemoved)
+
         self.initActions()
 
     def initActions(self):
@@ -100,6 +106,9 @@ class ProtoPlugin:
 
         QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
 
+        QgsProject.instance().layersAdded.disconnect(self.layersAdded)
+        QgsProject.instance().layersRemoved.disconnect(self.layersRemoved)
+
     def reloadPluginLayers(self):
         """Re-reads and reloads plugin layers
         """
@@ -143,13 +152,14 @@ class ProtoPlugin:
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
             os.rmdir(directory)
 
-    def addLayer(self, layerType):
-        layer = QgsGraphLayer()
-        layer.setLayerType(layerType)
+    def layersAdded(self, layers):
+        for layer in layers:
+            self.mLayers[layer.id()] = layer
 
-        if layer.isValid():
-            # coordRefSys = layerType.coordRefSys(self.iface.mapCanvas().mapSettings().destinationCrs())
-            QgsProject.instance().addMapLayer(layer)
+        self.iface.mapCanvas().refresh()
 
+    def layersRemoved(self, layerIds):
+        for layerId in layerIds:
+            del self.mLayers[layerId]
 
-        return layer
+        self.iface.mapCanvas().refresh()
