@@ -3,7 +3,7 @@ from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QVariant, QPointF, Qt
-from qgis.PyQt.QtGui import QColor, QFont, QPainterPath, QCursor
+from qgis.PyQt.QtGui import QColor, QFont, QPainterPath
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog, QFrame, QApplication
 
@@ -34,8 +34,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         self.mShowDirection = self.mLayer.mShowDirection
         self.mShowLines = self.mLayer.mShowLines
 
-        self.mTransform = self.mLayer.mTransform
-
     def render(self):
         return self.__drawGraph()
 
@@ -46,7 +44,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setBrush(self.mRandomColor)
         painter.setFont(QFont("arial", 5))
         painter.save()
-        # painter.setRenderHint(painter.Antialiasing)
+        
+        mTransform = self.renderContext().coordinateTransform()
 
         if isinstance(self.mGraph, PGGraph):
             try:
@@ -58,12 +57,15 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                     max = self.mGraph.vertexCount()
 
                 for id in range(max):
+                    if self.renderContext().renderingStopped():
+                        break
+
                     # draw vertices
                     if id < self.mGraph.vertexCount():
                         point = self.mGraph.vertex(id).point()
 
-                        if self.mTransform.isValid():
-                            point = self.mTransform.transform(point)
+                        if mTransform.isValid():
+                            point = mTransform.transform(point)
 
                         point = converter.toCanvasCoordinates(point)
                         
@@ -79,9 +81,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         toPoint = self.mGraph.vertex(edge.toVertex()).point()
                         fromPoint = self.mGraph.vertex(edge.fromVertex()).point()
 
-                        if self.mTransform.isValid():
-                            toPoint = self.mTransform.transform(toPoint)
-                            fromPoint = self.mTransform.transform(fromPoint)
+                        if mTransform.isValid():
+                            toPoint = mTransform.transform(toPoint)
+                            fromPoint = mTransform.transform(fromPoint)
 
                         toPoint = converter.toCanvasCoordinates(toPoint)
                         fromPoint = converter.toCanvasCoordinates(fromPoint)
@@ -140,7 +142,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         QgsPluginLayer ([type]): [description]
     """
 
-    LAYER_TYPE="graph"
+    LAYER_TYPE = "graph"
     LAYER_PROPERTY = "graph_layer_type"
 
     def __init__(self, name="QgsGraphLayer"):
@@ -189,6 +191,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mFields
 
     def createMapRenderer(self, rendererContext):
+        self.mTransform = rendererContext.coordinateTransform()
         return QgsGraphLayerRenderer(self.id(), rendererContext)
 
     def setTransformContext(self, ct):
@@ -560,11 +563,6 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     def updateCrs(self):
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
-
-        # transform drawn coordinates -> coordinates stay the same in graph and features
-        destCRS = iface.mapCanvas().mapSettings().destinationCrs()
-        if destCRS.authid() != self.crs().authid():
-            self.mTransform = QgsCoordinateTransform(self.crs(), destCRS, QgsProject.instance())
 
         self.triggerRepaint()
         iface.mapCanvas().refresh()
