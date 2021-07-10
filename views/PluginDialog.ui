@@ -284,9 +284,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>-569</y>
+                         <y>-546</y>
                          <width>773</width>
-                         <height>1199</height>
+                         <height>1201</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -882,7 +882,18 @@ QListWidget::item::selected {
                                 </widget>
                                </item>
                                <item>
-                                <widget class="QLineEdit" name="create_graph_costfunction_input"/>
+                                <layout class="QHBoxLayout" name="horizontalLayout_8">
+                                 <item>
+                                  <widget class="QLineEdit" name="create_graph_costfunction_input"/>
+                                 </item>
+                                 <item>
+                                  <widget class="QToolButton" name="create_graph_costfunction_define_btn">
+                                   <property name="text">
+                                    <string>...</string>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                </layout>
                                </item>
                                <item>
                                 <widget class="QLabel" name="create_graph_crs_label">

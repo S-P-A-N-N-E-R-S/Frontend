@@ -1,4 +1,5 @@
 from .baseContentView import BaseContentView
+from .widgets.QgsCostFunctionDialog import QgsCostFunctionDialog
 from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath
 
@@ -8,10 +9,6 @@ from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox
 from PyQt5.QtCore import QTimer, Qt, QSize
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton, QHBoxLayout, QSizePolicy
 from PyQt5.QtGui import QIcon
-
-import time
-
-from PyQt5.QtCore import QTimer
 
 import time
 
@@ -51,6 +48,9 @@ class CreateGraphView(BaseContentView):
 
         # set up add raster data button
         self.dialog.create_graph_raster_plus_btn.clicked.connect(self._addRasterDataInput)
+
+        # set up advance cost widget button
+        self.dialog.create_graph_costfunction_define_btn.clicked.connect(self._showCostFunctionWidget)
 
         # set up tasks table
         self.dialog.graph_tasks_table.setColumnCount(4)
@@ -146,6 +146,14 @@ class CreateGraphView(BaseContentView):
         for i in reversed(range(inputLayout.count())):
             inputLayout.itemAt(i).widget().deleteLater()
         self.dialog.create_graph_rasterdata_layout.removeItem(inputLayout)
+
+    def _showCostFunctionWidget(self):
+        costFunctionDialog = QgsCostFunctionDialog()
+        costFunctionDialog.setCostFunction(self.getCostFunction())
+        costFunctionDialog.setVectorLayer(self.getInputLayer())
+        # load cost function when ok button is clicked
+        costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction()))
+        costFunctionDialog.exec()
 
     def _disableButton(self):
         """
@@ -297,6 +305,9 @@ class CreateGraphView(BaseContentView):
 
     def getCostFunction(self):
         return self.dialog.create_graph_costfunction_input.text()
+
+    def setCostFunction(self, costFunction):
+        self.dialog.create_graph_costfunction_input.setText(costFunction)
 
     def getCRS(self):
         return self.dialog.create_graph_crs_input.crs()
