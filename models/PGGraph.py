@@ -6,7 +6,6 @@ import math
 from random import *
 
 
-
 """
 Class extends the QgsGraph by adding a function costOfEdge
 which returns the distance between the two endpoint of an edge.
@@ -74,7 +73,20 @@ class PGGraph(QgsGraph):
                    
     def addEdge(self, vertex1, vertex2, strats=[]):
         super().addEdge(vertex1, vertex2, strats)
-        
+
+
+    def findVertex(self, vertex, tolerance=0):
+        if tolerance <= 0:
+            return self.findVertex(vertex)
+
+        else:
+            toleranceRect = QgsRectangle.fromCenterAndSize(vertex, tolerance, tolerance)
+            for id in range(self.vertexCount()):
+                checkVertex = self.vertex(id)
+
+                if toleranceRect.contains(checkVertex.point()):
+                    return id
+        return -1
         
         
     def writeGraphML(self, path):
