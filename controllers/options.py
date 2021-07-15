@@ -24,7 +24,7 @@ class OptionsController(BaseController):
         # check if id is set and not manually removed by user
         if savedAuthId and savedAuthId in self.authManager.configIds():
             self.view.setUsername(username)
-            self.view.setPasswordPlaceholder("Change password")
+            self.view.setPasswordPlaceholder(self.tr("Change password"))
 
     def saveOptions(self):
         host = self.view.getHost()
@@ -71,8 +71,8 @@ class OptionsController(BaseController):
             self.authManager.updateAuthenticationConfig(config)
 
         if password and not username or not username and hasAuth:
-            self.view.showWarning("Please enter an username!")
+            self.view.showWarning(self.tr("Please enter an username!"))
         elif not password and username and not hasAuth:
-            self.view.showWarning("Please enter a password!")
+            self.view.showWarning(self.tr("Please enter a password!"))
         else:
-            self.view.showSuccess("Settings saved!")
+            self.view.showSuccess(self.tr("Settings saved!"))

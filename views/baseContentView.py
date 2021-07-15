@@ -2,15 +2,18 @@ from qgis.gui import QgsMessageBar
 from qgis.core import Qgis
 
 from PyQt5.QtWidgets import QFileDialog, QAction
+from qgis.PyQt.QtCore import QObject
 
 
-class BaseContentView:
+class BaseContentView(QObject):
 
     def __init__(self, dialog):
         """
         Base constuctor of a content window
         :param dialog: contains all ui elements
         """
+        super(BaseContentView, self).__init__()
+
         self.name = None
         self.dialog = dialog
         self.controller = None

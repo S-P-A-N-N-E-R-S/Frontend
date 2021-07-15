@@ -48,7 +48,7 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>153</width>
+       <width>170</width>
        <height>16777215</height>
       </size>
      </property>
@@ -140,7 +140,7 @@ QListWidget::item::selected {
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>831</width>
+           <width>814</width>
            <height>734</height>
           </rect>
          </property>

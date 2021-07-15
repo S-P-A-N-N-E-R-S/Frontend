@@ -25,26 +25,26 @@ class CreateGraphController(BaseController):
         """
         super().__init__(view)
 
-        self.view.addRandomArea("Germany")
-        self.view.addRandomArea("France")
-        self.view.addRandomArea("Osnabrueck")
-        self.view.addRandomArea("United States")
-        self.view.addRandomArea("Rome")
-        self.view.addRandomArea("Australia")
+        self.view.addRandomArea(self.tr("Germany"), "Germany")
+        self.view.addRandomArea(self.tr("France"), "France")
+        self.view.addRandomArea(self.tr("Osnabrueck"), "Osnabrueck")
+        self.view.addRandomArea(self.tr("United States"), "United States")
+        self.view.addRandomArea(self.tr("Rome"), "Rome")
+        self.view.addRandomArea(self.tr("Australia"), "Australia")
 
-        self.view.addConnectionType("None")
-        self.view.addConnectionType("Nearest neighbor")
-        self.view.addConnectionType("Complete")
-        self.view.addConnectionType("ClusterComplete")
-        self.view.addConnectionType("ClusterNN")
+        self.view.addConnectionType(self.tr("None"), "None")
+        self.view.addConnectionType(self.tr("Nearest neighbor"), "Nearest neighbor")
+        self.view.addConnectionType(self.tr("Complete"), "Complete")
+        self.view.addConnectionType(self.tr("ClusterComplete"), "ClusterComplete")
+        self.view.addConnectionType(self.tr("ClusterNN"), "ClusterNN")
 
-        self.view.addEdgeDirection("Directed")
-        self.view.addEdgeDirection("Undirected")
+        self.view.addEdgeDirection(self.tr("Directed"), "Directed")
+        self.view.addEdgeDirection(self.tr("Undirected"), "Undirected")
 
-        self.view.addDistance("Euclidean")
-        self.view.addDistance("Manhattan")
-        self.view.addDistance("Geodesic")
-        self.view.addDistance("Advanced")
+        self.view.addDistance(self.tr("Euclidean"), "Euclidean")
+        self.view.addDistance(self.tr("Manhattan"), "Manhattan")
+        self.view.addDistance(self.tr("Geodesic"), "Geodesic")
+        self.view.addDistance(self.tr("Advanced"), "Advanced")
 
         # set save path formats
         self.view.setSavePathFilter("GraphML (*.graphml );;Shape files (*.shp)")
@@ -59,11 +59,11 @@ class CreateGraphController(BaseController):
 
     def createGraph(self):
         if len(CreateGraphController.activeGraphTasks) >= CreateGraphController.maxNumberTasks:
-            self.view.showWarning("Can not building graph due to task limit of {}!".format(
+            self.view.showWarning(self.tr("Can not building graph due to task limit of {}!").format(
                 CreateGraphController.maxNumberTasks))
             return
 
-        self.view.showInfo("Start graph building..")
+        self.view.showInfo(self.tr("Start graph building.."))
         self.view.insertLogText("Start graph building..\n")
         builder = GraphBuilder()
         builder.setOption("createGraphAsLayers", False)
@@ -94,22 +94,22 @@ class CreateGraphController(BaseController):
         costFunction = self.view.getCostFunction()
         if costFunction:
             if not builder.setCostFunction(costFunction):
-                self.view.showWarning("Advanced cost function can not be set!")
+                self.view.showWarning(self.tr("Advanced cost function can not be set!"))
 
         # set options
-        builder.setOption("connectionType", self.view.getConnectionType()[0])
+        builder.setOption("connectionType", self.view.getConnectionType()[1])
         builder.setOption("neighborNumber", self.view.getNeighborNumber())
         builder.setOption("nnAllowDoubleEdges", self.view.isDoubleEdgesAllowed())
         builder.setOption("clusterNumber", self.view.getClusterNumber())
-        builder.setOption("edgeDirection", self.view.getEdgeDirection()[0])
-        builder.setOption("distanceStrategy", self.view.getDistance()[0])
+        builder.setOption("edgeDirection", self.view.getEdgeDirection()[1])
+        builder.setOption("distanceStrategy", self.view.getDistance()[1])
 
         # set builder options for random graph
         if self.view.isRandom():
             graphName = "Random"
             builder.setOption("createRandomGraph", True)
             builder.setRandomOption("numberOfVertices", self.view.getRandomVerticesNumber())
-            builder.setRandomOption("area", self.view.getRandomArea()[0])
+            builder.setRandomOption("area", self.view.getRandomArea()[1])
 
         # set vector layer in builder if input layer exist
         elif self.view.hasInput() and self.view.isInputLayer():
@@ -129,7 +129,7 @@ class CreateGraphController(BaseController):
                 graph.readGraphML(path)
 
                 if not graph:
-                    self.view.showError("File can not be parsed!")
+                    self.view.showError(self.tr("File can not be parsed!"))
                     return
 
                 # create empty graph layer
@@ -144,7 +144,7 @@ class CreateGraphController(BaseController):
                     graphLayer.setCrs(graphCrs)
 
                 self.saveGraph(graph, graphLayer, graphName)
-                self.view.showSuccess("Graph created!")
+                self.view.showSuccess(self.tr("Graph created!"))
                 return
             else:
                 # load shape file and set this layer in builder
@@ -154,7 +154,7 @@ class CreateGraphController(BaseController):
 
         # no input and not random
         else:
-            self.view.showWarning("No input and not random graph!")
+            self.view.showWarning(self.tr("No input and not random graph!"))
             return
 
         # set name to save path basename
@@ -206,8 +206,8 @@ class CreateGraphController(BaseController):
                 # save graph to destination
                 self.saveGraph(graph, graphLayer, graphName)
 
-                self.view.showSuccess("Graph created!")
-                iface.messageBar().pushMessage("Success", "Graph created!", level=Qgis.Success)
+                self.view.showSuccess(self.tr("Graph created!"))
+                iface.messageBar().pushMessage("Success", self.tr("Graph created!"), level=Qgis.Success)
                 self.view.insertLogText("Graph created!\n")
 
             self.view.insertLogText("Remaining graph creation processes : {}\n".format(

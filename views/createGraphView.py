@@ -50,10 +50,11 @@ class CreateGraphView(BaseContentView):
         self.dialog.graph_tasks_table.setColumnCount(4)
         self.dialog.graph_tasks_table.setColumnWidth(0, 100)
         self.dialog.graph_tasks_table.setColumnWidth(2, 100)
-        self.dialog.graph_tasks_table.setColumnWidth(3, 60)
+        self.dialog.graph_tasks_table.setColumnWidth(3, 80)
         # stretch remaining column
         self.dialog.graph_tasks_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.dialog.graph_tasks_table.setHorizontalHeaderLabels(["Task Id", "Description", "State", "Discard"])
+        self.dialog.graph_tasks_table.setHorizontalHeaderLabels([self.tr("Task Id"), self.tr("Description"),
+                                                                 self.tr("State"), self.tr("Discard")])
 
         # set up crs selection
         self.dialog.create_graph_crs_input.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
@@ -179,13 +180,13 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_randomarea_input.addItem(area, userData)
 
     def getRandomArea(self):
-        return self.dialog.create_graph_randomarea_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+        return self.dialog.create_graph_randomarea_input.currentText(), self.dialog.create_graph_randomarea_input.currentData()
 
     def addConnectionType(self, type, userData=None):
         self.dialog.create_graph_connectiontype_input.addItem(type, userData)
 
     def getConnectionType(self):
-        return self.dialog.create_graph_connectiontype_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+        return self.dialog.create_graph_connectiontype_input.currentText(), self.dialog.create_graph_connectiontype_input.currentData()
 
     def getNeighborNumber(self):
         return self.dialog.create_graph_numberneighbor_input.value()
