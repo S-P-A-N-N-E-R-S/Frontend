@@ -46,13 +46,6 @@ class CreateGraphController(BaseController):
         self.view.addDistance("Geodesic")
         self.view.addDistance("Advanced")
 
-        self.view.addRasterType("elevation")
-        self.view.addRasterType("prohibited area")
-        self.view.addRasterType("cost")
-        self.view.addRasterType("rgb vector")
-
-        self.view.addPolygonType("prohibited area")
-
         # set save path formats
         self.view.setSavePathFilter("GraphML (*.graphml );;Shape files (*.shp)")
 
@@ -139,11 +132,16 @@ class CreateGraphController(BaseController):
                     self.view.showError("File can not be parsed!")
                     return
 
-                # set graph to graph builder
-                builder.graph = graph
+                # create empty graph layer
+                graphLayer = QgsGraphLayer()
 
-                # create graph layer
-                graphLayer = builder.createGraphLayer(False)
+                # set graph to graph layer
+                graphLayer.setGraph(graph)
+
+                # set user specified crs
+                graphCrs = self.view.getCRS()
+                if graphCrs and graphCrs.isValid():
+                    graphLayer.setCrs(graphCrs)
 
                 self.saveGraph(graph, graphLayer, graphName)
                 self.view.showSuccess("Graph created!")

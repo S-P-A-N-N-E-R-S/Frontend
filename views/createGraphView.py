@@ -4,7 +4,7 @@ from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath
 
 from qgis.core import QgsMapLayerProxyModel, QgsTask
-from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox
+from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget
 
 from PyQt5.QtCore import QTimer, Qt, QSize
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton, QHBoxLayout, QSizePolicy
@@ -21,22 +21,16 @@ class CreateGraphView(BaseContentView):
 
         # set up layer inputs
         self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer)
-        self.dialog.create_graph_poi_input.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.dialog.create_graph_polycost_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_forbiddenarea_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_additionalpoint_input.setFilters(QgsMapLayerProxyModel.PointLayer)
 
         # set null layer as default
-        self.dialog.create_graph_poi_input.setCurrentIndex(0)
         self.dialog.create_graph_raster_input.setCurrentIndex(0)
         self.dialog.create_graph_polycost_input.setCurrentIndex(0)
         self.dialog.create_graph_forbiddenarea_input.setCurrentIndex(0)
         self.dialog.create_graph_additionalpoint_input.setCurrentIndex(0)
-
-        # show layer fields
-        self.dialog.create_graph_cost_input.setLayer(self.getInputLayer())
-        self.dialog.create_graph_input.layerChanged.connect(self.dialog.create_graph_cost_input.setLayer)
 
         # show raster bands
         self.dialog.create_graph_raster_input.layerChanged.connect(self.dialog.create_graph_rasterband_input.setLayer)
@@ -61,20 +55,13 @@ class CreateGraphView(BaseContentView):
         self.dialog.graph_tasks_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.dialog.graph_tasks_table.setHorizontalHeaderLabels(["Task Id", "Description", "State", "Discard"])
 
-        # hide all unused inputs
-        self.dialog.create_graph_cost_label.hide()
-        self.dialog.create_graph_cost_input.hide()
+        # set up crs selection
+        self.dialog.create_graph_crs_input.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
 
+        # hide all unused inputs
         self.dialog.create_graph_coordinatetype_label.hide()
         self.dialog.create_graph_coordinatetype_planar.hide()
         self.dialog.create_graph_coordinatestype_spherical.hide()
-
-        self.dialog.create_graph_poi_label.hide()
-        self.dialog.create_graph_poi_input.hide()
-        self.dialog.create_graph_poi_input_tools.hide()
-
-        self.dialog.create_graph_rastertype_label.hide()
-        self.dialog.create_graph_rastertype_input.hide()
 
         self.dialog.create_graph_rasterrange_label.hide()
         self.dialog.create_graph_rasterrangemode_label.hide()
@@ -84,12 +71,6 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_rastermin_input.hide()
         self.dialog.create_graph_rastermax_label.hide()
         self.dialog.create_graph_rastermax_input.hide()
-
-        self.dialog.create_graph_polygontype_label.hide()
-        self.dialog.create_graph_polygontype_input.hide()
-
-        self.dialog.create_graph_crs_label.hide()
-        self.dialog.create_graph_crs_input.hide()
 
         # disable input field if random is checked
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input.setDisabled)
@@ -240,17 +221,11 @@ class CreateGraphView(BaseContentView):
     def getDistance(self):
         return self.dialog.create_graph_distance_input.currentText(), self.dialog.create_graph_distance_input.currentData()
 
-    def getCostField(self):
-        return self.dialog.create_graph_cost_input.currentField()
-
     def getCoordinateType(self):
         if self.dialog.create_graph_coordinatetype_planar.isChecked():
             return "planar"
         else:
             return "spherical"
-
-    def getPOILayer(self):
-        return self.dialog.create_graph_poi_input.currentLayer()
 
     def getRasterData(self):
         """
@@ -264,12 +239,6 @@ class CreateGraphView(BaseContentView):
             rasterBand = inputLayout.itemAt(1).widget().currentBand()
             rasterData.append((rasterLayer, rasterBand))
         return rasterData
-
-    def addRasterType(self, type, userData=None):
-        self.dialog.create_graph_rastertype_input.addItem(type, userData)
-
-    def getRasterType(self):
-        return self.dialog.create_graph_rastertype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
 
     def getRasterMinimum(self):
         return self.dialog.create_graph_rastermin_input.value()
@@ -293,12 +262,6 @@ class CreateGraphView(BaseContentView):
 
     def getForbiddenAreaLayer(self):
         return self.dialog.create_graph_forbiddenarea_input.currentLayer()
-
-    def addPolygonType(self, type, userData=None):
-        self.dialog.create_graph_polygontype_input.addItem(type, userData)
-
-    def getPolygonType(self):
-        return self.dialog.create_graph_polygontype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
 
     def getAdditionalPointLayer(self):
         return self.dialog.create_graph_additionalpoint_input.currentLayer()

@@ -9,16 +9,6 @@ class OptionsView(BaseContentView):
         self.name = "options"
         self.controller = OptionsController(self)
 
-        # hide all unused inputs
-        self.dialog.ogdf_analysis_job_label.hide()
-        self.dialog.ogdf_analysis_job_input.hide()
-
-        self.dialog.ogdf_analysis_crs_label.hide()
-        self.dialog.ogdf_analysis_crs_input.hide()
-
-        self.dialog.ogdf_analysis_stretch_label.hide()
-        self.dialog.ogdf_analysis_stretch_input.hide()
-
         self.dialog.options_save_btn.clicked.connect(self.controller.saveOptions)
 
     def getHost(self):
