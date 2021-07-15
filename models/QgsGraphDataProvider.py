@@ -12,13 +12,11 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         self._index = 0
 
     def fetchFeature(self, feat):
-        """Gets actually looked at feature. Increases feature index for next fetchFeature.
+        """
+        Gets actually looked at feature. Increases feature index for next fetchFeature.
 
-        Args:
-            feat ([type]): Feature to be filled with information from fetched feature.
-
-        Returns:
-            [type]: True if successfull
+        :type feat: QgsFeature to be filled with information from fetched feature.
+        :return Boolean If fetch was successful
         """
         # TODO this is a very simplified version of fetchFeature (e.g. request completely ignored -> necessary?)
         if self._index == len(self._source._features):
@@ -71,10 +69,8 @@ class QgsGraphFeatureSource(QgsAbstractFeatureSource):
 
 
 class QgsGraphDataProvider(QgsVectorDataProvider):
-    """Data provider for GraphLayer
-
-    Args:
-        QgsVectorDataProvider ([type]): Extends QgsVectorDataProvider to be able to store fields and features.
+    """
+    DataProvider for GraphLayer
     """
 
     nextFeatId = 1

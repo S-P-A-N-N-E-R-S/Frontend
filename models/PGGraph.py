@@ -76,6 +76,13 @@ class PGGraph(QgsGraph):
 
 
     def findVertex(self, vertex, tolerance=0):
+        """
+        Modified findVertex function to find a vertex within q tolerance square
+
+        :type vertex: QgsPointXY
+        :type tolerance: int
+        :return vertexId: Integer
+        """
         if tolerance <= 0:
             return self.findVertex(vertex)
 

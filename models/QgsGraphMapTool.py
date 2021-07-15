@@ -5,10 +5,8 @@ from qgis.utils import iface
 from qgis.PyQt.QtCore import QPoint, Qt
 
 class QgsGraphMapTool(QgsMapTool):
-    """QgsGraphMapTool should enable the user to edit a QgsGraphLayer
-
-    Args:
-        QgsMapTool ([type]): [description]
+    """
+    QgsGraphMapTool should enable the user to edit a QgsGraphLayer
     """
 
     def __init__(self, canvas, layer):
@@ -21,14 +19,14 @@ class QgsGraphMapTool(QgsMapTool):
         self.ctrlPressed = False
 
     def canvasPressEvent(self, event):
-        """Contains graph editing functions on MouseClick:
-           LeftClick: AddVertex without Edges on clicked position
-           CTRL + LeftClick: AddVertex with Edges (according to GraphBuilder options) on clicked position
-           RightClick: 1) Mark Vertex, 2) Move Vertex (with edges) on LeftClick OR Add Edge to Vertex on RightClick
-           CTRL + RightClick: deleteVertex if found on clicked position
+        """
+        Contains graph editing functions on MouseClick:
+        LeftClick: AddVertex without Edges on clicked position
+        CTRL + LeftClick: AddVertex with Edges (according to GraphBuilder options) on clicked position
+        RightClick: 1) Mark Vertex, 2) Move Vertex (with edges) on LeftClick OR Add Edge to Vertex on RightClick
+        CTRL + RightClick: deleteVertex if found on clicked position
 
-        Args:
-            event ([type]): [description]
+        :type event: QgsMapMouseEvent
         """
         clickPosition = QPoint(event.pos().x(), event.pos().y())
 
@@ -107,6 +105,13 @@ class QgsGraphMapTool(QgsMapTool):
         self.mCanvas.refresh()
 
     def keyPressEvent(self, event):
+        """
+        Additional edit options by pressing and holding keys:
+        HOLD CTRL: enable new options on MouseClick, see canvasPressEvent
+        ESC: quit edit mode
+
+        :type event: QKeyEvent
+        """
         # TODO: seems like keyPressEvent needs canvasPressEvent beforehand?
         if event.key() == Qt.Key_Control:
             self.ctrlPressed = True

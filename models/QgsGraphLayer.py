@@ -14,6 +14,9 @@ from .QgsGraphMapTool import QgsGraphMapTool
 from .PGGraph import PGGraph
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
+    """
+    Renderer to render the graph of a QgsGraphLayer
+    """
 
     def __init__(self, layerId, rendererContext):
         super().__init__(layerId, rendererContext)
@@ -135,11 +138,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
 
 class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
-    """Subclass of PluginLayer to render a QgsGraph (and its subclasses) 
-        and to save a QgsGraph (and its subclasses) to the project file.
-
-    Args:
-        QgsPluginLayer ([type]): [description]
+    """
+    Represent a graph in a layer and make that graph saveable and editable.
     """
 
     LAYER_TYPE = "graph"
@@ -198,6 +198,11 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         pass 
 
     def setGraph(self, graph):
+        """
+        Set the graph of the QgsGraphLayer and add features accordingly.
+        
+        :type graph: PGGraph
+        """
         if isinstance(graph, PGGraph):
             # create an actual new PGGraph from graph
             self.mGraph = PGGraph()
@@ -213,7 +218,6 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 toVertexField = QgsField("toVertex", QVariant.Double, "double")
                 costField = QgsField("edgeCost", QVariant.Double, "double")
                 
-                # self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
                 self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField])
                 
                 # self.updateFields()
@@ -275,10 +279,11 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mGraph
 
     def exportToFile(self):
-        """Generic function to export GraphLayers features (either points or linestrings) to a file.
+        """
+        Function to export GraphLayers features (either points or linestrings) to a file.
+        DataTypes to export to are: .shp, .gpkg, .csv, .graphML, .geojson
 
-        Returns:
-            [boolean]: True if export was successfull.
+        :return Boolean if export was successful
         """
         
         if self.hasEdges:
@@ -355,12 +360,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return True
 
     def readXml(self, node, context):
-        """Read QgsGraph (and its subclasses) from the project file.
 
-        Args:
-            node (QDomNode): XML Node for layer
-            context ([type]): [description]
-        """
         self.setLayerType(QgsGraphLayer.LAYER_TYPE)
 
         # start with empty PGGraph
@@ -459,14 +459,6 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return True
 
     def writeXml(self, node, doc, context):
-        """Write the mGraph (QgsGraph and its subclasses) to the project file.
-            To be done after mGraph has been set.
-
-        Args:
-            node (QDomNode): XML Node for layer
-            doc (QDomDocument): XML Project File
-            context ([type]): [description]
-        """
 
         if node.isElement():
             node.toElement().setAttribute("type", "plugin")
@@ -523,12 +515,11 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
     def __writeVertexXML(self, doc, node, id, x, y):
         """Writes given vertex information to XML.
 
-        Args:
-            doc (QDomDocument): XML Project File
-            node (QDomNode): vertices node to append new vertex node to
-            id (int): vertexId
-            x (float): vertex x-coordinate
-            y (float): vertex y-coordinate
+        :type doc: QDomDocument
+        :type node: QDomNode
+        :type vertexId: Integer
+        :type x: Float
+        :type y: Float
         """
         vertexNode = doc.createElement("vertex")
         vertexNode.setAttribute("id", id)
@@ -604,10 +595,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return True
         
 class QgsGraphLayerType(QgsPluginLayerType):
-    """When loading a project containing a QgsGraphLayer, a factory class is needed.
-
-    Args:
-        QgsPluginLayerType ([type]): [description]
+    """
+    When loading a project containing a QgsGraphLayer, a factory class is needed.
     """
     def __init__(self):
         super().__init__(QgsGraphLayer.LAYER_TYPE)
@@ -616,6 +605,12 @@ class QgsGraphLayerType(QgsPluginLayerType):
         return QgsGraphLayer()
 
     def showLayerProperties(self, layer):
+        """
+        Show a QDialog with options for the QgsGraphLayer for the user
+
+        :type layer: QgsGraphLayer
+        :return Boolean
+        """
         win = QDialog(iface.mainWindow())
         win.setVisible(True)
 
