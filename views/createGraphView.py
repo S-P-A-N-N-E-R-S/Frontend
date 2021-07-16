@@ -58,20 +58,6 @@ class CreateGraphView(BaseContentView):
         # set up crs selection
         self.dialog.create_graph_crs_input.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
 
-        # hide all unused inputs
-        self.dialog.create_graph_coordinatetype_label.hide()
-        self.dialog.create_graph_coordinatetype_planar.hide()
-        self.dialog.create_graph_coordinatestype_spherical.hide()
-
-        self.dialog.create_graph_rasterrange_label.hide()
-        self.dialog.create_graph_rasterrangemode_label.hide()
-        self.dialog.create_graph_rasterrange_scale_input.hide()
-        self.dialog.create_graph_rasterrange_cutoff_input.hide()
-        self.dialog.create_graph_rastermin_label.hide()
-        self.dialog.create_graph_rastermin_input.hide()
-        self.dialog.create_graph_rastermax_label.hide()
-        self.dialog.create_graph_rastermax_input.hide()
-
         # disable input field if random is checked
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input.setDisabled)
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input_tools.setDisabled)
@@ -221,12 +207,6 @@ class CreateGraphView(BaseContentView):
     def getDistance(self):
         return self.dialog.create_graph_distance_input.currentText(), self.dialog.create_graph_distance_input.currentData()
 
-    def getCoordinateType(self):
-        if self.dialog.create_graph_coordinatetype_planar.isChecked():
-            return "planar"
-        else:
-            return "spherical"
-
     def getRasterData(self):
         """
         Collects all user selected raster layer and corresponding bands
@@ -239,23 +219,6 @@ class CreateGraphView(BaseContentView):
             rasterBand = inputLayout.itemAt(1).widget().currentBand()
             rasterData.append((rasterLayer, rasterBand))
         return rasterData
-
-    def getRasterMinimum(self):
-        return self.dialog.create_graph_rastermin_input.value()
-
-    def getRasterMaximum(self):
-        return self.dialog.create_graph_rastermax_input.value()
-
-    def isRasterRangeModeSelected(self):
-        return True if self.getRasterRangeMode() else False
-
-    def getRasterRangeMode(self):
-        if self.dialog.create_graph_rasterrange_scale_input.isChecked():
-            return "scale"
-        elif self.dialog.create_graph_rasterrange_cutoff_input.isChecked():
-            return "cut-off"
-        # if both not checked
-        return False
 
     def getPolygonCostLayer(self):
         return self.dialog.create_graph_polycost_input.currentLayer()
