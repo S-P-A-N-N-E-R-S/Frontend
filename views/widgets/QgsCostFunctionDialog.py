@@ -574,15 +574,10 @@ class QgsExpressionContext(QObject):
             title = self.tr("distance {}").format(expression)
         elif group == "Operators":
             title = self.tr("operator {}").format(expression)
-        elif group == "Fields":
-            title = self.tr("group {}").format(expression)
-        elif group == "Raster Data":
+        elif group == "Fields" or group == "Raster Data":
             title = self.tr("group {}").format(group)
 
         return "<h2>{}</h2><p>{}</p>".format(html.escape(title), helpText)
-
-    def getRasterDataHelpText(self, group):
-        return "<h2>group {}</h2><p>{}</p>".format(group.lower(), self.rasterDataHelpText)
 
     def getGroupHelpText(self, group):
         groupLabel = self.groups.get(group, {}).get("label", group)
