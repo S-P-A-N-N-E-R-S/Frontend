@@ -2,7 +2,7 @@ from qgis.core import *
 from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
-from qgis.PyQt.QtCore import QVariant, QPointF, Qt
+from qgis.PyQt.QtCore import QVariant, QPointF, Qt, QLineF
 from qgis.PyQt.QtGui import QColor, QFont, QPainterPath
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog, QFrame, QApplication
@@ -96,7 +96,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
                         if self.mShowDirection:
                             arrowHead = self.__createArrowHead(toPoint, fromPoint)
+                            painter.setPen(QColor('red'))
                             painter.drawPath(arrowHead)
+                            painter.setPen(QColor('black'))
                         
                         # add text with edgeCost at line mid point
                         if self.mShowText:
@@ -116,20 +118,25 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
     def __createArrowHead(self, toPoint, fromPoint):
         # create an arrowHead path (used for directed edges)
         arrowHead = QPainterPath(toPoint)
-        if toPoint.y() != fromPoint.y():
-            m = (toPoint.x() - fromPoint.x()) / (toPoint.y() - fromPoint.y())
-            angle = math.degrees(math.atan(m))
-        else:
-            angle = 0 
 
+        # calculate angle of line
+        dx = toPoint.x() - fromPoint.x()
+        dy = toPoint.y() - fromPoint.y()
+        length = math.sqrt(dx*dx + dy*dy)
+        angle = math.radians(math.degrees(math.acos(dx / length)) + 45)
+        
+        if dy < 0:
+            angle = -angle
+            angle = math.radians(math.degrees(angle) + 90)
+            
         # rotate first arrowHeadHalf (-10, 0)
-        firstX = math.cos(0.5 * angle) * (-10)
-        firstY = math.sin(0.5 * angle) * (-10)
+        firstX = math.cos(angle) * (-10)
+        firstY = math.sin(angle) * (-10)
 
         # rotate second arrowHeadHalf (0, 10)
-        secondX = -math.sin( 0.5 * angle) * 10
-        secondY = math.cos(0.5 * angle) * 10
-        
+        secondX = -math.sin(angle) * 10
+        secondY = math.cos(angle) * 10
+
         arrowHead.lineTo(toPoint.x() + firstX, toPoint.y() + firstY)
         arrowHead.moveTo(toPoint.x(), toPoint.y())
         arrowHead.lineTo(toPoint.x() + secondX, toPoint.y() + secondY)
@@ -191,6 +198,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mFields
 
     def createMapRenderer(self, rendererContext):
+        print("CreateRenderer")
         self.mTransform = rendererContext.coordinateTransform()
         return QgsGraphLayerRenderer(self.id(), rendererContext)
 
