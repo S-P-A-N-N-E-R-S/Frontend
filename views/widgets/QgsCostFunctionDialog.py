@@ -473,12 +473,14 @@ class QgsExpressionContext(QObject):
             ],
         }
         self.fieldHelpText = "Double-click to add field to expression editor."
+        self.rasterDataHelpText = "Double-click to add raster data to expression editor."
         self.groupHelpTexts = {
             "Conditionals": "This group contains functions to handle conditional checks in expressions.",
             "Distances": "This group contains distances to use in the cost calculation.",
             "Fields": "This group contains numeric fields from the selected vector layer.",
             "Math": "This group contains math functions.",
             "Operators": "This group contains several common operators.",
+            "Raster Data": "This group contains the selected raster data.",
             "Raster": "This group contains raster functions which calculate raster statistics and values for each edge.",
         }
 
@@ -507,11 +509,19 @@ class QgsExpressionContext(QObject):
         :param field: name of field
         :return:
         """
-        return QgsExpressionItem(field, self.getFieldExpressionText(field), self.getFieldHelpText(group),
+        return QgsExpressionItem(field, " field:" + field + " ", self.getFieldHelpText(group),
                                  QgsExpressionItem.ItemType.Expression)
 
-    def getFieldExpressionText(self, field):
-        return " field:" + field + " "
+    def getRasterDataItem(self, group, label, rasterIndex):
+        """
+        Returns a field expression item
+        :param rasterIndex: array index of raster data
+        :param group: name of field group
+        :param label: label of raster data
+        :return:
+        """
+        return QgsExpressionItem(label, " raster[{}]:".format(rasterIndex), self.getRasterDataHelpText(group),
+                                 QgsExpressionItem.ItemType.Expression)
 
     def formatHelpText(self, group, expression, helpText):
         """
@@ -534,6 +544,9 @@ class QgsExpressionContext(QObject):
     def getFieldHelpText(self, group):
         return "<h2>group {}</h2><p>{}</p>".format(group.lower(), self.fieldHelpText)
 
+    def getRasterDataHelpText(self, group):
+        return "<h2>group {}</h2><p>{}</p>".format(group.lower(), self.rasterDataHelpText)
+
     def getGroupHelpText(self, group):
         return "<h2>group {}</h2><p>{}</p>".format(group.lower(), self.groupHelpTexts.get(group, ""))
 
@@ -547,9 +560,10 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     """
     costFunctionChanged = pyqtSignal()
 
-    def __init__(self, parent=None, vectorLayer=None):
+    def __init__(self, parent=None, vectorLayer=None, rasterData=None):
         """
         Constructor
+        :type rasterData: Array of raster inputs and each input is a tuple: (layer, band)
         :param parent:
         :param vectorLayer: Vector layer which fields are shown in the tree view
         """
@@ -557,6 +571,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         self.setupUi(self)
 
         self.vectorLayer = vectorLayer
+        self.rasterData = rasterData
 
         self.codeEditor.setWrapMode(QsciScintilla.WrapWord)
 
@@ -667,6 +682,14 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         for item in operatorItems:
             self._addTreeItem(group, item)
 
+        # Raster Data
+        group = "Raster Data"
+        if self.rasterData:
+            for index in range(len(self.rasterData)):
+                rasterLayer, rasterBand = self.rasterData[index]
+                self._addTreeItem(group, self.expressionContext.getRasterDataItem(group, "{layer} ({band})".format(
+                    layer=rasterLayer.name(), band=rasterLayer.bandName(rasterBand)), index))
+
         # Raster Expressions
         group = "Raster"
         rasterItems = self.expressionContext.getGroupExpressionItems(group)
@@ -700,6 +723,16 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
 
     def setVectorLayer(self, vectorLayer):
         self.vectorLayer = vectorLayer
+        self._loadTreeViewItems()
+
+    def setRasterData(self, rasterData):
+        """
+        Sets the raster data
+        :param rasterData: Raster data
+        :type rasterData: Array of raster inputs and each input is a tuple: (layer, band)
+        :return:
+        """
+        self.rasterData = rasterData
         self._loadTreeViewItems()
 
     def getVectorLayer(self):

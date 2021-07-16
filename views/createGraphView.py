@@ -118,6 +118,7 @@ class CreateGraphView(BaseContentView):
         costFunctionDialog = QgsCostFunctionDialog()
         costFunctionDialog.setCostFunction(self.getCostFunction())
         costFunctionDialog.setVectorLayer(self.getInputLayer())
+        costFunctionDialog.setRasterData(self.getRasterData())
         # load cost function when ok button is clicked
         costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction()))
         costFunctionDialog.exec()
@@ -209,7 +210,7 @@ class CreateGraphView(BaseContentView):
 
     def getRasterData(self):
         """
-        Collects all user selected raster layer and corresponding bands
+        Collects all not empty user selected raster layer and corresponding bands
         :return: Array of raster inputs and each input is a tuple: (layer, band)
         """
         rasterData = []
@@ -217,7 +218,8 @@ class CreateGraphView(BaseContentView):
             inputLayout = self.dialog.create_graph_rasterdata_layout.itemAt(i)
             rasterLayer = inputLayout.itemAt(0).widget().currentLayer()
             rasterBand = inputLayout.itemAt(1).widget().currentBand()
-            rasterData.append((rasterLayer, rasterBand))
+            if rasterLayer is not None:
+                rasterData.append((rasterLayer, rasterBand))
         return rasterData
 
     def getPolygonCostLayer(self):
