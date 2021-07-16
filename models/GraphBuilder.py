@@ -10,7 +10,7 @@ import random
 from qgis import processing
 import math
 import re
-from .kdtree import kdtree
+from ..lib.kdtree import kdtree
 
 
 class GraphBuilder:
