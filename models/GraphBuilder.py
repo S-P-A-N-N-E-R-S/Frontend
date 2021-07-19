@@ -742,13 +742,7 @@ class GraphBuilder:
         for feat in vertexLayer.getFeatures():            
             geom = feat.geometry()
             addVertex([geom.asPoint().x(),geom.asPoint().y()])
-        
-    def deleteVertex(self, vertexID):
-        print("TODO")   
-    
-    def deleteEdge(self, edgeID):          
-        print("TODO")
-               
+                      
     def getGraph(self):
         return self.graph   
                
