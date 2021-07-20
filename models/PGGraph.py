@@ -200,12 +200,12 @@ class PGGraph:
             vertex = self.mVertices[idx]
             # delete all incoming edges vertex is connected with
             for id in range(len(vertex.incomingEdges())):
-                edgeIdx = vertex.incomingEdges()[id]
+                edgeIdx = vertex.incomingEdges().pop(0)
                 self.deleteEdge(edgeIdx)
             vertex.mIncomingEdges = []
             # delete all outgoing edges vertex is connected with
             for id in range(len(vertex.outgoingEdges())):
-                edgeIdx = vertex.outgoingEdges()[id]
+                edgeIdx = vertex.outgoingEdges().pop(0)
                 self.deleteEdge(edgeIdx)
             vertex.mOutgoingEdges = []
             
