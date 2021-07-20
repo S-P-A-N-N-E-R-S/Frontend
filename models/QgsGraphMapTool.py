@@ -40,7 +40,7 @@ class QgsGraphMapTool(QgsMapTool):
             if not self.ctrlPressed:
                 if not self.firstFound: # addVertex
                     
-                    if self.mLayer.mGraph.edgeCount == 0:
+                    if self.mLayer.mGraph.edgeCount() == 0:
                         feat = QgsFeature()
                         feat.setGeometry(QgsGeometry.fromPointXY(clickPosition))
 
@@ -50,17 +50,25 @@ class QgsGraphMapTool(QgsMapTool):
                     self.mLayer.mGraph.addVertex(clickPosition)
                 
                 else: # move firstFoundVertex to new position
-                    # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
+                    # deleteVertex firstFoundVertex, addVertex (without edges) on clicked position
+                    self.mLayer.mGraph.deleteVertex(self.firstFoundVertex)
+                    self.mLayer.mGraph.addVertex(clickPosition)
                     self.__removeFirstFound()
 
             else: # CTRL + LeftClick
-                # use addVertex from GraphBuilder to also add edges
-                self.__removeFirstFound()
+                if not self.firstFound:
+                    # TODO: use addVertex from GraphBuilder to also add edges
+                    self.__removeFirstFound()
+                else:
+                    # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
+                    self.mLayer.mGraph.deleteVertex(self.firstFoundVertex)
+                    # TODO: use addVertex from GraphBuilder to also add edges
+                    self.__removeFirstFound()
 
         elif event.button() == Qt.RightButton: # RightClick
 
             # TODO: find a way to set a satisfying tolerance for the checkup
-            vertexId = self.mLayer.mGraph.findVertex(clickPosition, 100000)
+            vertexId = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 3)
             
             if vertexId > 0 and not self.firstFound and not self.ctrlPressed: # first RightClick
                 # mark first found vertex
@@ -70,6 +78,9 @@ class QgsGraphMapTool(QgsMapTool):
                 self.firstMarker.setIconType(QgsVertexMarker.ICON_DOUBLE_TRIANGLE)
                 self.firstMarker.setCenter(clickPosition)
             
+            elif vertexId < 0 and self.firstFound: # second RightClick (no vertex found)
+                self.__removeFirstFound()
+
             elif vertexId > 0 and self.firstFound and not self.ctrlPressed: # second RightClick
                 # add edge between firstFoundVertex and vertexId                
                 self.mLayer.mGraph.addEdge(self.firstFoundVertex, vertexId)
@@ -92,10 +103,9 @@ class QgsGraphMapTool(QgsMapTool):
                 
                 self.__removeFirstFound()
 
-            elif vertexId > 0 and self.ctrlPressed: # CTRL + RightClick
+            elif vertexId > 0 and self.firstFound and self.ctrlPressed: # second CTRL + RightClick
                 # remove vertex if found on click
-                # TODO: add function in PGGraph deleteVertex
-                # self.mLayer.mGraph.deleteVertex(vertexId)
+                self.mLayer.mGraph.deleteVertex(vertexId)
                 self.__removeFirstFound()
 
         iface.mapCanvas().scene().removeItem(self.converter)
