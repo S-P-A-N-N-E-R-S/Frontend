@@ -14,23 +14,68 @@ the distanceStrategy attribute of the class
 
 Strategies are divided in cost functions and already set weights
 """
-class PGGraph(QgsGraph):
+class PGGraph:
     
+    #==ExtVertex===================================================================
+    class ExtVertex:
+        """
+        Inner class representing a vertex of the ExtGraph
+        """
+        def __init__(self, point):
+            self.mCoordinates = point
+            self.mIncomingEdges = []
+            self.mOutgoingEdges = []
+
+        def incomingEdges(self):
+            return self.mIncomingEdges
+
+        def outgoingEdges(self):
+            return self.mOutgoingEdges
+
+        def point(self):
+            return self.mCoordinates
+
+    #==ExtEdge=======================================================================
+    class ExtEdge:
+        """
+        Inner class representing an edge of the ExtGraph
+        """
+        def __init__(self, fromVertexIdx, toVertexIdx):
+            # TODO: add costs list for an edge here?
+            self.mFromIdx = fromVertexIdx
+            self.mToIdx = toVertexIdx
+
+        def fromVertex(self):
+            return self.mFromIdx
+
+        def toVertex(self):
+            return self.mToIdx
+
+    #==ExtGraph Methods===============================================================
     def __init__(self):        
         super().__init__()
         self.distanceStrategy = "Euclidean"
         self.edgeWeights = []        
         self.vertexWeights = []
+
+        self.mVertices = {}
+        self.mEdges = {}
+
+        self.mEdgeCount = 0
+        self.mVertexCount = 0
+
+        self.__availableVertexIndices =[]
+        self.__availableEdgeIndices = []
      
     
     def setDistanceStrategy(self, strategy):
         self.distanceStrategy = strategy
      
           
-    def costOfEdge(self, edgeID):        
+    def costOfEdge(self, edgeID):
         edgeFromID = self.edge(edgeID)
         
-        #differentiate between edge weights from cost functions and set weights from graph builder        
+        # differentiate between edge weights from cost functions and set weights from graph builder        
         if self.distanceStrategy == "Euclidean":                       
             fromPoint = self.vertex(edgeFromID.fromVertex()).point()
             toPoint = self.vertex(edgeFromID.toVertex()).point()        
@@ -46,55 +91,130 @@ class PGGraph(QgsGraph):
         
     
     def hasEdge(self, vertex1, vertex2):
-        for i in range(self.edgeCount()):            
-            if self.edge(i).fromVertex() == vertex1 and self.edge(i).toVertex() == vertex2:
+        # TODO: maybe return edgeIdx
+        for edgeIdx in self.mEdges:
+            edge = self.mEdges[edgeIdx]            
+            if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
                 return True
                
         return False
-              
-    
-    def findEdgeWithID(self, startVertex, endVertex):
-        for i in range(self.edgeCount()):
-            if self.edge(i).fromVertex() == startVertex and self.edge(i).toVertex == endVertex:
-                return True
-        return False
-    
-    def findEdgeWithPoints(self, startVertex, endVertex):
-        idStart = self.findVertex(startVertex)
-        idEnd = self.findVertex(endVertex)
-        
-        if idStart != -1 and idEnd != -1:
-            for i in range(self.edgeCount()):
-                if self.edge(i).fromVertex() == idStart and self.edge(i).toVertex == idEnd:
-                    return True
-        
-        return False
-        
                    
-    def addEdge(self, vertex1, vertex2, strats=[]):
-        super().addEdge(vertex1, vertex2, strats)
+    def addEdge(self, vertex1, vertex2, idx=-1):
+        addIndex = self.mEdgeCount
+        if len(self.__availableEdgeIndices) > 0:
+            # check if other indices are available due to earlier delete
+            print("Use earlier edge index")
+            addIndex = self.__availableEdgeIndices.pop(0)
+        if idx >= 0:
+            addIndex = idx
 
+        self.mEdges[addIndex] = self.ExtEdge(vertex1, vertex2)
+        self.mVertices[vertex1].mOutgoingEdges.append(addIndex)
+        self.mVertices[vertex2].mIncomingEdges.append(addIndex)
+        self.mEdgeCount += 1
+        
+        return addIndex
+
+    def addVertex(self, point, idx=-1):
+        addIndex = self.mVertexCount
+        if len(self.__availableVertexIndices) > 0:
+            # check if other indices are available due to earlier delete
+            print("Use earlier vertex index")
+            addIndex = self.__availableVertexIndices.pop(0)
+        if idx >= 0:
+            addIndex = idx
+
+        self.mVertices[addIndex] = self.ExtVertex(point)
+        self.mVertexCount += 1
+        
+        return addIndex
+
+    def edge(self, idx):
+        if idx in self.mEdges:
+            return self.mEdges[idx]
+        return None
+
+    def edgeCount(self):
+        return self.mEdgeCount
 
     def findVertex(self, vertex, tolerance=0):
         """
-        Modified findVertex function to find a vertex within q tolerance square
+        Modified findVertex function to find a vertex within a tolerance square
 
         :type vertex: QgsPointXY
         :type tolerance: int
         :return vertexId: Integer
         """
-        if tolerance <= 0:
-            return self.findVertex(vertex)
-
-        else:
+        if tolerance > 0:
             toleranceRect = QgsRectangle.fromCenterAndSize(vertex, tolerance, tolerance)
-            for id in range(self.vertexCount()):
-                checkVertex = self.vertex(id)
-
-                if toleranceRect.contains(checkVertex.point()):
-                    return id
-        return -1
         
+        for idx in self.mVertices:
+            checkVertex = self.vertex(idx)
+            
+            if tolerance == 0 and checkVertex.point() == vertex:
+                return idx
+            elif tolerance > 0 and toleranceRect.contains(checkVertex.point()):
+                return idx
+
+        return -1
+    
+    def vertex(self, idx):
+        if idx in self.mVertices:
+            return self.mVertices[idx]
+        return None
+
+    def vertexCount(self):
+        return self.mVertexCount
+
+    def vertices(self):
+        return self.mVertices
+
+    def edges(self):
+        return self.mEdges
+
+    def deleteEdge(self, idx):
+        if idx in self.mEdges:
+            edge = self.mEdges[idx]
+
+            # remove edge from toVertex incomingEdges
+            toVertex = self.vertex(edge.toVertex())
+            for edgeIdx in range(len(toVertex.mIncomingEdges)):
+                if toVertex.mIncomingEdges[edgeIdx] == idx:
+                    toVertex.mIncomingEdges.pop(edgeIdx)
+                    break
+            # remove edge from fromVertex outgoingEdges
+            fromVertex = self.vertex(edge.fromVertex())
+            for edgeIdx in range(len(fromVertex.mOutgoingEdges)):
+                if fromVertex.mOutgoingEdges[edgeIdx] == idx:
+                    fromVertex.mOutgoingEdges.pop(edgeIdx)
+                    break
+
+            del self.mEdges[idx]
+            self.__availableEdgeIndices.append(idx)
+            self.mEdgeCount -= 1
+            return True
+        return False
+
+    def deleteVertex(self, idx):
+        if idx in self.mVertices:
+            vertex = self.mVertices[idx]
+            # delete all incoming edges vertex is connected with
+            for id in range(len(vertex.incomingEdges())):
+                edgeIdx = vertex.incomingEdges()[id]
+                self.deleteEdge(edgeIdx)
+            vertex.mIncomingEdges = []
+            # delete all outgoing edges vertex is connected with
+            for id in range(len(vertex.outgoingEdges())):
+                edgeIdx = vertex.outgoingEdges()[id]
+                self.deleteEdge(edgeIdx)
+            vertex.mOutgoingEdges = []
+            
+            del self.mVertices[idx]
+            self.__availableVertexIndices.append(idx)
+            self.mVertexCount -= 1
+            return True
+        return False
+            
         
     def writeGraphML(self, path):
         file = open(path, "w")
@@ -109,7 +229,7 @@ class PGGraph(QgsGraph):
         file.writelines(header)
         file.write('\t<graph id="G" edgedefault="directed">\n')
         
-        for i in range(self.vertexCount()):
+        for i in self.mVertices:
             nodeLine = '\t\t<node id="' + str(i) + '"/>\n'
             file.write(nodeLine) 
             file.write('\t\t\t<data key="d1">\n')
@@ -119,7 +239,7 @@ class PGGraph(QgsGraph):
             file.write('\t\t\t\t</y:ShapeNode>\n')
             file.write('\t\t\t</data>\n')
         
-        for i in range(self.edgeCount()):
+        for i in self.mEdges:
             edgeLine = '\t\t<edge source="' + str(self.edge(i).fromVertex()) + '" target="' + str(self.edge(i).toVertex()) + '"/>\n'
             file.write(edgeLine)
         
