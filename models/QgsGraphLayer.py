@@ -444,7 +444,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                     feat = QgsFeature()
                     feat.setGeometry(QgsGeometry.fromPointXY(vertex))
 
-                    feat.setAttributes([vertexId, vertex.x(), vertex.y()])
+                    feat.setAttributes([vIdx, vertex.x(), vertex.y()])
                     self.mDataProvider.addFeature(feat)
 
 
@@ -464,7 +464,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 toVertex = self.mGraph.vertex(toVertexId).point()
                 feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-                feat.setAttributes([edgeId, fromVertexId, toVertexId, self.mGraph.costOfEdge(edgeId)])
+                feat.setAttributes([eIdx, fromVertexId, toVertexId, self.mGraph.costOfEdge(eIdx)])
 
                 self.mDataProvider.addFeature(feat)                
 

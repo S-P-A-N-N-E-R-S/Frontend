@@ -101,12 +101,12 @@ class PGGraph:
                    
     def addEdge(self, vertex1, vertex2, idx=-1):
         addIndex = self.mEdgeCount
-        if len(self.__availableEdgeIndices) > 0:
+        if idx >= 0:
+            addIndex = idx
+        elif len(self.__availableEdgeIndices) > 0:
             # check if other indices are available due to earlier delete
             print("Use earlier edge index")
             addIndex = self.__availableEdgeIndices.pop(0)
-        if idx >= 0:
-            addIndex = idx
 
         self.mEdges[addIndex] = self.ExtEdge(vertex1, vertex2)
         self.mVertices[vertex1].mOutgoingEdges.append(addIndex)
@@ -117,12 +117,12 @@ class PGGraph:
 
     def addVertex(self, point, idx=-1):
         addIndex = self.mVertexCount
-        if len(self.__availableVertexIndices) > 0:
+        if idx >= 0:
+            addIndex = idx
+        elif len(self.__availableVertexIndices) > 0:
             # check if other indices are available due to earlier delete
             print("Use earlier vertex index")
             addIndex = self.__availableVertexIndices.pop(0)
-        if idx >= 0:
-            addIndex = idx
 
         self.mVertices[addIndex] = self.ExtVertex(point)
         self.mVertexCount += 1
