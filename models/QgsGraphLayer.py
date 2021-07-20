@@ -2,7 +2,7 @@ from qgis.core import *
 from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
-from qgis.PyQt.QtCore import QVariant, QPointF, Qt, QLineF
+from qgis.PyQt.QtCore import QVariant, QPointF, Qt
 from qgis.PyQt.QtGui import QColor, QFont, QPainterPath
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog, QFrame, QApplication
@@ -55,55 +55,57 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                 # used to convert map coordinates to canvas coordinates
                 converter = QgsVertexMarker(iface.mapCanvas())
                 
-                max = self.mGraph.edgeCount()
-                if max < self.mGraph.vertexCount():
-                    max = self.mGraph.vertexCount()
+                # max = self.mGraph.edgeCount()
+                # if max < self.mGraph.vertexCount():
+                #     max = self.mGraph.vertexCount()
+                vertices = self.mGraph.vertices()
+                for id in vertices:
+                    vertex = self.mGraph.vertex(id)
+                    
+                    # draw vertex
+                    point = vertex.point()
 
-                for id in range(max):
-                    if self.renderContext().renderingStopped():
-                        break
+                    if mTransform.isValid():
+                        point = mTransform.transform(point)
 
-                    # draw vertices
-                    if id < self.mGraph.vertexCount():
-                        point = self.mGraph.vertex(id).point()
+                    point = converter.toCanvasCoordinates(point)
+                    
+                    painter.setPen(QColor('black'))
+                    # don't draw border of vertices if graph has edges
+                    if self.mGraph.edgeCount() != 0:
+                        painter.setPen(self.mRandomColor)
+                    painter.drawEllipse(point, 3.0, 3.0)
 
-                        if mTransform.isValid():
-                            point = mTransform.transform(point)
+                    # draw outgoing edges
+                    if self.mGraph.edgeCount() != 0 and self.mShowLines:
+                        outgoing = vertex.outgoingEdges()
+                        for outgoingEdgeId in range(len(outgoing)):
+                            # print("Id: ", id, ", OutgoingEdgeId: ", outgoingEdgeId)
+                            edge = self.mGraph.edge(outgoing[outgoingEdgeId])
 
-                        point = converter.toCanvasCoordinates(point)
-                        
-                        painter.setPen(QColor('black'))
-                        # don't draw border of vertices if graph has edges
-                        if self.mGraph.edgeCount() != 0:
-                            painter.setPen(self.mRandomColor)
-                        painter.drawEllipse(point, 3.0, 3.0)
+                            toPoint = self.mGraph.vertex(edge.toVertex()).point()
+                            fromPoint = self.mGraph.vertex(edge.fromVertex()).point()
 
-                    # draw edges                    
-                    if id < self.mGraph.edgeCount() and self.mShowLines:
-                        edge = self.mGraph.edge(id)
-                        toPoint = self.mGraph.vertex(edge.toVertex()).point()
-                        fromPoint = self.mGraph.vertex(edge.fromVertex()).point()
+                            if mTransform.isValid():
+                                toPoint = mTransform.transform(toPoint)
+                                fromPoint = mTransform.transform(fromPoint)
 
-                        if mTransform.isValid():
-                            toPoint = mTransform.transform(toPoint)
-                            fromPoint = mTransform.transform(fromPoint)
+                            toPoint = converter.toCanvasCoordinates(toPoint)
+                            fromPoint = converter.toCanvasCoordinates(fromPoint)
 
-                        toPoint = converter.toCanvasCoordinates(toPoint)
-                        fromPoint = converter.toCanvasCoordinates(fromPoint)
-
-                        painter.setPen(QColor('black'))
-                        painter.drawLine(toPoint, fromPoint)
-
-                        if self.mShowDirection:
-                            arrowHead = self.__createArrowHead(toPoint, fromPoint)
-                            painter.setPen(QColor('red'))
-                            painter.drawPath(arrowHead)
                             painter.setPen(QColor('black'))
-                        
-                        # add text with edgeCost at line mid point
-                        if self.mShowText:
-                            midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                            painter.drawText(midPoint, str(self.mGraph.costOfEdge(id)))
+                            painter.drawLine(toPoint, fromPoint)
+
+                            if self.mShowDirection:
+                                arrowHead = self.__createArrowHead(toPoint, fromPoint)
+                                painter.setPen(QColor('red'))
+                                painter.drawPath(arrowHead)
+                                painter.setPen(QColor('black'))
+                            
+                            # add text with edgeCost at line mid point
+                            if self.mShowText:
+                                midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
+                                painter.drawText(midPoint, str(self.mGraph.costOfEdge(outgoingEdgeId)))
 
                 iface.mapCanvas().scene().removeItem(converter)
             except Exception as err:
@@ -198,7 +200,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         return self.mFields
 
     def createMapRenderer(self, rendererContext):
-        print("CreateRenderer")
+        # print("CreateRenderer")
         self.mTransform = rendererContext.coordinateTransform()
         return QgsGraphLayerRenderer(self.id(), rendererContext)
 
@@ -235,13 +237,13 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 self.mFields.append(costField)
                 
                 # add vertices to new PGGraph (have to be added to PGGraph before edges do -> inefficient)
-                for vertexId in range(graph.vertexCount()):
+                for vertexId in graph.vertices():
                     vertex = graph.vertex(vertexId)
                     
                     self.mGraph.addVertex(vertex.point())
 
                 # add edges to new PGGraph and create corresponding features
-                for edgeId in range(graph.edgeCount()):
+                for edgeId in self.mGraph.edges():
                     edge = graph.edge(edgeId)
 
                     feat = QgsFeature()
@@ -434,7 +436,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             if vertexNodes.at(vertexId).isElement():
                 elem = vertexNodes.at(vertexId).toElement()
                 vertex = QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y")))
-                self.mGraph.addVertex(vertex)
+                vIdx = int(elem.attribute("id"))
+                self.mGraph.addVertex(vertex, vIdx)
                 
                 if not self.hasEdges:
                     # add feature for each vertex
@@ -452,7 +455,8 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 # TODO: read cost (has to be casted to float when read)
                 fromVertexId = int(elem.attribute("fromVertex"))
                 toVertexId = int(elem.attribute("toVertex"))
-                self.mGraph.addEdge(fromVertexId, toVertexId) # add cost at later state
+                eIdx = int(elem.attribute("id"))
+                self.mGraph.addEdge(fromVertexId, toVertexId, eIdx) # add cost at later state
 
                 # add feature for each edge
                 feat = QgsFeature()
@@ -494,7 +498,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         graphNode.appendChild(edgesNode)
 
         # store vertices
-        for vertexId in range(self.mGraph.vertexCount()):
+        for vertexId in self.mGraph.vertices():
             # QgsPointXY TODO: support for QgsPointZ?
             point = self.mGraph.vertex(vertexId).point()
 
@@ -504,7 +508,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         if self.mGraph.edgeCount() != 0:
             # store only edges if available
             
-            for edgeId in range(self.mGraph.edgeCount()):
+            for edgeId in self.mGraph.edges():
                 edge = self.mGraph.edge(edgeId)
                 
                 fromVertex = edge.fromVertex()
@@ -713,6 +717,15 @@ class QgsGraphLayerType(QgsPluginLayerType):
         editButton = QPushButton("Toggle Editing")
         editButton.clicked.connect(layer.toggleEdit)
         editButton.setVisible(True)
+        editButton.setToolTip("List of Options:"\
+                                +"\n LeftClick: Add Vertex without Edges"\
+                                +"\n CTRL+LeftClick: Add Vertex with Edges"\
+                                +"\n RightClick: Select Vertex"\
+                                +"\n  1) Select Vertex"\
+                                +"\n  2) Move Vertex (with Edges) on LeftClick"\
+                                +"\n  3) Add Edge to 2nd Vertex on RightClick"\
+                                +"\n  4) Remove Vertex on CTRL+RightClick"\
+                                +"\n  5) 2nd RightClick not on Vertex removes Selection")
         layout.addWidget(editButton)
 
 
