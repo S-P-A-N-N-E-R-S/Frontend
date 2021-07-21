@@ -42,7 +42,7 @@ SOURCES = \
 PLUGINNAME = proto_plugin
 
 PY_FILES = __init__.py mainPlugin.py helperFunctions.py
-DIRECTORIES = controllers models resources views network
+DIRECTORIES = controllers lib models resources views network
 EXTRAS = metadata.txt
 
 # COMPILED_RESOURCE_FILES = resources.py
@@ -83,7 +83,7 @@ default:
 %.qm : %.ts
 	$(LRELEASE) $<
 
-deploy:
+deploy: proto
 	@echo
 	@echo "------------------------------------------"
 	@echo "Deploying plugin to your .qgis2 directory."
@@ -107,6 +107,14 @@ derase:
 	@echo "Removing deployed plugin."
 	@echo "-------------------------"
 	rm -Rf $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+
+proto:
+	mkdir -p network/protocol/build
+	protoc --proto_path=network/protocol/protos/ --python_out=network/protocol/build/ network/protocol/protos/*.proto
+	sed -i 's/^\(import.*pb2\)/from . \1/g' network/protocol/build/*.py
+
+clean_proto:
+	rm -Rf network/protocol/build
 
 zip:
 	@echo
