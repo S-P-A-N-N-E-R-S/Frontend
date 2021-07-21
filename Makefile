@@ -41,7 +41,7 @@ SOURCES = \
 PLUGINNAME = proto_plugin
 
 PY_FILES = __init__.py mainPlugin.py helperFunctions.py
-DIRECTORIES = controllers lib models resources views network
+DIRECTORIES = controllers lib models resources views network i18n
 EXTRAS = metadata.txt
 
 # COMPILED_RESOURCE_FILES = resources.py
