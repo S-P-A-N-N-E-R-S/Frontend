@@ -128,7 +128,7 @@ class QgsGraphMapTool(QgsMapTool):
         elif event.button() == Qt.RightButton: # RightClick
 
             # TODO: find a way to set a satisfying tolerance for the checkup
-            vertexId = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 3)
+            vertexId = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
             
             if vertexId > 0 and not self.firstFound and not self.ctrlPressed: # first RightClick
                 # mark first found vertex
