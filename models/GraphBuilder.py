@@ -11,6 +11,7 @@ from qgis import processing
 import math
 import re
 from .kdtree import kdtree
+from builtins import staticmethod
 
 class GraphBuilder:
     """
@@ -24,7 +25,7 @@ class GraphBuilder:
         - nnAllowDoubleEdges": True, False
         - clusterNumber": int
         - edgeDirection: Undirected, Directed (do not use undirected with Nearest neighbor connectionType)
-        - distanceStrategy: Euclidean, Squared, Manhattan, Geodesic, Advanced
+        - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced
         - createGraphAsLayers: False, True
         - createRandomGraph: False, True
         - usePolygonsAsForbidden: False, True
@@ -128,7 +129,7 @@ class GraphBuilder:
         self.rasterBands.append(band)
         self.rLayers.append(rasterLayer)
 
-    def setCostFunction(self, function):
+    def addCostFunction(self, function):
         """
         Set the cost function for an advanced distance strategy. Returns if the
         function has a valid format and the function is set.
@@ -136,8 +137,9 @@ class GraphBuilder:
         :type function: String
         :return Boolean
         """       
+        self.__options["distanceStrategy"] = "Advanced"
         function = self.__replaceBrackets(function)                
-        syntaxCheckResult = self.__syntaxCheck(function)        
+        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields())        
         if syntaxCheckResult == "Valid function":
             self.costFunctions.append(function)
             
@@ -177,9 +179,9 @@ class GraphBuilder:
                 function = function[0:index] + function[index:].replace("(","[",1)
         
         return function 
-                         
-    def __syntaxCheck(self, function):
-        self.__options["distanceStrategy"] = "Advanced"
+    
+    @staticmethod                   
+    def syntaxCheck(function, fields):
         costFunction = function.replace(" ", "").replace('"', '').replace("(","").replace(")","")
         formulaParts = re.split("\+|-|\*|/", costFunction)
         possibleMetrics = ["euclidean", "manhattan", "geodesic"]
@@ -226,7 +228,6 @@ class GraphBuilder:
                 if res != -1:
                     return "Math function inside inner function"
 
-
         # check operands
         for i in range(len(formulaParts)):
             var = formulaParts[i]
@@ -240,7 +241,7 @@ class GraphBuilder:
         
             # check fields
             possibleFields = []
-            for field in self.vLayer.fields():
+            for field in fields:
                 possibleFields.append(field.name())
                 
             if "field:" in var:
@@ -727,7 +728,7 @@ class GraphBuilder:
             functionCounter = 0
             for func in self.costFunctions:          
                 self.graph = costCalculator.setEdgeCosts(func,i,functionCounter)   
-                functionCounter+=1     
+                functionCounter+=1
         
         return listOfEdges
         
@@ -742,7 +743,7 @@ class GraphBuilder:
         for feat in vertexLayer.getFeatures():            
             geom = feat.geometry()
             addVertex([geom.asPoint().x(),geom.asPoint().y()])
-                      
+
     def getGraph(self):
         return self.graph   
                
