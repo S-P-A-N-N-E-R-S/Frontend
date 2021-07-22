@@ -23,8 +23,7 @@ class ExtGraph(QgsGraph):
         self.edgeWeights = []
         self.vertexWeights = []
         # holds the feature IDs if lines where used to create graph
-        self.featureMatchings = []
-        
+        self.featureMatchings = []       
     
     def setDistanceStrategy(self, strategy):
         """
@@ -69,12 +68,12 @@ class ExtGraph(QgsGraph):
             return self.geodesicDist(edgeID)
         
         #if the type is advanced the distances are set by the GraphBuilder directly
-        elif self.distanceStrategy == "Advanced":
-            
+        elif self.distanceStrategy == "Advanced":            
             return self.edgeWeights[functionIndex][edgeID]
         
         else:
             return 0  
+    
     
     def euclideanDist(self, edgeID):
         edgeFromID = self.edge(edgeID)

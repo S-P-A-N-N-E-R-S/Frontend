@@ -14,6 +14,7 @@ import time
 import numpy as np
 
 
+
 class AdvancedCostCalculator():
     """
     Class to calculate the edge costs of a graph by analysis of a cost function. The cost function
@@ -73,7 +74,7 @@ class AdvancedCostCalculator():
             return "False"        
                                 
         # translate if part
-        elif "if" in part:            
+        elif "if" in part:                     
             expression = part.split(",")[0].split("[",1)[1]
             variables = re.split("and|or|not|<|>|==|!=", expression) 
             varTranslations = []        
@@ -99,8 +100,7 @@ class AdvancedCostCalculator():
             return "if" + "[" + expression + "," + str(v1) + "," + str(v2) + "]"
         
         # python math method
-        elif "math." in part:  
-                    
+        elif "math." in part:                     
             mathOperation = part.split(".",1)[1].split("[")[0]
             if "," in part:          
                 # recursive calls               
@@ -257,7 +257,7 @@ class AdvancedCostCalculator():
         
         return graphLayerEdges
         
-    def setEdgeCosts(self, costFunction):    
+    def setEdgeCosts(self, costFunction, edgeID = None, costFunctionCount = None):    
         """
         Set the cost function for the edge cost calculation.
         
@@ -270,7 +270,7 @@ class AdvancedCostCalculator():
         sampledPointsLayers = []        
         if len(self.rLayers) > 0:            
             edgeLayer = self.__createEdgeLayer()
-            for i in range(len(self.rLayers)):
+            for i in range(len(self.rLayers)):                           
                 result = processing.run("qgis:generatepointspixelcentroidsalongline", {"INPUT_RASTER": self.rLayers[i], "INPUT_VECTOR": edgeLayer, "OUTPUT": "memory:"})
                 result2 = processing.run("qgis:rastersampling",{"INPUT": result["OUTPUT"], "RASTERCOPY": self.rLayers[i], "COLUMN_PREFIX": "SAMPLE_", "OUTPUT": "memory:"})
                 sampledPointsLayers.append(result2["OUTPUT"])  
@@ -288,18 +288,50 @@ class AdvancedCostCalculator():
             if "crossesPolygon" in costFunction:
                 polygonResult = processing.run("native:extractbylocation", {"INPUT": edgeLayer, "PREDICATE": 7, "INTERSECT": self.polygons, "OUTPUT": "memory:"})
                 edgesCrossingPolygons = polygonResult["OUTPUT"]
-            
-        
-        costFunction = costFunction.replace(" ", "").replace('"', '')                  
+                    
+        costFunction = costFunction.replace(" ", "").replace('"', '')           
         formulaParts = re.split("\+|-|\*|/", costFunction)
         variables = []
-        
+                       
         for i in range(len(formulaParts)):
             formulaParts[i] = formulaParts[i].replace("(","").replace(")","")
             variables.append(formulaParts[i])
                                                    
-        # since the function value depends on the edge the function needs to be evaluated for every edge separately                                                          
-        for i in range(self.graph.edgeCount()):   
+        # since the function value depends on the edge the function needs to be evaluated for every edge separately                                                                  
+        if edgeID == None:            
+            for i in range(self.graph.edgeCount()):   
+                translatedParts = []                                                       
+                # call function to translate the  parts            
+                for j in range(len(formulaParts)):
+                    # check if the current variables was already analyzed
+                    alreadyDone = False
+                    foundIndex = 0
+                    for o in range(j):
+                        if formulaParts[o] == formulaParts[j]:
+                            alreadyDone = True
+                            foundIndex = o
+                            break               
+                    # only translate if not already done    
+                    if alreadyDone == False:    
+                        translatedParts.append(self.__translate(formulaParts[j], i, sampledPointsLayers, edgesInPolygons, edgesCrossingPolygons))  
+                    else:
+                        translatedParts.append(translatedParts[foundIndex])    
+                                                                                               
+                # after all variables are translated to numbers if conditions can be evaluated
+                for j in range(len(formulaParts)):
+                    translatedParts[j] = self.__evaluateIfs(str(translatedParts[j]))
+                
+                counter = 0                       
+                translatedFormula = costFunction
+                for var in variables:               
+                    translatedFormula = translatedFormula.replace(var,str(translatedParts[counter]))
+                    counter+=1                                                             
+                weights.append(eval(translatedFormula))                                             
+                
+            # append the list        
+            self.graph.edgeWeights.append(weights)
+        
+        else:           
             translatedParts = []                                                       
             # call function to translate the  parts            
             for j in range(len(formulaParts)):
@@ -313,7 +345,7 @@ class AdvancedCostCalculator():
                         break               
                 # only translate if not already done    
                 if alreadyDone == False:    
-                    translatedParts.append(self.__translate(formulaParts[j], i, sampledPointsLayers, edgesInPolygons, edgesCrossingPolygons))  
+                    translatedParts.append(self.__translate(formulaParts[j], edgeID, sampledPointsLayers, edgesInPolygons, edgesCrossingPolygons))  
                 else:
                     translatedParts.append(translatedParts[foundIndex])    
                                                                                            
@@ -325,14 +357,9 @@ class AdvancedCostCalculator():
             translatedFormula = costFunction
             for var in variables:               
                 translatedFormula = translatedFormula.replace(var,str(translatedParts[counter]))
-                counter+=1
-            
-            #print(translatedFormula)
+                counter+=1                           
                       
-            weights.append(eval(translatedFormula))                                             
-            
-        # append the list        
-        self.graph.edgeWeights.append(weights)
+            self.graph.edgeWeights[costFunctionCount].append(eval(translatedFormula))
                         
         return self.graph    
     
