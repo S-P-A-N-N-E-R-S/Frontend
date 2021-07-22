@@ -158,8 +158,10 @@ class GraphBuilder:
                         minValue = distances[p]
                         
                 # add edge                
-                if not self.graph.hasEdge(minIndex, i):
-                    self.graph.addEdge(i,minIndex)
+                # if not self.graph.hasEdge(minIndex, i):
+                #     self.graph.addEdge(i,minIndex)
+                if not self.graph.hasEdge(minIndex, i) >= 0:
+                    self.graph.addEdge(i, minIndex)
                           
                 
                 # don't look at minIndex again

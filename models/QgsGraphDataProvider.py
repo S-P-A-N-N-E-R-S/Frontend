@@ -10,6 +10,7 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         self._request = request
         self._source = source
         self._index = 0
+        self._keys = self._keys = list(self._source._features.keys())
 
     def fetchFeature(self, feat):
         """
@@ -19,39 +20,38 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         :return Boolean If fetch was successful
         """
         # TODO this is a very simplified version of fetchFeature (e.g. request completely ignored -> necessary?)
-        if self._index == len(self._source._features):
+        if self._index >= len(self._source._features):
             return False
-        
-        try:
-            _feat = self._source._features[self._index]
-            feat.setGeometry(_feat.geometry())
-            feat.setFields(_feat.fields())
-            feat.setAttributes(_feat.attributes())
-            feat.setValid(_feat.isValid())
-            feat.setId(_feat.id())
 
-            self._index += 1
+        featIdx = self._keys[self._index]
+        _feat = self._source._features[featIdx]
+        feat.setGeometry(_feat.geometry())
+        feat.setFields(_feat.fields())
+        feat.setAttributes(_feat.attributes())
+        feat.setValid(_feat.isValid())
+        feat.setId(_feat.id())
 
-            return True
-        except Exception as e:
-            traceback.print_exc()
-            return False
+        self._index += 1
+
+        return True
 
     def __iter__(self):
         self._index = 0
         return self
 
-    def __next__(self):        
+    def __next__(self):  
         if self._index + 1 < len(self._source._features):
             self._index += 1
-        
-        return self._source._features[self._index]
+        featIdx = self._keys[self._index]
+        return self._source._features[featIdx]
 
     def rewind(self):
+        self._keys = self._keys = list(self._source._features.keys())
         self._index = 0
         return True
 
     def close(self):
+        self._keys = []
         self._index = -1
         return True
 
@@ -97,7 +97,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         self._uri = uri
         self._providerOptions = providerOptions
         self._flags = flags
-        self._features = []
+        self._features = {}
         self._fields = tempLayer.fields()
         self._extent = QgsRectangle()
         self._subsetString = ''
@@ -141,9 +141,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
     def addFeature(self, feat, flags=None):
         # TODO check for valid feature
-
-        self._features.append(feat)
-        self.nextFeatId += 1
+        self._features[feat.attribute(0)] = feat
         self._featureCount += 1
 
         # if self._spatialindex is not None:
@@ -152,14 +150,12 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         return True
 
     def deleteFeature(self, id):
-        try:
+        if id in self._features:
             del self._features[id]
             self._featureCount -= 1
         
             return True
-        except Exception as e:
-            # probably index out of bound
-            return False
+        return False
 
     def addAttributes(self, attrs):
         # TODO check for valid attribute types defined by fields
@@ -183,7 +179,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
     def extent(self):
         # TODO this update of extent maybe in addFeature?
         for feat in self._features:
-            self._extent.combineExtentWith(feat.geometry().boundingBox())
+            self._extent.combineExtentWith(self._features[feat].geometry().boundingBox())
 
         return self._extent
 

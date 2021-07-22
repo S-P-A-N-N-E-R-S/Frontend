@@ -724,7 +724,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
                                 +"\n  1) Select Vertex"\
                                 +"\n  2) Move Vertex (without Edges) on LeftClick"\
                                 +"\n  3) Move Vertex (with Edges) on CTRL+LeftClick"\
-                                +"\n  4) Add Edge to 2nd Vertex on RightClick"\
+                                +"\n  4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)"\
                                 +"\n  5) Remove Vertex on CTRL+RightClick"\
                                 +"\n  6) 2nd RightClick not on Vertex removes Selection")
         layout.addWidget(editButton)

@@ -95,9 +95,9 @@ class PGGraph:
         for edgeIdx in self.mEdges:
             edge = self.mEdges[edgeIdx]            
             if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
-                return True
+                return edgeIdx
                
-        return False
+        return -1
                    
     def addEdge(self, vertex1, vertex2, idx=-1):
         addIndex = self.mEdgeCount
@@ -196,24 +196,34 @@ class PGGraph:
         return False
 
     def deleteVertex(self, idx):
+        """
+        Deletes a vertex and all outgoing and incoming edges of this vertex
+
+        :type idx: Integer, index of vertex to delete
+        :return list with indices of all edges deleted (may be empty)
+
+        """
+        deletedEdges = []
         if idx in self.mVertices:
             vertex = self.mVertices[idx]
             # delete all incoming edges vertex is connected with
             for id in range(len(vertex.incomingEdges())):
                 edgeIdx = vertex.incomingEdges().pop(0)
                 self.deleteEdge(edgeIdx)
+                deletedEdges.append(edgeIdx)
             vertex.mIncomingEdges = []
             # delete all outgoing edges vertex is connected with
             for id in range(len(vertex.outgoingEdges())):
                 edgeIdx = vertex.outgoingEdges().pop(0)
                 self.deleteEdge(edgeIdx)
+                deletedEdges.append(edgeIdx)
             vertex.mOutgoingEdges = []
             
             del self.mVertices[idx]
             self.__availableVertexIndices.append(idx)
             self.mVertexCount -= 1
-            return True
-        return False
+            
+        return deletedEdges
             
         
     def writeGraphML(self, path):

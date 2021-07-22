@@ -18,6 +18,72 @@ class QgsGraphMapTool(QgsMapTool):
         self.firstFound = False
         self.ctrlPressed = False
 
+    def _addVertex(self, point):
+        """
+        Adds a vertex to the Graphlayers graph.
+        Also adds the vertex as feature to the layers DataProvider if necessary.
+
+        :type point: QgsPointXY
+        """
+        if self.mLayer.mGraph.edgeCount() == 0:
+            feat = QgsFeature()
+            feat.setGeometry(QgsGeometry.fromPointXY(point))
+
+            feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()])
+            self.mLayer.dataProvider().addFeature(feat)
+
+        self.mLayer.mGraph.addVertex(point)
+
+    def _addEdge(self, p1, p2):
+        """
+        Adds an edge to the Graphlayers graph.
+        Also adds the edge as feature to the layers DataProvider if necessary.
+
+        Deletes the edge from the Graphlayers graph if it already existed.
+        Also deletes the corresponding features from the Graphlayers DataProvider.
+
+        :type p1: Integer
+        :type p2: Integer
+        """
+        edgeId = self.mLayer.mGraph.hasEdge(p1, p2)
+        if edgeId >= 0:
+            # delete possibly existing edge
+            self.mLayer.mGraph.deleteEdge(edgeId)
+            self.mLayer.mDataProvider.deleteFeature(edgeId)
+        else:
+            # add new edge
+            edgeId = self.mLayer.mGraph.addEdge(p1, p2)
+
+            if self.mLayer.mGraph.edgeCount() != 0:
+                # TODO: what to do if graph had no edges before -> GraphLayer has points as features
+                # -> Two Ideas: 1) don't allow add edges, 2) remove all features and add edge feature
+                
+                edge = self.mLayer.mGraph.edge(edgeId)
+
+                feat = QgsFeature()
+                fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
+                toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
+                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+
+                feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edgeId)])
+
+                self.mLayer.mDataProvider.addFeature(feat)
+
+    def _deleteVertex(self, idx):
+        """
+        Deletes a vertex and its outgoing and incoming edges from the Graphlayers graph.
+        Also deletes the corresponding features from the layers DataProvider.
+
+        :type idx: Integer
+        """
+        deletedEdges = self.mLayer.mGraph.deleteVertex(idx)
+        if self.mLayer.mGraph.edgeCount() == 0:
+            self.mLayer.mDataProvider.deleteFeature(idx)
+        else:
+            for edgeId in deletedEdges:
+                self.mLayer.mDataProvider.deleteFeature(edgeId)
+
+
     def canvasPressEvent(self, event):
         """
         Contains graph editing functions on MouseClick:
@@ -39,20 +105,14 @@ class QgsGraphMapTool(QgsMapTool):
 
             if not self.ctrlPressed:
                 if not self.firstFound: # addVertex
-                    
-                    if self.mLayer.mGraph.edgeCount() == 0:
-                        feat = QgsFeature()
-                        feat.setGeometry(QgsGeometry.fromPointXY(clickPosition))
-
-                        feat.setAttributes([self.mLayer.mGraph.vertexCount(), clickPosition.x(), clickPosition.y()])
-                        self.mLayer.dataProvider().addFeature(feat)
-
-                    self.mLayer.mGraph.addVertex(clickPosition)
+                    self._addVertex(clickPosition)
                 
                 else: # move firstFoundVertex to new position
                     # deleteVertex firstFoundVertex, addVertex (without edges) on clicked position
-                    self.mLayer.mGraph.deleteVertex(self.firstFoundVertex)
-                    self.mLayer.mGraph.addVertex(clickPosition)
+                    self._deleteVertex(self.firstFoundVertex)
+                    
+                    self._addVertex(clickPosition)
+                    
                     self.__removeFirstFound()
 
             else: # CTRL + LeftClick
@@ -61,7 +121,7 @@ class QgsGraphMapTool(QgsMapTool):
                     self.__removeFirstFound()
                 else:
                     # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
-                    self.mLayer.mGraph.deleteVertex(self.firstFoundVertex)
+                    self._deleteVertex(self.firstFoundVertex)
                     # TODO: use addVertex from GraphBuilder to also add edges
                     self.__removeFirstFound()
 
@@ -82,37 +142,23 @@ class QgsGraphMapTool(QgsMapTool):
                 self.__removeFirstFound()
 
             elif vertexId > 0 and self.firstFound and not self.ctrlPressed: # second RightClick
-                # add edge between firstFoundVertex and vertexId                
-                self.mLayer.mGraph.addEdge(self.firstFoundVertex, vertexId)
-
-                if self.mLayer.mGraph.edgeCount() != 0:
-                    # TODO: what to do if graph had no edges before -> GraphLayer has points as features
-                    # -> Two Ideas: 1) don't allow add edges, 2) remove all features and add edge feature
-                    
-                    edgeId = self.mLayer.mGraph.edgeCount() - 1
-                    edge = self.mLayer.mGraph.edge(edgeId)
-
-                    feat = QgsFeature()
-                    fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
-                    toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
-                    feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
-
-                    feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edgeId)])
-
-                    self.mLayer.mDataProvider.addFeature(feat)
+                # add edge between firstFoundVertex and vertexId
+                # deletes edge if it already exits
+                self._addEdge(self.firstFoundVertex, vertexId)                
                 
                 self.__removeFirstFound()
 
             elif vertexId > 0 and self.firstFound and self.ctrlPressed: # second CTRL + RightClick
                 # remove vertex if found on click
-                self.mLayer.mGraph.deleteVertex(vertexId)
+                self._deleteVertex(vertexId)
+
                 self.__removeFirstFound()
 
         iface.mapCanvas().scene().removeItem(self.converter)
         del self.converter  
         
         self.mLayer.triggerRepaint()
-        self.mCanvas.refresh()
+        # self.mCanvas.refresh()
 
     def keyPressEvent(self, event):
         """
