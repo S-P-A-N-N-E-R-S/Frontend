@@ -3,9 +3,10 @@ from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath
 
 from qgis.core import QgsMapLayerProxyModel, QgsTask
+from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox
 
 from PyQt5.QtCore import QTimer, Qt, QSize
-from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton
+from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton, QHBoxLayout, QSizePolicy
 from PyQt5.QtGui import QIcon
 
 import time
@@ -23,17 +24,18 @@ class CreateGraphView(BaseContentView):
 
         # set up layer inputs
         self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer)
-        # self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer | QgsMapLayerProxyModel.RasterLayer | QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_poi_input.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        self.dialog.create_graph_polygon_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-        self.dialog.create_graph_additionalline_input.setFilters(QgsMapLayerProxyModel.LineLayer)
+        self.dialog.create_graph_polycost_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.dialog.create_graph_forbiddenarea_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.dialog.create_graph_additionalpoint_input.setFilters(QgsMapLayerProxyModel.PointLayer)
 
         # set null layer as default
         self.dialog.create_graph_poi_input.setCurrentIndex(0)
         self.dialog.create_graph_raster_input.setCurrentIndex(0)
-        self.dialog.create_graph_polygon_input.setCurrentIndex(0)
-        self.dialog.create_graph_additionalline_input.setCurrentIndex(0)
+        self.dialog.create_graph_polycost_input.setCurrentIndex(0)
+        self.dialog.create_graph_forbiddenarea_input.setCurrentIndex(0)
+        self.dialog.create_graph_additionalpoint_input.setCurrentIndex(0)
 
         # show layer fields
         self.dialog.create_graph_cost_input.setLayer(self.getInputLayer())
@@ -46,6 +48,9 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_input_tools.clicked.connect(
             lambda: self._browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
         )
+
+        # set up add raster data button
+        self.dialog.create_graph_raster_plus_btn.clicked.connect(self._addRasterDataInput)
 
         # set up tasks table
         self.dialog.graph_tasks_table.setColumnCount(4)
@@ -97,6 +102,51 @@ class CreateGraphView(BaseContentView):
         # immediately disable button and enable after 1 seconds
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
 
+    def _addRasterDataInput(self):
+        """
+        Appends a new raster band input line
+        :return:
+        """
+        #  change add button to remove button
+        lastLayout = self.dialog.create_graph_rasterdata_layout.itemAt(self.dialog.create_graph_rasterdata_layout.count()-1)
+        button = lastLayout.itemAt(lastLayout.count()-1).widget()
+        button.setText("➖")
+        button.clicked.disconnect()
+        button.clicked.connect(lambda: self._removeRasterDataInput(lastLayout))
+
+        layerComboBox = QgsMapLayerComboBox()
+        layerComboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        layerComboBox.setAllowEmptyLayer(True)
+        layerComboBox.setCurrentIndex(0)
+        layerComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
+
+        bandComboBox = QgsRasterBandComboBox()
+        bandComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
+        bandComboBox.setMinimumSize(150, 0)
+        layerComboBox.layerChanged.connect(bandComboBox.setLayer)
+
+        addButton = QPushButton("➕")
+        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        addButton.setMaximumSize(25, 25)
+        addButton.clicked.connect(self._addRasterDataInput)
+
+        layout = QHBoxLayout()
+        layout.addWidget(layerComboBox)
+        layout.addWidget(bandComboBox)
+        layout.addWidget(addButton)
+
+        self.dialog.create_graph_rasterdata_layout.addLayout(layout)
+
+    def _removeRasterDataInput(self, inputLayout):
+        """
+        Removes the passed input layout
+        :param inputLayout: input layout
+        :return:
+        """
+        for i in reversed(range(inputLayout.count())):
+            inputLayout.itemAt(i).widget().deleteLater()
+        self.dialog.create_graph_rasterdata_layout.removeItem(inputLayout)
+
     def _disableButton(self):
         """
         Disables the button and enables it after 1 seconds
@@ -146,11 +196,35 @@ class CreateGraphView(BaseContentView):
 
     # advanced parameters
 
+    def getRandomVerticesNumber(self):
+        return self.dialog.create_graph_randomNumber_input.value()
+
+    def addRandomArea(self, area, userData=None):
+        self.dialog.create_graph_randomarea_input.addItem(area, userData)
+
+    def getRandomArea(self):
+        return self.dialog.create_graph_randomarea_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+
     def addConnectionType(self, type, userData=None):
         self.dialog.create_graph_connectiontype_input.addItem(type, userData)
 
     def getConnectionType(self):
         return self.dialog.create_graph_connectiontype_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+
+    def getNeighborNumber(self):
+        return self.dialog.create_graph_numberneighbor_input.value()
+
+    def isDoubleEdgesAllowed(self):
+        return self.dialog.create_graph_allowdoubleedges_checkbox.isChecked()
+
+    def getClusterNumber(self):
+        return self.dialog.create_graph_clusternumber_input.value()
+
+    def addEdgeDirection(self, direction, userData=None):
+        self.dialog.create_graph_edgedirection_input.addItem(direction, userData)
+
+    def getEdgeDirection(self):
+        return self.dialog.create_graph_edgedirection_input.currentText(), self.dialog.create_graph_edgedirection_input.currentData()
 
     def addDistance(self, distance, userData=None):
         self.dialog.create_graph_distance_input.addItem(distance, userData)
@@ -170,11 +244,18 @@ class CreateGraphView(BaseContentView):
     def getPOILayer(self):
         return self.dialog.create_graph_poi_input.currentLayer()
 
-    def getRasterLayer(self):
-        return self.dialog.create_graph_raster_input.currentLayer()
-
-    def getRasterBand(self):
-        return self.dialog.create_graph_raster_input.currentBand()
+    def getRasterData(self):
+        """
+        Collects all user selected raster layer and corresponding bands
+        :return: Array of raster inputs and each input is a tuple: (layer, band)
+        """
+        rasterData = []
+        for i in range(self.dialog.create_graph_rasterdata_layout.count()):
+            inputLayout = self.dialog.create_graph_rasterdata_layout.itemAt(i)
+            rasterLayer = inputLayout.itemAt(0).widget().currentLayer()
+            rasterBand = inputLayout.itemAt(1).widget().currentBand()
+            rasterData.append((rasterLayer, rasterBand))
+        return rasterData
 
     def addRasterType(self, type, userData=None):
         self.dialog.create_graph_rastertype_input.addItem(type, userData)
@@ -183,10 +264,10 @@ class CreateGraphView(BaseContentView):
         return self.dialog.create_graph_rastertype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
 
     def getRasterMinimum(self):
-        return self.dialog.create_graph_rastermin_input.int()
+        return self.dialog.create_graph_rastermin_input.value()
 
     def getRasterMaximum(self):
-        return self.dialog.create_graph_rastermax_input.int()
+        return self.dialog.create_graph_rastermax_input.value()
 
     def isRasterRangeModeSelected(self):
         return True if self.getRasterRangeMode() else False
@@ -199,8 +280,11 @@ class CreateGraphView(BaseContentView):
         # if both not checked
         return False
 
-    def getPolygonLayer(self):
-        return self.dialog.create_graph_polygon_input.currentLayer()
+    def getPolygonCostLayer(self):
+        return self.dialog.create_graph_polycost_input.currentLayer()
+
+    def getForbiddenAreaLayer(self):
+        return self.dialog.create_graph_forbiddenarea_input.currentLayer()
 
     def addPolygonType(self, type, userData=None):
         self.dialog.create_graph_polygontype_input.addItem(type, userData)
@@ -208,11 +292,14 @@ class CreateGraphView(BaseContentView):
     def getPolygonType(self):
         return self.dialog.create_graph_polygontype_input.currentText(), self.dialog.create_graph_rastertype_input.currentData()
 
+    def getAdditionalPointLayer(self):
+        return self.dialog.create_graph_additionalpoint_input.currentLayer()
+
+    def getCostFunction(self):
+        return self.dialog.create_graph_costfunction_input.text()
+
     def getCRS(self):
         return self.dialog.create_graph_crs_input.crs()
-
-    def getAdditionalLineLayer(self):
-        return self.dialog.create_graph_additionalline_input.currentLayer()
 
     # task overview
 
