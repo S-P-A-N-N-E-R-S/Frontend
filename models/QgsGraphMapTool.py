@@ -25,12 +25,11 @@ class QgsGraphMapTool(QgsMapTool):
 
         :type point: QgsPointXY
         """
-        if self.mLayer.mGraph.edgeCount() == 0:
-            feat = QgsFeature()
-            feat.setGeometry(QgsGeometry.fromPointXY(point))
+        feat = QgsFeature()
+        feat.setGeometry(QgsGeometry.fromPointXY(point))
 
-            feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()])
-            self.mLayer.dataProvider().addFeature(feat)
+        feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()], True)
+        self.mLayer.dataProvider().addFeature(feat, True)
 
         self.mLayer.mGraph.addVertex(point)
 
@@ -45,29 +44,37 @@ class QgsGraphMapTool(QgsMapTool):
         :type p1: Integer
         :type p2: Integer
         """
+        if p1 == p2:
+            return
+
         edgeId = self.mLayer.mGraph.hasEdge(p1, p2)
         if edgeId >= 0:
             # delete possibly existing edge
             self.mLayer.mGraph.deleteEdge(edgeId)
-            self.mLayer.mDataProvider.deleteFeature(edgeId)
+            self.mLayer.mDataProvider.deleteFeature(edgeId, False)
+
+            if self.mLayer.mGraph.edgeCount() == 0:
+                # no edges exist anymore
+                self.mLayer.mDataProvider.setGeometryToPoint(True)
         else:
+            if self.mLayer.mGraph.edgeCount() == 0:
+                # now edges exist
+                self.mLayer.mDataProvider.setGeometryToPoint(False)
+            
             # add new edge
             edgeId = self.mLayer.mGraph.addEdge(p1, p2)
+            
+            edge = self.mLayer.mGraph.edge(edgeId)
 
-            if self.mLayer.mGraph.edgeCount() != 0:
-                # TODO: what to do if graph had no edges before -> GraphLayer has points as features
-                # -> Two Ideas: 1) don't allow add edges, 2) remove all features and add edge feature
-                
-                edge = self.mLayer.mGraph.edge(edgeId)
+            feat = QgsFeature()
+            fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
+            toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
+            feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-                feat = QgsFeature()
-                fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
-                toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
-                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+            feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edgeId)], False)
 
-                feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edgeId)])
+            self.mLayer.mDataProvider.addFeature(feat, False)
 
-                self.mLayer.mDataProvider.addFeature(feat)
 
     def _deleteVertex(self, idx):
         """
@@ -77,11 +84,11 @@ class QgsGraphMapTool(QgsMapTool):
         :type idx: Integer
         """
         deletedEdges = self.mLayer.mGraph.deleteVertex(idx)
-        if self.mLayer.mGraph.edgeCount() == 0:
-            self.mLayer.mDataProvider.deleteFeature(idx)
-        else:
-            for edgeId in deletedEdges:
-                self.mLayer.mDataProvider.deleteFeature(edgeId)
+        
+        self.mLayer.mDataProvider.deleteFeature(idx, True)
+        
+        for edgeId in deletedEdges:
+            self.mLayer.mDataProvider.deleteFeature(edgeId, False)
 
 
     def canvasPressEvent(self, event):

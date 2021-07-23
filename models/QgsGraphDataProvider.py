@@ -4,13 +4,15 @@ import traceback
 
 class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
 
-    def __init__(self, source, request=QgsFeatureRequest()):
+    def __init__(self, source, point, request=QgsFeatureRequest()):
         super().__init__(request)
-
         self._request = request
         self._source = source
         self._index = 0
-        self._keys = self._keys = list(self._source._features.keys())
+        self._pointKeys = list(self._source._pointFeatures.keys())
+        self._lineKeys = list(self._source._lineFeatures.keys())
+
+        self.point = point
 
     def fetchFeature(self, feat):
         """
@@ -20,16 +22,30 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         :return Boolean If fetch was successful
         """
         # TODO this is a very simplified version of fetchFeature (e.g. request completely ignored -> necessary?)
-        if self._index >= len(self._source._features):
-            return False
+        if self.point:
+            # point feature at index
+            if self._index >= len(self._source._pointFeatures):
+                return False
 
-        featIdx = self._keys[self._index]
-        _feat = self._source._features[featIdx]
-        feat.setGeometry(_feat.geometry())
-        feat.setFields(_feat.fields())
-        feat.setAttributes(_feat.attributes())
-        feat.setValid(_feat.isValid())
-        feat.setId(_feat.id())
+            featIdx = self._pointKeys[self._index]
+            _feat = self._source._pointFeatures[featIdx]
+            feat.setGeometry(_feat.geometry())
+            feat.setFields(_feat.fields())
+            feat.setAttributes(_feat.attributes())
+            feat.setValid(_feat.isValid())
+            feat.setId(_feat.id())
+        else:
+            # line feature at index
+            if self._index >= len(self._source._lineFeatures):
+                return False
+
+            featIdx = self._lineKeys[self._index]
+            _feat = self._source._lineFeatures[featIdx]
+            feat.setGeometry(_feat.geometry())
+            feat.setFields(_feat.fields())
+            feat.setAttributes(_feat.attributes())
+            feat.setValid(_feat.isValid())
+            feat.setId(_feat.id())
 
         self._index += 1
 
@@ -39,41 +55,49 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         self._index = 0
         return self
 
-    def __next__(self):  
-        if self._index + 1 < len(self._source._features):
-            self._index += 1
-        featIdx = self._keys[self._index]
-        return self._source._features[featIdx]
+    def __next__(self):
+        if self.point:
+            if self._index + 1 < len(self._source._pointFeatures):
+                self._index += 1
+            return self._source._pointFeatures[self._pointKeys[self._index]]
+        
+        else:
+            if self._index + 1 < len(self._source._lineFeatures):
+                self._index += 1
+            return self._source._lineFeatures[self._lineKeys[self._index]]
 
     def rewind(self):
-        self._keys = self._keys = list(self._source._features.keys())
+        self._pointKeys = list(self._source._pointFeatures.keys())
+        self._lineKeys = list(self._source._lineFeatures.keys())
         self._index = 0
         return True
 
     def close(self):
-        self._keys = []
+        self._pointKeys = []
+        self._lineKeys = []
         self._index = -1
         return True
 
 
 class QgsGraphFeatureSource(QgsAbstractFeatureSource):
 
-    def __init__(self, provider):
+    def __init__(self, provider, point):
         super(QgsGraphFeatureSource).__init__()
-
         self._provider = provider
-        self._features = provider._features
+        self._pointFeatures = provider._pointFeatures
+        self._lineFeatures = provider._lineFeatures
+        
+        self.point = point
 
-    def getFeatures(self, request):
-        return QgsFeatureIterator(QgsGraphFeatureIterator(self, request))
+    def getFeatures(self, request, point):
+        return QgsFeatureIterator(QgsGraphFeatureIterator(self, request, point))
 
 
 class QgsGraphDataProvider(QgsVectorDataProvider):
     """
     DataProvider for GraphLayer
+    Keeps track of features for PointGeometry AND LineGeometry
     """
-
-    nextFeatId = 1
 
     @classmethod
     def providerKey(self):
@@ -91,19 +115,27 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
     def __init__(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(), flags=QgsDataProvider.ReadFlags()):
         super().__init__(uri)
 
-        tempLayer = QgsVectorLayer(uri, "tmp", "memory")
         self.mCRS = QgsProject.instance().crs()
         
-        self._uri = uri
+        self._pointUri = uri
+        self._lineUri = uri
+        
         self._providerOptions = providerOptions
         self._flags = flags
-        self._features = {}
-        self._fields = tempLayer.fields()
+        
+        self._pointFeatures = {}
+        self._lineFeatures = {}
+        
+        self._pointFields = QgsFields()
+        self._lineFields = QgsFields()
+        
         self._extent = QgsRectangle()
         self._subsetString = ''
-        self._featureCount = 0
+        
+        self._pointFeatureCount = 0
+        self._lineFeatureCount = 0
 
-        self._points = True
+        self._points = True # if graph has only points
 
         # if 'index=yes' in self._uri:
         #     self.createSpatialIndex()
@@ -111,11 +143,17 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
     def isValid(self):
         return True
 
-    def setDataSourceUri(self, uri):
-        self._uri = uri
+    def setDataSourceUri(self, uri, point):
+        if point:
+            self._pointUri = uri
+        else:
+            self._lineUri = uri
 
-    def dataSourceUri(self, expandAuthConfig=True):
-        return self._uri
+    def dataSourceUri(self, point, expandAuthConfig=True):
+        if point:
+            return self._pointUri
+        else:
+            return self._lineUri
 
     def setCrs(self, crs):
         self.mCRS = crs
@@ -126,42 +164,60 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
         return self.mCRS
 
-    def featureSource(self):
-        return QgsGraphFeatureSource(self)
+    def featureSource(self, point):
+        return QgsGraphFeatureSource(self, point)
 
-    def getFeatures(self, request=QgsFeatureRequest()):
-        # return self._features
-        return QgsFeatureIterator(QgsGraphFeatureIterator(self.featureSource(), request))
+    def getFeatures(self, point, request=QgsFeatureRequest()):
+        # return self._pointFeatures and self._lineFeatures one by one in a tuple
+        return QgsFeatureIterator(QgsGraphFeatureIterator(self.featureSource(point), point, request))
 
-    def featureCount(self):
-        return self._featureCount
+    def featureCount(self, point):
+        if point:
+            return self._pointFeatureCount
+        else:
+            return self._lineFeatureCount
 
-    def fields(self):
-        return self._fields
+    def fields(self, point):
+        if point:
+            return self._pointFields
+        else:
+            return self._lineFields
 
-    def addFeature(self, feat, flags=None):
-        # TODO check for valid feature
-        self._features[feat.attribute(0)] = feat
-        self._featureCount += 1
+    def addFeature(self, feat, point, flags=None):
+        if point:
+            self._pointFeatures[feat.attribute(0)] = feat
+            self._pointFeatureCount += 1
+        else:
+            self._lineFeatures[feat.attribute(0)] = feat
+            self._lineFeatureCount += 1
 
         # if self._spatialindex is not None:
         #     self._spatialindex.insertFeatue(feat)
 
         return True
 
-    def deleteFeature(self, id):
-        if id in self._features:
-            del self._features[id]
-            self._featureCount -= 1
+    def deleteFeature(self, id, point):
+        if point and id in self._pointFeatures:
+            del self._pointFeatures[id]
+            self._pointFeatureCount -= 1
         
+            return True
+        elif not point and id in self._lineFeatures:
+            del self._lineFeatures[id]
+            self._lineFeatureCount -= 1
+
             return True
         return False
 
-    def addAttributes(self, attrs):
-        # TODO check for valid attribute types defined by fields
-        for field in attrs:
-            self._fields.append(field)
-            self._uri += "&field=" + field.displayName() + ":" + field.typeName()
+    def addAttributes(self, attrs, point):
+        if point:
+            for field in attrs:
+                self._pointFields.append(field)
+                self._pointUri += "&field=" + field.displayName() + ":" + field.typeName()
+        else:
+            for field in attrs:
+                self._lineFields.append(field)
+                self._lineUri += "&field=" + field.displayName() + ":" + field.typeName()
 
         return True
 
@@ -175,13 +231,6 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
     def subsetString(self):
         return self._subsetString
-
-    def extent(self):
-        # TODO this update of extent maybe in addFeature?
-        for feat in self._features:
-            self._extent.combineExtentWith(self._features[feat].geometry().boundingBox())
-
-        return self._extent
 
     def updateExtents(self):
         # TODO understand this

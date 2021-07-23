@@ -167,15 +167,14 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mLayerType = QgsGraphLayerType()
 
         self.mDataProvider = QgsGraphDataProvider("Point")
-        self.mFields = QgsFields()
+        self.mPointFields = QgsFields()
+        self.mLineFields = QgsFields()
 
         if not self.crs().isValid():
             self.setCrs(QgsProject.instance().crs())
 
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
-
-        self.setDataSource(self.mDataProvider.dataSourceUri(), self.mName, self.mDataProvider.providerKey(), QgsDataProvider.ProviderOptions())
 
         self.mShowEdgeText = False
         self.mShowDirection = False
@@ -191,13 +190,18 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mMapTool = QgsGraphMapTool(iface.mapCanvas(), self)
 
         self.isEditing = False
+
+        self._extent = QgsRectangle()
         
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
         return self.mDataProvider
 
-    def fields(self):
-        return self.mFields
+    def fields(self, point):
+        if point:
+            return self.mPointFields
+        else:
+            return self.mLineFields
 
     def createMapRenderer(self, rendererContext):
         # print("CreateRenderer")
@@ -221,69 +225,65 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 self.hasEdges = True
                 
                 self.mDataProvider.setGeometryToPoint(False)
-                self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri)
-
-                edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
-                fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
-                toVertexField = QgsField("toVertex", QVariant.Double, "double")
-                costField = QgsField("edgeCost", QVariant.Double, "double")
-                
-                self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField])
-                
-                # self.updateFields()
-                self.mFields.append(edgeIdField)
-                self.mFields.append(fromVertexField)
-                self.mFields.append(toVertexField)
-                self.mFields.append(costField)
-                
-                # add vertices to new PGGraph (have to be added to PGGraph before edges do -> inefficient)
-                for vertexId in graph.vertices():
-                    vertex = graph.vertex(vertexId)
-                    
-                    self.mGraph.addVertex(vertex.point())
-
-                # add edges to new PGGraph and create corresponding features
-                for edgeId in self.mGraph.edges():
-                    edge = graph.edge(edgeId)
-
-                    feat = QgsFeature()
-                    fromVertex = graph.vertex(edge.fromVertex()).point()
-                    toVertex = graph.vertex(edge.toVertex()).point()
-                    feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
-
-                    feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), graph.costOfEdge(edgeId)])
-
-                    self.mDataProvider.addFeature(feat)
-
-                    self.mGraph.addEdge(edge.fromVertex(), edge.toVertex())
-
             else:
                 self.hasEdges = False
+                self.mDataProvieder.setGeometryToPoint(True)
 
-                self.mDataProvider.setGeometryToPoint(True)
-                self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri)
+            self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri, True)
+            self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri, False)
 
-                vertexIdField = QgsField("vertexId", QVariant.Int, "integer")
-                xField = QgsField("x", QVariant.Double, "double")
-                yField = QgsField("y", QVariant.Double, "double")
+            # point attributes
+            vertexIdField = QgsField("vertexId", QVariant.Int, "integer")
+            xField = QgsField("x", QVariant.Double, "double")
+            yField = QgsField("y", QVariant.Double, "double")
 
-                self.mDataProvider.addAttributes([vertexIdField, xField, yField])
+            self.mDataProvider.addAttributes([vertexIdField, xField, yField], True)
+            
+            # update point fields
+            self.mPointFields.append(vertexIdField)
+            self.mPointFields.append(xField)
+            self.mPointFields.append(yField)
+
+            # line attributes
+            edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
+            fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
+            toVertexField = QgsField("toVertex", QVariant.Double, "double")
+            costField = QgsField("edgeCost", QVariant.Double, "double")
+            
+            self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField], False)
                 
-                # self.updateFields()
-                self.mFields.append(vertexIdField)
-                self.mFields.append(xField)
-                self.mFields.append(yField)
+            # update line fields
+            self.mLineFields.append(edgeIdField)
+            self.mLineFields.append(fromVertexField)
+            self.mLineFields.append(toVertexField)
+            self.mLineFields.append(costField)
+                
+            # add vertices to new PGGraph (have to be added to PGGraph before edges do -> inefficient)
+            for vertexId in graph.vertices():
+                vertex = graph.vertex(vertexId)
 
-                for vertexId in range(graph.vertexCount()):
-                    vertex = graph.vertex(vertexId).point()
+                feat = QgsFeature()
+                feat.setGeometry(QgsGeometry.fromPointXY(vertex))
 
-                    feat = QgsFeature()
-                    feat.setGeometry(QgsGeometry.fromPointXY(vertex))
+                feat.setAttributes([vertexId, vertex.x(), vertex.y()])
+                self.mDataProvider.addFeature(feat, True)
+                
+                self.mGraph.addVertex(vertex.point(), vertexId)
 
-                    feat.setAttributes([vertexId, vertex.x(), vertex.y()])
-                    self.mDataProvider.addFeature(feat)
+            # add edges to new PGGraph and create corresponding features
+            for edgeId in self.mGraph.edges():
+                edge = graph.edge(edgeId)
 
-                    self.mGraph.addVertex(vertex)
+                feat = QgsFeature()
+                fromVertex = graph.vertex(edge.fromVertex()).point()
+                toVertex = graph.vertex(edge.toVertex()).point()
+                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+
+                feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), graph.costOfEdge(edgeId)])
+
+                self.mDataProvider.addFeature(feat, False)
+
+                self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), edgeId)
 
     def getGraph(self):
         return self.mGraph
@@ -295,77 +295,90 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
         :return Boolean if export was successful
         """
-        
-        if self.hasEdges:
-            geomType = QgsWkbTypes.LineString
-        else:
-            geomType = QgsWkbTypes.Point
 
         # get saveFileName and datatype to export to
         saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;Geopackage (*.gpkg);;CSV (*.csv);; graphML (*.graphML);;GeoJSON (*.geojson)")
-        fileName = saveFileName[0]
+        pointFileName = saveFileName[0]
+        lineFileName = saveFileName[0]
         
         driver = ""
 
         if saveFileName[1] == "Shapefile (*.shp)": # Shapefile
-            fileName += ".shp"
+            pointFileName += "Points.shp"
+            lineFileName += "Lines.shp"
             driver = "ESRI Shapefile"
 
         elif saveFileName[1] == "Geopackage (*.gpkg)": # Geopackage
-            fileName += ".gpkg"
+            pointFileName += "Points.gpkg"
+            lineFileName += "Lines.gpkg"
             driver = "GPKG"
 
         elif saveFileName[1] == "CSV (*.csv)": # CSV
-            fileName += ".csv"
+            pointFileName += "Points.csv"
+            lineFileName += "Lines.csv"
             driver = "CSV"
         
         elif saveFileName[1] == "graphML (*.graphML)":
-            fileName += ".graphML"
+            pointFileName += "Points.graphML"
+            lineFileName += "Lines.graphML"
             self.mGraph.writeGraphML(fileName)
             return True
 
         elif saveFileName[1] == "GeoJSON (*.geojson)":
-            fileName += ".geojson"
+            pointFileName += "Points.geojson"
+            lineFileName += "Lines.geojson"
             driver = "GeoJSON"
         else:
             return False
 
-        # write features in QgsVectorFileWriter (save features in selected file)
-        writer = QgsVectorFileWriter(fileName, "utf-8", self.fields(),
-                                        geomType, self.crs(), driver)
+        # write point features in QgsVectorFileWriter (save features in selected file)
+        pointWriter = QgsVectorFileWriter(pointFileName, "utf-8", self.fields(True),
+                                        QgsWkbTypes.Point, self.crs(), driver)
 
-        if writer.hasError() != QgsVectorFileWriter.NoError:
-            print("ERROR: ", writer.errorMessage())
+        # write line features in QgsVectorFileWriter (save features in selected file)
+        lineWriter = QgsVectorFileWriter(lineFileName, "utf-8", self.fields(False),
+                                        QgsWkbTypes.LineString, self.crs(), driver)
+
+        if pointWriter.hasError() != QgsVectorFileWriter.NoError or lineWriter.hasError() != QgsVectorFileWriter.NoError:
+            print("ERROR QgsVectorFileWriter", pointWriter.errorMessage() if pointWriter.hasError() != QgsVectorFileWriter.NoError else lineWriter.errorMessage())
             return False
         
-        for feat in self.mDataProvider.getFeatures():
-            writer.addFeature(feat)
+        for feat in self.mDataProvider.getFeatures(True):
+                pointWriter.addFeature(feat)
+        for feat in self.mDataProvider.getFeatures(False):
+                lineWriter.addFeature(feat)
         
-        del writer
+        del pointWriter
+        del lineWriter
 
         return True
 
     def createVectorLayer(self):
-        if self.hasEdges:
-            vLayer = QgsVectorLayer("LineString", "GraphEdges", "memory")
-        else:
-            vLayer = QgsVectorLayer("Point", "GraphVertices", "memory")
+        vLineLayer = QgsVectorLayer("LineString", "GraphEdges", "memory")
+        vPointLayer = QgsVectorLayer("Point", "GraphVertices", "memory")
 
-        vDp = vLayer.dataProvider()
+        vPDp = vPointLayer.dataProvider()
+        vLDp = vLineLayer.dataProvider()
 
-        vDp.addAttributes(self.mFields)
+        vPDp.addAttributes(self.mPointFields)
+        vLDp.addAttributes(self.mLineFields)
 
-        for feat in self.mDataProvider.getFeatures():
-            vDp.addFeature(feat)
+        for feat in self.mDataProvider.getFeatures(True):
+            vPDp.addFeature(feat)
 
-        vLayer.setCrs(self.crs())
+        for feat in self.mDataProvider.getFeatures(False):
+            vLDp.addFeature(feat)
 
-        return vLayer
+        vPointLayer.setCrs(self.crs())
+        vLineLayer.setCrs(self.crs())
+
+        return [vPointLayer, vLineLayer]
 
     def exportToVectorLayer(self):
-        vLayer = self.createVectorLayer()
+        [vPointLayer, vLineLayer] = self.createVectorLayer()
 
-        QgsProject.instance().addMapLayer(vLayer)
+        QgsProject.instance().addMapLayer(vPointLayer)
+        QgsProject.instance().addMapLayer(vLineLayer)
 
         return True
 
@@ -399,36 +412,38 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         # prepare fields and features
         if self.hasEdges:
             self.mDataProvider.setGeometryToPoint(False)
-            self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri)
-
-            edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
-            fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
-            toVertexField = QgsField("toVertex", QVariant.Double, "double")
-            costField = QgsField("edgeCost", QVariant.Double, "double")
-            
-            # self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
-            self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField])
-            
-            # self.updateFields()
-            self.mFields.append(edgeIdField)
-            self.mFields.append(fromVertexField)
-            self.mFields.append(toVertexField)
-            self.mFields.append(costField)
-        
         else:
             self.mDataProvider.setGeometryToPoint(True)
-            self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri)
+        
+        self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri, True)
+        self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri, False)
 
-            vertexIdField = QgsField("vertexId", QVariant.Int, "integer")
-            xField = QgsField("x", QVariant.Double, "double")
-            yField = QgsField("y", QVariant.Double, "double")
+        # point attributes
+        vertexIdField = QgsField("vertexId", QVariant.Int, "integer")
+        xField = QgsField("x", QVariant.Double, "double")
+        yField = QgsField("y", QVariant.Double, "double")
 
-            self.mDataProvider.addAttributes([vertexIdField, xField, yField])
-            
-            # self.updateFields()
-            self.mFields.append(vertexIdField)
-            self.mFields.append(xField)
-            self.mFields.append(yField)
+        self.mDataProvider.addAttributes([vertexIdField, xField, yField], True)
+        
+        # update point fields
+        self.mPointFields.append(vertexIdField)
+        self.mPointFields.append(xField)
+        self.mPointFields.append(yField)
+
+        # line attributes
+        edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
+        fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
+        toVertexField = QgsField("toVertex", QVariant.Double, "double")
+        costField = QgsField("edgeCost", QVariant.Double, "double")
+        
+        # self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
+        self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField], False)
+        
+        # update line fields
+        self.mLineFields.append(edgeIdField)
+        self.mLineFields.append(fromVertexField)
+        self.mLineFields.append(toVertexField)
+        self.mLineFields.append(costField)
 
 
         # get vertex information and add them to graph
@@ -439,14 +454,12 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 vIdx = int(elem.attribute("id"))
                 self.mGraph.addVertex(vertex, vIdx)
                 
-                if not self.hasEdges:
-                    # add feature for each vertex
-                    feat = QgsFeature()
-                    feat.setGeometry(QgsGeometry.fromPointXY(vertex))
+                # add feature for each vertex
+                feat = QgsFeature()
+                feat.setGeometry(QgsGeometry.fromPointXY(vertex))
 
-                    feat.setAttributes([vIdx, vertex.x(), vertex.y()])
-                    self.mDataProvider.addFeature(feat)
-
+                feat.setAttributes([vIdx, vertex.x(), vertex.y()])
+                self.mDataProvider.addFeature(feat, True)
 
         # get edge information and add them to graph
         for edgeId in range(edgeNodes.length()):
@@ -466,7 +479,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
 
                 feat.setAttributes([eIdx, fromVertexId, toVertexId, self.mGraph.costOfEdge(eIdx)])
 
-                self.mDataProvider.addFeature(feat)                
+                self.mDataProvider.addFeature(feat, False)                
 
         return True
 
@@ -544,12 +557,18 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.mLayerType = layerType
         self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.mLayerType)
 
+    def extent(self):
+        for vertexId in self.mGraph.mVertices:
+            self._extent.combineExtentWith(self.mGraph.mVertices[vertexId].point())
+
+        return self._extent
+
     def zoomToExtent(self):
         canvas = iface.mapCanvas()
-        extent = self.mDataProvider.extent()
+        extent = self.extent()
 
         if self.mTransform.isValid():
-            extent = self.mTransform.transform(self.mDataProvider.extent())
+            extent = self.mTransform.transform(extent)
 
         canvas.setExtent(extent)
         canvas.refresh()
@@ -640,9 +659,13 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(informationLabel)
         
         # QLabel with information about the layers fields
-        fieldsText = "Fields:"
-        for field in layer.fields():
-            fieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
+        pointFieldsText = "PointFields:"
+        for field in layer.fields(True):
+            pointFieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
+        lineFieldsText = "LineFields:"
+        for field in layer.fields(False):
+            lineFieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
+        fieldsText = pointFieldsText + "\n" + lineFieldsText
         fieldsLabel = QLabel(fieldsText)
         fieldsLabel.setWordWrap(True)
         fieldsLabel.setVisible(True)
