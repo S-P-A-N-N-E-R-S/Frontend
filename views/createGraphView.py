@@ -4,7 +4,8 @@ from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath
 
 from qgis.core import QgsMapLayerProxyModel, QgsTask
-from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget
+from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget, QgsExtentWidget, QgsMapToolExtent
+from qgis.utils import iface
 
 from PyQt5.QtCore import QTimer, Qt, QSize
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton, QHBoxLayout, QSizePolicy
@@ -62,6 +63,11 @@ class CreateGraphView(BaseContentView):
         # disable input field if random is checked
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input.setDisabled)
         self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input_tools.setDisabled)
+
+        # set up random extent
+        self.addRandomArea(self.tr("Custom"), "custom area")
+        self.dialog.create_graph_randomarea_extent.setMapCanvas(iface.mapCanvas())
+        self.dialog.create_graph_randomarea_input.currentIndexChanged.connect(self._randomAreaChanged)
 
         # set up controller
         self.controller = CreateGraphController(self)
@@ -132,6 +138,13 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_create_btn.setEnabled(False)
         QTimer.singleShot(1000, lambda: self.dialog.create_graph_create_btn.setEnabled(True))
 
+    def _randomAreaChanged(self):
+        area, userdata = self.getRandomArea()
+        if userdata == "custom area":
+            self.dialog.create_graph_randomarea_extent.setDisabled(False)
+        else:
+            self.dialog.create_graph_randomarea_extent.setDisabled(True)
+
     def hasInput(self):
         return self.dialog.create_graph_input.count() > 0
 
@@ -182,6 +195,14 @@ class CreateGraphView(BaseContentView):
     def getRandomArea(self):
         return self.dialog.create_graph_randomarea_input.currentText(), self.dialog.create_graph_randomarea_input.currentData()
 
+    def getRandomUserArea(self):
+        """
+        Return user defined area.
+        :return: tuple (extent, crs) of (QgsRectangle, QgsCoordinateReferenceSystem)
+        """
+        return self.dialog.create_graph_randomarea_extent.currentExtent(), self.dialog.create_graph_randomarea_extent.currentCrs()
+
+
     def addConnectionType(self, type, userData=None):
         self.dialog.create_graph_connectiontype_input.addItem(type, userData)
 
@@ -194,6 +215,9 @@ class CreateGraphView(BaseContentView):
     def isDoubleEdgesAllowed(self):
         return self.dialog.create_graph_allowdoubleedges_checkbox.isChecked()
 
+    def getDistance(self):
+        return self.dialog.create_graph_distance_input.value()
+
     def getClusterNumber(self):
         return self.dialog.create_graph_clusternumber_input.value()
 
@@ -203,11 +227,11 @@ class CreateGraphView(BaseContentView):
     def getEdgeDirection(self):
         return self.dialog.create_graph_edgedirection_input.currentText(), self.dialog.create_graph_edgedirection_input.currentData()
 
-    def addDistance(self, distance, userData=None):
-        self.dialog.create_graph_distance_input.addItem(distance, userData)
+    def addDistanceStrategy(self, distance, userData=None):
+        self.dialog.create_graph_distancestrategy_input.addItem(distance, userData)
 
-    def getDistance(self):
-        return self.dialog.create_graph_distance_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+    def getDistanceStrategy(self):
+        return self.dialog.create_graph_distancestrategy_input.currentText(), self.dialog.create_graph_distancestrategy_input.currentData()
 
     def getRasterData(self):
         """

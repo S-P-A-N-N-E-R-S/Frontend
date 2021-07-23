@@ -37,6 +37,7 @@ class CreateGraphController(BaseController):
         self.view.addConnectionType(self.tr("Complete"), "Complete")
         self.view.addConnectionType(self.tr("ClusterComplete"), "ClusterComplete")
         self.view.addConnectionType(self.tr("ClusterNN"), "ClusterNN")
+        self.view.addConnectionType(self.tr("DistanceNN"), "DistanceNN")
 
         self.view.addEdgeDirection(self.tr("Directed"), "Directed")
         self.view.addEdgeDirection(self.tr("Undirected"), "Undirected")
@@ -93,23 +94,31 @@ class CreateGraphController(BaseController):
         # set advanced cost function
         costFunction = self.view.getCostFunction()
         if costFunction:
-            if not builder.setCostFunction(costFunction):
-                self.view.showWarning(self.tr("Advanced cost function can not be set!"))
+            status = builder.addCostFunction(costFunction)
+            if not status == "Valid function":
+                self.view.showWarning(status)
 
         # set options
         builder.setOption("connectionType", self.view.getConnectionType()[1])
         builder.setOption("neighborNumber", self.view.getNeighborNumber())
         builder.setOption("nnAllowDoubleEdges", self.view.isDoubleEdgesAllowed())
+        builder.setOption("distance", self.view.getDistance())
         builder.setOption("clusterNumber", self.view.getClusterNumber())
         builder.setOption("edgeDirection", self.view.getEdgeDirection()[1])
-        builder.setOption("distanceStrategy", self.view.getDistance()[1])
+        builder.setOption("distanceStrategy", self.view.getDistanceStrategy()[1])
 
         # set builder options for random graph
         if self.view.isRandom():
             graphName = "Random"
             builder.setOption("createRandomGraph", True)
             builder.setRandomOption("numberOfVertices", self.view.getRandomVerticesNumber())
-            builder.setRandomOption("area", self.view.getRandomArea()[1])
+            # set predefined or user defined random area
+            area, areaData = self.view.getRandomArea()
+            if areaData == "custom area":
+                builder.setRandomOption("area", self.view.getRandomUserArea())
+            else:
+                builder.setRandomOption("area", area)
+
 
         # set vector layer in builder if input layer exist
         elif self.view.hasInput() and self.view.isInputLayer():
