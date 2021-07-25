@@ -5,7 +5,9 @@ from qgis.utils import iface
 from qgis.PyQt.QtCore import QVariant, QPointF, Qt
 from qgis.PyQt.QtGui import QColor, QFont, QPainterPath
 from qgis.PyQt.QtXml import *
-from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QFileDialog, QFrame, QApplication
+from qgis.PyQt.QtWidgets import (QDialog, QPushButton, QBoxLayout, QLabel,
+                                    QFileDialog, QFrame, QApplication, QHBoxLayout,
+                                    QRadioButton, QGroupBox)
 
 import random, math
 
@@ -354,25 +356,33 @@ class QgsGraphLayer(QgsPluginLayer):
         else:
             return False
 
-        # write point features in QgsVectorFileWriter (save features in selected file)
-        pointWriter = QgsVectorFileWriter(pointFileName, "utf-8", self.fields(True),
-                                        QgsWkbTypes.Point, self.crs(), driver)
+        if self.exportPoints:
+            # write point features in QgsVectorFileWriter (save features in selected file)
+            pointWriter = QgsVectorFileWriter(pointFileName, "utf-8", self.fields(True),
+                                            QgsWkbTypes.Point, self.crs(), driver)
 
-        # write line features in QgsVectorFileWriter (save features in selected file)
-        lineWriter = QgsVectorFileWriter(lineFileName, "utf-8", self.fields(False),
-                                        QgsWkbTypes.LineString, self.crs(), driver)
+            if pointWriter.hasError() != QgsVectorFileWriter.NoError:
+                print("ERROR QgsVectorFileWriter", pointWriter.errorMessage())
+                return False
 
-        if pointWriter.hasError() != QgsVectorFileWriter.NoError or lineWriter.hasError() != QgsVectorFileWriter.NoError:
-            print("ERROR QgsVectorFileWriter", pointWriter.errorMessage() if pointWriter.hasError() != QgsVectorFileWriter.NoError else lineWriter.errorMessage())
-            return False
-        
-        for feat in self.mDataProvider.getFeatures(True):
+            for feat in self.mDataProvider.getFeatures(True):
                 pointWriter.addFeature(feat)
-        for feat in self.mDataProvider.getFeatures(False):
-                lineWriter.addFeature(feat)
-        
-        del pointWriter
-        del lineWriter
+
+            del pointWriter
+
+        if self.exportLines:
+            # write line features in QgsVectorFileWriter (save features in selected file)
+            lineWriter = QgsVectorFileWriter(lineFileName, "utf-8", self.fields(False),
+                                            QgsWkbTypes.LineString, self.crs(), driver)
+
+            if lineWriter.hasError() != QgsVectorFileWriter.NoError:
+                print("ERROR QgsVectorFileWriter", lineWriter.errorMessage())
+                return False
+            
+            for feat in self.mDataProvider.getFeatures(False):
+                    lineWriter.addFeature(feat)
+            
+            del lineWriter
 
         return True
 
@@ -399,7 +409,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def exportToVectorLayer(self):
         [vPointLayer, vLineLayer] = self.createVectorLayer()
-
+        
         QgsProject.instance().addMapLayer(vPointLayer)
         QgsProject.instance().addMapLayer(vLineLayer)
 
@@ -647,7 +657,20 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def supportsEditing(self):
         return True
-        
+
+    def toggleExportType(self, sender):
+        if sender.isChecked():
+            if sender.text() == "Only Points":
+                self.exportPoints = True
+                self.exportLines = False
+            elif sender.text() == "Only Lines":
+                self.exportPoints = False
+                self.exportLines = True
+            else:
+                self.exportPoints = True
+                self.exportLines = True
+
+
 class QgsGraphLayerType(QgsPluginLayerType):
     """
     When loading a project containing a QgsGraphLayer, a factory class is needed.
@@ -734,6 +757,22 @@ class QgsGraphLayerType(QgsPluginLayerType):
         fileSeparator.setFrameShape(QFrame.HLine | QFrame.Plain)
         fileSeparator.setLineWidth(1)
         layout.addWidget(fileSeparator)
+
+        selectExportTypeGroup = QGroupBox("Export Type")
+        onlyPointsRadio = QRadioButton("Only Points")
+        onlyPointsRadio.toggled.connect(lambda:layer.toggleExportType(onlyPointsRadio))
+        onlyLinesRadio = QRadioButton("Only Lines")
+        onlyLinesRadio.toggled.connect(lambda:layer.toggleExportType(onlyLinesRadio))
+        bothRadio = QRadioButton("Both")
+        bothRadio.toggled.connect(lambda:layer.toggleExportType(bothRadio))
+        bothRadio.setChecked(True)
+        
+        radioLayout = QHBoxLayout()
+        radioLayout.addWidget(onlyPointsRadio)
+        radioLayout.addWidget(onlyLinesRadio)
+        radioLayout.addWidget(bothRadio)
+        selectExportTypeGroup.setLayout(radioLayout)
+        layout.addWidget(selectExportTypeGroup)
 
         # button for exportToVectorLayer
         exportVLButton = QPushButton("Export to VectorLayer")
