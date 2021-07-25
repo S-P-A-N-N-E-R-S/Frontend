@@ -38,6 +38,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
     def __drawGraph(self):
 
         painter = self.renderContext().painter()
+        painter.save()
         painter.setPen(QColor('black'))
         painter.setBrush(self.randomColor)
         painter.setFont(QFont("arial", 5))
@@ -47,7 +48,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         if isinstance(self.mGraph, QgsGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
-                converter = QgsVertexMarker(iface.mapCanvas())
+                converter = iface.mapCanvas().getCoordinateTransform()
                 
                 max = self.mGraph.edgeCount()
                 if max < self.mGraph.vertexCount():
@@ -61,7 +62,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         if self.mTransform.isValid():
                             point = self.mTransform.transform(point)
 
-                        point = converter.toCanvasCoordinates(point)
+                        point = converter.transform(point).toQPointF()
                         
                         painter.setPen(QColor('black'))
                         # don't draw border of vertices if graph has edges
@@ -79,8 +80,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             toPoint = self.mTransform.transform(toPoint)
                             fromPoint = self.mTransform.transform(fromPoint)
 
-                        toPoint = converter.toCanvasCoordinates(toPoint)
-                        fromPoint = converter.toCanvasCoordinates(fromPoint)
+                        toPoint = converter.transform(toPoint).toQPointF()
+                        fromPoint = converter.transform(fromPoint).toQPointF()
 
                         painter.setPen(QColor('black'))
                         painter.drawLine(toPoint, fromPoint)
@@ -94,7 +95,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
                             painter.drawText(midPoint, "1")
 
-                iface.mapCanvas().scene().removeItem(converter)
             except Exception as err:
                 print(err)
         else:
