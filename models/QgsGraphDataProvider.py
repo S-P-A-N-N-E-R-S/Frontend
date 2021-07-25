@@ -14,6 +14,14 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
 
         self.point = point
 
+    def __del__(self):
+        del self._pointKeys
+        del self._lineKeys
+        del self._request
+
+    def isValid(self):
+        return True
+
     def fetchFeature(self, feat):
         """
         Gets actually looked at feature. Increases feature index for next fetchFeature.
@@ -89,6 +97,9 @@ class QgsGraphFeatureSource(QgsAbstractFeatureSource):
         
         self.point = point
 
+    def __del__(self):
+        pass
+
     def getFeatures(self, request, point):
         return QgsFeatureIterator(QgsGraphFeatureIterator(self, request, point))
 
@@ -140,6 +151,14 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         # if 'index=yes' in self._uri:
         #     self.createSpatialIndex()
 
+    def __del__(self):
+        del self._pointFeatures
+        del self._lineFeatures
+        del self._pointFields
+        del self._lineFields
+        del self._extent
+        del self._providerOptions
+        
     def isValid(self):
         return True
 

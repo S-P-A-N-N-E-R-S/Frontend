@@ -1,7 +1,7 @@
 from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
-from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtCore import QObject
 import math
 from random import *
 
@@ -14,7 +14,7 @@ the distanceStrategy attribute of the class
 
 Strategies are divided in cost functions and already set weights
 """
-class PGGraph:
+class PGGraph(QObject):
     
     #==ExtVertex===================================================================
     class ExtVertex:
@@ -25,6 +25,11 @@ class PGGraph:
             self.mCoordinates = point
             self.mIncomingEdges = []
             self.mOutgoingEdges = []
+
+        def __del__(self):
+            del self.mCoordinates
+            del self.mIncomingEdges
+            del self.mOutgoingEdges
 
         def incomingEdges(self):
             return self.mIncomingEdges
@@ -44,6 +49,9 @@ class PGGraph:
             # TODO: add costs list for an edge here?
             self.mFromIdx = fromVertexIdx
             self.mToIdx = toVertexIdx
+
+        def __del__(self):
+            pass
 
         def fromVertex(self):
             return self.mFromIdx
@@ -67,7 +75,15 @@ class PGGraph:
         self.__availableVertexIndices =[]
         self.__availableEdgeIndices = []
      
-    
+    def __del__(self):
+        del self.edgeWeights
+        del self.vertexWeights
+        del self.mVertices
+        del self.mEdges
+        
+        del self.__availableVertexIndices
+        del self.__availableEdgeIndices
+
     def setDistanceStrategy(self, strategy):
         self.distanceStrategy = strategy
      

@@ -18,6 +18,16 @@ class QgsGraphMapTool(QgsMapTool):
         self.firstFound = False
         self.ctrlPressed = False
 
+    def activate(self):
+        print("QgsGraphMapTool activated")
+        # emit self.activated()
+        pass
+
+    def deactivate(self):
+        print("QgsGraphMapTool deactivated")
+        # emit self.deactivated()
+        pass
+
     def _addVertex(self, point):
         """
         Adds a vertex to the Graphlayers graph.
@@ -28,7 +38,7 @@ class QgsGraphMapTool(QgsMapTool):
         feat = QgsFeature()
         feat.setGeometry(QgsGeometry.fromPointXY(point))
 
-        feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()], True)
+        feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()])
         self.mLayer.dataProvider().addFeature(feat, True)
 
         self.mLayer.mGraph.addVertex(point)

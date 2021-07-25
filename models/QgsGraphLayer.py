@@ -37,6 +37,10 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         self.mShowDirection = self.mLayer.mShowDirection
         self.mShowLines = self.mLayer.mShowLines
 
+    def __del__(self):
+        # print("Renderer Destructor")
+        pass
+
     def render(self):
         return self.__drawGraph()
 
@@ -146,7 +150,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         return arrowHead
 
 
-class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
+class QgsGraphLayer(QgsPluginLayer):
     """
     Represent a graph in a layer and make that graph saveable and editable.
     """
@@ -192,6 +196,24 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
         self.isEditing = False
 
         self._extent = QgsRectangle()
+
+    def __del__(self):
+        del self.mDataProvider
+        self.nameChanged.disconnect(self.updateName)
+        self.crsChanged.disconnect(self.updateCrs)
+        
+        if self.isEditing:
+            QApplication.restoreOverrideCursor()
+            iface.mapCanvas().setMapTool(self.oldMapTool)
+            del self.mMapTool
+        
+        del self.mTransform
+        del self._extent
+
+        del self.mPointFields
+        del self.mLineFields
+
+        del self.mGraph
         
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
@@ -261,17 +283,17 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
             # add vertices to new PGGraph (have to be added to PGGraph before edges do -> inefficient)
             for vertexId in graph.vertices():
                 vertex = graph.vertex(vertexId)
-
+                vertexPoint = vertex.point()
                 feat = QgsFeature()
-                feat.setGeometry(QgsGeometry.fromPointXY(vertex))
+                feat.setGeometry(QgsGeometry.fromPointXY(vertexPoint))
 
-                feat.setAttributes([vertexId, vertex.x(), vertex.y()])
+                feat.setAttributes([vertexId, vertexPoint.x(), vertexPoint.y()])
                 self.mDataProvider.addFeature(feat, True)
                 
                 self.mGraph.addVertex(vertex.point(), vertexId)
 
             # add edges to new PGGraph and create corresponding features
-            for edgeId in self.mGraph.edges():
+            for edgeId in graph.edges():
                 edge = graph.edge(edgeId)
 
                 feat = QgsFeature()
@@ -284,6 +306,7 @@ class QgsGraphLayer(QgsPluginLayer, QgsFeatureSink, QgsFeatureSource):
                 self.mDataProvider.addFeature(feat, False)
 
                 self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), edgeId)
+        
 
     def getGraph(self):
         return self.mGraph
@@ -631,6 +654,10 @@ class QgsGraphLayerType(QgsPluginLayerType):
     """
     def __init__(self):
         super().__init__(QgsGraphLayer.LAYER_TYPE)
+
+    def __del__(self):
+        # print("QgsGraphLayerType Destructor")
+        pass
 
     def createLayer(self):
         return QgsGraphLayer()
