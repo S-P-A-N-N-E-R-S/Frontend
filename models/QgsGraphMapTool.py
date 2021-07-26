@@ -114,7 +114,7 @@ class QgsGraphMapTool(QgsMapTool):
         clickPosition = QPoint(event.pos().x(), event.pos().y())
 
         # used to convert canvas coordinates to map coordinates
-        self.converter = QgsVertexMarker(iface.mapCanvas())
+        self.converter = iface.mapCanvas().getCoordinateTransform()
         clickPosition = self.converter.toMapCoordinates(clickPosition)
         clickPosition = self.mLayer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
@@ -170,9 +170,6 @@ class QgsGraphMapTool(QgsMapTool):
                 self._deleteVertex(vertexId)
 
                 self.__removeFirstFound()
-
-        iface.mapCanvas().scene().removeItem(self.converter)
-        del self.converter  
         
         self.mLayer.triggerRepaint()
         # self.mCanvas.refresh()
