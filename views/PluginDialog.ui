@@ -284,9 +284,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>-243</y>
+                         <y>0</y>
                          <width>773</width>
-                         <height>873</height>
+                         <height>1309</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -399,13 +399,17 @@ QListWidget::item::selected {
                                    </property>
                                   </widget>
                                  </item>
-                                 <item>
-                                  <widget class="QLabel" name="create_graph_randomarea_label">
-                                   <property name="text">
-                                    <string>Area:</string>
-                                   </property>
-                                  </widget>
-                                 </item>
+                                </layout>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_randomarea_label">
+                                 <property name="text">
+                                  <string>Random area:</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <layout class="QHBoxLayout" name="horizontalLayout_8">
                                  <item>
                                   <widget class="QComboBox" name="create_graph_randomarea_input">
                                    <property name="sizePolicy">
@@ -418,6 +422,9 @@ QListWidget::item::selected {
                                     <string/>
                                    </property>
                                   </widget>
+                                 </item>
+                                 <item>
+                                  <widget class="QgsExtentWidget" name="create_graph_randomarea_extent" native="true"/>
                                  </item>
                                 </layout>
                                </item>
@@ -473,6 +480,23 @@ QListWidget::item::selected {
                                 </layout>
                                </item>
                                <item>
+                                <widget class="QLabel" name="create_graph_distance_label">
+                                 <property name="text">
+                                  <string>Distance (for DistanceNN)</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QDoubleSpinBox" name="create_graph_distance_input">
+                                 <property name="maximum">
+                                  <double>1000.000000000000000</double>
+                                 </property>
+                                 <property name="stepType">
+                                  <enum>QAbstractSpinBox::DefaultStepType</enum>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
                                 <widget class="QLabel" name="create_graph_clusternumber_label">
                                  <property name="text">
                                   <string>Cluster Number</string>
@@ -500,14 +524,14 @@ QListWidget::item::selected {
                                 <widget class="QComboBox" name="create_graph_edgedirection_input"/>
                                </item>
                                <item>
-                                <widget class="QLabel" name="create_graph_distance_label">
+                                <widget class="QLabel" name="create_graph_distancestrategy_label">
                                  <property name="text">
                                   <string>Distance strategy</string>
                                  </property>
                                 </widget>
                                </item>
                                <item>
-                                <widget class="QComboBox" name="create_graph_distance_input"/>
+                                <widget class="QComboBox" name="create_graph_distancestrategy_input"/>
                                </item>
                                <item>
                                 <widget class="QLabel" name="create_graph_raster_label">
@@ -1309,6 +1333,12 @@ QListWidget::item::selected {
    <class>QgsRasterBandComboBox</class>
    <extends>QComboBox</extends>
    <header>qgsrasterbandcombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsExtentWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsextentwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>

@@ -280,13 +280,10 @@ class GraphBuilder:
                 self.graph.addVertex(QgsPointXY(random.uniform(12.40009,12.57946), random.uniform(41.83013,41.97905)))
             elif self.__randomOptions["area"] == "Australia":
                 self.graph.addVertex(QgsPointXY(random.uniform(115.157,150.167), random.uniform(-37.211,-14.210)))
-            elif any(char.isdigit() for char in self.__randomOptions["area"]):
-                inputs = self.__randomOptions["area"].split(",")
-                inputs[3] = inputs[3].split("[")[0]
-                inputFloats = []
-                for input in inputs:
-                    inputFloats.append(float(input))
-                self.graph.addVertex(QgsPointXY(random.uniform(inputFloats[0],inputFloats[1]),random.uniform(inputFloats[2],inputFloats[3])))
+            elif isinstance(self.__randomOptions["area"], tuple):
+                rectangleExtent, _ = self.__randomOptions["area"]
+                self.graph.addVertex(QgsPointXY(random.uniform(rectangleExtent.xMinimum(), rectangleExtent.xMaximum()),
+                                                random.uniform(rectangleExtent.yMinimum(), rectangleExtent.yMaximum())))
                 
     def __createVerticesForPoints(self):
         for feat in self.vLayer.getFeatures():
@@ -494,8 +491,8 @@ class GraphBuilder:
         if self.__options["createRandomGraph"] == False:            
             graphLayerVertices.setCrs(self.vLayer.crs())  
         else:
-            if any(char.isdigit() for char in self.__randomOptions["area"]):
-                inputCRS = self.__randomOptions["area"].split("[")[1].split("]")[0]
+            if isinstance(self.__randomOptions["area"], tuple):
+                _, inputCRS = self.__randomOptions["area"]
                 graphLayerVertices.setCrs(QgsCoordinateReferenceSystem(inputCRS))
             else:
                 graphLayerVertices.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
@@ -533,8 +530,8 @@ class GraphBuilder:
         if self.__options["createRandomGraph"] == False:
             graphLayerEdges.setCrs(self.vLayer.crs())  
         else:
-            if any(char.isdigit() for char in self.__randomOptions["area"]):
-                inputCRS = self.__randomOptions["area"].split("[")[1].split("]")[0]
+            if isinstance(self.__randomOptions["area"], tuple):
+                _, inputCRS = self.__randomOptions["area"]
                 graphLayerEdges.setCrs(QgsCoordinateReferenceSystem(inputCRS))
             else:
                 graphLayerEdges.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
@@ -592,11 +589,14 @@ class GraphBuilder:
         """
         graphLayer = QgsGraphLayer()
 
-        # todo: currently the setCrs method leads to crashes
-        # if self.__options["createRandomGraph"] == False:
-        #     graphLayer.setCrs(self.vLayer.crs())
-        # else:
-        #     graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+        if self.__options["createRandomGraph"] == False:
+            graphLayer.setCrs(self.vLayer.crs())
+        else:
+            if isinstance(self.__randomOptions["area"], tuple):
+                _, inputCRS = self.__randomOptions["area"]
+                graphLayer.setCrs(QgsCoordinateReferenceSystem(inputCRS))
+            else:
+                graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         graphLayer.setGraph(self.graph)
 
