@@ -1,5 +1,7 @@
 """ Basic helper functions """
 
+from qgis.PyQt.QtCore import QCoreApplication
+
 from os.path import abspath, join, dirname, splitext, basename
 
 from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe, QgsRasterFileWriter, QgsRasterLayer
@@ -25,6 +27,17 @@ def getExamplePath(example):
     """ Get the example path """
     path = join(getPluginPath(), "resources/examples")
     return abspath(join(path, example))
+
+
+def tr(message, context="@default"):
+    """
+    Get the translation for a string using Qt translation API.
+
+    :param message: String for translation.
+    :type message: str, QString
+    :returns: Translated version of message.
+    """
+    return QCoreApplication.translate(context, message)
 
 
 def saveLayer(layer, layerName, type, path=None, format=None):

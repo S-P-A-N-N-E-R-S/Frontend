@@ -12,6 +12,8 @@ import random, math
 
 from .QgsGraphDataProvider import QgsGraphDataProvider
 from .ExtGraph import ExtGraph
+from ..helperFunctions import tr
+
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
@@ -533,37 +535,37 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(label)
 
         # button to zoom to layers extent
-        zoomExtentButton = QPushButton("Zoom to Layer")
+        zoomExtentButton = QPushButton(tr("Zoom to Layer"))
         zoomExtentButton.setVisible(True)
         zoomExtentButton.clicked.connect(layer.zoomToExtent)
         layout.addWidget(zoomExtentButton)
 
         # button to toggle rendered text (mainly edge costs)
-        toggleTextButton = QPushButton("Toggle Edge Text")
+        toggleTextButton = QPushButton(tr("Toggle Edge Text"))
         toggleTextButton.setVisible(layer.getGraph().edgeCount() != 0) # don't show this button when graph has no edges
         toggleTextButton.clicked.connect(layer.toggleText)
         layout.addWidget(toggleTextButton)
 
         # button to toggle drawing of arrowHead to show edge direction
-        toggleDirectionButton = QPushButton("Toggle Direction")
+        toggleDirectionButton = QPushButton(tr("Toggle Direction"))
         toggleDirectionButton.setVisible(layer.getGraph().edgeCount() != 0)
         toggleDirectionButton.clicked.connect(layer.toggleDirection)
         layout.addWidget(toggleDirectionButton)
 
         # button for exportToVectorLayer
-        exportVLButton = QPushButton("Export to VectorLayer")
+        exportVLButton = QPushButton(tr("Export to VectorLayer"))
         exportVLButton.setVisible(True)
         exportVLButton.clicked.connect(layer.exportToVectorLayer)
         layout.addWidget(exportVLButton)
 
         # button for exportToFile
-        exportFButton = QPushButton("Export To File")
+        exportFButton = QPushButton(tr("Export To File"))
         exportFButton.clicked.connect(layer.exportToFile)
         exportFButton.setVisible(True)
         layout.addWidget(exportFButton)
 
         # button to randomize vertex color
-        randomColorButton = QPushButton("Random Vertex Color")
+        randomColorButton = QPushButton(tr("Random Vertex Color"))
         randomColorButton.clicked.connect(layer.newRandomColor)
         randomColorButton.setVisible(True)
         layout.addWidget(randomColorButton)
