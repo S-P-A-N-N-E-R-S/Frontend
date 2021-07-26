@@ -740,7 +740,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         text = button.text()
         # add brackets to if text
         if "if" == text:
-            text = "if [ ]"
+            text = "if( )"
         self.insertEditorText(" " + text + " ")
 
     def _changeItemHelpText(self, currentItemIndex, previousItemIndex):

@@ -42,10 +42,10 @@ class CreateGraphController(BaseController):
         self.view.addEdgeDirection(self.tr("Directed"), "Directed")
         self.view.addEdgeDirection(self.tr("Undirected"), "Undirected")
 
-        self.view.addDistance(self.tr("Euclidean"), "Euclidean")
-        self.view.addDistance(self.tr("Manhattan"), "Manhattan")
-        self.view.addDistance(self.tr("Geodesic"), "Geodesic")
-        self.view.addDistance(self.tr("Advanced"), "Advanced")
+        self.view.addDistanceStrategy(self.tr("Euclidean"), "Euclidean")
+        self.view.addDistanceStrategy(self.tr("Manhattan"), "Manhattan")
+        self.view.addDistanceStrategy(self.tr("Geodesic"), "Geodesic")
+        self.view.addDistanceStrategy(self.tr("Advanced"), "Advanced")
 
         # set save path formats
         self.view.setSavePathFilter("GraphML (*.graphml );;Shape files (*.shp)")
