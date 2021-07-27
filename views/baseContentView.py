@@ -22,17 +22,17 @@ class BaseContentView(QObject):
         self.bar = QgsMessageBar()
         self.dialog.content_widget.layout().insertWidget(0, self.bar)
 
-    def showError(self, msg):
-        self.bar.pushMessage("Error", msg, level=Qgis.Critical)
+    def showError(self, msg, title="Error"):
+        self.bar.pushMessage(title, msg, level=Qgis.Critical)
 
-    def showWarning(self, msg):
-        self.bar.pushMessage("Warning", msg, level=Qgis.Warning)
+    def showWarning(self, msg, title="Warning"):
+        self.bar.pushMessage(title, msg, level=Qgis.Warning)
 
-    def showSuccess(self, msg):
-        self.bar.pushMessage("Success", msg, level=Qgis.Success)
+    def showSuccess(self, msg, title="Success"):
+        self.bar.pushMessage(title, msg, level=Qgis.Success)
 
-    def showInfo(self, msg):
-        self.bar.pushMessage("Info", msg, level=Qgis.Info)
+    def showInfo(self, msg, title="Info"):
+        self.bar.pushMessage(title, msg, level=Qgis.Info)
 
     def _browseFile(self, layerComboBox, filter):
         """

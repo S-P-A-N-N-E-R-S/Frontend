@@ -59,9 +59,18 @@ class CreateGraphController(BaseController):
             )
 
     def createGraph(self):
+        """
+        Starts the graph creation process. This function is called from view.
+        :return:
+        """
         if len(CreateGraphController.activeGraphTasks) >= CreateGraphController.maxNumberTasks:
             self.view.showWarning(self.tr("Can not building graph due to task limit of {}!").format(
                 CreateGraphController.maxNumberTasks))
+            return
+
+        # no input and not random
+        if not self.view.hasInput() and not self.view.isRandom():
+            self.view.showWarning(self.tr("No input and not random graph!"))
             return
 
         self.view.showInfo(self.tr("Start graph building.."))
@@ -96,7 +105,8 @@ class CreateGraphController(BaseController):
         if costFunction:
             status = builder.addCostFunction(costFunction)
             if not status == "Valid function":
-                self.view.showWarning(status)
+                self.view.showError(format(status), self.tr("Cost Function Error"))
+                return
 
         # set options
         builder.setOption("connectionType", self.view.getConnectionType()[1])
@@ -118,7 +128,6 @@ class CreateGraphController(BaseController):
                 builder.setRandomOption("area", self.view.getRandomUserArea())
             else:
                 builder.setRandomOption("area", area)
-
 
         # set vector layer in builder if input layer exist
         elif self.view.hasInput() and self.view.isInputLayer():
@@ -160,11 +169,6 @@ class CreateGraphController(BaseController):
                 layer = QgsVectorLayer(path, "", "ogr")
                 # build graph from layer
                 builder.setVectorLayer(layer)
-
-        # no input and not random
-        else:
-            self.view.showWarning(self.tr("No input and not random graph!"))
-            return
 
         # set name to save path basename
         savePath = self.view.getSavePath()
