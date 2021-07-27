@@ -198,10 +198,13 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self._extent = QgsRectangle()
 
+        self.willBeDeleted.connect(lambda: self.toggleEdit(True))
+
     def __del__(self):
         del self.mDataProvider
         self.nameChanged.disconnect(self.updateName)
         self.crsChanged.disconnect(self.updateCrs)
+        self.willBeDeleted.disconnect(self.toggleEdit)
         
         if self.isEditing:
             QApplication.restoreOverrideCursor()
@@ -639,15 +642,15 @@ class QgsGraphLayer(QgsPluginLayer):
         self.triggerRepaint()
         iface.mapCanvas().refresh()
 
-    def toggleEdit(self):
+    def toggleEdit(self, willBeDeleted=False):
         self.isEditing = not self.isEditing
 
-        if self.isEditing:
+        if self.isEditing and not willBeDeleted:
             QApplication.setOverrideCursor(Qt.CrossCursor)
             self.oldMapTool = iface.mapCanvas().mapTool()
             iface.mapCanvas().setMapTool(self.mMapTool)
 
-        else:
+        elif not self.isEditing:
             QApplication.restoreOverrideCursor()
             iface.mapCanvas().setMapTool(self.oldMapTool)
 
