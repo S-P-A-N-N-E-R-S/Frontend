@@ -131,8 +131,8 @@ class CreateGraphController(BaseController):
                 [vectorPointLayer, vectorLineLayer] = graphLayer.createVectorLayer()
 
                 # save vector layer to path
-                # vectorPointLayer = helper.saveLayer(vectorPointLayer, vectorPointLayer.name(), "vector", savePath, extension)
-                vectorLineLayer = helper.saveLayer(vectorLineLayer, vectorLineLayer.name(), "vector", savepath, extension)
+                vectorPointLayer = helper.saveLayer(vectorPointLayer, vectorPointLayer.name(), "vector", savePath, extension)
+                vectorLineLayer = helper.saveLayer(vectorLineLayer, vectorLineLayer.name(), "vector", savePath, extension)
 
                 # add vector layer to project
                 QgsProject.instance().addMapLayer(vectorPointLayer)

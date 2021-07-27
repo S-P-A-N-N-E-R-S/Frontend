@@ -42,6 +42,15 @@ def saveLayer(layer, layerName, type, path=None, format=None):
     if layer.isValid():
         if type == "vector":
                 if path:
+                    
+                    # adjust path to point or lines
+                    if layerName == "GraphVertices":
+                        path = path[:-len(format)]
+                        path += "Points" + format
+                    elif layerName == "GraphEdges":
+                        path = path[:-len(format)]
+                        path += "Lines" + format
+
                     # copy layer to path
                     QgsVectorFileWriter.writeAsVectorFormat(layer, path, "UTF-8", layer.crs(), QgsVectorFileWriter.driverForExtension(format))
                     # load created layer
