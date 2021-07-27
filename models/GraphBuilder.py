@@ -3,7 +3,7 @@ from qgis.gui import *
 from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
-from .PGGraph import PGGraph
+from .ExtGraph import ExtGraph
 from .QgsGraphLayer import QgsGraphLayer
 from random import *
 from qgis import processing
@@ -58,7 +58,7 @@ Raster data options:
 class GraphBuilder:
     
     def __init__(self):
-        self.graph = PGGraph()
+        self.graph = ExtGraph()
         
         #TODO: load example data into the two layers
         self.vLayer = QgsVectorLayer()
@@ -174,7 +174,7 @@ class GraphBuilder:
             crs = "EPSG:4326" 
         
         endNodes = []
-        newGraph = PGGraph()
+        newGraph = ExtGraph()
         for i in range(self.graph.vertexCount()-1):   
             help = 0                                   
             for j in range(i+1, self.graph.vertexCount()):    
@@ -242,7 +242,7 @@ class GraphBuilder:
         result2 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2, "INTERSECT": self.polygonLayer, "OUTPUT": "memory:"})         
         layerWithDelEdges = result2["OUTPUT"]
         
-        newGraph = PGGraph()
+        newGraph = ExtGraph()
         for feature in layerWithDelEdges.getFeatures():                   
             geom = feature.geometry()
                                             

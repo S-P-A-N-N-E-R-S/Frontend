@@ -3,7 +3,7 @@ import os
 from .base import BaseController
 
 from ..models.GraphBuilder import GraphBuilder
-from ..models.PGGraph import PGGraph
+from ..models.ExtGraph import ExtGraph
 from .. import helperFunctions as helper
 
 from qgis.core import QgsVectorLayer, QgsProject
@@ -90,7 +90,7 @@ class CreateGraphController(BaseController):
                 fileName, extension = os.path.splitext(path)
                 graphName = os.path.basename(fileName)
                 if extension == ".graphml":
-                    graph = PGGraph()
+                    graph = ExtGraph()
                     graph.readGraphML(path)
 
                     # set graph to graph builder

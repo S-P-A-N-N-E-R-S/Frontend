@@ -14,7 +14,7 @@ the distanceStrategy attribute of the class
 
 Strategies are divided in cost functions and already set weights
 """
-class PGGraph(QObject):
+class ExtGraph(QObject):
     
     #==ExtVertex===================================================================
     class ExtVertex:

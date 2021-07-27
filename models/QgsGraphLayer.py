@@ -13,7 +13,7 @@ import random, math
 
 from .QgsGraphDataProvider import QgsGraphDataProvider
 from .QgsGraphMapTool import QgsGraphMapTool
-from .PGGraph import PGGraph
+from .ExtGraph import ExtGraph
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
     """
@@ -56,7 +56,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         
         mTransform = self.renderContext().coordinateTransform()
 
-        if isinstance(self.mGraph, PGGraph):
+        if isinstance(self.mGraph, ExtGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
                 converter = iface.mapCanvas().getCoordinateTransform()
@@ -165,7 +165,7 @@ class QgsGraphLayer(QgsPluginLayer):
         self.setValid(True)
         
         self.mName = name
-        self.mGraph = PGGraph()
+        self.mGraph = ExtGraph()
 
         self.hasEdges = False
 
@@ -241,11 +241,11 @@ class QgsGraphLayer(QgsPluginLayer):
         """
         Set the graph of the QgsGraphLayer and add features accordingly.
         
-        :type graph: PGGraph
+        :type graph: ExtGraph
         """
-        if isinstance(graph, PGGraph):
-            # create an actual new PGGraph from graph
-            self.mGraph = PGGraph()
+        if isinstance(graph, ExtGraph):
+            # create an actual new ExtGraph from graph
+            self.mGraph = ExtGraph()
 
             if graph.edgeCount() != 0:
                 self.hasEdges = True
@@ -284,7 +284,7 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mLineFields.append(toVertexField)
             self.mLineFields.append(costField)
                 
-            # add vertices to new PGGraph (have to be added to PGGraph before edges do -> inefficient)
+            # add vertices to new ExtGraph (have to be added to ExtGraph before edges do -> inefficient)
             for vertexId in graph.vertices():
                 vertex = graph.vertex(vertexId)
                 vertexPoint = vertex.point()
@@ -296,7 +296,7 @@ class QgsGraphLayer(QgsPluginLayer):
                 
                 self.mGraph.addVertex(vertex.point(), vertexId)
 
-            # add edges to new PGGraph and create corresponding features
+            # add edges to new ExtGraph and create corresponding features
             for edgeId in graph.edges():
                 edge = graph.edge(edgeId)
 
@@ -421,8 +421,8 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.setLayerType(QgsGraphLayer.LAYER_TYPE)
 
-        # start with empty PGGraph
-        self.mGraph = PGGraph()
+        # start with empty ExtGraph
+        self.mGraph = ExtGraph()
 
         # find srs node in xml
         srsNode = node.firstChild()
