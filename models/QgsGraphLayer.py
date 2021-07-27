@@ -181,7 +181,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.mShowEdgeText = False
         self.mShowDirection = False
-        self.mShowLines = False
+        self.mShowLines = True
 
         self.mRandomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
