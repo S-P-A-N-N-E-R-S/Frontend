@@ -10,7 +10,6 @@ from qgis.analysis import *
 from .views.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath, getPluginPath
 
-
 from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
 
 import os
@@ -173,3 +172,4 @@ class ProtoPlugin:
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
             os.rmdir(directory)
+            

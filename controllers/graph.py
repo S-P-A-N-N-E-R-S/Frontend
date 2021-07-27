@@ -241,13 +241,24 @@ class CreateGraphController(BaseController):
             else:
                 # if layer path as .shp
                 # create vector layer from graph layer
-                vectorLayer = graphLayer.createVectorLayer()
+                [vectorPointLayer, vectorLineLayer] = graphLayer.createVectorLayer()
+
+
+                # adjust path to point or lines
+                savePath = savePath[:-len(extension)]
+                savePathPoints = savePath
+                savePathLines = savePath
+                
+                savePathPoints += "Points" + extension
+                savePathLines += "Lines" + extension
 
                 # save vector layer to path
-                vectorLayer = helper.saveLayer(vectorLayer, vectorLayer.name(), "vector", savePath, extension)
+                vectorPointLayer = helper.saveLayer(vectorPointLayer, vectorPointLayer.name(), "vector", savePathPoints, extension)
+                vectorLineLayer = helper.saveLayer(vectorLineLayer, vectorLineLayer.name(), "vector", savePathLines, extension)
 
                 # add vector layer to project
-                QgsProject.instance().addMapLayer(vectorLayer)
+                QgsProject.instance().addMapLayer(vectorPointLayer)
+                QgsProject.instance().addMapLayer(vectorLineLayer)
 
         # add graph layer to project
         graphLayer.setName(graphName + "GraphLayer")
