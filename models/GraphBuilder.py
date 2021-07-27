@@ -843,8 +843,9 @@ class GraphBuilder:
             else:
                 graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
-        # set graph to graph layer
-        graphLayer.setGraph(self.graph)
+        if not self.task.isCanceled():
+            # set graph to graph layer
+            graphLayer.setGraph(self.graph)
 
         if self.task.isCanceled():
             # if task is canceled by User or QGIS
