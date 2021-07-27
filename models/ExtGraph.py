@@ -7,6 +7,8 @@ from qgis.PyQt.QtCore import QObject
 import math
 from random import *
 
+from ..lib.kdtree import kdtree
+
 """
 Class extends the QgsGraph by adding a function costOfEdge
 which returns the distance between the two endpoint of an edge.
@@ -79,6 +81,15 @@ class ExtGraph(QObject):
 
         # holds the feature IDs if lines where used to create graph
         self.featureMatchings = []
+
+        # information from GraphBuilder
+        self.numberNeighbours = 20
+        self.edgeDirection = "Directed"
+        self.clusterNumber = 5
+        self.nnAllowDoubleEdges = True
+        self.distance = 0
+
+        self.kdTree = None
      
     def __del__(self):
         del self.edgeWeights
@@ -97,12 +108,21 @@ class ExtGraph(QObject):
         :type strategy: String
         """
         self.distanceStrategy = strategy
+        print("Strategy: ", strategy)
     
     def setConnectionType(self, connectionType):
         self.mConnectionType = connectionType
+        print("ConnectionType: ", connectionType)
 
     def connectionType(self):
         return self.mConnectionType
+
+    def setGraphBuilderInformation(self, numberNeighbours, edgeDirection, clusterNumber, nnAllowDoubleEgdes, distance):
+        self.numberNeighbours = numberNeighbours
+        self.edgeDirection = edgeDirection
+        self.clusterNumber = clusterNumber
+        self.nnAllowDoubleEdges = nnAllowDoubleEgdes
+        self.distance = distance
 
     def setCostOfEdge(self, edgeID, functionIndex, cost):
         """
@@ -229,6 +249,143 @@ class ExtGraph(QObject):
         self.mVertexCount += 1
         
         return addIndex
+
+    def addVertexWithEdges(self, vertexCoordinates): 
+        """
+        Methods adds the point given by its coordinates to the
+        graph attribute of the Graphbuilder. Get the modified 
+        ExtGraph object by using the getGraph() method.
+        
+        :type vertexCoordinates: list with x,y-Coordinates
+        :return list of edges
+        """
+        if not self.kdTree:
+            points = []
+            for i in self.vertices():
+                point = self.vertex(i).point()
+                points.append([point.x(),point.y()])
+
+            self.kdTree = kdtree.create(points)
+        
+        listOfEdges = []
+        addedEdgeIndices = []
+        numberOfEdgesOriginal = self.edgeCount()
+        index = self.addVertex(QgsPointXY(vertexCoordinates[0], vertexCoordinates[1]))
+        point = self.vertex(index).point()
+        if self.mConnectionType == "Complete":
+            for i in self.vertices():
+                edgeId = self.addEdge(i, index)
+                addedEdgeIndices.append(edgeId)
+                listOfEdges.append([edgeId, i,index])
+                if self.edgeDirection == "Undirected":
+                    edgeId = self.addEdge(i, index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, i,index])
+        
+        elif self.mConnectionType == "Nearest neighbor" or self.mConnectionType == "DistanceNN":                     
+            # if this is True the nodes got deleted
+            if self.nnAllowDoubleEdges == False:
+                points = []
+                for i in self.vertices():
+                    p = self.vertex(i).point()
+                    points.append([p.x(),p.y()])        
+                self.kdTree = kdtree.create(points)
+            
+            else:
+                self.kdTree.add([point.x(),point.y()])
+            
+            if self.mConnectionType == "Nearest neighbor":
+                listOfNeighbors = self.kdTree.search_knn([point.x(),point.y()],self.numberNeighbours+1)
+                rangeStart = 1
+                rangeEnd = len(listOfNeighbors)
+            elif self.mConnectionType == "DistanceNN":
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(self.distance,2))    
+                rangeStart = 0
+                rangeEnd = len(listOfNeighbors)-1
+                          
+            for j in range(rangeStart,rangeEnd):
+                if self.mConnectionType == "Nearest neighbor": 
+                    neighborPoint = listOfNeighbors[j][0].data
+                elif self.mConnectionType == "DistanceNN":
+                    neighborPoint = listOfNeighbors[j]    
+                
+                edgeId = self.addEdge(index,neighborPoint[2])
+                addedEdgeIndices.append(edgeId)
+                listOfEdges.append([edgeId, index,neighborPoint[2]])
+                if self.edgeDirection == "Undirected" or self.nnAllowDoubleEdges == True:
+                    edgeId = self.addEdge(neighborPoint[2], index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, neighborPoint[2],index])
+         
+        elif self.mConnectionType == "ClusterComplete":
+            print("addVertexWithEdges not yet supported for ClusterComplete")
+            return
+            
+            # # search nearest point
+            # neighborPoint = self.getNearestVertex(index)
+            
+            # # add an edge to all the neighbors of the found nearest point
+            # for i in self.edges():
+            #     edge = self.edge(i)
+            #     if edge.toVertex() == neighborPoint:
+            #         edgeId = self.addEdge(edge.fromVertex(), index)
+            #         addedEdgeIndices.append(edgeId)
+            #         listOfEdges.append([edgeId, edge.fromVertex(),index])
+            #     elif edge.fromVertex() == neighborPoint:
+            #         edgeId = self.addEdge(edge.toVertex(), index)
+            #         addedEdgeIndices.append(edgeId)
+            #         listOfEdges.append([edgeId, edge.toVertex(), index])
+
+            # edgeId = self.addEdge(neighborPoint, index)      
+            # addedEdgeIndices.append(edgeId)
+            # listOfEdges.append([edgeId, neighborPoint, index])  
+                                
+        elif self.mConnectionType == "ClusterNN":
+            print("addVertexWithEdges not yet supported for ClusterNN")
+            return
+
+            # # search nearest point           
+            # neighborPoint = self.getNearestVertex(index)          
+            # self.layerWithClusterIDS.selectByIds([neighborPoint])
+            # for feature in self.layerWithClusterIDS.selectedFeatures():                
+            #     idOfNearestCluster = feature["CLUSTER_ID"]              
+            
+            # self.layerWithClusterIDS.selectAll()
+            # #create kdtree with all the nodes from the same cluster
+            # points = []
+            # counter = 0
+            # for feature in self.layerWithClusterIDS.getFeatures():
+            #     geom = feature.geometry()
+            #     if feature["CLUSTER_ID"] == idOfNearestCluster:                    
+            #         points.append([geom.asPoint().x(),geom.asPoint().y(),counter])
+            #     counter+=1            
+            # clusterKDTree = kdtree.create(points)
+            
+            # listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(),index],self.numberNeighbours) 
+            # for j in range(len(listOfNeighbors)):
+            #     neighborPoint = listOfNeighbors[j][0].data
+            #     edgeId = self.addEdge(index, neighborPoint[2])
+            #     addedEdgeIndices.append(edgeId)
+            #     listOfEdges.append([edgeId, index, neighborPoint[2]]) 
+            #     if self.edgeDirection == "Undirected" or self.nnAllowDoubleEdges == True:
+            #         edgeId = self.addEdge(neighborPoint[2], index)
+            #         addedEdgeIndices.append(edgeId)
+            #         listOfEdges.append([edgeId, neighborPoint[2], index])        
+        
+        # # create AdvancedCostCalculator object with the necessary parameters
+        # costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
+        
+        # # call for every new edge
+        # for i in range(len(addedEdgeIndices)):
+        #     # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
+        #     # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
+        #     functionCounter = 0
+        #     for func in self.costFunctions:          
+        #         self = costCalculator.setEdgeCosts(func,addedEdgeIndices[i],functionCounter)   
+        #         functionCounter+=1
+        
+        print(listOfEdges)
+        return listOfEdges
 
     def edge(self, idx):
         if idx in self.mEdges:

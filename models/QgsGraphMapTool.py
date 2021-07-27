@@ -4,8 +4,6 @@ from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QPoint, Qt
 
-# from .GraphBuilder import GraphBuilder
-
 class QgsGraphMapTool(QgsMapTool):
     """
     QgsGraphMapTool should enable the user to edit a QgsGraphLayer
@@ -134,41 +132,39 @@ class QgsGraphMapTool(QgsMapTool):
                     
                     self.__removeFirstFound()
 
-            # else: # CTRL + LeftClick
-            #     builder = GraphBuilder()
-            #     builder.setOption("connectionType", self.mLayer.mGraph.connectionType())
-            #     builder.setGraph(self.mLayer.mGraph)
-
-            #     if not self.firstFound:
-            #         # use addVertex from GraphBuilder to also add edges
-            #         addedEdges = builder.addVertex([clickPosition.x(), clickPosition.y()])
-            #         self.__removeFirstFound()
-            #     else:
-            #         # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
-            #         self._deleteVertex(self.firstFoundVertex)
+            else: # CTRL + LeftClick
+                if not self.advancedCosts:
+                    print("addVertexWithEdges")
+                    if not self.firstFound:
+                        # use addVertex from GraphBuilder to also add edges
+                        addedEdges = self.mLayer.mGraph.addVertexWithEdges([clickPosition.x(), clickPosition.y()])
+                        self.__removeFirstFound()
+                    elif self.firstFound:
+                        # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
+                        self._deleteVertex(self.firstFoundVertex)
+                        
+                        # use addVertex from GraphBuilder to also add edges
+                        addedEdges = self.mLayer.mGraph.addVertexWithEdges([clickPosition.x(), clickPosition.y()])
+                        self.__removeFirstFound()
                     
-            #         # use addVertex from GraphBuilder to also add edges
-            #         addedEdges = builder.addVertex([clickPosition.x(), clickPosition.y()])
-            #         self.__removeFirstFound()
-                
-            #     # add Features from added vertices and lines from GraphBuilder
-            #     feat = QgsFeature()
-            #     feat.setGeometry(QgsGeometry.fromPointXY(clickPosition))
+                    # add Features from added vertices and lines from GraphBuilder
+                    feat = QgsFeature()
+                    feat.setGeometry(QgsGeometry.fromPointXY(clickPosition))
 
-            #     feat.setAttributes([self.mLayer.mGraph.vertexCount(), clickPosition.x(), clickPosition.y()])
-            #     self.mLayer.dataProvider().addFeature(feat, True)
+                    feat.setAttributes([self.mLayer.mGraph.vertexCount(), clickPosition.x(), clickPosition.y()])
+                    self.mLayer.dataProvider().addFeature(feat, True)
 
-            #     for edge in addedEdges:
-            #         edge = self.mLayer.mGraph.edge(edge[0])
+                    for edge in addedEdges:
+                        edge = self.mLayer.mGraph.edge(edge[0])
 
-            #         feat = QgsFeature()
-            #         fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
-            #         toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
-            #         feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+                        feat = QgsFeature()
+                        fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
+                        toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
+                        feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-            #         feat.setAttributes([edge[0], edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edge[0])], False)
+                        feat.setAttributes([edge[0], edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edge[0])], False)
 
-            #         self.mLayer.mDataProvider.addFeature(feat, False)
+                        self.mLayer.mDataProvider.addFeature(feat, False)
 
         elif event.button() == Qt.RightButton: # RightClick
 

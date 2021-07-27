@@ -244,6 +244,12 @@ class QgsGraphLayer(QgsPluginLayer):
         if isinstance(graph, ExtGraph):
             # create an actual new ExtGraph from graph
             self.mGraph = ExtGraph()
+            self.mGraph.setConnectionType(graph.mConnectionType)
+            self.mGraph.setDistanceStrategy(graph.distanceStrategy)
+            
+            advanced = False
+            if self.mGraph.distanceStrategy == "Advanced":
+                advanced = True
 
             if graph.edgeCount() != 0:
                 self.hasEdges = True
@@ -437,6 +443,11 @@ class QgsGraphLayer(QgsPluginLayer):
         graphElem = graphNode.toElement()
         if graphElem.hasAttribute("connectionType"):
             self.mGraph.setConnectionType(graphElem.attribute("connectionType"))
+            self.mGraph.numberNeighbours = int(graphElem.attribute("numberNeighbours"))
+            self.mGraph.edgeDirection = graphElem.attribute("edgeDirection")
+            self.mGraph.clusterNumber = int(graphElem.attribute("clusterNumber"))
+            self.mGraph.nnAllowDoubleEdges = graphElem.attribute("nnAllowDoubleEdges") == "True"
+            self.mGraph.distance = float(graphElem.attribute("distance"))
 
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
@@ -539,6 +550,11 @@ class QgsGraphLayer(QgsPluginLayer):
         # graphNode saves all graphData
         graphNode = doc.createElement("graphData")
         graphNode.setAttribute("connectionType", self.mGraph.connectionType())
+        graphNode.setAttribute("numberNeighbours", self.mGraph.numberNeighbours)
+        graphNode.setAttribute("edgeDirection", self.mGraph.edgeDirection)
+        graphNode.setAttribute("clusterNumber", self.mGraph.clusterNumber)
+        graphNode.setAttribute("nnAllowDoubleEdges", str(self.mGraph.nnAllowDoubleEdges))
+        graphNode.setAttribute("distance", str(self.mGraph.distance))
         node.appendChild(graphNode)
 
         # vertexNode saves all vertices with tis coordinates
