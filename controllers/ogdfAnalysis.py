@@ -28,7 +28,7 @@ class OGDFAnalysisController(BaseController):
 
         # self.view.addAnalysis("t-Spanner")
         # self.view.addAnalysis("minimum spanner")
-        self.view.addAnalysis("shortest path")
+        self.view.addAnalysis(self.tr("shortest path"), "shortest path")
         # self.view.addAnalysis("steiner tree")
         # self.view.addAnalysis("delaunay triangulation")
 
@@ -45,7 +45,7 @@ class OGDFAnalysisController(BaseController):
         # todo: pass authId to client
         authId = self.settings.value("protoplugin/authId")
         if not (host and port):
-            self.view.showError("Please set host and port in options!")
+            self.view.showError(self.tr("Please set host and port in options!"))
             return None
 
         with Client(host, port) as client:
@@ -65,18 +65,18 @@ class OGDFAnalysisController(BaseController):
         graphLayer = builder.createGraphLayer(False)
         graphLayer.setName("ResultGraphLayer")
         QgsProject.instance().addMapLayer(graphLayer)
-        self.view.showSuccess("Analysis complete!")
+        self.view.showSuccess(self.tr("Analysis complete!"))
 
     def __getGraph(self):
         if not self.view.hasInput():
-            self.view.showError("Please select a graph!")
+            self.view.showError(self.tr("Please select a graph!"))
             return None
 
         if self.view.isInputLayer():
             # return graph from graph layer
             graphLayer = self.view.getInputLayer()
             if not isinstance(graphLayer, QgsGraphLayer):
-                self.view.showError("The selected layer is not a graph layer!")
+                self.view.showError(self.tr("The selected layer is not a graph layer!"))
                 return None
             return graphLayer.getGraph()
         else:

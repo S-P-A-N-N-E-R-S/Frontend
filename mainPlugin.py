@@ -1,6 +1,7 @@
 from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
 from qgis.PyQt.QtXml import *
+from qgis.PyQt.QtCore import *
 
 from qgis.core import *
 from qgis.gui import *
@@ -22,43 +23,66 @@ class ProtoPlugin:
         """
         self.iface = iface
 
-        # keep track of layers
-        self.mLayers = {}
-        QgsProject.instance().layersAdded.connect(self.layersAdded)
-        QgsProject.instance().layersRemoved.connect(self.layersRemoved)
+        # initialize plugin directory
+        self.plugin_dir = os.path.dirname(__file__)
+
+        # initialize locale
+        locale = QSettings().value('locale/userLocale')[0:2]
+        locale_path = os.path.join(
+            self.plugin_dir,
+            'i18n',
+            '{}.qm'.format(locale))
+
+        if os.path.exists(locale_path):
+            self.translator = QTranslator()
+            self.translator.load(locale_path)
+            QCoreApplication.installTranslator(self.translator)
 
         self.initActions()
 
+    def tr(self, message):
+        """Get the translation for a string using Qt translation API.
+
+        We implement this ourselves since we do not inherit QObject.
+
+        :param message: String for translation.
+        :type message: str, QString
+
+        :returns: Translated version of message.
+        :rtype: QString
+        """
+        return QCoreApplication.translate('ProtoPlugin', message)
+
     def initActions(self):
-        self.exampleAction = QAction("Create example data", self.iface.mainWindow())
+        self.exampleAction = QAction(self.tr("Create example data"), self.iface.mainWindow())
         self.exampleAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ExampleDataView))
-        self.exampleAction.setWhatsThis("Create example data")
-        self.exampleAction.setStatusTip("Create example data")
+        self.exampleAction.setWhatsThis(self.tr("Create example data"))
+        self.exampleAction.setStatusTip(self.tr("Create example data"))
 
-        self.graphAction = QAction("Create graph", self.iface.mainWindow())
+        self.graphAction = QAction(self.tr("Create graph"), self.iface.mainWindow())
         self.graphAction.triggered.connect(lambda: self.openView(PluginDialog.Views.CreateGraphView))
-        self.graphAction.setWhatsThis("Create graph")
-        self.graphAction.setStatusTip("Create graph")
+        self.graphAction.setWhatsThis(self.tr("Create graph"))
+        self.graphAction.setStatusTip(self.tr("Create graph"))
 
-        self.ogdfAnalysisAction = QAction("OGDF analysis", self.iface.mainWindow())
+        self.ogdfAnalysisAction = QAction(self.tr("OGDF analysis"), self.iface.mainWindow())
         self.ogdfAnalysisAction.triggered.connect(lambda: self.openView(PluginDialog.Views.OGDFAnalysisView))
-        self.ogdfAnalysisAction.setWhatsThis("OGDF analysis")
-        self.ogdfAnalysisAction.setStatusTip("OGDF analysis")
+        self.ogdfAnalysisAction.setWhatsThis(self.tr("OGDF analysis"))
+        self.ogdfAnalysisAction.setStatusTip(self.tr("OGDF analysis"))
 
-        self.ogdfJobsAction = QAction("OGDF jobs", self.iface.mainWindow())
+        self.ogdfJobsAction = QAction(self.tr("OGDF jobs"), self.iface.mainWindow())
         self.ogdfJobsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.JobsView))
-        self.ogdfJobsAction.setWhatsThis("OGDF jobs")
-        self.ogdfJobsAction.setStatusTip("OGDF jobs")
+        self.ogdfJobsAction.setWhatsThis(self.tr("OGDF jobs"))
+        self.ogdfJobsAction.setStatusTip(self.tr("OGDF jobs"))
 
-        self.optionsAction = QAction("Options", self.iface.mainWindow())
+        self.optionsAction = QAction(self.tr("Options"), self.iface.mainWindow())
         self.optionsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.OptionsView))
-        self.optionsAction.setWhatsThis("Options")
-        self.optionsAction.setStatusTip("Options")
+        self.optionsAction.setWhatsThis(self.tr("Options"))
+        self.optionsAction.setStatusTip(self.tr("Options"))
 
-        self.defaultAction = QAction(QIcon(getImagePath("icon.png")), "Create example data", self.iface.mainWindow())
+        self.defaultAction = QAction(QIcon(getImagePath("icon.png")), self.tr("Create example data"), self.iface.mainWindow())
         self.defaultAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ExampleDataView))
-        self.defaultAction.setWhatsThis("Create example data")
-        self.defaultAction.setStatusTip("Create example data")
+        self.defaultAction.setWhatsThis(self.tr("Create example data"))
+        self.defaultAction.setStatusTip(self.tr("Create example data"))
 
     def initGui(self):
         QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())

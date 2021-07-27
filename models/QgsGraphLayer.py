@@ -14,6 +14,7 @@ import random, math
 from .QgsGraphDataProvider import QgsGraphDataProvider
 from .QgsGraphMapTool import QgsGraphMapTool
 from .ExtGraph import ExtGraph
+from ..helperFunctions import tr
 
 class QgsGraphLayerRenderer(QgsMapLayerRenderer):
     """
@@ -61,9 +62,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                 # used to convert map coordinates to canvas coordinates
                 converter = iface.mapCanvas().getCoordinateTransform()
                 
-                # max = self.mGraph.edgeCount()
-                # if max < self.mGraph.vertexCount():
-                #     max = self.mGraph.vertexCount()
                 vertices = self.mGraph.vertices()
                 for id in vertices:
                     vertex = self.mGraph.vertex(id)
@@ -542,6 +540,7 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.appendChild(verticesNode)
 
         # edgeNode saves all edges with its vertices ids
+        # TODO: also save cost information stored in ExtGraph (merge necessary beforehand)
         edgesNode = doc.createElement("edges")
         graphNode.appendChild(edgesNode)
 
@@ -725,7 +724,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(fieldsLabel)
 
         # button to zoom to layers extent
-        zoomExtentButton = QPushButton("Zoom to Layer")
+        zoomExtentButton = QPushButton(tr("Zoom to Layer"))
         zoomExtentButton.setVisible(True)
         zoomExtentButton.clicked.connect(layer.zoomToExtent)
         layout.addWidget(zoomExtentButton)
@@ -744,13 +743,13 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(toggleLinesButton)
 
         # button to toggle rendered text (mainly edge costs)
-        toggleTextButton = QPushButton("Toggle Edge Text")
+        toggleTextButton = QPushButton(tr("Toggle Edge Text"))
         toggleTextButton.setVisible(hasEdges) # don't show this button when graph has no edges
         toggleTextButton.clicked.connect(layer.toggleText)
         layout.addWidget(toggleTextButton)
 
         # button to toggle drawing of arrowHead to show edge direction
-        toggleDirectionButton = QPushButton("Toggle Direction")
+        toggleDirectionButton = QPushButton(tr("Toggle Direction"))
         toggleDirectionButton.setVisible(hasEdges)
         toggleDirectionButton.clicked.connect(layer.toggleDirection)
         layout.addWidget(toggleDirectionButton)
@@ -777,13 +776,13 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(selectExportTypeGroup)
 
         # button for exportToVectorLayer
-        exportVLButton = QPushButton("Export to VectorLayer")
+        exportVLButton = QPushButton(tr("Export to VectorLayer"))
         exportVLButton.setVisible(True)
         exportVLButton.clicked.connect(layer.exportToVectorLayer)
         layout.addWidget(exportVLButton)
 
         # button for exportToFile
-        exportFButton = QPushButton("Export To File")
+        exportFButton = QPushButton(tr("Export To File"))
         exportFButton.clicked.connect(layer.exportToFile)
         exportFButton.setVisible(True)
         layout.addWidget(exportFButton)
@@ -794,7 +793,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(colorSeparator)
 
         # button to randomize vertex color
-        randomColorButton = QPushButton("Random Vertex Color")
+        randomColorButton = QPushButton(tr("Random Vertex Color"))
         randomColorButton.clicked.connect(layer.newRandomColor)
         randomColorButton.setVisible(True)
         layout.addWidget(randomColorButton)

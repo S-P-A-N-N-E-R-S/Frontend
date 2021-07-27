@@ -19,9 +19,9 @@ class JobsController(BaseController):
         self.view.clearJobs()
 
         # dummy jobs
-        self.view.addJob("Job 1")
-        self.view.addJob("Job 2")
-        self.view.addJob("Job 3")
+        self.view.addJob(self.tr("Job 1"))
+        self.view.addJob(self.tr("Job 2"))
+        self.view.addJob(self.tr("Job 3"))
 
     def abortJob(self):
         pass

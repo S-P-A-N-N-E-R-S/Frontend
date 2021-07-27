@@ -1,11 +1,14 @@
 from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
+
 from qgis.PyQt.QtCore import QObject
+
 import math
 from random import *
 
 
+<<<<<<< models/ExtGraph.py
 """
 Class extends the QgsGraph by adding a function costOfEdge
 which returns the distance between the two endpoint of an edge.
@@ -74,6 +77,9 @@ class ExtGraph(QObject):
 
         self.__availableVertexIndices =[]
         self.__availableEdgeIndices = []
+
+        # holds the feature IDs if lines where used to create graph
+        self.featureMatchings = []
      
     def __del__(self):
         del self.edgeWeights
@@ -85,28 +91,102 @@ class ExtGraph(QObject):
         del self.__availableEdgeIndices
 
     def setDistanceStrategy(self, strategy):
+        """
+        Function is called my the GraphBuilder every time the makeGraph 
+        method is called.
+        
+        :type strategy: String
+        """
         self.distanceStrategy = strategy
      
-          
-    def costOfEdge(self, edgeID):
-        edgeFromID = self.edge(edgeID)
+    def setCostOfEdge(self, edgeID, functionIndex, cost):
+        """
+        Set cost of a specific edge.
         
+        :type functionIndex: Integer
+        :type edgeID: Integer
+        :type cost: Integer
+        """
+        self.edgeWeights[functionIndex][edgeID] = cost
+
+    def costOfEdge(self, edgeID, functionIndex = 0):  
+        """
+        Function to get the weight of an edge. The returned value
+        depends on the set distance strategy and on the functionIndex.
+        The functionIndex defines the cost function to use if multiple ones
+        are given.
+        
+        :type edgeID: Integer
+        :type functionIndex: Integer
+        :return cost of Edge
+        """                  
         # differentiate between edge weights from cost functions and set weights from graph builder        
-        if self.distanceStrategy == "Euclidean":                       
-            fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-            toPoint = self.vertex(edgeFromID.toVertex()).point()        
-            euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))                     
-            return euclDist
+        if self.distanceStrategy == "Euclidean":                                                                    
+            return self.euclideanDist(edgeID)
+        
+        elif self.distanceStrategy == "Manhattan":
+            return self.manhattanDist(edgeID)
+        
+        # calculate geodesic distance using the Haversine formula
+        elif self.distanceStrategy == "Geodesic":
+            return self.geodesicDist(edgeID)
+        
+        #if the type is advanced the distances are set by the GraphBuilder directly
+        elif self.distanceStrategy == "Advanced":            
+            return self.edgeWeights[functionIndex][edgeID]
+        
         else:
             return 0  
     
+    
+    def euclideanDist(self, edgeID):
+        edgeFromID = self.edge(edgeID)
+        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
+        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2)) 
+        return euclDist
+        
+    def manhattanDist(self, edgeID): 
+        edgeFromID = self.edge(edgeID)
+        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
+        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        manhattenDist = abs(fromPoint.x()-toPoint.x()) + abs(fromPoint.y()-toPoint.y())
+        return manhattenDist
+    
+    def geodesicDist(self, edgeID):
+        edgeFromID = self.edge(edgeID)
+        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
+        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        radius = 6371000
+        phi1 = math.radians(fromPoint.y())
+        phi2 = math.radians(toPoint.y())        
+        deltaPhi = math.radians(toPoint.y()-fromPoint.y())
+        deltaLambda = math.radians(toPoint.x()-fromPoint.x())
+        a = math.sin(deltaPhi/2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(deltaLambda / 2.0) ** 2    
+        c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))       
+        return radius*c  
+    
     def distanceP2P(self, vertex1, vertex2):
+        """
+        Method to get the euclidean distance between two vertices
+        
+        :type vertex1: Integer
+        :type vertex2: Integer
+        :return distance between vertices
+        """
         fromPoint = self.vertex(vertex1).point()
         toPoint = self.vertex(vertex2).point()
         return math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
         
     
     def hasEdge(self, vertex1, vertex2):
+        """
+        Method searches for the edge between to vertices
+        
+        :type vertex1: Integer
+        :type vertex2: Integer
+        :return Integer found edgeIdx, else -1
+        """
         # TODO: maybe return edgeIdx
         for edgeIdx in self.mEdges:
             edge = self.mEdges[edgeIdx]            
@@ -241,8 +321,13 @@ class ExtGraph(QObject):
             
         return deletedEdges
             
-        
+
     def writeGraphML(self, path):
+        """
+        Write the graph into a .graphml format
+        
+        :type path: String       
+        """
         file = open(path, "w")
         header = ['<?xml version="1.0" encoding="UTF-8"?>\n',
             '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n',  
@@ -272,8 +357,13 @@ class ExtGraph(QObject):
         file.write("\t</graph>\n")
         file.write("</graphml>")
         file.close()
+       
+    def readGraphML(self, path):   
+        """
+        Read a .graphml file into a ExtGraph
         
-    def readGraphML(self, path):        
+        :type path: String
+        """     
         file = open(path, "r")
         lines = file.readlines()
         nodeCoordinatesGiven = False
@@ -287,10 +377,11 @@ class ExtGraph(QObject):
                 nodeCoordinatesGiven = True
                 break
                    
+        # maybe no coordinate are given in the .graphml file           
         if nodeCoordinatesGiven == True:
             for line in lines:
                 if '<node' in line:
-                    nodeIDs.append(line.split('id="')[1].split('"')[0])
+                    nodeIDs.append(line.split('id="')[1].split('"')[0])                
                 
                 elif 'x="' in line:
                     xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
@@ -307,12 +398,13 @@ class ExtGraph(QObject):
                         if nodeIDs[i] == fromVertex:
                             fromVertexID = i
                         elif nodeIDs[i] == toVertex:
-                            toVertexID = i    
+                            toVertexID = i                        
                     
                     self.addEdge(fromVertexID, toVertexID)                     
                     if edgeTypeDirection == "Undirected":   
                         self.addEdge(toVertexID, fromVertexID)      
-                                         
+         
+        # if no coordinates are given assign random                             
         else:
             for line in lines:
                 if '<node' in line:

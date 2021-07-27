@@ -19,6 +19,10 @@ class OGDFAnalysisView(BaseContentView):
             lambda: self._browseFile("ogdf_analysis_graph_input", "GraphML (*.graphml)")
         )
 
+        # hide all unused inputs
+        self.dialog.ogdf_analysis_stretch_label.hide()
+        self.dialog.ogdf_analysis_stretch_input.hide()
+
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
 
     def getJobName(self):
@@ -61,9 +65,6 @@ class OGDFAnalysisView(BaseContentView):
         self.dialog.ogdf_analysis_analysis_input.addItem(analysis, userData)
 
     # advanced parameters
-
-    def getCRS(self):
-        return self.dialog.ogdf_analysis_crs_input.crs()
 
     def getStretch(self):
         return self.dialog.ogdf_analysis_stretch_input.value()
