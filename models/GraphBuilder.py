@@ -834,6 +834,15 @@ class GraphBuilder:
         # build graph
         graph = self.makeGraph()
 
+        if self.__options["createRandomGraph"] == False:
+            graphLayer.setCrs(self.vLayer.crs())
+        else:
+            if isinstance(self.__randomOptions["area"], tuple):
+                _, inputCRS = self.__randomOptions["area"]
+                graphLayer.setCrs(QgsCoordinateReferenceSystem(inputCRS))
+            else:
+                graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+
         # set graph to graph layer
         graphLayer.setGraph(self.graph)
 
