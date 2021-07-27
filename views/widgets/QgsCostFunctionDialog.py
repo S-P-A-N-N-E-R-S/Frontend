@@ -69,6 +69,16 @@ class QgsExpressionContext(QObject):
                         "helpText": self.tr("Tests a condition and returns a different result depending on the conditional "
                                             "check.")
                     },
+                    {
+                        "label": self.tr("crossesPolygon"),
+                        "expressionText": "crossesPolygon ",
+                        "helpText": self.tr("Checks whether an edge crosses a polygon.")
+                    },
+                    {
+                        "label": self.tr("insidePolygon"),
+                        "expressionText": "insidePolygon ",
+                        "helpText": self.tr("Checks whether an edge is inside a polygon.")
+                    },
                 ],
             },
             "Distances": {
