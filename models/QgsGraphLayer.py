@@ -109,7 +109,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             # add text with edgeCost at line mid point
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                                painter.drawText(midPoint, str(self.mGraph.costOfEdge(outgoingEdgeId)))
+                                painter.drawText(midPoint, str("%.3f" % self.mGraph.costOfEdge(outgoingEdgeId)))
 
             except Exception as err:
                 print(err)
@@ -251,7 +251,7 @@ class QgsGraphLayer(QgsPluginLayer):
                 self.mDataProvider.setGeometryToPoint(False)
             else:
                 self.hasEdges = False
-                self.mDataProvieder.setGeometryToPoint(True)
+                self.mDataProvider.setGeometryToPoint(True)
 
             self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri, True)
             self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri, False)
@@ -435,7 +435,8 @@ class QgsGraphLayer(QgsPluginLayer):
             graphNode = graphNode.nextSibling()
             
         graphElem = graphNode.toElement()
-        self.mGraph.setConnectionType(graphElem.attribute("connectionType"))
+        if graphElem.hasAttribute("connectionType"):
+            self.mGraph.setConnectionType(graphElem.attribute("connectionType"))
 
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()

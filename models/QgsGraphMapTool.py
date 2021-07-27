@@ -83,7 +83,7 @@ class QgsGraphMapTool(QgsMapTool):
             toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
             feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-            feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edgeId)], False)
+            feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edgeId)])
 
             self.mLayer.mDataProvider.addFeature(feat, False)
 

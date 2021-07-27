@@ -64,7 +64,7 @@ class ExtGraph(QObject):
     def __init__(self):        
         super().__init__()
         self.distanceStrategy = "Euclidean"
-        self.connectionType = "None"
+        self.mConnectionType = "None"
         self.edgeWeights = []        
         self.vertexWeights = []
 
@@ -99,10 +99,10 @@ class ExtGraph(QObject):
         self.distanceStrategy = strategy
     
     def setConnectionType(self, connectionType):
-        self.connectionType = connectionType
+        self.mConnectionType = connectionType
 
     def connectionType(self):
-        return self.connectionType
+        return self.mConnectionType
 
     def setCostOfEdge(self, edgeID, functionIndex, cost):
         """
