@@ -112,6 +112,12 @@ class ExtGraph(QObject):
         :type edgeID: Integer
         :type cost: Integer
         """
+        while len(self.edgeWeights) <= functionIndex:
+            self.edgeWeights.append([])
+        
+        while len(self.edgeWeights[functionIndex]) <= edgeID:
+            self.edgeWeights[functionIndex].append(-1)
+        
         self.edgeWeights[functionIndex][edgeID] = cost
 
     def costOfEdge(self, edgeID, functionIndex = 0):  
@@ -137,7 +143,7 @@ class ExtGraph(QObject):
             return self.geodesicDist(edgeID)
         
         #if the type is advanced the distances are set by the GraphBuilder directly
-        elif self.distanceStrategy == "Advanced":            
+        elif self.distanceStrategy == "Advanced":          
             return self.edgeWeights[functionIndex][edgeID]
         
         else:
@@ -213,7 +219,7 @@ class ExtGraph(QObject):
         self.mVertices[vertex1].mOutgoingEdges.append(addIndex)
         self.mVertices[vertex2].mIncomingEdges.append(addIndex)
         self.mEdgeCount += 1
-        
+
         return addIndex
 
     def addVertex(self, point, idx=-1):

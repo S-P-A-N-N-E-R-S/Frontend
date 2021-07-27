@@ -22,6 +22,7 @@ class QgsGraphMapTool(QgsMapTool):
 
     def activate(self):
         print("QgsGraphMapTool activated")
+        self.advancedCosts = self.mLayer.mGraph.distanceStrategy == "Advanced"
         # emit self.activated()
         pass
 
@@ -68,7 +69,10 @@ class QgsGraphMapTool(QgsMapTool):
             if self.mLayer.mGraph.edgeCount() == 0:
                 # no edges exist anymore
                 self.mLayer.mDataProvider.setGeometryToPoint(True)
+        
         else:
+            # advancedCosts prevent user from adding edges
+
             if self.mLayer.mGraph.edgeCount() == 0:
                 # now edges exist
                 self.mLayer.mDataProvider.setGeometryToPoint(False)
@@ -139,11 +143,11 @@ class QgsGraphMapTool(QgsMapTool):
             #     builder.setOption("connectionType", self.mLayer.mGraph.connectionType())
             #     builder.setGraph(self.mLayer.mGraph)
 
-            #     if not self.firstFound:
+            #     if not self.firstFound and not self.advancedCosts:
             #         # use addVertex from GraphBuilder to also add edges
             #         addedEdges = builder.addVertex([clickPosition.x(), clickPosition.y()])
             #         self.__removeFirstFound()
-            #     else:
+            #     elif self.firstFound and not self.advancedCosts:
             #         # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
             #         self._deleteVertex(self.firstFoundVertex)
                     
@@ -183,10 +187,10 @@ class QgsGraphMapTool(QgsMapTool):
                 self.firstMarker.setIconType(QgsVertexMarker.ICON_DOUBLE_TRIANGLE)
                 self.firstMarker.setCenter(clickPosition)
             
-            elif vertexId < 0 and self.firstFound: # second RightClick (no vertex found)
+            elif vertexId < 0 and self.firstFound or self.advancedCosts and self.firstFound: # second RightClick (no vertex found)
                 self.__removeFirstFound()
 
-            elif vertexId > 0 and self.firstFound and not self.ctrlPressed: # second RightClick
+            elif vertexId > 0 and self.firstFound and not self.ctrlPressed and not self.advancedCosts: # second RightClick
                 # add edge between firstFoundVertex and vertexId
                 # deletes edge if it already exits
                 self._addEdge(self.firstFoundVertex, vertexId)                

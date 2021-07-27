@@ -244,6 +244,12 @@ class QgsGraphLayer(QgsPluginLayer):
         if isinstance(graph, ExtGraph):
             # create an actual new ExtGraph from graph
             self.mGraph = ExtGraph()
+            self.mGraph.setConnectionType(graph.connectionType)
+            self.mGraph.setDistanceStrategy(graph.distanceStrategy)
+            
+            advanced = False
+            if self.mGraph.distanceStrategy == "Advanced":
+                advanced = True
 
             if graph.edgeCount() != 0:
                 self.hasEdges = True
@@ -307,7 +313,9 @@ class QgsGraphLayer(QgsPluginLayer):
 
                 self.mDataProvider.addFeature(feat, False)
 
-                self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), edgeId)
+                mEdgeId = self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), edgeId)
+                if advanced:
+                    self.mGraph.setCostOfEdge(mEdgeId, 0, graph.costOfEdge(edgeId))
         
 
     def getGraph(self):
