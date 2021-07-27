@@ -200,7 +200,12 @@ class CreateGraphView(BaseContentView):
         Return user defined area.
         :return: tuple (extent, crs) of (QgsRectangle, QgsCoordinateReferenceSystem)
         """
-        return self.dialog.create_graph_randomarea_extent.currentExtent(), self.dialog.create_graph_randomarea_extent.currentCrs()
+        if self.dialog.create_graph_randomarea_extent.isValid():
+            # if extent is set by user
+            return self.dialog.create_graph_randomarea_extent.outputExtent(), self.dialog.create_graph_randomarea_extent.outputCrs()
+        else:
+            # return map extent if no extent is selected
+            return iface.mapCanvas().extent(), iface.mapCanvas().mapSettings().destinationCrs()
 
 
     def addConnectionType(self, type, userData=None):
