@@ -4,6 +4,8 @@ from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QPoint, Qt
 
+# from .GraphBuilder import GraphBuilder
+
 class QgsGraphMapTool(QgsMapTool):
     """
     QgsGraphMapTool should enable the user to edit a QgsGraphLayer
@@ -132,15 +134,41 @@ class QgsGraphMapTool(QgsMapTool):
                     
                     self.__removeFirstFound()
 
-            else: # CTRL + LeftClick
-                if not self.firstFound:
-                    # TODO: use addVertex from GraphBuilder to also add edges
-                    self.__removeFirstFound()
-                else:
-                    # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
-                    self._deleteVertex(self.firstFoundVertex)
-                    # TODO: use addVertex from GraphBuilder to also add edges
-                    self.__removeFirstFound()
+            # else: # CTRL + LeftClick
+            #     builder = GraphBuilder()
+            #     builder.setOption("connectionType", self.mLayer.mGraph.connectionType())
+            #     builder.setGraph(self.mLayer.mGraph)
+
+            #     if not self.firstFound:
+            #         # use addVertex from GraphBuilder to also add edges
+            #         addedEdges = builder.addVertex([clickPosition.x(), clickPosition.y()])
+            #         self.__removeFirstFound()
+            #     else:
+            #         # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
+            #         self._deleteVertex(self.firstFoundVertex)
+                    
+            #         # use addVertex from GraphBuilder to also add edges
+            #         addedEdges = builder.addVertex([clickPosition.x(), clickPosition.y()])
+            #         self.__removeFirstFound()
+                
+            #     # add Features from added vertices and lines from GraphBuilder
+            #     feat = QgsFeature()
+            #     feat.setGeometry(QgsGeometry.fromPointXY(clickPosition))
+
+            #     feat.setAttributes([self.mLayer.mGraph.vertexCount(), clickPosition.x(), clickPosition.y()])
+            #     self.mLayer.dataProvider().addFeature(feat, True)
+
+            #     for edge in addedEdges:
+            #         edge = self.mLayer.mGraph.edge(edge[0])
+
+            #         feat = QgsFeature()
+            #         fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
+            #         toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
+            #         feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+
+            #         feat.setAttributes([edge[0], edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edge[0])], False)
+
+            #         self.mLayer.mDataProvider.addFeature(feat, False)
 
         elif event.button() == Qt.RightButton: # RightClick
 

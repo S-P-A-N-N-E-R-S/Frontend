@@ -130,9 +130,6 @@ class ProtoPlugin:
 
         QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
 
-        QgsProject.instance().layersAdded.disconnect(self.layersAdded)
-        QgsProject.instance().layersRemoved.disconnect(self.layersRemoved)
-
     def reloadPluginLayers(self):
         """Re-reads and reloads plugin layers
         """
@@ -175,15 +172,4 @@ class ProtoPlugin:
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
             os.rmdir(directory)
-
-    def layersAdded(self, layers):
-        for layer in layers:
-            self.mLayers[layer.id()] = layer
-
-        self.iface.mapCanvas().refresh()
-
-    def layersRemoved(self, layerIds):
-        for layerId in layerIds:
-            del self.mLayers[layerId]
-
-        self.iface.mapCanvas().refresh()
+            

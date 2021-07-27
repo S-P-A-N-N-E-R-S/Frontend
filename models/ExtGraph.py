@@ -7,8 +7,6 @@ from qgis.PyQt.QtCore import QObject
 import math
 from random import *
 
-
-<<<<<<< models/ExtGraph.py
 """
 Class extends the QgsGraph by adding a function costOfEdge
 which returns the distance between the two endpoint of an edge.
@@ -66,6 +64,7 @@ class ExtGraph(QObject):
     def __init__(self):        
         super().__init__()
         self.distanceStrategy = "Euclidean"
+        self.connectionType = "None"
         self.edgeWeights = []        
         self.vertexWeights = []
 
@@ -98,7 +97,13 @@ class ExtGraph(QObject):
         :type strategy: String
         """
         self.distanceStrategy = strategy
-     
+    
+    def setConnectionType(self, connectionType):
+        self.connectionType = connectionType
+
+    def connectionType(self):
+        return self.connectionType
+
     def setCostOfEdge(self, edgeID, functionIndex, cost):
         """
         Set cost of a specific edge.

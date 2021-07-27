@@ -630,22 +630,25 @@ class GraphBuilder:
         :return list of edges
         """ 
         listOfEdges = []
+        addedEdgeIndices = []
         numberOfEdgesOriginal = self.graph.edgeCount()
         index = self.graph.addVertex(QgsPointXY(vertexCoordinates[0], vertexCoordinates[1]))
         point = self.graph.vertex(index).point()
         if self.__options["connectionType"] == "Complete":
-            for i in range(self.graph.vertexCount()):
-                self.graph.addEdge(i, index)
-                listOfEdges.append([i,index])
+            for i in self.graph.vertices():
+                edgeId = self.graph.addEdge(i, index)
+                addedEdgeIndices.append(edgeId)
+                listOfEdges.append([edgeId, i,index])
                 if self.__options["edgeDirection"] == "Undirected":
-                    self.graph.addEdge(i, index)
-                    listOfEdges.append([i,index])
+                    edgeId = self.graph.addEdge(i, index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, i,index])
         
         elif self.__options["connectionType"] == "Nearest neighbor" or self.__options["connectionType"] == "DistanceNN":                     
             # if this is True the nodes got deleted
             if self.__options["nnAllowDoubleEdges"] == False:
                 points = []
-                for i in range(self.graph.vertexCount()):
+                for i in self.graph.vertices():
                     p = self.graph.vertex(i).point()
                     points.append([p.x(),p.y(),i])        
                 self.kdTree = kdtree.create(points)
@@ -667,29 +670,34 @@ class GraphBuilder:
                     neighborPoint = listOfNeighbors[j][0].data
                 elif self.__options["connectionType"] == "DistanceNN":
                     neighborPoint = listOfNeighbors[j]    
-                   
-                self.graph.addEdge(index,neighborPoint[2])  
-                listOfEdges.append([index,neighborPoint[2]])
+                
+                edgeId = self.graph.addEdge(index,neighborPoint[2])
+                addedEdgeIndices.append(edgeId)
+                listOfEdges.append([edgeId, index,neighborPoint[2]])
                 if self.__options["edgeDirection"] == "Undirected" or self.__options["nnAllowDoubleEdges"] == True:
-                    self.graph.addEdge(neighborPoint[2], index)
-                    listOfEdges.append([neighborPoint[2],index])
+                    edgeId = self.graph.addEdge(neighborPoint[2], index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, neighborPoint[2],index])
          
         elif self.__options["connectionType"] == "ClusterComplete":
             # search nearest point
             neighborPoint = self.getNearestVertex(index)
             
             # add an edge to all the neighbors of the found nearest point
-            for i in range(self.graph.edgeCount()):
+            for i in self.graph.edges():
                 edge = self.graph.edge(i)
                 if edge.toVertex() == neighborPoint:
-                    self.graph.addEdge(edge.fromVertex(), index)
-                    listOfEdges.append([edge.fromVertex(),index])
+                    edgeId = self.graph.addEdge(edge.fromVertex(), index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, edge.fromVertex(),index])
                 elif edge.fromVertex() == neighborPoint:
-                    self.graph.addEdge(edge.toVertex(), index) 
-                    listOfEdges.append([edge.toVertex(), index])   
-                                                
-            self.graph.addEdge(neighborPoint, index)  
-            listOfEdges.append([neighborPoint, index])  
+                    edgeId = self.graph.addEdge(edge.toVertex(), index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, edge.toVertex(), index])
+
+            edgeId = self.graph.addEdge(neighborPoint, index)      
+            addedEdgeIndices.append(edgeId)
+            listOfEdges.append([edgeId, neighborPoint, index])  
                                 
         elif self.__options["connectionType"] == "ClusterNN":
             # search nearest point           
@@ -712,23 +720,25 @@ class GraphBuilder:
             listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(),index],self.__options["neighborNumber"]) 
             for j in range(len(listOfNeighbors)):
                 neighborPoint = listOfNeighbors[j][0].data
-                self.graph.addEdge(index, neighborPoint[2])
-                listOfEdges.append([index, neighborPoint[2]]) 
+                edgeId = self.graph.addEdge(index, neighborPoint[2])
+                addedEdgeIndices.append(edgeId)
+                listOfEdges.append([edgeId, index, neighborPoint[2]]) 
                 if self.__options["edgeDirection"] == "Undirected" or self.__options["nnAllowDoubleEdges"] == True:
-                    self.graph.addEdge(neighborPoint[2], index)                   
-                    listOfEdges.append([neighborPoint[2], index])        
+                    edgeId = self.graph.addEdge(neighborPoint[2], index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, neighborPoint[2], index])        
         
-        # create AdvancedCostCalculator object with the necessary parameters
-        costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
+        # # create AdvancedCostCalculator object with the necessary parameters
+        # costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
         
-        # call for every new edge
-        for i in range(numberOfEdgesOriginal, self.graph.edgeCount()):
-            # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
-            # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
-            functionCounter = 0
-            for func in self.costFunctions:          
-                self.graph = costCalculator.setEdgeCosts(func,i,functionCounter)   
-                functionCounter+=1
+        # # call for every new edge
+        # for i in range(len(addedEdgeIndices)):
+        #     # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
+        #     # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
+        #     functionCounter = 0
+        #     for func in self.costFunctions:          
+        #         self.graph = costCalculator.setEdgeCosts(func,addedEdgeIndices[i],functionCounter)   
+        #         functionCounter+=1
         
         return listOfEdges
         
@@ -746,7 +756,10 @@ class GraphBuilder:
 
     def getGraph(self):
         return self.graph   
-               
+
+    def setGraph(self, graph):
+        self.graph = graph  
+         
     def makeGraph(self):
         """
         If this method is called the creation of the graph starts. The set options are read and
@@ -757,6 +770,7 @@ class GraphBuilder:
         self.graph = ExtGraph()
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
+        self.graph.setConnectionType(self.__options["connectionType"])
 
         if self.__options["createRandomGraph"] == True:
             self.__createRandomVertices()

@@ -434,6 +434,9 @@ class QgsGraphLayer(QgsPluginLayer):
         while graphNode.nodeName() != "graphData":
             graphNode = graphNode.nextSibling()
             
+        graphElem = graphNode.toElement()
+        self.mGraph.setConnectionType(graphElem.attribute("connectionType"))
+
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
 
@@ -498,11 +501,12 @@ class QgsGraphLayer(QgsPluginLayer):
         for edgeId in range(edgeNodes.length()):
             if edgeNodes.at(edgeId).isElement():
                 elem = edgeNodes.at(edgeId).toElement()
-                # TODO: read cost (has to be casted to float when read)
                 fromVertexId = int(elem.attribute("fromVertex"))
                 toVertexId = int(elem.attribute("toVertex"))
                 eIdx = int(elem.attribute("id"))
                 self.mGraph.addEdge(fromVertexId, toVertexId, eIdx) # add cost at later state
+                # TODO: set correct function index
+                # self.mGraph.setCostOfEdge(eIdx, 0, float(elem.attribute("cost")))
 
                 # add feature for each edge
                 feat = QgsFeature()
@@ -533,6 +537,7 @@ class QgsGraphLayer(QgsPluginLayer):
         
         # graphNode saves all graphData
         graphNode = doc.createElement("graphData")
+        graphNode.setAttribute("connectionType", self.mGraph.connectionType())
         node.appendChild(graphNode)
 
         # vertexNode saves all vertices with tis coordinates
