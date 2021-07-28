@@ -42,7 +42,7 @@ class AdvancedCostCalculator():
     def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygons = None, edgesCrossingPolygons = None):        
         edge = self.graph.edge(edgeID)       
         # operator or bracket do not need to be translated
-        if part in self.operators or part.isnumeric():                                   
+        if part in self.operators or part.isnumeric() or part == "True" or part == "False":                                   
             return str(part)          
         
         try:
