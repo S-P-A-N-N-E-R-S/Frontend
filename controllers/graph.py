@@ -83,30 +83,34 @@ class CreateGraphController(BaseController):
         for rasterInput in self.view.getRasterData():
             rasterLayer, rasterBand = rasterInput
             if rasterLayer and rasterBand:
+                if not rasterLayer.isValid():
+                    self.view.showWarning(self.tr("Raster layer:{}[{}] is invalid!").format(rasterLayer.name(), rasterBand))
+                    return
                 builder.setRasterLayer(rasterLayer, rasterBand)
 
         # polygon cost layer
         polygonCostLayer = self.view.getPolygonCostLayer()
         if polygonCostLayer:
+            if not polygonCostLayer.isValid():
+                self.view.showWarning(self.tr("Polygon cost layer is invalid!"))
+                return
             builder.setPolygonsForCostFunction(polygonCostLayer)
 
         # polygon forbidden area
         forbiddenAreaLayer = self.view.getForbiddenAreaLayer()
         if forbiddenAreaLayer:
+            if not forbiddenAreaLayer.isValid():
+                self.view.showWarning(self.tr("Forbidden area layer is invalid!"))
+                return
             builder.setForbiddenAreas(forbiddenAreaLayer)
 
         # additional point layer
         additionalPointLayer = self.view.getAdditionalPointLayer()
         if additionalPointLayer:
-            builder.setAdditionalPointLayer(additionalPointLayer)
-
-        # set advanced cost function
-        costFunction = self.view.getCostFunction()
-        if costFunction:
-            status = builder.addCostFunction(costFunction)
-            if not status == "Valid function":
-                self.view.showError(format(status), self.tr("Cost Function Error"))
+            if not additionalPointLayer.isValid():
+                self.view.showWarning(self.tr("Additional point layer is invalid!"))
                 return
+            builder.setAdditionalPointLayer(additionalPointLayer)
 
         # set options
         builder.setOption("connectionType", self.view.getConnectionType()[1])
@@ -132,6 +136,9 @@ class CreateGraphController(BaseController):
         # set vector layer in builder if input layer exist
         elif self.view.hasInput() and self.view.isInputLayer():
             layer = self.view.getInputLayer()
+            if not layer.isValid():
+                self.view.showWarning(self.tr("Input layer is invalid!"))
+                return
             graphName = layer.name()
             # build graph from layer
             builder.setVectorLayer(layer)
@@ -161,14 +168,25 @@ class CreateGraphController(BaseController):
                 if graphCrs and graphCrs.isValid():
                     graphLayer.setCrs(graphCrs)
 
-                self.saveGraph(graph, graphLayer, graphName)
-                self.view.showSuccess(self.tr("Graph created!"))
+                if self.saveGraph(graph, graphLayer, graphName):
+                    self.view.showSuccess(self.tr("Graph created!"))
                 return
             else:
                 # load shape file and set this layer in builder
                 layer = QgsVectorLayer(path, "", "ogr")
+                if not layer.isValid():
+                    self.view.showWarning(self.tr("Input layer is invalid!"))
+                    return
                 # build graph from layer
                 builder.setVectorLayer(layer)
+
+        # set advanced cost function
+        costFunction = self.view.getCostFunction()
+        if costFunction:
+            status = builder.addCostFunction(costFunction)
+            if not status == "Valid function":
+                self.view.showError(format(status), self.tr("Cost Function Error"))
+                return
 
         # set name to save path basename
         savePath = self.view.getSavePath()
@@ -213,15 +231,15 @@ class CreateGraphController(BaseController):
                 graphLayer = result["graphLayer"]
                 graphName = result["graphName"]
                 if not graph:
-                    self.view.showError("Error during graph creation!")
+                    self.view.showError(self.tr("Error during graph creation!"))
                     return
 
                 # save graph to destination
-                self.saveGraph(graph, graphLayer, graphName)
-
-                self.view.showSuccess(self.tr("Graph created!"))
-                iface.messageBar().pushMessage("Success", self.tr("Graph created!"), level=Qgis.Success)
-                self.view.insertLogText("Graph created!\n")
+                if self.saveGraph(graph, graphLayer, graphName):
+                    # show success message if
+                    self.view.showSuccess(self.tr("Graph created!"))
+                    iface.messageBar().pushMessage("Success", self.tr("Graph created!"), level=Qgis.Success)
+                    self.view.insertLogText("Graph created!\n")
 
             self.view.insertLogText("Remaining graph creation processes : {}\n".format(
                 len(CreateGraphController.activeGraphTasks)))
@@ -231,12 +249,13 @@ class CreateGraphController(BaseController):
 
     def saveGraph(self, graph, graphLayer, graphName=""):
         """
-        Saves graph to destination
+        Saves graph or created graph layers to destination and adds the created layers to project
         :param graph: ExtGraph
         :param graphLayer:
         :param graphName:
-        :return:
+        :return: successful or not
         """
+        success = True
         savePath = self.view.getSavePath()
         if savePath:
             fileName, extension = os.path.splitext(savePath)
@@ -247,7 +266,6 @@ class CreateGraphController(BaseController):
                 # create vector layer from graph layer
                 [vectorPointLayer, vectorLineLayer] = graphLayer.createVectorLayer()
 
-
                 # adjust path to point or lines
                 savePath = savePath[:-len(extension)]
                 savePathPoints = savePath
@@ -256,17 +274,31 @@ class CreateGraphController(BaseController):
                 savePathPoints += "Points" + extension
                 savePathLines += "Lines" + extension
 
-                # save vector layer to path
+                # save vector layers to path
                 vectorPointLayer = helper.saveLayer(vectorPointLayer, vectorPointLayer.name(), "vector", savePathPoints, extension)
                 vectorLineLayer = helper.saveLayer(vectorLineLayer, vectorLineLayer.name(), "vector", savePathLines, extension)
 
-                # add vector layer to project
-                QgsProject.instance().addMapLayer(vectorPointLayer)
-                QgsProject.instance().addMapLayer(vectorLineLayer)
+                # add vector layers to project
+                if vectorPointLayer:
+                    QgsProject.instance().addMapLayer(vectorPointLayer)
+                else:
+                    self.view.showError(self.tr("Created point layer can not be loaded due to invalidity!"))
+                    success = False
+
+                if vectorLineLayer:
+                    QgsProject.instance().addMapLayer(vectorLineLayer)
+                else:
+                    self.view.showError(self.tr("Created line layer can not be loaded due to invalidity!"))
+                    success = False
 
         # add graph layer to project
         graphLayer.setName(graphName + "GraphLayer")
-        QgsProject.instance().addMapLayer(graphLayer)
+        if graphLayer.isValid():
+            QgsProject.instance().addMapLayer(graphLayer)
+        else:
+            self.view.showError(self.tr("Created graph layer can not be loaded due to invalidity!"))
+            success = False
+        return success
 
     def discardTask(self, taskId):
         """

@@ -785,6 +785,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     def setVectorLayer(self, vectorLayer):
         self.vectorLayer = vectorLayer
         self._loadTreeViewItems()
+        self._updateStatusText()
 
     def setRasterData(self, rasterData):
         """
