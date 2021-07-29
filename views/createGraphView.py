@@ -1,7 +1,7 @@
 from .baseContentView import BaseContentView
 from .widgets.QgsCostFunctionDialog import QgsCostFunctionDialog
 from ..controllers.graph import CreateGraphController
-from ..helperFunctions import getImagePath
+from ..helperFunctions import getImagePath, getRasterFileFilter, getVectorFileFilter
 
 from qgis.core import QgsMapLayerProxyModel, QgsTask
 from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget, QgsExtentWidget, QgsMapToolExtent
@@ -38,8 +38,13 @@ class CreateGraphView(BaseContentView):
 
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
-            lambda: self._browseFile("create_graph_input", "Shape files (*.shp);;GraphML (*.graphml )")
+            lambda: self._browseFile("create_graph_input", "GraphML (*.graphml );;"+getVectorFileFilter())
         )
+
+        # show output placeholder
+        self.dialog.create_graph_dest_output.lineEdit().setPlaceholderText("[Save to temporary file]")
+        # set save path formats
+        self.dialog.create_graph_dest_output.setFilter("GraphML (*.graphml );;"+getVectorFileFilter())
 
         # set up add raster data button
         self.dialog.create_graph_raster_plus_btn.clicked.connect(self._addRasterDataInput)
@@ -178,9 +183,6 @@ class CreateGraphView(BaseContentView):
     def isRandom(self):
         return self.dialog.random_graph_checkbox.isChecked()
 
-    def setSavePathFilter(self, filter):
-        self.dialog.create_graph_dest_output.setFilter(filter)
-
     def getSavePath(self):
         return self.dialog.create_graph_dest_output.filePath()
 
@@ -206,7 +208,6 @@ class CreateGraphView(BaseContentView):
         else:
             # return map extent if no extent is selected
             return iface.mapCanvas().extent(), iface.mapCanvas().mapSettings().destinationCrs()
-
 
     def addConnectionType(self, type, userData=None):
         self.dialog.create_graph_connectiontype_input.addItem(type, userData)

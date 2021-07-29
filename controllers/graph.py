@@ -47,9 +47,6 @@ class CreateGraphController(BaseController):
         self.view.addDistanceStrategy(self.tr("Geodesic"), "Geodesic")
         self.view.addDistanceStrategy(self.tr("Advanced"), "Advanced")
 
-        # set save path formats
-        self.view.setSavePathFilter("GraphML (*.graphml );;Shape files (*.shp)")
-
         # load possibly available active tasks into table and reconnect slots
         self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
         for taskTuple in CreateGraphController.activeGraphTasks:

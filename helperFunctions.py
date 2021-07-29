@@ -4,7 +4,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 
 from os.path import abspath, join, dirname, splitext, basename
 
-from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe, QgsRasterFileWriter, QgsRasterLayer
+from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsProcessingParameterVectorDestination
 
 
 def getPluginPath():
@@ -50,11 +50,15 @@ def saveLayer(layer, layerName, type, path=None, format=None):
     :param format: not all tested and not for temporary vector layer available. In this case set None.
                     vector: 'gpkg', 'shp', '000', 'bna', 'csv', 'dgn', 'dxf', 'geojson', 'geojsonl', 'geojsons', 'gml', 'gpx', 'gxt', 'ili', 'itf', 'json', 'kml', 'ods', 'sql', 'sqlite', 'tab', 'txt', 'xlsx', 'xml', 'xtf'
                     raster: "tif", "gen", "bmp", "bt", "byn", "bil", "ers", "gpkg", "grd", "grd", "gtx", "img", "mpr", "lbl", "kro", "ter", "mbtiles", "hdr", "mrf", "ntf", "gsb", "grd", "pix", "map", "pdf", "xml", "pgm", "rsw", "grd", "rst", "sdat", "rgb", "ter", "vrt", "nc"
-    :return:
+                   The default format for raster layer is tif.
+    :return: created Layer. None if created layer is invalid.
     """
     if layer.isValid():
         if type == "vector":
                 if path:
+                    if not format:
+                        # use extension
+                        format = splitext(path)[1]
                     # copy layer to path
                     QgsVectorFileWriter.writeAsVectorFormat(layer, path, "UTF-8", layer.crs(), QgsVectorFileWriter.driverForExtension(format))
                     # load created layer
@@ -77,7 +81,9 @@ def saveLayer(layer, layerName, type, path=None, format=None):
                 if not path:
                     # create temporary path
                     path = QgsProcessingUtils.generateTempFilename(layerName)
-
+                if not format:
+                    # use tif
+                    format = "tif"
                 # copy layer to path
                 provider = layer.dataProvider()
                 pipe = QgsRasterPipe()
@@ -92,3 +98,25 @@ def saveLayer(layer, layerName, type, path=None, format=None):
                 if createdLayer.isValid():
                     return createdLayer
     return None
+
+
+def getVectorFileFilter():
+    """
+    Returns all Vector File Filters, e.g.
+    "GeoPackage (*.gpkg *.GPKG);;ESRI Shapefile (*.shp *.SHP);;..."
+    :return:
+    """
+    return QgsVectorFileWriter.fileFilterString()
+
+
+def getRasterFileFilter():
+    """
+    Resturn all Raster File Filters, e.g.
+    "GeoTIFF (*.tif *.TIF *.tiff *.TIFF);;ARC Digitized Raster Graphics (*.gen *.GEN);;..."
+    :return:
+    """
+    filters = []
+    for filterAndFormat in QgsRasterFileWriter.supportedFiltersAndFormats():
+        filters.append(filterAndFormat.filterString)
+    return ";;".join(filters)
+
