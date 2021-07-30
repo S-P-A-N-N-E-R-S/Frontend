@@ -4,6 +4,7 @@ import gzip
 
 from . import protoParser
 from .exceptions import NetworkClientError
+from .protocol.build import meta_pb2
 
 LENGTH_FIELD_SIZE = 8
 
@@ -36,14 +37,17 @@ class Client():
         self.socket.close()
 
     def send(self, request):
+        # Create compressed wire format
         protoBufString = protoParser.createProtoBuf(request)
-
-        return self._sendProtoBufString(protoBufString)
-
-    def _sendProtoBufString(self, protoBufString):
         compressedProtoBufString = gzip.compress(protoBufString)
 
-        msg = struct.pack('!Q', len(compressedProtoBufString)) + compressedProtoBufString
+        # Create meta message
+        metaData = meta_pb2.MetaData()
+        metaData.containerSize = len(compressedProtoBufString)
+        metaString = metaData.SerializeToString()
+
+        # Pack message and send
+        msg = struct.pack('!Q', len(metaString)) + metaString + compressedProtoBufString
 
         try:
             self.socket.sendall(msg)
@@ -54,26 +58,29 @@ class Client():
 
 
     def recv(self, response):
-        protoBufString = self._recvProtobufString()
-
-        protoParser.parseProtoBuf(protoBufString, response)
-
-    def _recvProtobufString(self):
+        # Get meta message length
         rawMsgLength = self._recvAll(LENGTH_FIELD_SIZE)
         if not rawMsgLength:
             raise NetworkClientError("No ProtoBuf length received")
-
         msgLength = struct.unpack('!Q', rawMsgLength)[0]
 
-        compressedProtoBufString = self._recvAll(msgLength)
+        # Get meta message
+        metaString = self._recvAll(msgLength)
+        metaData = meta_pb2.MetaData()
+        metaData.ParseFromString(metaString)
+        if metaData.containerSize <= 0:
+            raise NetworkClientError("Empty Message")
+
+        # Get container
+        compressedProtoBufString = self._recvAll(metaData.containerSize)
         if not compressedProtoBufString:
             raise NetworkClientError("No ProtoBuf received")
-
-        return gzip.decompress(compressedProtoBufString)
+        protoParser.parseProtoBuf(gzip.decompress(compressedProtoBufString), response)
 
     def _recvAll(self, msgLength):
         # Helper function to recv n bytes or return None if EOF is hit
         data = bytearray()
+
         while len(data) < msgLength:
             try:
                 packet = self.socket.recv(msgLength - len(data))

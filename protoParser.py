@@ -1,4 +1,4 @@
-from .exceptions import ParseError
+from .exceptions import ParseError, ServerError
 from .protocol.build import container_pb2
 
 
@@ -27,7 +27,12 @@ def parseProtoBuf(protoBufString, response):
             raise ParseError("Method not defined") from nameError
 
     elif protoBuf.status == container_pb2.ResponseContainer.StatusCode.ERROR:
-        raise ParseError("Server responded with error")
-
+        raise ServerError("Server responded with unspecified error")
+    elif protoBuf.status == container_pb2.ResponseContainer.StatusCode.READ_ERROR:
+        raise ServerError("Server responded with error: READ_ERROR")
+    elif protoBuf.status == container_pb2.ResponseContainer.StatusCode.PROTO_PARSING_ERROR:
+        raise ServerError("Server responded with error: PROTO_PARSING_ERROR")
+    elif protoBuf.status == container_pb2.ResponseContainer.StatusCode.INVALID_REQUEST_ERROR:
+        raise ServerError("Server responded with error: INVALID_REQUEST_ERROR")
     else:
         raise ParseError("Server responded with unknown status code")
