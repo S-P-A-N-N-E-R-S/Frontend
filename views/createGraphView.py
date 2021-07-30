@@ -43,6 +43,9 @@ class CreateGraphView(BaseContentView):
         # set save path formats
         self.dialog.create_graph_dest_output.setFilter("GraphML (*.graphml );;"+getVectorFileFilter())
 
+        # enable and disable inputs when connection type is changed
+        self.dialog.create_graph_connectiontype_input.currentIndexChanged.connect(self._connectionTypeChanged)
+
         # enable and disable inputs when distance strategy is changed
         self.dialog.create_graph_distancestrategy_input.currentIndexChanged.connect(self._distanceStrategyChanged)
 
@@ -88,6 +91,17 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
         # immediately disable button and enable after 1 seconds
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
+
+    def _connectionTypeChanged(self):
+        """
+        Disables and enables parameter inputs based on selected connection type
+        :return:
+        """
+        _, connectionType = self.getConnectionType()
+        self.dialog.create_graph_nearest_neighbor_widget.setEnabled(connectionType in ["Nearest neighbor", "ClusterNN",
+                                                                                       "DistanceNN"])
+        self.dialog.create_graph_distance_input.setEnabled(connectionType == "DistanceNN")
+        self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
 
     def _distanceStrategyChanged(self):
         """
