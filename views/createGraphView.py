@@ -68,9 +68,14 @@ class CreateGraphView(BaseContentView):
         # set up crs selection
         self.dialog.create_graph_crs_input.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
 
-        # disable input field if random is checked
-        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input.setDisabled)
-        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input_tools.setDisabled)
+        # disable input field and enable random params if random is checked
+        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input_widget.setDisabled)
+        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_randomNumber_input.setEnabled)
+        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_randomarea_widget.setEnabled)
+        # random is unchecked by default
+        self.dialog.random_graph_checkbox.setChecked(False)
+        self.dialog.create_graph_randomNumber_input.setEnabled(False)
+        self.dialog.create_graph_randomarea_widget.setEnabled(False)
 
         # set up random extent
         self.addRandomArea(self.tr("Custom"), "custom area")
