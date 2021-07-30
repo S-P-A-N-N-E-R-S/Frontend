@@ -258,6 +258,11 @@ class GraphBuilder:
         if not optionType in self.__options:
             raise KeyError("Option not found")
         self.__options[optionType] = value
+
+    def getOption(self, optionType):
+        if not optionType in self.__options:
+            raise KeyError("Option not found")
+        return self.__options[optionType]
     
     def setRandomOption(self, optionType, value):
         if not optionType in self.__randomOptions:

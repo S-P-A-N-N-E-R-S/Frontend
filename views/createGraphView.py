@@ -33,9 +33,6 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_forbiddenarea_input.setCurrentIndex(0)
         self.dialog.create_graph_additionalpoint_input.setCurrentIndex(0)
 
-        # show raster bands
-        self.dialog.create_graph_raster_input.layerChanged.connect(self.dialog.create_graph_rasterband_input.setLayer)
-
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
             lambda: self._browseFile("create_graph_input", "GraphML (*.graphml );;"+getVectorFileFilter())
@@ -45,6 +42,12 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_dest_output.lineEdit().setPlaceholderText("[Save to temporary file]")
         # set save path formats
         self.dialog.create_graph_dest_output.setFilter("GraphML (*.graphml );;"+getVectorFileFilter())
+
+        # enable and disable inputs when distance strategy is changed
+        self.dialog.create_graph_distancestrategy_input.currentIndexChanged.connect(self._distanceStrategyChanged)
+
+        # show raster bands
+        self.dialog.create_graph_raster_input.layerChanged.connect(self.dialog.create_graph_rasterband_input.setLayer)
 
         # set up add raster data button
         self.dialog.create_graph_raster_plus_btn.clicked.connect(self._addRasterDataInput)
@@ -81,13 +84,23 @@ class CreateGraphView(BaseContentView):
         # immediately disable button and enable after 1 seconds
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
 
+    def _distanceStrategyChanged(self):
+        """
+        Disables and enables parameter inputs based on selected distance strategy
+        :return:
+        """
+        _, distanceStrategy = self.getDistanceStrategy()
+        self.dialog.create_graph_costfunction_widget.setEnabled(distanceStrategy == "Advanced")
+        self.dialog.create_graph_polycost_input.setEnabled(distanceStrategy == "Advanced")
+        self.dialog.create_graph_rasterdata_widget.setEnabled(distanceStrategy == "Advanced")
+
     def _addRasterDataInput(self):
         """
         Appends a new raster band input line
         :return:
         """
         #  change add button to remove button
-        lastLayout = self.dialog.create_graph_rasterdata_layout.itemAt(self.dialog.create_graph_rasterdata_layout.count()-1)
+        lastLayout = self.dialog.create_graph_rasterdata_widget.layout().itemAt(self.dialog.create_graph_rasterdata_widget.layout().count()-1)
         button = lastLayout.itemAt(lastLayout.count()-1).widget()
         button.setText("➖")
         button.clicked.disconnect()
@@ -114,7 +127,7 @@ class CreateGraphView(BaseContentView):
         layout.addWidget(bandComboBox)
         layout.addWidget(addButton)
 
-        self.dialog.create_graph_rasterdata_layout.addLayout(layout)
+        self.dialog.create_graph_rasterdata_widget.layout().addLayout(layout)
 
     def _removeRasterDataInput(self, inputLayout):
         """
@@ -124,7 +137,7 @@ class CreateGraphView(BaseContentView):
         """
         for i in reversed(range(inputLayout.count())):
             inputLayout.itemAt(i).widget().deleteLater()
-        self.dialog.create_graph_rasterdata_layout.removeItem(inputLayout)
+        self.dialog.create_graph_rasterdata_widget.layout().removeItem(inputLayout)
 
     def _showCostFunctionWidget(self):
         costFunctionDialog = QgsCostFunctionDialog()
@@ -245,8 +258,8 @@ class CreateGraphView(BaseContentView):
         :return: Array of raster inputs and each input is a tuple: (layer, band)
         """
         rasterData = []
-        for i in range(self.dialog.create_graph_rasterdata_layout.count()):
-            inputLayout = self.dialog.create_graph_rasterdata_layout.itemAt(i)
+        for i in range(self.dialog.create_graph_rasterdata_widget.layout().count()):
+            inputLayout = self.dialog.create_graph_rasterdata_widget.layout().itemAt(i)
             rasterLayer = inputLayout.itemAt(0).widget().currentLayer()
             rasterBand = inputLayout.itemAt(1).widget().currentBand()
             if rasterLayer is not None:

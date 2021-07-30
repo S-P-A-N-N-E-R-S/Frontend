@@ -179,7 +179,7 @@ class CreateGraphController(BaseController):
 
         # set advanced cost function
         costFunction = self.view.getCostFunction()
-        if costFunction:
+        if costFunction and builder.getOption("distanceStrategy") == "Advanced":
             status = builder.addCostFunction(costFunction)
             if not status == "Valid function":
                 self.view.showError(format(status), self.tr("Cost Function Error"))
