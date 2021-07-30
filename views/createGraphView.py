@@ -11,7 +11,7 @@ from PyQt5.QtCore import QTimer, Qt, QSize
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton, QHBoxLayout, QSizePolicy
 from PyQt5.QtGui import QIcon
 
-import time
+import time, os
 
 
 class CreateGraphView(BaseContentView):
@@ -32,6 +32,11 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_polycost_input.setCurrentIndex(0)
         self.dialog.create_graph_forbiddenarea_input.setCurrentIndex(0)
         self.dialog.create_graph_additionalpoint_input.setCurrentIndex(0)
+
+        # enable and disable inputs when input is changed
+        self.dialog.create_graph_input.currentIndexChanged.connect(self._inputChanged)
+        self.dialog.random_graph_checkbox.stateChanged.connect(self._inputChanged)
+        self._inputChanged()
 
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
@@ -71,15 +76,6 @@ class CreateGraphView(BaseContentView):
         # set up crs selection
         self.dialog.create_graph_crs_input.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
 
-        # disable input field and enable random params if random is checked
-        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_input_widget.setDisabled)
-        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_randomNumber_input.setEnabled)
-        self.dialog.random_graph_checkbox.stateChanged.connect(self.dialog.create_graph_randomarea_widget.setEnabled)
-        # random is unchecked by default
-        self.dialog.random_graph_checkbox.setChecked(False)
-        self.dialog.create_graph_randomNumber_input.setEnabled(False)
-        self.dialog.create_graph_randomarea_widget.setEnabled(False)
-
         # set up random extent
         self.addRandomArea(self.tr("Custom"), "custom area")
         self.dialog.create_graph_randomarea_extent.setMapCanvas(iface.mapCanvas())
@@ -91,6 +87,23 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
         # immediately disable button and enable after 1 seconds
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
+
+    def _inputChanged(self):
+        """
+        Disables and enables parameter inputs based on input
+        :return:
+        """
+        inputText = self.dialog.create_graph_input.currentText()
+        root, ext = os.path.splitext(inputText)
+        # show only crs input and hide other params if graph file is selected and not random
+        self.dialog.create_graph_advanced_parameters_groupbox.setHidden(ext == ".graphml" and not self.isRandom())
+        self.dialog.create_graph_crs_label.setVisible(ext == ".graphml" and not self.isRandom())
+        self.dialog.create_graph_crs_input.setVisible(ext == ".graphml" and not self.isRandom())
+
+        # disable input field and enable random params if random is checked
+        self.dialog.create_graph_input_widget.setDisabled(self.isRandom())
+        self.dialog.create_graph_randomNumber_input.setEnabled(self.isRandom())
+        self.dialog.create_graph_randomarea_widget.setEnabled(self.isRandom())
 
     def _connectionTypeChanged(self):
         """
