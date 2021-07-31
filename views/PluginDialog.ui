@@ -537,18 +537,51 @@ QListWidget::item::selected {
                                <item>
                                 <widget class="QLabel" name="create_graph_distance_label">
                                  <property name="text">
-                                  <string>Distance (for DistanceNN)</string>
+                                  <string>Distance</string>
                                  </property>
                                 </widget>
                                </item>
                                <item>
-                                <widget class="QDoubleSpinBox" name="create_graph_distance_input">
-                                 <property name="maximum">
-                                  <double>1000.000000000000000</double>
-                                 </property>
-                                 <property name="stepType">
-                                  <enum>QAbstractSpinBox::DefaultStepType</enum>
-                                 </property>
+                                <widget class="QWidget" name="create_graph_distance_widget" native="true">
+                                 <layout class="QHBoxLayout" name="horizontalLayout_10">
+                                  <property name="leftMargin">
+                                   <number>0</number>
+                                  </property>
+                                  <property name="topMargin">
+                                   <number>0</number>
+                                  </property>
+                                  <property name="rightMargin">
+                                   <number>0</number>
+                                  </property>
+                                  <property name="bottomMargin">
+                                   <number>0</number>
+                                  </property>
+                                  <item>
+                                   <widget class="QDoubleSpinBox" name="create_graph_distance_input">
+                                    <property name="sizePolicy">
+                                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                                      <horstretch>0</horstretch>
+                                      <verstretch>0</verstretch>
+                                     </sizepolicy>
+                                    </property>
+                                    <property name="decimals">
+                                     <number>2</number>
+                                    </property>
+                                    <property name="maximum">
+                                     <double>1000.000000000000000</double>
+                                    </property>
+                                    <property name="stepType">
+                                     <enum>QAbstractSpinBox::DefaultStepType</enum>
+                                    </property>
+                                    <property name="value">
+                                     <double>1.000000000000000</double>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QComboBox" name="create_graph_distance_unit_input"/>
+                                  </item>
+                                 </layout>
                                 </widget>
                                </item>
                                <item>

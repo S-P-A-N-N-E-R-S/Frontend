@@ -3,7 +3,7 @@ from .widgets.QgsCostFunctionDialog import QgsCostFunctionDialog
 from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath, getRasterFileFilter, getVectorFileFilter
 
-from qgis.core import QgsMapLayerProxyModel, QgsTask
+from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes
 from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget, QgsExtentWidget, QgsMapToolExtent
 from qgis.utils import iface
 
@@ -50,6 +50,20 @@ class CreateGraphView(BaseContentView):
 
         # enable and disable inputs when connection type is changed
         self.dialog.create_graph_connectiontype_input.currentIndexChanged.connect(self._connectionTypeChanged)
+
+        # add distance units
+        distanceUnits = [(QgsUnitTypes.toString(QgsUnitTypes.DistanceMeters), QgsUnitTypes.DistanceMeters),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceKilometers), QgsUnitTypes.DistanceKilometers),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceFeet), QgsUnitTypes.DistanceFeet),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceNauticalMiles), QgsUnitTypes.DistanceNauticalMiles),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceYards), QgsUnitTypes.DistanceYards),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceMiles), QgsUnitTypes.DistanceMiles),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceDegrees), QgsUnitTypes.DistanceDegrees),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceCentimeters), QgsUnitTypes.DistanceCentimeters),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceMillimeters), QgsUnitTypes.DistanceMillimeters),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceUnknownUnit), QgsUnitTypes.DistanceUnknownUnit)]
+        for distanceName, distanceData in distanceUnits:
+            self.dialog.create_graph_distance_unit_input.addItem(distanceName, distanceData)
 
         # enable and disable inputs when distance strategy is changed
         self.dialog.create_graph_distancestrategy_input.currentIndexChanged.connect(self._distanceStrategyChanged)
@@ -113,7 +127,7 @@ class CreateGraphView(BaseContentView):
         _, connectionType = self.getConnectionType()
         self.dialog.create_graph_nearest_neighbor_widget.setEnabled(connectionType in ["Nearest neighbor", "ClusterNN",
                                                                                        "DistanceNN"])
-        self.dialog.create_graph_distance_input.setEnabled(connectionType == "DistanceNN")
+        self.dialog.create_graph_distance_widget.setEnabled(connectionType == "DistanceNN")
         self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
 
     def _distanceStrategyChanged(self):
@@ -267,7 +281,11 @@ class CreateGraphView(BaseContentView):
         return self.dialog.create_graph_allowdoubleedges_checkbox.isChecked()
 
     def getDistance(self):
-        return self.dialog.create_graph_distance_input.value()
+        """
+        Gets the user entered distance and selected distance unit
+        :return: (distance, QgsUnitTypes::DistanceUnit)
+        """
+        return self.dialog.create_graph_distance_input.value(), self.dialog.create_graph_distance_unit_input.currentData()
 
     def getClusterNumber(self):
         return self.dialog.create_graph_clusternumber_input.value()
