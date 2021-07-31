@@ -284,9 +284,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>0</y>
+                         <y>-339</y>
                          <width>756</width>
-                         <height>967</height>
+                         <height>969</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -779,7 +779,7 @@ QListWidget::item::selected {
                                </item>
                                <item>
                                 <widget class="QWidget" name="create_graph_costfunction_widget" native="true">
-                                 <layout class="QHBoxLayout" name="horizontalLayout_13">
+                                 <layout class="QVBoxLayout" name="verticalLayout_24">
                                   <property name="leftMargin">
                                    <number>0</number>
                                   </property>
@@ -793,14 +793,70 @@ QListWidget::item::selected {
                                    <number>0</number>
                                   </property>
                                   <item>
-                                   <widget class="QLineEdit" name="create_graph_costfunction_input"/>
-                                  </item>
-                                  <item>
-                                   <widget class="QToolButton" name="create_graph_costfunction_define_btn">
-                                    <property name="text">
-                                     <string>...</string>
-                                    </property>
-                                   </widget>
+                                   <layout class="QHBoxLayout" name="horizontalLayout_12">
+                                    <item>
+                                     <widget class="QLineEdit" name="create_graph_costfunction_input"/>
+                                    </item>
+                                    <item>
+                                     <widget class="QToolButton" name="create_graph_costfunction_define_btn">
+                                      <property name="text">
+                                       <string>...</string>
+                                      </property>
+                                      <property name="arrowType">
+                                       <enum>Qt::NoArrow</enum>
+                                      </property>
+                                     </widget>
+                                    </item>
+                                    <item>
+                                     <widget class="QPushButton" name="create_graph_costfunction_add_btn">
+                                      <property name="sizePolicy">
+                                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                       </sizepolicy>
+                                      </property>
+                                      <property name="minimumSize">
+                                       <size>
+                                        <width>0</width>
+                                        <height>0</height>
+                                       </size>
+                                      </property>
+                                      <property name="maximumSize">
+                                       <size>
+                                        <width>25</width>
+                                        <height>16777215</height>
+                                       </size>
+                                      </property>
+                                      <property name="sizeIncrement">
+                                       <size>
+                                        <width>0</width>
+                                        <height>0</height>
+                                       </size>
+                                      </property>
+                                      <property name="baseSize">
+                                       <size>
+                                        <width>0</width>
+                                        <height>0</height>
+                                       </size>
+                                      </property>
+                                      <property name="styleSheet">
+                                       <string notr="true"/>
+                                      </property>
+                                      <property name="text">
+                                       <string>➕</string>
+                                      </property>
+                                      <property name="autoDefault">
+                                       <bool>true</bool>
+                                      </property>
+                                      <property name="default">
+                                       <bool>false</bool>
+                                      </property>
+                                      <property name="flat">
+                                       <bool>false</bool>
+                                      </property>
+                                     </widget>
+                                    </item>
+                                   </layout>
                                   </item>
                                  </layout>
                                 </widget>

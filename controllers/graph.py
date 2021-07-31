@@ -178,12 +178,13 @@ class CreateGraphController(BaseController):
                 builder.setVectorLayer(layer)
 
         # set advanced cost function
-        costFunction = self.view.getCostFunction()
-        if costFunction and builder.getOption("distanceStrategy") == "Advanced":
-            status = builder.addCostFunction(costFunction)
-            if not status == "Valid function":
-                self.view.showError(format(status), self.tr("Cost Function Error"))
-                return
+        costFunctions = self.view.getCostFunctions()
+        if costFunctions and builder.getOption("distanceStrategy") == "Advanced":
+            for index, costFunction in enumerate(costFunctions):
+                status = builder.addCostFunction(costFunction)
+                if not status == "Valid function":
+                    self.view.showError(format(status), self.tr("Error in cost function with index {}").format(index))
+                    return
 
         # set name to save path basename
         savePath = self.view.getSavePath()

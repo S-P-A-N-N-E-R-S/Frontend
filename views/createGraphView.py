@@ -4,11 +4,11 @@ from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath, getRasterFileFilter, getVectorFileFilter
 
 from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes
-from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget, QgsExtentWidget, QgsMapToolExtent
+from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget
 from qgis.utils import iface
 
 from PyQt5.QtCore import QTimer, Qt, QSize
-from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem,QPushButton, QHBoxLayout, QSizePolicy
+from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QPushButton, QHBoxLayout, QSizePolicy, QLineEdit, QToolButton
 from PyQt5.QtGui import QIcon
 
 import time, os
@@ -75,7 +75,10 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_raster_plus_btn.clicked.connect(self._addRasterDataInput)
 
         # set up advance cost widget button
-        self.dialog.create_graph_costfunction_define_btn.clicked.connect(self._showCostFunctionWidget)
+        self.dialog.create_graph_costfunction_define_btn.clicked.connect(lambda: self._showCostFunctionDialog(0))
+
+        # set up add cost function button
+        self.dialog.create_graph_costfunction_add_btn.clicked.connect(self._addCostFunctionInput)
 
         # set up tasks table
         self.dialog.graph_tasks_table.setColumnCount(4)
@@ -150,7 +153,7 @@ class CreateGraphView(BaseContentView):
         button = lastLayout.itemAt(lastLayout.count()-1).widget()
         button.setText("➖")
         button.clicked.disconnect()
-        button.clicked.connect(lambda: self._removeRasterDataInput(lastLayout))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget("create_graph_rasterdata_widget", lastLayout))
 
         layerComboBox = QgsMapLayerComboBox()
         layerComboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -175,23 +178,63 @@ class CreateGraphView(BaseContentView):
 
         self.dialog.create_graph_rasterdata_widget.layout().addLayout(layout)
 
-    def _removeRasterDataInput(self, inputLayout):
+    def _addCostFunctionInput(self):
         """
-        Removes the passed input layout
-        :param inputLayout: input layout
+        Appends a new cost function input line
         :return:
         """
-        for i in reversed(range(inputLayout.count())):
-            inputLayout.itemAt(i).widget().deleteLater()
-        self.dialog.create_graph_rasterdata_widget.layout().removeItem(inputLayout)
+        costFunctionWidget = self.dialog.create_graph_costfunction_widget
+        #  change add button to remove button
+        lastLayout = costFunctionWidget.layout().itemAt(costFunctionWidget.layout().count() - 1)
+        button = lastLayout.itemAt(lastLayout.count() - 1).widget()
+        button.setText("➖")
+        button.clicked.disconnect()
+        button.clicked.connect(lambda: self._removeLayoutFromWidget("create_graph_costfunction_widget", lastLayout))
 
-    def _showCostFunctionWidget(self):
+        costLineEdit = QLineEdit()
+        costLineEdit.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
+
+        costWidgetDialogButton = QToolButton()
+        costWidgetDialogButton.setText("...")
+
+        addButton = QPushButton("➕")
+        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        addButton.setMaximumSize(25, 25)
+        addButton.clicked.connect(self._addCostFunctionInput)
+
+        layout = QHBoxLayout()
+        layout.addWidget(costLineEdit)
+        layout.addWidget(costWidgetDialogButton)
+        layout.addWidget(addButton)
+
+        costFunctionWidget.layout().addLayout(layout)
+
+        # show cost function dialog when button is clicked
+        costWidgetDialogButton.clicked.connect(lambda: self._showCostFunctionDialog(
+            costFunctionWidget.layout().indexOf(layout)))
+
+    def _removeLayoutFromWidget(self, widget, layout):
+        """
+        Removes the passed layout from widget
+        :param layout to be deleted
+        :return:
+        """
+        widget = getattr(self.dialog, widget)
+        for i in reversed(range(layout.count())):
+            layout.itemAt(i).widget().deleteLater()
+        widget.layout().removeItem(layout)
+
+    def _showCostFunctionDialog(self, index):
+        """
+        Creates and displays the cost function Dialog
+        :return:
+        """
         costFunctionDialog = QgsCostFunctionDialog()
-        costFunctionDialog.setCostFunction(self.getCostFunction())
+        costFunctionDialog.setCostFunction(self.getCostFunction(index))
         costFunctionDialog.setVectorLayer(self.getInputLayer())
         costFunctionDialog.setRasterData(self.getRasterData())
         # load cost function when ok button is clicked
-        costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction()))
+        costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction(), index))
         costFunctionDialog.exec()
 
     def _disableButton(self):
@@ -325,11 +368,36 @@ class CreateGraphView(BaseContentView):
     def getAdditionalPointLayer(self):
         return self.dialog.create_graph_additionalpoint_input.currentLayer()
 
-    def getCostFunction(self):
-        return self.dialog.create_graph_costfunction_input.text()
+    def getCostFunctions(self):
+        """
+        Collects all non-empty user defined cost functions
+        :return: Array of cost functions
+        """
+        costFunctions = []
+        for i in range(self.dialog.create_graph_costfunction_widget.layout().count()):
+            costFunction = self.getCostFunction(i)
+            if costFunction is not None:
+                costFunctions.append(costFunction)
+        return costFunctions
 
-    def setCostFunction(self, costFunction):
-        self.dialog.create_graph_costfunction_input.setText(costFunction)
+    def getCostFunction(self, index):
+        """
+        Gets cost function at given index
+        :param index:
+        :return:
+        """
+        costLineEdit = self.dialog.create_graph_costfunction_widget.layout().itemAt(index).itemAt(0).widget()
+        return costLineEdit.text()
+
+    def setCostFunction(self, costFunction, index):
+        """
+        Sets cost function at given index
+        :param costFunction:
+        :param index:
+        :return:
+        """
+        costLineEdit = self.dialog.create_graph_costfunction_widget.layout().itemAt(index).itemAt(0).widget()
+        costLineEdit.setText(costFunction)
 
     def getCRS(self):
         return self.dialog.create_graph_crs_input.crs()
