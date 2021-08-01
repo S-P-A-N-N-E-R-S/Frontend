@@ -297,7 +297,7 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>-339</y>
+                         <y>0</y>
                          <width>756</width>
                          <height>969</height>
                         </rect>
@@ -308,7 +308,7 @@ QListWidget::item::selected {
                           <item>
                            <widget class="QLabel" name="create_graph_input_label">
                             <property name="text">
-                             <string>Vector layer (points, lines) or graph file (.graphML)</string>
+                             <string>Vector layer (points or lines) or graph file</string>
                             </property>
                            </widget>
                           </item>
@@ -330,14 +330,14 @@ QListWidget::item::selected {
                              <item>
                               <widget class="QgsMapLayerComboBox" name="create_graph_input">
                                <property name="toolTip">
-                                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a vector layer or a graph file. The vector layer should contain points or lines. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a vector layer or a graph file. The vector layer should contain points or lines. Supported graph file type is graphML.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                                </property>
                               </widget>
                              </item>
                              <item>
                               <widget class="QToolButton" name="create_graph_input_tools">
                                <property name="toolTip">
-                                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Browse&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                <string>Browse</string>
                                </property>
                                <property name="text">
                                 <string>...</string>
@@ -829,7 +829,7 @@ QListWidget::item::selected {
                                <item>
                                 <widget class="QLabel" name="create_graph_forbiddenarea_label">
                                  <property name="text">
-                                  <string>Forbidden areas [optional] (only polygon layer)</string>
+                                  <string>Forbidden areas [optional]</string>
                                  </property>
                                 </widget>
                                </item>
@@ -846,7 +846,7 @@ QListWidget::item::selected {
                                <item>
                                 <widget class="QLabel" name="create_graph_additionalpoint_label">
                                  <property name="text">
-                                  <string>Additional point layer (only line layer)</string>
+                                  <string>Additional point layer [optional]</string>
                                  </property>
                                 </widget>
                                </item>

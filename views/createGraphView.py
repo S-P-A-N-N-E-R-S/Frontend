@@ -2,8 +2,9 @@ from .baseContentView import BaseContentView
 from .widgets.QgsCostFunctionDialog import QgsCostFunctionDialog
 from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath, getRasterFileFilter, getVectorFileFilter
+from ..models.ExtGraph import ExtGraph
 
-from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes
+from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes, QgsVectorLayer, QgsWkbTypes
 from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget
 from qgis.utils import iface
 
@@ -121,6 +122,13 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_input_widget.setDisabled(self.isRandom())
         self.dialog.create_graph_randomNumber_input.setEnabled(self.isRandom())
         self.dialog.create_graph_randomarea_widget.setEnabled(self.isRandom())
+
+        # show connection type if point or random graph
+        layer = self.getInputLayer()
+        isPointLayer = layer is not None and layer.geometryType() == QgsWkbTypes.PointGeometry
+        isLineLayer = layer is not None and layer.geometryType() == QgsWkbTypes.LineGeometry
+        self.dialog.create_graph_connectiontype_input.setEnabled(isPointLayer or self.isRandom())
+        self.dialog.create_graph_additionalpoint_input.setEnabled(isLineLayer and not self.isRandom())
 
     def _connectionTypeChanged(self):
         """
@@ -266,28 +274,53 @@ class CreateGraphView(BaseContentView):
     def isInputLayer(self):
         """
         True: if input is layer
-        False: if input is path
+        False: if input is graph
+        None: if no input available
         :return:
         """
-        if self.dialog.create_graph_input.currentLayer():
-            return True
-        return False
+        if self.hasInput():
+            if self.dialog.create_graph_input.currentLayer():
+                return True
+
+            # assumed that only one additional item is inserted
+            path = self.dialog.create_graph_input.additionalItems()[0]
+            name, ext = os.path.splitext(os.path.basename(path))
+            if ext != ".graphml":
+                return True
+            else:
+                return False
+        return None
 
     def getInputLayer(self):
         """
-        Returns the current selected layer or none if path is sleceted
-        :return: Layer or None if path is selected
+        Returns the input layer or none if no layer is given
+        :return: Layer or None if no layer
         """
-        return self.dialog.create_graph_input.currentLayer()
+        if self.hasInput() and self.isInputLayer():
+            layer = self.dialog.create_graph_input.currentLayer()
+            if layer is not None:
+                return layer
 
-    def getInputPath(self):
+            # load layer from file path
+            path = self.dialog.create_graph_input.additionalItems()[0]
+            name, ext = os.path.splitext(os.path.basename(path))
+            if ext != ".graphml":
+                return QgsVectorLayer(path, name, "ogr")
+        return None
+
+    def getInputGraph(self):
         """
-        Returns input path of selected file path in layer combobox
-        :return: Path to file or None if layer is selected
+        Returns input graph
+        :return: ExtGraph or None
         """
         # assumed that only one additional item is inserted
         if self.hasInput() and not self.isInputLayer():
-            return self.dialog.create_graph_input.additionalItems()[0]
+            path = self.dialog.create_graph_input.additionalItems()[0]
+            name, ext = os.path.splitext(os.path.basename(path))
+            if ext == ".graphml":
+                graph = ExtGraph()
+                graph.readGraphML(path)
+                return graph
         return None
 
     def isRandom(self):

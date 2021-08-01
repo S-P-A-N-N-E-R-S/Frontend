@@ -140,42 +140,27 @@ class CreateGraphController(BaseController):
             # build graph from layer
             builder.setVectorLayer(layer)
 
-        # if file path as input
+        # if graph as input
         elif self.view.hasInput() and not self.view.isInputLayer():
-            path = self.view.getInputPath()
-            fileName, extension = os.path.splitext(path)
-            graphName = os.path.basename(fileName)
-            if extension == ".graphml":
-                # create graph from .graphml file
-                graph = ExtGraph()
-                graph.readGraphML(path)
-
-                if not graph:
-                    self.view.showError(self.tr("File can not be parsed!"))
-                    return
-
-                # create empty graph layer
-                graphLayer = QgsGraphLayer()
-
-                # set graph to graph layer
-                graphLayer.setGraph(graph)
-
-                # set user specified crs
-                graphCrs = self.view.getCRS()
-                if graphCrs and graphCrs.isValid():
-                    graphLayer.setCrs(graphCrs)
-
-                if self.saveGraph(graph, graphLayer, graphName):
-                    self.view.showSuccess(self.tr("Graph created!"))
+            graph = self.view.getInputGraph()
+            if not graph:
+                self.view.showError(self.tr("File can not be parsed!"))
                 return
-            else:
-                # load shape file and set this layer in builder
-                layer = QgsVectorLayer(path, "", "ogr")
-                if not layer.isValid():
-                    self.view.showWarning(self.tr("Input layer is invalid!"))
-                    return
-                # build graph from layer
-                builder.setVectorLayer(layer)
+
+            # create empty graph layer
+            graphLayer = QgsGraphLayer()
+
+            # set graph to graph layer
+            graphLayer.setGraph(graph)
+
+            # set user specified crs
+            graphCrs = self.view.getCRS()
+            if graphCrs and graphCrs.isValid():
+                graphLayer.setCrs(graphCrs)
+
+            if self.saveGraph(graph, graphLayer, graphName):
+                self.view.showSuccess(self.tr("Graph created!"))
+            return
 
         # set advanced cost function
         costFunctions = self.view.getCostFunctions()
