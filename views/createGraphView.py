@@ -152,6 +152,7 @@ class CreateGraphView(BaseContentView):
         lastLayout = self.dialog.create_graph_rasterdata_widget.layout().itemAt(self.dialog.create_graph_rasterdata_widget.layout().count()-1)
         button = lastLayout.itemAt(lastLayout.count()-1).widget()
         button.setText("➖")
+        button.setToolTip(self.tr("Remove raster input"))
         button.clicked.disconnect()
         button.clicked.connect(lambda: self._removeLayoutFromWidget("create_graph_rasterdata_widget", lastLayout))
 
@@ -160,15 +161,18 @@ class CreateGraphView(BaseContentView):
         layerComboBox.setAllowEmptyLayer(True)
         layerComboBox.setCurrentIndex(0)
         layerComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
+        layerComboBox.setToolTip(self.tr("Select raster layer"))
 
         bandComboBox = QgsRasterBandComboBox()
         bandComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
         bandComboBox.setMinimumSize(150, 0)
+        bandComboBox.setToolTip(self.tr("Select raster band"))
         layerComboBox.layerChanged.connect(bandComboBox.setLayer)
 
         addButton = QPushButton("➕")
         addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
         addButton.setMaximumSize(25, 25)
+        addButton.setToolTip(self.tr("Add raster layer"))
         addButton.clicked.connect(self._addRasterDataInput)
 
         layout = QHBoxLayout()
@@ -188,19 +192,23 @@ class CreateGraphView(BaseContentView):
         lastLayout = costFunctionWidget.layout().itemAt(costFunctionWidget.layout().count() - 1)
         button = lastLayout.itemAt(lastLayout.count() - 1).widget()
         button.setText("➖")
+        button.setToolTip(self.tr("Remove cost function"))
         button.clicked.disconnect()
         button.clicked.connect(lambda: self._removeLayoutFromWidget("create_graph_costfunction_widget", lastLayout))
 
         costLineEdit = QLineEdit()
         costLineEdit.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
+        costLineEdit.setToolTip(self.tr("Define advanced cost function"))
 
         costWidgetDialogButton = QToolButton()
         costWidgetDialogButton.setText("...")
+        costWidgetDialogButton.setToolTip(self.tr("Show cost editor"))
 
         addButton = QPushButton("➕")
         addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
         addButton.setMaximumSize(25, 25)
         addButton.clicked.connect(self._addCostFunctionInput)
+        addButton.setToolTip(self.tr("Add cost function"))
 
         layout = QHBoxLayout()
         layout.addWidget(costLineEdit)
