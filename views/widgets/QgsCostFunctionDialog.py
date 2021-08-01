@@ -648,6 +648,20 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         self.expressionTreeView.selectionModel().currentChanged.connect(self._changeItemHelpText)
         self.setStatus("No function is set")
 
+        # show initial help text
+        self.setHelpText(
+            """
+            <h1>Cost Function Builder</h1>
+            <p>The builder provides an easy method for creating cost functions.</p>
+            <h2>Usage</h2>
+            <p>On the left side there is the editor where the cost function can be entered. Below the editor are buttons 
+            with the most common functions. In the center there is a list of all available expressions that can 
+            be used in the cost function.</p>
+            <h2>Example</h2>
+            <p>if(field:ELEV > 100, raster[0]:sum, raster[0]:min)</p>
+            """
+        )
+
         self._loadTreeViewItems()
 
     def _updateStatusText(self):
