@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>1</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -1179,9 +1179,9 @@ QListWidget::item::selected {
                        </widget>
                       </item>
                       <item>
-                       <widget class="QgsCollapsibleGroupBox" name="mGroupBox_3">
+                       <widget class="QgsCollapsibleGroupBox" name="ogdf_analysis_parameters_groupbox">
                         <property name="title">
-                         <string>Advanced Parameters</string>
+                         <string>Analysis Parameters</string>
                         </property>
                         <property name="alignment">
                          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1208,71 +1208,6 @@ QListWidget::item::selected {
                          <property name="sizeConstraint">
                           <enum>QLayout::SetMinimumSize</enum>
                          </property>
-                         <item>
-                          <layout class="QVBoxLayout" name="verticalLayout_15">
-                           <property name="sizeConstraint">
-                            <enum>QLayout::SetDefaultConstraint</enum>
-                           </property>
-                           <item>
-                            <widget class="QLabel" name="ogdf_analysis_stretch_label">
-                             <property name="text">
-                              <string>stretch factor</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item>
-                            <widget class="QSpinBox" name="ogdf_analysis_stretch_input">
-                             <property name="minimum">
-                              <number>1</number>
-                             </property>
-                            </widget>
-                           </item>
-                           <item>
-                            <widget class="QLabel" name="ogdf_analysis_startend_label">
-                             <property name="text">
-                              <string>Start and end nodes</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item>
-                            <layout class="QHBoxLayout" name="horizontalLayout_4">
-                             <item>
-                              <widget class="QLabel" name="ogdf_analysis_start_label">
-                               <property name="text">
-                                <string>Start:</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
-                              <widget class="QSpinBox" name="ogdf_analysis_start_input"/>
-                             </item>
-                             <item>
-                              <widget class="QLabel" name="ogdf_analysis_end_label">
-                               <property name="text">
-                                <string>End:</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
-                              <widget class="QSpinBox" name="ogdf_analysis_end_input"/>
-                             </item>
-                             <item>
-                              <spacer name="horizontalSpacer_4">
-                               <property name="orientation">
-                                <enum>Qt::Horizontal</enum>
-                               </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>40</width>
-                                 <height>0</height>
-                                </size>
-                               </property>
-                              </spacer>
-                             </item>
-                            </layout>
-                           </item>
-                          </layout>
-                         </item>
                         </layout>
                        </widget>
                       </item>

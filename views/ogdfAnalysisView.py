@@ -1,7 +1,14 @@
 from .baseContentView import BaseContentView
 from ..controllers.ogdfAnalysis import OGDFAnalysisController
+from ..models.ExtGraph import ExtGraph
+from ..models.QgsGraphLayer import QgsGraphLayer
+from .widgets.QgsGraphEdgePickerWidget import QgsGraphEdgePickerWidget
+from .widgets.QgsGraphVertexPickerWidget import QgsGraphVertexPickerWidget
 
 from qgis.core import QgsMapLayerProxyModel
+from qgis.PyQt.QtWidgets import QLabel
+
+import os
 
 
 class OGDFAnalysisView(BaseContentView):
@@ -19,11 +26,40 @@ class OGDFAnalysisView(BaseContentView):
             lambda: self._browseFile("ogdf_analysis_graph_input", "GraphML (*.graphml)")
         )
 
-        # hide all unused inputs
-        self.dialog.ogdf_analysis_stretch_label.hide()
-        self.dialog.ogdf_analysis_stretch_input.hide()
+        # set up analysis parameters
+        layout = self.dialog.ogdf_analysis_parameters_groupbox.layout()
+        self.startNodeLabel = QLabel(self.tr("Start node"))
+        self.startNodePicker = QgsGraphVertexPickerWidget()
+
+        self.endNodeLabel = QLabel(self.tr("End node"))
+        self.endNodePicker = QgsGraphVertexPickerWidget()
+        layout.addWidget(self.startNodeLabel)
+        layout.addWidget(self.startNodePicker)
+        layout.addWidget(self.endNodeLabel)
+        layout.addWidget(self.endNodePicker)
+
+        # add graph to picker widgets
+        self.dialog.ogdf_analysis_graph_input.currentIndexChanged.connect(self._inputChanged)
+        self._inputChanged()
 
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
+
+    def _inputChanged(self):
+        """
+        Sets the graph into the parameter widgets
+        :return:
+        """
+        self.startNodePicker.clear()
+        self.endNodePicker.clear()
+
+        graphLayer = self.getInputLayer()
+        if graphLayer is not None:
+            self.startNodePicker.setGraphLayer(graphLayer)
+            self.endNodePicker.setGraphLayer(graphLayer)
+        else:
+            graph = self.getGraph()
+            self.startNodePicker.setGraph(graph)
+            self.endNodePicker.setGraph(graph)
 
     def getJobName(self):
         return self.dialog.ogdf_analysis_job_input.text()
@@ -58,22 +94,48 @@ class OGDFAnalysisView(BaseContentView):
             return self.dialog.ogdf_analysis_graph_input.additionalItems()[0]
         return None
 
+    def getGraph(self):
+        """
+        Gets the graph containing in input. Return none if input has no graph
+        :return:
+        """
+        if self.hasInput():
+            if self.isInputLayer():
+                # return graph from graph layer
+                graphLayer = self.getInputLayer()
+                if isinstance(graphLayer, QgsGraphLayer) and graphLayer.isValid():
+                    return graphLayer.getGraph()
+            else:
+                # if file path as input
+                path = self.getInputPath()
+                fileName, extension = os.path.splitext(path)
+                if extension == ".graphml":
+                    graph = ExtGraph()
+                    graph.readGraphML(path)
+                    return graph
+        return None
+
     def getAnalysis(self):
         return self.dialog.ogdf_analysis_analysis_input.currentText(), self.dialog.create_graph_distance_input.currentData()
 
     def addAnalysis(self, analysis, userData=None):
         self.dialog.ogdf_analysis_analysis_input.addItem(analysis, userData)
 
-    # advanced parameters
-
-    def getStretch(self):
-        return self.dialog.ogdf_analysis_stretch_input.value()
+    # analysis parameters
 
     def getStartNode(self):
-        return self.dialog.ogdf_analysis_start_input.value()
+        """
+        Returns vertex id
+        :return:
+        """
+        return self.startNodePicker.getVertex()
 
     def getEndNode(self):
-        return self.dialog.ogdf_analysis_end_input.value()
+        """
+        Returns vertex id
+        :return:
+        """
+        return self.endNodePicker.getVertex()
 
     # log
 
