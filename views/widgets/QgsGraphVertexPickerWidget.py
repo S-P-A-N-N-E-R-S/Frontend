@@ -10,10 +10,11 @@ from ...models.QgsGraphLayer import QgsGraphLayer
 
 class QgsVertexPickerMapTool(QgsMapTool):
     """
-    QgsMapTool enables to select a vertex on a graph layer
+    QgsMapTool to select a vertex on a graph layer
     """
 
     vertexSelected = pyqtSignal(int)
+    canceled = pyqtSignal()
 
     def __init__(self, canvas, layer):
         super().__init__(canvas)
@@ -22,25 +23,33 @@ class QgsVertexPickerMapTool(QgsMapTool):
 
         self.selectedVertexId = None
 
+    def activate(self):
+        super().activate()
+        self.selectedVertexId = None
+
     def canvasReleaseEvent(self, event):
         """
         Select a vertex on canvas
         :param event:
         :return:
         """
-        if event.button() == Qt.LeftButton:
-            clickPosition = QPoint(event.pos().x(), event.pos().y())
+        clickPosition = QPoint(event.pos().x(), event.pos().y())
 
-            # used to convert canvas coordinates to map coordinates
-            converter = iface.mapCanvas().getCoordinateTransform()
-            clickPosition = converter.toMapCoordinates(clickPosition)
-            clickPosition = self.layer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
+        # used to convert canvas coordinates to map coordinates
+        converter = iface.mapCanvas().getCoordinateTransform()
+        clickPosition = converter.toMapCoordinates(clickPosition)
+        clickPosition = self.layer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
-            vertexId = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
+        vertexId = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
 
-            if vertexId >= 0:
-                self.selectedVertexId = vertexId
-                self.vertexSelected.emit(vertexId)
+        if vertexId >= 0:
+            self.selectedVertexId = vertexId
+            self.vertexSelected.emit(vertexId)
+
+    def keyReleaseEvent(self, event):
+        # cancel selection
+        if event.key() == Qt.Key_Escape:
+            self.canceled.emit()
 
     def getSelectedVertexId(self):
         return self.selectedVertexId
@@ -115,6 +124,7 @@ class QgsGraphVertexPickerWidget(QWidget):
         iface.mapCanvas().setMapTool(self.mapTool)
 
         self.mapTool.vertexSelected.connect(self._vertexSelected)
+        self.mapTool.canceled.connect(self._deactivateMapTool)
 
     def _vertexSelected(self, vertexId):
         """
@@ -123,10 +133,16 @@ class QgsGraphVertexPickerWidget(QWidget):
         :return:
         """
         self.comboBox.setCurrentIndex(self.comboBox.findData(vertexId))
+        self._deactivateMapTool()
+
+    def _deactivateMapTool(self):
+        """
+        Removes map tool
+        :return:
+        """
         iface.mapCanvas().setMapTool(self.oldMapTool)
         self.oldMapTool = None
         self.mapTool = None
-
 
     def clear(self):
         """
@@ -140,7 +156,7 @@ class QgsGraphVertexPickerWidget(QWidget):
 
     def setGraph(self, graph):
         """
-        Sets graph without possiblity to select vertex on canvas
+        Sets graph without possibility to select vertex on canvas
         :param graph:
         :return:
         """
