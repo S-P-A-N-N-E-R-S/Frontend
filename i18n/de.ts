@@ -303,7 +303,7 @@
     </message>
 </context>
 <context>
-    <name>ProtoPlugin</name>
+    <name>OGDFPlugin</name>
     <message>
         <location filename="../mainPlugin.py" line="86"/>
         <source>Create example data</source>

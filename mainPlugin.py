@@ -14,7 +14,7 @@ from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphData
 
 import os
 
-class ProtoPlugin:
+class OGDFPlugin:
 
     def __init__(self, iface):
         """
@@ -51,7 +51,7 @@ class ProtoPlugin:
         :returns: Translated version of message.
         :rtype: QString
         """
-        return QCoreApplication.translate('ProtoPlugin', message)
+        return QCoreApplication.translate('OGDFPlugin', message)
 
     def initActions(self):
         self.exampleAction = QAction(self.tr("Create example data"), self.iface.mainWindow())
@@ -95,7 +95,7 @@ class ProtoPlugin:
         self.reloadPluginLayers()
 
         # create menu
-        menu = QMenu("Proto Plugin")
+        menu = QMenu("OGDF Plugin")
         menu.setIcon(QIcon(getImagePath("icon.png")))
         menu.addAction(self.exampleAction)
         menu.addAction(self.graphAction)

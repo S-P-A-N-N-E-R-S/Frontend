@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string notr="true">Proto Plugin</string>
+   <string notr="true">OGDF Plugin</string>
   </property>
   <property name="accessibleName">
    <string/>

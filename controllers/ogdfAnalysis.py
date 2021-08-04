@@ -40,10 +40,10 @@ class OGDFAnalysisController(BaseController):
         if not graph:
             return
 
-        host = self.settings.value("protoplugin/host", "")
-        port = int(self.settings.value("protoplugin/port", 4711))
+        host = self.settings.value("ogdfplugin/host", "")
+        port = int(self.settings.value("ogdfplugin/port", 4711))
         # todo: pass authId to client
-        authId = self.settings.value("protoplugin/authId")
+        authId = self.settings.value("ogdfplugin/authId")
         if not (host and port):
             self.view.showError(self.tr("Please set host and port in options!"))
             return None
