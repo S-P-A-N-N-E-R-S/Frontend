@@ -1150,6 +1150,9 @@ QListWidget::item::selected {
                           <property name="toolTip">
                            <string>Select graph layer or graph file (.graphML)</string>
                           </property>
+                          <property name="allowEmptyLayer">
+                           <bool>true</bool>
+                          </property>
                          </widget>
                         </item>
                         <item>

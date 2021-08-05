@@ -52,35 +52,44 @@ class OGDFAnalysisView(BaseContentView):
         self.startNodePicker.clear()
         self.endNodePicker.clear()
 
-        graphLayer = self.getInputLayer()
-        if graphLayer is not None:
-            self.startNodePicker.setGraphLayer(graphLayer)
-            self.endNodePicker.setGraphLayer(graphLayer)
-        else:
-            graph = self.getGraph()
-            self.startNodePicker.setGraph(graph)
-            self.endNodePicker.setGraph(graph)
+        if self.hasInput():
+            graphLayer = self.getInputLayer()
+            if graphLayer is not None:
+                self.startNodePicker.setGraphLayer(graphLayer)
+                self.endNodePicker.setGraphLayer(graphLayer)
+            else:
+                graph = self.getGraph()
+                self.startNodePicker.setGraph(graph)
+                self.endNodePicker.setGraph(graph)
 
     def getJobName(self):
         return self.dialog.ogdf_analysis_job_input.text()
 
     def hasInput(self):
-        return self.dialog.ogdf_analysis_graph_input.count() > 0
+        """
+        Returns true if input is not empty
+        :return:
+        """
+        if self.dialog.ogdf_analysis_graph_input.currentLayer() is not None:
+            return True
+
+        if len(self.dialog.ogdf_analysis_graph_input.additionalItems()) > 0:
+            return self.dialog.ogdf_analysis_graph_input.currentText() == self.dialog.ogdf_analysis_graph_input.additionalItems()[0]
+
+        return False
 
     def isInputLayer(self):
         """
         True: if input is layer
-        False: if input is path
+        False: if input is path or empty
         :return:
         """
-        if self.dialog.ogdf_analysis_graph_input.currentLayer():
-            return True
-        return False
+        return self.dialog.ogdf_analysis_graph_input.currentLayer() is not None
 
     def getInputLayer(self):
         """
-        Returns the current selected layer or none if path is selected
-        :return: Layer or None if path is selected
+        Returns the current selected layer or none if path or empty is selected
+        :return: Layer or None if path or empty is selected
         """
         return self.dialog.ogdf_analysis_graph_input.currentLayer()
 
@@ -159,4 +168,3 @@ class OGDFAnalysisView(BaseContentView):
 
     def getLogHtml(self):
         return self.dialog.ogdf_analysis_log.toHtml()
-
