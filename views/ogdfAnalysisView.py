@@ -21,6 +21,9 @@ class OGDFAnalysisView(BaseContentView):
         # setup graph input
         self.dialog.ogdf_analysis_graph_input.setFilters(QgsMapLayerProxyModel.PluginLayer)
 
+        # set null layer as default
+        self.dialog.ogdf_analysis_graph_input.setCurrentIndex(0)
+
         # set up graph file upload
         self.dialog.ogdf_analysis_graph_input_tools.clicked.connect(
             lambda: self._browseFile("ogdf_analysis_graph_input", "GraphML (*.graphml)")
