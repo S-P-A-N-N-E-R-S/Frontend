@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>2</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -297,7 +297,7 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>0</y>
+                         <y>-285</y>
                          <width>756</width>
                          <height>969</height>
                         </rect>
@@ -844,23 +844,6 @@ QListWidget::item::selected {
                                 </widget>
                                </item>
                                <item>
-                                <widget class="QLabel" name="create_graph_additionalpoint_label">
-                                 <property name="text">
-                                  <string>Additional point layer [optional]</string>
-                                 </property>
-                                </widget>
-                               </item>
-                               <item>
-                                <widget class="QgsMapLayerComboBox" name="create_graph_additionalpoint_input">
-                                 <property name="toolTip">
-                                  <string>Select additional point layer. Available if line layer is given.</string>
-                                 </property>
-                                 <property name="allowEmptyLayer">
-                                  <bool>true</bool>
-                                 </property>
-                                </widget>
-                               </item>
-                               <item>
                                 <widget class="QLabel" name="create_graph_costfunction_label">
                                  <property name="text">
                                   <string>Advanced cost function</string>
@@ -959,6 +942,23 @@ QListWidget::item::selected {
                                    </layout>
                                   </item>
                                  </layout>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_additionalpoint_label">
+                                 <property name="text">
+                                  <string>Additional point layer [optional]</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QgsMapLayerComboBox" name="create_graph_additionalpoint_input">
+                                 <property name="toolTip">
+                                  <string>Select additional point layer. Available if line layer is given.</string>
+                                 </property>
+                                 <property name="allowEmptyLayer">
+                                  <bool>true</bool>
+                                 </property>
                                 </widget>
                                </item>
                                <item>

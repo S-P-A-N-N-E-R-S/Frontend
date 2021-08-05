@@ -123,12 +123,19 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_randomNumber_input.setEnabled(self.isRandom())
         self.dialog.create_graph_randomarea_widget.setEnabled(self.isRandom())
 
-        # show connection type if point or random graph
+        # show input layer type specific params
         layer = self.getInputLayer()
         isPointLayer = layer is not None and layer.geometryType() == QgsWkbTypes.PointGeometry
-        isLineLayer = layer is not None and layer.geometryType() == QgsWkbTypes.LineGeometry
+        isLineLayer = layer is not None and layer.geometryType() == QgsWkbTypes.LineGeometry and not self.isRandom()
+
         self.dialog.create_graph_connectiontype_input.setEnabled(isPointLayer or self.isRandom())
-        self.dialog.create_graph_additionalpoint_input.setEnabled(isLineLayer and not self.isRandom())
+
+        if isLineLayer:
+            # disable all parameters associated with connection type
+            self.dialog.create_graph_connectiontype_input.setCurrentIndex(
+                self.dialog.create_graph_connectiontype_input.findData("None"))
+
+        self.dialog.create_graph_additionalpoint_input.setEnabled(isLineLayer)
 
     def _connectionTypeChanged(self):
         """
