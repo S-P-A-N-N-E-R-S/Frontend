@@ -1,5 +1,6 @@
 from .baseContentView import BaseContentView
 from ..controllers.example import ExampleController
+from ..helperFunctions import getRasterFileFilter, getVectorFileFilter
 
 from qgis.gui import QgsFileWidget
 
@@ -13,6 +14,7 @@ class ExampleDataView(BaseContentView):
 
         # set up file upload widget
         self.dialog.example_data_output.setStorageMode(QgsFileWidget.SaveFile)
+        self.dialog.example_data_output.lineEdit().setPlaceholderText("[Save to temporary file]")
 
         # change example data
         self.dialog.example_data_input.currentIndexChanged.connect(self.controller.changeFilter)
@@ -32,10 +34,10 @@ class ExampleDataView(BaseContentView):
         self.dialog.example_data_output.setFilter(filter)
 
     def setVectorFilter(self):
-        self.setFilter("GPKG files (*.gpkg);;Shape files (*.shp)")
+        self.setFilter(getVectorFileFilter())
 
     def setRasterFilter(self):
-        self.setFilter("TIF files (*.tif);;IMG files (*.img)")
+        self.setFilter(getRasterFileFilter())
 
     def getFilePath(self):
         return self.dialog.example_data_output.filePath()

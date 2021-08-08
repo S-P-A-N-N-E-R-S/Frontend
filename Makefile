@@ -1,5 +1,5 @@
 #/***************************************************************************
-# ProtoPlugin
+# OGDFPlugin
 #
 # Prototype Plugin for Project Group Theoretical Computer Science. Creates Graphs from VectorLayers.
 #							 -------------------
@@ -38,7 +38,7 @@ SOURCES = \
 	__init__.py \
 	mainPlugin.py
 
-PLUGINNAME = proto_plugin
+PLUGINNAME = ogdf_plugin
 
 PY_FILES = __init__.py mainPlugin.py helperFunctions.py
 DIRECTORIES = controllers lib models resources views network i18n

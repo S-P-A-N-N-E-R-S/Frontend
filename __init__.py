@@ -1,4 +1,4 @@
-from .mainPlugin import ProtoPlugin
+from .mainPlugin import OGDFPlugin
 
 def classFactory(iface):
-    return ProtoPlugin(iface)
+    return OGDFPlugin(iface)

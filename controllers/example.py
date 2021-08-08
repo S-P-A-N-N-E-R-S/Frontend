@@ -40,7 +40,11 @@ class ExampleController(BaseController):
         LayerName = self.view.getExample()[0]
         example, type = self.view.getExample()[1]
         path = self.view.getFilePath()
-        extension =  os.path.splitext(path)[1] if path else "tif"
+        extension = os.path.splitext(path)[1]
+
+        if path and not extension:
+            self.view.showError(self.tr("No file format is specified!"))
+            return
 
         if type == "vector":
             exampleLayer = QgsVectorLayer(helper.getExamplePath("{}.shp".format(example)), example, "ogr")
@@ -49,7 +53,7 @@ class ExampleController(BaseController):
                 if createdLayer:
                     QgsProject.instance().addMapLayer(createdLayer)
                 else:
-                    self.view.showError(self.tr("Layer is invalid!"))
+                    self.view.showError(self.tr("Layer or file format is invalid!"))
             else:
                 self.view.showError(self.tr("Layer is invalid!"))
         elif type == "raster":
@@ -59,7 +63,7 @@ class ExampleController(BaseController):
                 if createdLayer:
                     QgsProject.instance().addMapLayer(createdLayer)
                 else:
-                    self.view.showError(self.tr("Layer is invalid!"))
+                    self.view.showError(self.tr("Layer or file format is invalid!"))
             else:
                 self.view.showError(self.tr("Layer is invalid!"))
 

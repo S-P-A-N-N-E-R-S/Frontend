@@ -21,7 +21,7 @@ class GraphBuilder:
     Options:
         - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN, DistanceNN
         - neighborNumber: int
-        - distance: float (euclidean distance)
+        - distance: (float, QgsUnitTypes::DistanceUnit) (euclidean distance)
         - nnAllowDoubleEdges": True, False
         - clusterNumber": int
         - edgeDirection: Undirected, Directed (do not use undirected with Nearest neighbor connectionType)
@@ -58,7 +58,7 @@ class GraphBuilder:
         self.__options = {
             "connectionType": "Nearest neighbor",            
             "neighborNumber": 2,
-            "distance": 0.3,
+            "distance": (0.3, QgsUnitTypes.DistanceMeters),
             "nnAllowDoubleEdges": False,
             "clusterNumber": 5,
             "edgeDirection": "Directed",
@@ -258,6 +258,11 @@ class GraphBuilder:
         if not optionType in self.__options:
             raise KeyError("Option not found")
         self.__options[optionType] = value
+
+    def getOption(self, optionType):
+        if not optionType in self.__options:
+            raise KeyError("Option not found")
+        return self.__options[optionType]
     
     def setRandomOption(self, optionType, value):
         if not optionType in self.__randomOptions:
@@ -316,7 +321,7 @@ class GraphBuilder:
             if self.__options["connectionType"] == "Nearest neighbor":
                 listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1)
             elif self.__options["connectionType"] == "DistanceNN":
-                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"],2))    
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"][0],2))
             
             for j in range(1,len(listOfNeighbors)):
                 if self.__options["connectionType"] == "Nearest neighbor":
@@ -392,7 +397,7 @@ class GraphBuilder:
             if self.task is not None and self.task.isCanceled():
                 return
             point = self.graph.vertex(i).point()
-            listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"],2))
+            listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"][0],2))
             
             for j in range(1,len(listOfNeighbors)):
                 neighborPoint = listOfNeighbors[j]
@@ -661,7 +666,7 @@ class GraphBuilder:
                 rangeStart = 1
                 rangeEnd = len(listOfNeighbors)
             elif self.__options["connectionType"] == "DistanceNN":
-                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),index], pow(self.__options["distance"],2))    
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),index], pow(self.__options["distance"][0],2))
                 rangeStart = 0
                 rangeEnd = len(listOfNeighbors)-1
                           
