@@ -44,8 +44,9 @@ class CreateGraphController(BaseController):
 
         self.view.addDistanceStrategy(self.tr("Euclidean"), "Euclidean")
         self.view.addDistanceStrategy(self.tr("Manhattan"), "Manhattan")
-        self.view.addDistanceStrategy(self.tr("Geodesic"), "Geodesic")
+        self.view.addDistanceStrategy(self.tr("Geodesic (Haversine formula)"), "Geodesic")
         self.view.addDistanceStrategy(self.tr("Advanced"), "Advanced")
+        self.view.addDistanceStrategy(self.tr("Ellipsoidal"), "Ellipsoidal")
         self.view.addDistanceStrategy(self.tr("None"), "None")
 
         # load possibly available active tasks into table and reconnect slots

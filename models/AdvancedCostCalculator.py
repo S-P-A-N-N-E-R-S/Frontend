@@ -61,6 +61,9 @@ class AdvancedCostCalculator():
         elif part == "geodesic":
             return str(self.graph.geodesicDist(edgeID))
         
+        elif part == "ellipsoidal":
+            return str(self.graph.ellipsoidalDist(edgeID))
+        
         elif part == "crossesPolygon":                              
             for feature in edgesCrossingPolygons.getFeatures():
                 if edgeID == feature["ID"]:

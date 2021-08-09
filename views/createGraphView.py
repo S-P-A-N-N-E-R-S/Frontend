@@ -22,7 +22,6 @@ class CreateGraphView(BaseContentView):
         super().__init__(dialog)
         self.name = "create graph"
 
-       
         # set up layer inputs
         self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)

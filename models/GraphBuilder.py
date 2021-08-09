@@ -816,8 +816,10 @@ class GraphBuilder:
         self.graph.setConnectionType(self.__options["connectionType"])
 
         if self.__options["createRandomGraph"] == True:
+            self.graph.crs = "EPSG:4326"
             self.__createRandomVertices()
-        else:          
+        else:     
+            self.graph.crs = self.vLayer.crs()          
             if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
                 self.__createVerticesForPoints()
 

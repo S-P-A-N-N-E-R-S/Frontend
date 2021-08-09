@@ -178,6 +178,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
+        self.mGraph.crs = self.crs()
 
         self.mShowEdgeText = False
         self.mShowDirection = False
@@ -633,6 +634,7 @@ class QgsGraphLayer(QgsPluginLayer):
     def updateCrs(self):
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
+        self.mGraph.crs = self.crs()
 
         self.triggerRepaint()
         iface.mapCanvas().refresh()
