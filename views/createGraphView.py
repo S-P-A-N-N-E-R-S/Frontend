@@ -14,6 +14,7 @@ from PyQt5.QtGui import QIcon
 
 import time, os
 
+from ..models.GraphBuilder import GraphBuilder
 
 class CreateGraphView(BaseContentView):
 
@@ -21,6 +22,7 @@ class CreateGraphView(BaseContentView):
         super().__init__(dialog)
         self.name = "create graph"
 
+       
         # set up layer inputs
         self.dialog.create_graph_input.setFilters(QgsMapLayerProxyModel.PointLayer | QgsMapLayerProxyModel.LineLayer)
         self.dialog.create_graph_raster_input.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -55,13 +57,13 @@ class CreateGraphView(BaseContentView):
         # add distance units
         distanceUnits = [(QgsUnitTypes.toString(QgsUnitTypes.DistanceMeters), QgsUnitTypes.DistanceMeters),
                          (QgsUnitTypes.toString(QgsUnitTypes.DistanceKilometers), QgsUnitTypes.DistanceKilometers),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceFeet), QgsUnitTypes.DistanceFeet),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceNauticalMiles), QgsUnitTypes.DistanceNauticalMiles),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceYards), QgsUnitTypes.DistanceYards),
+                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceFeet), QgsUnitTypes.DistanceFeet),
+                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceNauticalMiles), QgsUnitTypes.DistanceNauticalMiles),
+                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceYards), QgsUnitTypes.DistanceYards),
                          (QgsUnitTypes.toString(QgsUnitTypes.DistanceMiles), QgsUnitTypes.DistanceMiles),
                          (QgsUnitTypes.toString(QgsUnitTypes.DistanceDegrees), QgsUnitTypes.DistanceDegrees),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceCentimeters), QgsUnitTypes.DistanceCentimeters),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceMillimeters), QgsUnitTypes.DistanceMillimeters),
+                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceCentimeters), QgsUnitTypes.DistanceCentimeters),
+                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceMillimeters), QgsUnitTypes.DistanceMillimeters),
                          (QgsUnitTypes.toString(QgsUnitTypes.DistanceUnknownUnit), QgsUnitTypes.DistanceUnknownUnit)]
         for distanceName, distanceData in distanceUnits:
             self.dialog.create_graph_distance_unit_input.addItem(distanceName, distanceData)

@@ -147,8 +147,7 @@ class ExtGraph(QObject):
             return self.edgeWeights[functionIndex][edgeID]
         
         elif self.distanceStrategy == "None":
-            return None
-        
+            return None        
         else:
             raise NameError("Unknown distance strategy")
     

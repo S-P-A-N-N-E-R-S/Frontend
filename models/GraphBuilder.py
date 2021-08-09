@@ -304,6 +304,31 @@ class GraphBuilder:
                     return
                 self.graph.addEdge(i, j)
 
+
+    def __unitConvertion(self, userUnit, layerUnit, value):
+        """
+        Convert value in user defined units into the unit used by the layer
+        
+        """
+        if userUnit != layerUnit:            
+            if userUnit == "meters":
+                if layerUnit == "kilometers":
+                    return value / 1000
+                if layerUnit == "miles":
+                    return value / 1609.344                
+            elif userUnit == "kilometers":
+                if layerUnit == "meters":
+                    return value * 1000
+                if layerUnit == "miles":
+                    return value * 0.62137                         
+            elif userUnit == "miles":
+                if layerUnit == "kilometers":
+                    return value / 0.62137
+                if layerUnit == "meter":
+                    return value * 1609.344                 
+        else:
+            return value
+
     def __createNearestNeighbor(self):      
         points = []
         for i in range(self.graph.vertexCount()):
@@ -311,6 +336,14 @@ class GraphBuilder:
             points.append([point.x(),point.y(),i])
 
         self.kdTree = kdtree.create(points)
+
+        if self.__options["connectionType"] == "DistanceNN":            
+            if self.__options["createRandomGraph"] == True:
+                crsUnitRead = QgsCoordinateReferenceSystem("EPSG:4326")                
+            else:
+                crsUnitRead = self.vLayer.crs() 
+            
+            unitType = QgsUnitTypes.toString(crsUnitRead.mapUnits()) 
 
         for i in range(self.graph.vertexCount()):
             if self.task is not None and self.task.isCanceled():
@@ -321,8 +354,18 @@ class GraphBuilder:
             if self.__options["connectionType"] == "Nearest neighbor":
                 listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1)
             elif self.__options["connectionType"] == "DistanceNN":
-                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"][0],2))
-            
+                # make distance transformation  
+                if unitType == "degrees" or unitType == "<unknown>":                                                                            
+                    listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"][0],2))                                                      
+                else:
+                    
+                    distArea = QgsDistanceArea()
+                    distArea.setEllipsoid(crsUnitRead.ellipsoidAcronym())                    
+                    transDistValue = distArea.convertLengthMeasurement(self.__options["distance"][0], self.__options["distance"][1]) 
+                                      
+                    transDistValue = self.__unitConvertion(QgsUnitTypes.toString(self.__options["distance"][1]), unitType, self.__options["distance"][0])                    
+                    listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2)) 
+                                               
             for j in range(1,len(listOfNeighbors)):
                 if self.__options["connectionType"] == "Nearest neighbor":
                     neighborPoint = listOfNeighbors[j][0].data
