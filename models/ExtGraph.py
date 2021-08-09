@@ -146,8 +146,11 @@ class ExtGraph(QObject):
         elif self.distanceStrategy == "Advanced":          
             return self.edgeWeights[functionIndex][edgeID]
         
+        elif self.distanceStrategy == "None":
+            return None
+        
         else:
-            return 0  
+            raise NameError("Unknown distance strategy")
     
     
     def euclideanDist(self, edgeID):

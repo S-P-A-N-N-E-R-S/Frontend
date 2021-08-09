@@ -25,7 +25,7 @@ class GraphBuilder:
         - nnAllowDoubleEdges": True, False
         - clusterNumber": int
         - edgeDirection: Undirected, Directed (do not use undirected with Nearest neighbor connectionType)
-        - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced
+        - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced, None
         - createGraphAsLayers: False, True
         - createRandomGraph: False, True
         - usePolygonsAsForbidden: False, True

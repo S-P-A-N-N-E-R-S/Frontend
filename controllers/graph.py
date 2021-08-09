@@ -46,6 +46,7 @@ class CreateGraphController(BaseController):
         self.view.addDistanceStrategy(self.tr("Manhattan"), "Manhattan")
         self.view.addDistanceStrategy(self.tr("Geodesic"), "Geodesic")
         self.view.addDistanceStrategy(self.tr("Advanced"), "Advanced")
+        self.view.addDistanceStrategy(self.tr("None"), "None")
 
         # load possibly available active tasks into table and reconnect slots
         self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
