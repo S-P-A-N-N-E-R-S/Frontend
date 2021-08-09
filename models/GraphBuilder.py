@@ -357,12 +357,7 @@ class GraphBuilder:
                 # make distance transformation  
                 if unitType == "degrees" or unitType == "<unknown>":                                                                            
                     listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"][0],2))                                                      
-                else:
-                    
-                    distArea = QgsDistanceArea()
-                    distArea.setEllipsoid(crsUnitRead.ellipsoidAcronym())                    
-                    transDistValue = distArea.convertLengthMeasurement(self.__options["distance"][0], self.__options["distance"][1]) 
-                                      
+                else:                                                                         
                     transDistValue = self.__unitConvertion(QgsUnitTypes.toString(self.__options["distance"][1]), unitType, self.__options["distance"][0])                    
                     listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2)) 
                                                
