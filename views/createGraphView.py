@@ -14,7 +14,6 @@ from PyQt5.QtGui import QIcon
 
 import time, os
 
-from ..models.GraphBuilder import GraphBuilder
 
 class CreateGraphView(BaseContentView):
 
@@ -176,6 +175,7 @@ class CreateGraphView(BaseContentView):
         _, connectionType = self.getConnectionType()
         self.dialog.create_graph_nearest_neighbor_widget.setEnabled(connectionType in ["Nearest neighbor", "ClusterNN",
                                                                                        "DistanceNN"])
+        self.dialog.create_graph_numberneighbor_input.setEnabled(connectionType != "DistanceNN")
         self.dialog.create_graph_distance_widget.setEnabled(connectionType == "DistanceNN")
         self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
 
