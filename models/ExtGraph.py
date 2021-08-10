@@ -117,11 +117,9 @@ class ExtGraph(QObject):
         :type strategy: String
         """
         self.distanceStrategy = strategy
-        print("Strategy: ", strategy)
     
     def setConnectionType(self, connectionType):
         self.mConnectionType = connectionType
-        print("ConnectionType: ", connectionType)
 
     def connectionType(self):
         return self.mConnectionType
@@ -132,6 +130,9 @@ class ExtGraph(QObject):
         self.clusterNumber = clusterNumber
         self.nnAllowDoubleEdges = nnAllowDoubleEgdes
         self.distance = distance
+
+    def amountOfEdgeCostFunctions(self):
+        return len(self.edgeWeights)
 
     def setCostOfEdge(self, edgeID, functionIndex, cost):
         """
