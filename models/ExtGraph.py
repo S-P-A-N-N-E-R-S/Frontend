@@ -43,6 +43,9 @@ class ExtGraph(QObject):
         def point(self):
             return self.mCoordinates
 
+        def setNewPoint(self, point):
+            self.mCoordinates = point
+
     #==ExtEdge=======================================================================
     class ExtEdge:
         """

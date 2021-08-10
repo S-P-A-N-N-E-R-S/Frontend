@@ -28,12 +28,13 @@ class QgsGraphMapTool(QgsMapTool):
         # emit self.deactivated()
         pass
 
-    def _addVertex(self, point):
+    def _addVertex(self, point, movePoint=False):
         """
         Adds a vertex to the Graphlayers graph.
         Also adds the vertex as feature to the layers DataProvider if necessary.
 
         :type point: QgsPointXY
+        :type movePoint: Bool instead of adding new vertex, move fristFoundVertex
         """
         feat = QgsFeature()
         feat.setGeometry(QgsGeometry.fromPointXY(point))
@@ -41,7 +42,10 @@ class QgsGraphMapTool(QgsMapTool):
         feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()])
         self.mLayer.dataProvider().addFeature(feat, True)
 
-        self.mLayer.mGraph.addVertex(point)
+        if not movePoint:
+            self.mLayer.mGraph.addVertex(point)
+        else:
+            self.mLayer.mGraph.vertex(self.firstFoundVertex).setNewPoint(point)
 
     def _addEdge(self, p1, p2):
         """
@@ -125,10 +129,7 @@ class QgsGraphMapTool(QgsMapTool):
                     self._addVertex(clickPosition)
                 
                 else: # move firstFoundVertex to new position
-                    # deleteVertex firstFoundVertex, addVertex (without edges) on clicked position
-                    self._deleteVertex(self.firstFoundVertex)
-                    
-                    self._addVertex(clickPosition)
+                    self._addVertex(clickPosition, True)
                     
                     self.__removeFirstFound()
 
