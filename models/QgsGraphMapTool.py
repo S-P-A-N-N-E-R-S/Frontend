@@ -72,7 +72,7 @@ class QgsGraphMapTool(QgsMapTool):
                 self.mLayer.mDataProvider.setGeometryToPoint(False)
             
             # add new edge
-            edgeId = self.mLayer.mGraph.addEdge(p1, p2)
+            edgeId = self.mLayer.mGraph.addEdge(p1, p2, -1, True)
             
             edge = self.mLayer.mGraph.edge(edgeId)
 

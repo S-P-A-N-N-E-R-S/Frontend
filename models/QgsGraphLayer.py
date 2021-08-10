@@ -98,6 +98,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             fromPoint = converter.transform(fromPoint).toQPointF()
 
                             painter.setPen(QColor('black'))
+                            if edge.highlighted():
+                                painter.setPen(QColor('red'))
                             painter.drawLine(toPoint, fromPoint)
 
                             if self.mShowDirection:

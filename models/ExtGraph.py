@@ -48,10 +48,13 @@ class ExtGraph(QObject):
         """
         Inner class representing an edge of the ExtGraph
         """
-        def __init__(self, fromVertexIdx, toVertexIdx):
+        def __init__(self, fromVertexIdx, toVertexIdx, highlighted=False):
             # TODO: add costs list for an edge here?
             self.mFromIdx = fromVertexIdx
             self.mToIdx = toVertexIdx
+
+            # highlights used for marked edges by a server response
+            self.isHighlighted = highlighted
 
         def __del__(self):
             pass
@@ -61,6 +64,12 @@ class ExtGraph(QObject):
 
         def toVertex(self):
             return self.mToIdx
+
+        def highlighted(self):
+            return self.isHighlighted
+
+        def setHighlight(self, highlighted):
+            self.isHighlighted = highlighted
 
     #==ExtGraph Methods===============================================================
     def __init__(self):        
@@ -220,7 +229,16 @@ class ExtGraph(QObject):
                
         return -1
                    
-    def addEdge(self, vertex1, vertex2, idx=-1):
+    def addEdge(self, vertex1, vertex2, idx=-1, highlighted=False):
+        """
+        Adds an edge with fromVertex vertex1 and toVertex2 to the ExtGraph
+
+        :type vertex1: Integer
+        :type vertex2: Integer
+        :type idx: Integer add Edge with index idx, -1 if no custom index should be set
+        :type highlighted: Bool if the edge should be highlighted in the rendering process
+        :return Integer index of added edge
+        """
         addIndex = self.mEdgeCount
         if idx >= 0:
             addIndex = idx
@@ -229,7 +247,7 @@ class ExtGraph(QObject):
             print("Use earlier edge index")
             addIndex = self.__availableEdgeIndices.pop(0)
 
-        self.mEdges[addIndex] = self.ExtEdge(vertex1, vertex2)
+        self.mEdges[addIndex] = self.ExtEdge(vertex1, vertex2, highlighted)
         self.mVertices[vertex1].mOutgoingEdges.append(addIndex)
         self.mVertices[vertex2].mIncomingEdges.append(addIndex)
         self.mEdgeCount += 1
