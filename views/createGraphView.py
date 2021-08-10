@@ -38,7 +38,6 @@ class CreateGraphView(BaseContentView):
         # enable and disable inputs when input is changed
         self.dialog.create_graph_input.currentIndexChanged.connect(self._inputChanged)
         self.dialog.random_graph_checkbox.stateChanged.connect(self._inputChanged)
-        self._inputChanged()
 
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
@@ -53,18 +52,17 @@ class CreateGraphView(BaseContentView):
         # enable and disable inputs when connection type is changed
         self.dialog.create_graph_connectiontype_input.currentIndexChanged.connect(self._connectionTypeChanged)
 
-        # add distance units
-        distanceUnits = [(QgsUnitTypes.toString(QgsUnitTypes.DistanceMeters), QgsUnitTypes.DistanceMeters),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceKilometers), QgsUnitTypes.DistanceKilometers),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceFeet), QgsUnitTypes.DistanceFeet),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceNauticalMiles), QgsUnitTypes.DistanceNauticalMiles),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceYards), QgsUnitTypes.DistanceYards),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceMiles), QgsUnitTypes.DistanceMiles),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceDegrees), QgsUnitTypes.DistanceDegrees),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceCentimeters), QgsUnitTypes.DistanceCentimeters),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceMillimeters), QgsUnitTypes.DistanceMillimeters)]
-        for distanceName, distanceData in distanceUnits:
-            self.dialog.create_graph_distance_unit_input.addItem(distanceName, distanceData)
+        # standard units
+        self.standardDistanceUnits = [
+            (QgsUnitTypes.toString(QgsUnitTypes.DistanceMeters), QgsUnitTypes.DistanceMeters),
+            (QgsUnitTypes.toString(QgsUnitTypes.DistanceKilometers), QgsUnitTypes.DistanceKilometers),
+            (QgsUnitTypes.toString(QgsUnitTypes.DistanceFeet), QgsUnitTypes.DistanceFeet),
+            (QgsUnitTypes.toString(QgsUnitTypes.DistanceNauticalMiles), QgsUnitTypes.DistanceNauticalMiles),
+            (QgsUnitTypes.toString(QgsUnitTypes.DistanceYards), QgsUnitTypes.DistanceYards),
+            (QgsUnitTypes.toString(QgsUnitTypes.DistanceMiles), QgsUnitTypes.DistanceMiles),
+            (QgsUnitTypes.toString(QgsUnitTypes.DistanceCentimeters), QgsUnitTypes.DistanceCentimeters),
+            (QgsUnitTypes.toString(QgsUnitTypes.DistanceMillimeters), QgsUnitTypes.DistanceMillimeters)
+        ]
 
         # enable and disable inputs when distance strategy is changed
         self.dialog.create_graph_distancestrategy_input.currentIndexChanged.connect(self._distanceStrategyChanged)
@@ -106,6 +104,8 @@ class CreateGraphView(BaseContentView):
         # immediately disable button and enable after 1 seconds
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
 
+        self._inputChanged()
+
     def _inputChanged(self):
         """
         Disables and enables parameter inputs based on input
@@ -123,6 +123,9 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_randomNumber_input.setEnabled(self.isRandom())
         self.dialog.create_graph_randomarea_widget.setEnabled(self.isRandom())
 
+        # update distance units
+        self._updateDistanceUnits()
+
         # show input layer type specific params
         layer = self.getInputLayer()
         isPointLayer = layer is not None and layer.geometryType() == QgsWkbTypes.PointGeometry
@@ -136,6 +139,34 @@ class CreateGraphView(BaseContentView):
                 self.dialog.create_graph_connectiontype_input.findData("None"))
 
         self.dialog.create_graph_additionalpoint_input.setEnabled(isLineLayer)
+
+    def _updateDistanceUnits(self):
+        """
+        Updates distances units belonging to layer map unit
+        :return:
+        """
+        layer = self.getInputLayer()
+
+        # set units according to layer crs or random
+        unit = QgsUnitTypes.DistanceUnknownUnit
+        if self.isRandom():
+            # random graph has degree unit
+            unit = QgsUnitTypes.DistanceDegrees
+        elif layer is not None:
+            layerCrs = layer.crs()
+            if layerCrs.isValid():
+                unit = layerCrs.mapUnits()
+
+        self.dialog.create_graph_distance_unit_input.clear()
+        if QgsUnitTypes.unitType(unit) != QgsUnitTypes.Standard:
+            # if geographic or unknown unit
+            self.dialog.create_graph_distance_unit_input.addItem(QgsUnitTypes.toString(unit), unit)
+        else:
+            # if standard unit like meters etc.
+            for standardUnit in self.standardDistanceUnits:
+                self.dialog.create_graph_distance_unit_input.addItem(standardUnit[0], standardUnit[1])
+                self.dialog.create_graph_distance_unit_input.setCurrentIndex(
+                    self.dialog.create_graph_distance_unit_input.findData(unit))
 
     def _connectionTypeChanged(self):
         """
