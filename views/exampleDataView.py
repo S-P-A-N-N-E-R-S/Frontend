@@ -14,7 +14,7 @@ class ExampleDataView(BaseContentView):
 
         # set up file upload widget
         self.dialog.example_data_output.setStorageMode(QgsFileWidget.SaveFile)
-        self.dialog.example_data_output.lineEdit().setPlaceholderText("[Save to temporary file]")
+        self.dialog.example_data_output.lineEdit().setPlaceholderText("[Save to temporary layer]")
 
         # change example data
         self.dialog.example_data_input.currentIndexChanged.connect(self.controller.changeFilter)

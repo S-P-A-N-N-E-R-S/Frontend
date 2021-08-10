@@ -10,9 +10,12 @@ class JobsController(BaseController):
         """
         super().__init__(view)
 
-        self.view.setOutputVisible(False)
+        self.view.setResultVisible(False)
 
-    def saveResults(self):
+    def fetchResult(self):
+        pass
+
+    def fetchOriginGraph(self):
         pass
 
     def refreshJobs(self):
