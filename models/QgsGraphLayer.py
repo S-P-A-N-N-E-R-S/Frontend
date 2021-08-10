@@ -48,6 +48,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         return self.__drawGraph()
 
     def __drawGraph(self):
+        if not self.mLayer.doRender:
+            return False
 
         painter = self.renderContext().painter()
         painter.save()
@@ -199,6 +201,8 @@ class QgsGraphLayer(QgsPluginLayer):
         self._extent = QgsRectangle()
 
         self.willBeDeleted.connect(lambda: self.toggleEdit(True))
+
+        self.doRender = True
 
     def __del__(self):
         del self.mDataProvider
@@ -704,6 +708,11 @@ class QgsGraphLayer(QgsPluginLayer):
                 self.exportPoints = True
                 self.exportLines = True
 
+    def toggleRendering(self):
+        self.doRender = not self.doRender
+
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
 
 class QgsGraphLayerType(QgsPluginLayerType):
     """
@@ -768,6 +777,12 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(edgeSeparator)
 
         hasEdges = layer.getGraph().edgeCount() != 0
+
+        # button to toggle drawing of complete layer
+        toggleRenderButton = QPushButton("Toggle Rendering")
+        toggleRenderButton.setVisible(True)
+        toggleRenderButton.clicked.connect(layer.toggleRendering)
+        layout.addWidget(toggleRenderButton)
 
         # button to toggle drawing of lines / edges
         toggleLinesButton = QPushButton("Toggle Lines")
