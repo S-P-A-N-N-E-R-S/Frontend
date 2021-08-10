@@ -56,14 +56,13 @@ class CreateGraphView(BaseContentView):
         # add distance units
         distanceUnits = [(QgsUnitTypes.toString(QgsUnitTypes.DistanceMeters), QgsUnitTypes.DistanceMeters),
                          (QgsUnitTypes.toString(QgsUnitTypes.DistanceKilometers), QgsUnitTypes.DistanceKilometers),
-                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceFeet), QgsUnitTypes.DistanceFeet),
-                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceNauticalMiles), QgsUnitTypes.DistanceNauticalMiles),
-                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceYards), QgsUnitTypes.DistanceYards),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceFeet), QgsUnitTypes.DistanceFeet),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceNauticalMiles), QgsUnitTypes.DistanceNauticalMiles),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceYards), QgsUnitTypes.DistanceYards),
                          (QgsUnitTypes.toString(QgsUnitTypes.DistanceMiles), QgsUnitTypes.DistanceMiles),
                          (QgsUnitTypes.toString(QgsUnitTypes.DistanceDegrees), QgsUnitTypes.DistanceDegrees),
-                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceCentimeters), QgsUnitTypes.DistanceCentimeters),
-                         #(QgsUnitTypes.toString(QgsUnitTypes.DistanceMillimeters), QgsUnitTypes.DistanceMillimeters),
-                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceUnknownUnit), QgsUnitTypes.DistanceUnknownUnit)]
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceCentimeters), QgsUnitTypes.DistanceCentimeters),
+                         (QgsUnitTypes.toString(QgsUnitTypes.DistanceMillimeters), QgsUnitTypes.DistanceMillimeters)]
         for distanceName, distanceData in distanceUnits:
             self.dialog.create_graph_distance_unit_input.addItem(distanceName, distanceData)
 
