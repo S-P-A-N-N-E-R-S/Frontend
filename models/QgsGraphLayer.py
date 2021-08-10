@@ -7,7 +7,7 @@ from qgis.PyQt.QtGui import QColor, QFont, QPainterPath
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import (QDialog, QPushButton, QBoxLayout, QLabel,
                                     QFileDialog, QFrame, QApplication, QHBoxLayout,
-                                    QRadioButton, QGroupBox)
+                                    QRadioButton, QGroupBox, QUndoStack, QToolButton)
 
 import random, math
 
@@ -203,6 +203,8 @@ class QgsGraphLayer(QgsPluginLayer):
         self.willBeDeleted.connect(lambda: self.toggleEdit(True))
 
         self.doRender = True
+
+        self.mUndoStack = QUndoStack()
 
     def __del__(self):
         del self.mDataProvider
@@ -872,6 +874,17 @@ class QgsGraphLayerType(QgsPluginLayerType):
                                 +"\n  6) 2nd RightClick not on Vertex removes Selection")
         layout.addWidget(editButton)
 
+        # undo button
+        undoButton = QToolButton()
+        undoButton.setDefaultAction(layer.mUndoStack.createUndoAction(undoButton, "Undo"))
+        undoButton.setVisible(True)
+        layout.addWidget(undoButton)
+
+        # redo button
+        redoButton = QToolButton()
+        redoButton.setDefaultAction(layer.mUndoStack.createRedoAction(redoButton, "Redo"))
+        redoButton.setVisible(True)
+        layout.addWidget(redoButton)
 
         win.setLayout(layout)
         win.adjustSize()

@@ -4,6 +4,8 @@ from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QPoint, Qt
 
+from .QgsGraphUndoCommands import ExtVertexUndoCommand, ExtEdgeUndoCommand
+
 class QgsGraphMapTool(QgsMapTool):
     """
     QgsGraphMapTool should enable the user to edit a QgsGraphLayer
@@ -19,12 +21,10 @@ class QgsGraphMapTool(QgsMapTool):
         self.ctrlPressed = False
 
     def activate(self):
-        print("QgsGraphMapTool activated")
         # emit self.activated()
         pass
 
     def deactivate(self):
-        print("QgsGraphMapTool deactivated")
         # emit self.deactivated()
         pass
 
@@ -39,13 +39,27 @@ class QgsGraphMapTool(QgsMapTool):
         feat = QgsFeature()
         feat.setGeometry(QgsGeometry.fromPointXY(point))
 
-        feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()])
-        self.mLayer.dataProvider().addFeature(feat, True)
-
+        # add new vertex
         if not movePoint:
-            self.mLayer.mGraph.addVertex(point)
+            feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()])
+            
+            if len(self.mLayer.mGraph.availableVertexIndices) > 0:
+                vertexId = self.mLayer.mGraph.availableVertexIndices[0]
+            else:
+                vertexId = self.mLayer.mGraph.vertexCount()
+
+            vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), vertexId, point, "Add")
+
+        # move vertex
         else:
-            self.mLayer.mGraph.vertex(self.firstFoundVertex).setNewPoint(point)
+            feat.setAttributes([self.firstFoundVertex, point.x(), point.y()])
+
+            oldPos = self.mLayer.mGraph.vertex(self.firstFoundVertex).point()
+            
+            vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), self.firstFoundVertex, oldPos, "Move", point)
+        
+        self.mLayer.mUndoStack.push(vertexUndoCommand)
+        self.mLayer.dataProvider().addFeature(feat, True)
 
     def _addEdge(self, p1, p2):
         """
@@ -63,8 +77,12 @@ class QgsGraphMapTool(QgsMapTool):
 
         edgeId = self.mLayer.mGraph.hasEdge(p1, p2)
         if edgeId >= 0:
-            # delete possibly existing edge
-            self.mLayer.mGraph.deleteEdge(edgeId)
+            edge = self.mLayer.mGraph.edge(edgeId)
+
+            # delete possibly existing edge            
+            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeId, edge.fromVertex(), edge.toVertex(), True)
+            self.mLayer.mUndoStack.push(edgeUndoCommand)
+
             self.mLayer.mDataProvider.deleteFeature(edgeId, False)
 
             if self.mLayer.mGraph.edgeCount() == 0:
@@ -76,7 +94,13 @@ class QgsGraphMapTool(QgsMapTool):
                 self.mLayer.mDataProvider.setGeometryToPoint(False)
             
             # add new edge
-            edgeId = self.mLayer.mGraph.addEdge(p1, p2, -1, True)
+            if len(self.mLayer.mGraph.availableEdgeIndices) > 0:
+                edgeId = self.mLayer.mGraph.availableEdgeIndices[0]
+            else:
+                edgeId = self.mLayer.mGraph.edgeCount()
+
+            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeId, p1, p2, False)
+            self.mLayer.mUndoStack.push(edgeUndoCommand)
             
             edge = self.mLayer.mGraph.edge(edgeId)
 
@@ -89,7 +113,6 @@ class QgsGraphMapTool(QgsMapTool):
 
             self.mLayer.mDataProvider.addFeature(feat, False)
 
-
     def _deleteVertex(self, idx):
         """
         Deletes a vertex and its outgoing and incoming edges from the Graphlayers graph.
@@ -97,12 +120,16 @@ class QgsGraphMapTool(QgsMapTool):
 
         :type idx: Integer
         """
-        deletedEdges = self.mLayer.mGraph.deleteVertex(idx)
+        oldPos = self.mLayer.mGraph.vertex(idx).point()
+
+        vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), idx, oldPos, "Delete")
+        self.mLayer.mUndoStack.push(vertexUndoCommand)
         
         self.mLayer.mDataProvider.deleteFeature(idx, True)
         
-        for edgeId in deletedEdges:
-            self.mLayer.mDataProvider.deleteFeature(edgeId, False)
+        # TODO: move deleteFeatures for edges in UndoCommands
+        # for edgeId in deletedEdges:
+        #     self.mLayer.mDataProvider.deleteFeature(edgeId, False)
 
 
     def canvasPressEvent(self, event):

@@ -88,8 +88,8 @@ class ExtGraph(QObject):
         self.mEdgeCount = 0
         self.mVertexCount = 0
 
-        self.__availableVertexIndices =[]
-        self.__availableEdgeIndices = []
+        self.availableVertexIndices =[]
+        self.availableEdgeIndices = []
 
         # holds the feature IDs if lines where used to create graph
         self.featureMatchings = []
@@ -109,8 +109,8 @@ class ExtGraph(QObject):
         del self.mVertices
         del self.mEdges
         
-        del self.__availableVertexIndices
-        del self.__availableEdgeIndices
+        del self.availableVertexIndices
+        del self.availableEdgeIndices
 
     def setDistanceStrategy(self, strategy):
         """
@@ -225,7 +225,6 @@ class ExtGraph(QObject):
         :type vertex2: Integer
         :return Integer found edgeIdx, else -1
         """
-        # TODO: maybe return edgeIdx
         for edgeIdx in self.mEdges:
             edge = self.mEdges[edgeIdx]            
             if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
@@ -246,10 +245,9 @@ class ExtGraph(QObject):
         addIndex = self.mEdgeCount
         if idx >= 0:
             addIndex = idx
-        elif len(self.__availableEdgeIndices) > 0:
+        elif len(self.availableEdgeIndices) > 0:
             # check if other indices are available due to earlier delete
-            print("Use earlier edge index")
-            addIndex = self.__availableEdgeIndices.pop(0)
+            addIndex = self.availableEdgeIndices.pop(0)
 
         self.mEdges[addIndex] = self.ExtEdge(vertex1, vertex2, highlighted)
         self.mVertices[vertex1].mOutgoingEdges.append(addIndex)
@@ -262,10 +260,9 @@ class ExtGraph(QObject):
         addIndex = self.mVertexCount
         if idx >= 0:
             addIndex = idx
-        elif len(self.__availableVertexIndices) > 0:
+        elif len(self.availableVertexIndices) > 0:
             # check if other indices are available due to earlier delete
-            print("Use earlier vertex index")
-            addIndex = self.__availableVertexIndices.pop(0)
+            addIndex = self.availableVertexIndices.pop(0)
 
         self.mVertices[addIndex] = self.ExtVertex(point)
         self.mVertexCount += 1
@@ -470,7 +467,7 @@ class ExtGraph(QObject):
                     break
 
             del self.mEdges[idx]
-            self.__availableEdgeIndices.append(idx)
+            self.availableEdgeIndices.append(idx)
             self.mEdgeCount -= 1
             return True
         return False
@@ -500,7 +497,7 @@ class ExtGraph(QObject):
             vertex.mOutgoingEdges = []
             
             del self.mVertices[idx]
-            self.__availableVertexIndices.append(idx)
+            self.availableVertexIndices.append(idx)
             self.mVertexCount -= 1
             
         return deletedEdges
