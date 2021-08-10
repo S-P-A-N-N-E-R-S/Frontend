@@ -399,8 +399,17 @@ class QgsGraphLayer(QgsPluginLayer):
         vPDp = vPointLayer.dataProvider()
         vLDp = vLineLayer.dataProvider()
 
-        vPDp.addAttributes(self.mPointFields)
-        vLDp.addAttributes(self.mLineFields)
+        # add attributes to pointLayer
+        vPointLayer.startEditing()
+        for field in self.mPointFields:
+            vPointLayer.addAttribute(field)
+        vPointLayer.commitChanges()
+
+        # add attributes to lineLayer
+        vLineLayer.startEditing()
+        for field in self.mLineFields:
+            vLineLayer.addAttribute(field)
+        vLineLayer.commitChanges()
 
         for feat in self.mDataProvider.getFeatures(True):
             vPDp.addFeature(feat)
