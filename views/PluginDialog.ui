@@ -1252,6 +1252,20 @@ QListWidget::item::selected {
                        <enum>QLayout::SetDefaultConstraint</enum>
                       </property>
                       <item>
+                       <widget class="QLabel" name="ogdf_analysis_job_label">
+                        <property name="text">
+                         <string>Job name</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLineEdit" name="ogdf_analysis_job_input">
+                        <property name="toolTip">
+                         <string>Enter name of job</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
                        <widget class="QLabel" name="ogdf_analysis_analysis_label">
                         <property name="text">
                          <string>Analysis</string>
