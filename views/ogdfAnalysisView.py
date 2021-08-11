@@ -101,6 +101,9 @@ class OGDFAnalysisView(BaseContentView):
     #                 return graph
     #     return None
 
+    def getJobName(self):
+        return self.dialog.ogdf_analysis_job_input.text()
+
     def getAnalysis(self):
         return self.dialog.ogdf_analysis_analysis_input.currentText(), self.dialog.create_graph_distance_input.currentData()
 
