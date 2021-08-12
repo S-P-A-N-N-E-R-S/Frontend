@@ -166,7 +166,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>2</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="create_example_data">
              <property name="sizePolicy">
@@ -281,7 +281,7 @@ QListWidget::item::selected {
                 <item>
                  <widget class="QTabWidget" name="tabWidget">
                   <property name="currentIndex">
-                   <number>2</number>
+                   <number>0</number>
                   </property>
                   <widget class="QWidget" name="create_graph_tab">
                    <attribute name="title">
@@ -297,7 +297,7 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>-39</y>
+                         <y>0</y>
                          <width>756</width>
                          <height>969</height>
                         </rect>
@@ -1120,7 +1120,7 @@ QListWidget::item::selected {
                 <item>
                  <widget class="QTabWidget" name="tabWidget_2">
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>0</number>
                   </property>
                   <widget class="QWidget" name="tab_5">
                    <attribute name="title">
