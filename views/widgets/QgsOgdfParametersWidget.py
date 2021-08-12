@@ -94,12 +94,18 @@ class QgsOGDFParametersWidget(QWidget):
             "8": {
                 "type": FieldInformation.FieldType.CHOICE,
                 "label": "Weiterer Test",
-                "default": "Spanner",
+                "default": "Test2",
                 "required": True,
                 "choices": {
                     "Test": "testData",
                     "Test2": "testData2",
                 }
+            },
+            "13": {
+                "type": FieldInformation.FieldType.LITERAL,
+                "label": "Diese Daten müssen durchgeschliffen werden",
+                "default": "Nicht sichtbar",
+                "required": True,
             },
             "9": {
                 "type": FieldInformation.FieldType.EDGE_COSTS,
@@ -142,8 +148,14 @@ class QgsOGDFParametersWidget(QWidget):
         :return: dictionary with field key and corresponding value
         """
         data = {}
-        for key in self.fieldWidgets:
+        for key in self.fields:
             field = self.fields[key]
+
+            # store default value in data if widget is not implemented (possibly intended)
+            if key not in self.fieldWidgets:
+                data[key] = field.get("default")
+                continue
+
             fieldValue = None
             fieldWidget = self.fieldWidgets[key]
             inputWidget = fieldWidget.get("inputWidget", None)
@@ -176,7 +188,12 @@ class QgsOGDFParametersWidget(QWidget):
         self._clearWidgets()
         for key in self.fields:
             field = self.fields[key]
-            widgetFunction = self.FIELD_WIDGETS.get(field.get("type"))
+
+            # skip field if widget of corresponding field type is not implemented (possibly intended)
+            if field.get("type") not in self.FIELD_WIDGETS:
+                continue
+
+            widgetFunction = self.FIELD_WIDGETS.get(field.get("type"), None)
 
             # label exists if not checkbox widget
             labelWidget = QLabel(field.get("label")) if field.get("type") != FieldInformation.FieldType.BOOL else None
@@ -275,6 +292,8 @@ class QgsOGDFParametersWidget(QWidget):
         for choice in choices:
             choiceData = choices[choice]
             comboBoxWidget.addItem(choice, choiceData)
+        # select default item if exist
+        comboBoxWidget.setCurrentIndex(comboBoxWidget.findText(field.get("default")))
         return comboBoxWidget
 
     def _createGraphWidget(self, field):
