@@ -3,6 +3,7 @@ from qgis.gui import QgsMapTool, QgsVertexMarker
 from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QPoint, Qt
+from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QDoubleSpinBox, QGroupBox
 
 from .QgsGraphUndoCommands import ExtVertexUndoCommand, ExtEdgeUndoCommand
 
@@ -61,13 +62,26 @@ class QgsGraphMapTool(QgsMapTool):
         self.mLayer.mUndoStack.push(vertexUndoCommand)
         self.mLayer.dataProvider().addFeature(feat, True)
 
+    def _deleteEdge(self, edgeIdx):
+        if edgeIdx >= 0:
+            edge = self.mLayer.mGraph.edge(edgeIdx)
+
+            # delete possibly existing edge            
+            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, edge.fromVertex(), edge.toVertex(), True)
+            self.mLayer.mUndoStack.push(edgeUndoCommand)
+
+            self.mLayer.mDataProvider.deleteFeature(edgeIdx, False)
+
+            if self.mLayer.mGraph.edgeCount() == 0:
+                # no edges exist anymore
+                self.mLayer.mDataProvider.setGeometryToPoint(True)
+
     def _addEdge(self, p1, p2):
         """
         Adds an edge to the Graphlayers graph.
         Also adds the edge as feature to the layers DataProvider if necessary.
 
-        Deletes the edge from the Graphlayers graph if it already existed.
-        Also deletes the corresponding features from the Graphlayers DataProvider.
+        For existing edges, a new Dialog for this edge will be opened.
 
         :type p1: Integer
         :type p2: Integer
@@ -77,17 +91,40 @@ class QgsGraphMapTool(QgsMapTool):
 
         edgeId = self.mLayer.mGraph.hasEdge(p1, p2)
         if edgeId >= 0:
-            edge = self.mLayer.mGraph.edge(edgeId)
+            win = QDialog(iface.mainWindow())
+            win.setVisible(True)
 
-            # delete possibly existing edge            
-            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeId, edge.fromVertex(), edge.toVertex(), True)
-            self.mLayer.mUndoStack.push(edgeUndoCommand)
+            # QBoxLayout to add widgets to
+            layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
-            self.mLayer.mDataProvider.deleteFeature(edgeId, False)
+            # QLabel with information about the GraphLayer
+            informationLabel = QLabel("Edge " +  str(edgeId))
+            informationLabel.setWordWrap(True)
+            informationLabel.setVisible(True)
+            informationLabel.setStyleSheet("border: 1px solid black;")
+            layout.addWidget(informationLabel)
 
-            if self.mLayer.mGraph.edgeCount() == 0:
-                # no edges exist anymore
-                self.mLayer.mDataProvider.setGeometryToPoint(True)
+            if self.mLayer.mGraph.distanceStrategy == "Advanced":
+                costGroupBox = QGroupBox("Edge Cost per Advanced Cost Function")
+                costLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+                for i in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
+                    costSpinBox = QDoubleSpinBox()
+                    costSpinBox.setValue(self.mLayer.mGraph.costOfEdge(edgeId, i))
+                    costSpinBox.setVisible(True)
+                    costLayout.addWidget(costSpinBox)
+
+                costGroupBox.setLayout(costLayout)
+                costGroupBox.setVisible(True)
+                layout.addWidget(costGroupBox)
+
+            deleteEdgeButton = QPushButton("Delete")
+            deleteEdgeButton.clicked.connect(lambda: self._deleteEdge(edgeId))
+            deleteEdgeButton.setVisible(True)
+            layout.addWidget(deleteEdgeButton)
+
+            win.setLayout(layout)
+            win.adjustSize()
+
         else:
             if self.mLayer.mGraph.edgeCount() == 0:
                 # now edges exist

@@ -49,7 +49,6 @@ class ExtVertexUndoCommand(QUndoCommand):
     def redo(self):
         # delete vertex again
         if self.mOperation == "Delete":
-            print("Delete")
             deletedEdges = self.mLayer.mGraph.deleteVertex(self.mVertexId)
         
         # add vertex again

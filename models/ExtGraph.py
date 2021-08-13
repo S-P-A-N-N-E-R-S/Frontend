@@ -30,6 +30,7 @@ class ExtGraph(QObject):
             self.mOutgoingEdges = []
 
         def __del__(self):
+            # print("Delete Vertex")
             del self.mCoordinates
             del self.mIncomingEdges
             del self.mOutgoingEdges
@@ -60,6 +61,7 @@ class ExtGraph(QObject):
             self.isHighlighted = highlighted
 
         def __del__(self):
+            # print("Delete Edge")
             pass
 
         def fromVertex(self):
@@ -102,15 +104,28 @@ class ExtGraph(QObject):
         self.distance = 0
 
         self.kdTree = None
+
+        self.mJobId = -1
      
     def __del__(self):
+        print("Delete Graph")
         del self.edgeWeights
         del self.vertexWeights
+
+        for idx in self.mVertices:
+            del self.mVertices[idx]
+
+        for idx in self.mEdges:
+            del self.mEdges[idx]
+
         del self.mVertices
         del self.mEdges
         
         del self.availableVertexIndices
         del self.availableEdgeIndices
+
+    def setJobID(self, jobId):
+        self.mJobId = jobId
 
     def setDistanceStrategy(self, strategy):
         """
@@ -120,6 +135,8 @@ class ExtGraph(QObject):
         :type strategy: String
         """
         self.distanceStrategy = strategy
+        if strategy == "Advanced":
+            print("ADVANCED")
     
     def setConnectionType(self, connectionType):
         self.mConnectionType = connectionType
@@ -145,9 +162,16 @@ class ExtGraph(QObject):
         :type edgeID: Integer
         :type cost: Integer
         """
+        while len(self.edgeWeights) <= functionIndex:
+            self.edgeWeights.append([])
+        
+        while len(self.edgeWeights[functionIndex]) <= edgeID:
+            self.edgeWeights[functionIndex].append(-1)
+        
         self.edgeWeights[functionIndex][edgeID] = cost
 
-    def costOfEdge(self, edgeID, functionIndex = 0):  
+
+    def costOfEdge(self, edgeID, functionIndex = 0):
         """
         Function to get the weight of an edge. The returned value
         depends on the set distance strategy and on the functionIndex.
@@ -157,9 +181,9 @@ class ExtGraph(QObject):
         :type edgeID: Integer
         :type functionIndex: Integer
         :return cost of Edge
-        """                  
-        # differentiate between edge weights from cost functions and set weights from graph builder        
-        if self.distanceStrategy == "Euclidean":                                                                    
+        """
+        # differentiate between edge weights from cost functions and set weights from graph builder
+        if self.distanceStrategy == "Euclidean":
             return self.euclideanDist(edgeID)
         
         elif self.distanceStrategy == "Manhattan":
@@ -170,11 +194,11 @@ class ExtGraph(QObject):
             return self.geodesicDist(edgeID)
         
         #if the type is advanced the distances are set by the GraphBuilder directly
-        elif self.distanceStrategy == "Advanced":            
+        elif self.distanceStrategy == "Advanced":
             return self.edgeWeights[functionIndex][edgeID]
         
         else:
-            return 0  
+            return 0
     
     
     def euclideanDist(self, edgeID):
@@ -225,12 +249,19 @@ class ExtGraph(QObject):
         :type vertex2: Integer
         :return Integer found edgeIdx, else -1
         """
-        for edgeIdx in self.mEdges:
-            edge = self.mEdges[edgeIdx]            
+        for edgeIdx in self.vertex(vertex1).outgoingEdges():
+            edge = self.mEdges[edgeIdx]
             if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
                 return edgeIdx
-               
+        
         return -1
+        
+        # for edgeIdx in self.mEdges:
+        #     edge = self.mEdges[edgeIdx]            
+        #     if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
+        #         return edgeIdx
+               
+        # return -1
                    
     def addEdge(self, vertex1, vertex2, idx=-1, highlighted=False):
         """

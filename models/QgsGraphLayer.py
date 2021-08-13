@@ -325,9 +325,9 @@ class QgsGraphLayer(QgsPluginLayer):
                 self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), edgeId)
 
                 # set all cost functions
-                for functionIdx in range(amountEdgeCostFunctions):
-                    cost = edge.costOfEdge(edgeId, functionIdx)
-                    self.mGraph.setCostOfEdge(edgeId, functionIdx, cost)
+                # for functionIdx in range(amountEdgeCostFunctions):
+                #     cost = edge.costOfEdge(edgeId, functionIdx)
+                #     self.mGraph.setCostOfEdge(edgeId, functionIdx, cost)
         
     def getGraph(self):
         return self.mGraph
