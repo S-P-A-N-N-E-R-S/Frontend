@@ -138,56 +138,63 @@ class GraphBuilder:
         :return Boolean
         """       
         self.__options["distanceStrategy"] = "Advanced"
-        function = self.__replaceBrackets(function)                
-        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields())        
-        if syntaxCheckResult == "Valid function":
+                                               
+        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields())             
+        if syntaxCheckResult[0] == "Valid function":
+            function = syntaxCheckResult[1]
             self.costFunctions.append(function)
-            
-        return syntaxCheckResult
+                
+        return syntaxCheckResult[0]
     
-    def __replaceBrackets(self,function):
-       # replace if brackets with []
-        found = True
-        while(found):
-            found = False    
-            index =  function.find("if(")
-            if index != -1:
-                found = True
-                function = function[0:index] + function[index:].replace(")","]",1)
-                function = function.replace("if(","if[",1)
-         
-        # same for random 
-        found = True
-        while(found):
-            found = False    
-            index =  function.find("random(")
-            if index != -1:
-                found = True
-                function = function[0:index] + function[index:].replace(")","]",1)
-                function = function.replace("random(","random[",1) 
-          
-        # replace math brackets      
-        found = True
-        while(found):
-            found = False    
-            regex = re.compile(r'math.[a-z]+\(')            
-            res = regex.search(function)            
-            if res != None:
-                index = res.start()                                      
-                found = True                
-                function = function[0:index] + function[index:].replace(")","]",1)                              
-                function = function[0:index] + function[index:].replace("(","[",1)
-        
-        return function 
+    @staticmethod 
+    def findClosingBracketIndex(functionPart, startIndex):
+        stack = []
+        closingBracketIndex = startIndex
+        for i in functionPart:
+            if i == "(":
+                stack.append(i)
+            elif i == ")":                                          
+                stack.pop()    
+                if len(stack) == 0:
+                    return closingBracketIndex                        
+                      
+            closingBracketIndex+=1
+    
+    
     
     @staticmethod                   
     def syntaxCheck(function, fields):
+        """
+        Checks if the function is valid and exchanges the brackets with other
+        symbols to enable future analysis
+        """
         costFunction = function.replace(" ", "").replace('"', '').replace("(","").replace(")","")
+        function = function.replace(" ", "").replace('"', '')
         formulaParts = re.split("\+|-|\*|/", costFunction)
-        possibleMetrics = ["euclidean", "manhattan", "geodesic"]
+        possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
         possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance",
                                   "standDev", "gradientSum", "gradientMin", "gradientMax"]
-               
+        
+        possibleFields = []
+        for field in fields:
+            possibleFields.append(field.name())
+         
+            
+        for i in range(len(formulaParts)):
+            var = formulaParts[i]            
+            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):
+                return ("Invalid operand", "")
+            
+            if "raster[" in var:
+                analysisType = re.split("<|>|,|\)|==", var.split("]:")[1])[0]                
+                if not analysisType in possibleRasterAnalysis:
+                    return ("Invalid raster analysis", "")  
+            
+            if "field:" in var:
+                fieldName= re.split("<|>|,|\)", var.split("field:")[1])[0]  
+                if not fieldName in possibleFields:
+                    return ("Invalid field name", "")
+                             
         # check parentheses
         openList = ["[","("]
         closeList = ["]",")"]
@@ -200,56 +207,68 @@ class GraphBuilder:
                 if((len(stack)>0) and openList[pos] == stack[len(stack)-1]):
                     stack.pop()
                 else:
-                    return "Unbalanced parentheses"    
+                    return ("Unbalanced parentheses", "")    
         if len(stack) != 0:
-            return "Unbalanced parentheses"
-               
-        # check no operation in if/math/random construct
-        operatorRegex = re.compile(r'\+|-|\*|/')                           
-        for i in range(len(function)):
-            c = function[i]
-            if c == "[":
-                endOfBracket = 0
-                rasterBracket = False
-                for j in range(i,len(function)):
-                    if function[j] == "[":
-                        rasterBracket = True
-                    elif function[j] == "]" and rasterBracket:
-                        rasterBracket = False    
-                    elif function[j] == "]" and not rasterBracket:                       
-                        endOfBracket = j   
-                        break
-                                                        
-                res =  operatorRegex.search(function[i:endOfBracket])
-                if res != None:
-                    return "Operator inside inner function" 
-                
-                res = function[i:endOfBracket].find("math.")
-                if res != -1:
-                    return "Math function inside inner function"
-
-        # check operands
-        for i in range(len(formulaParts)):
-            var = formulaParts[i]
-            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random[" in var):
-                return "Invalid operand"
-
-            if "raster[" in var:
-                analysisType = re.split("<|>|,|\)", var.split("]:")[1])[0]                
-                if not analysisType in possibleRasterAnalysis:
-                    return "Invalid raster analysis"                       
+            return ("Unbalanced parentheses", "")        
+     
+        # check all random operands   
+        found = True
+        while(found):
+            found = False    
+            index = function.find("random(")
+            if index != -1:
+                found = True
+                # replace brackets
+                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)
+                function = function[0:closingBracketIndex] + "&" + function[closingBracketIndex+1:]                                                         
+                function = function.replace("random(","rnd?",1)                
+                if not "," in function[index:closingBracketIndex]:
+                    return ("Incorrect use of random function1", "")
+                randomRangeValues = function[index+4:closingBracketIndex-3].split(",")
+                for v in randomRangeValues:                                  
+                    if not v.isnumeric() or "." in v:
+                        return ("Incorrect use of random function", "")
         
-            # check fields
-            possibleFields = []
-            for field in fields:
-                possibleFields.append(field.name())
+        # check all if constructs
+        found = True
+        while(found):
+            found = False    
+            index =  function.find("if(")
+            if index != -1:
+                found = True
+                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)
+               
+                function = function[0:closingBracketIndex] + "}" + function[closingBracketIndex+1:]                                                                                                                                               
+                function = function[0:index] + function[index:].replace("(","{",1) 
+                                               
+                ifParts = function[index:closingBracketIndex].split(";")
+                if not len(ifParts) == 3:
+                    return ("Two values in if function necessary", "")
                 
-            if "field:" in var:
-                fieldName= re.split("<|>|,|\)", var.split("field:")[1])[0]  
-                if not fieldName in possibleFields:
-                    return "Invalid field name"
+                if "if(" in function[index:closingBracketIndex]:
+                    return ("Nested if construct", "")
+                                         
+                for part in ifParts:
+                    if len(part) == 0:
+                        return ("Values in if construct necessary", "") 
                                
-        return "Valid function"
+        # replace math brackets      
+        found = True
+        while(found):
+            found = False    
+            regex = re.compile(r'math.[a-z]+\(')            
+            res = regex.search(function)            
+            if res != None:
+                index = res.start()                                      
+                found = True                                                                                        
+                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)                
+                function = function[0:closingBracketIndex] + "$" + function[closingBracketIndex+1:]                                                                                                                                               
+                function = function[0:index] + function[index:].replace("(","%",1) 
+                if("rnd" in function[index:closingBracketIndex] or "if" in function[index:closingBracketIndex] or "math" in function[index:closingBracketIndex]):
+                    return ("Nested construct in math", "")
+                
+                
+        return ("Valid function", function) 
     
     def getCostFunction(self, index):
         return self.costFunctions[index]

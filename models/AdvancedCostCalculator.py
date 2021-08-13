@@ -38,6 +38,7 @@ class AdvancedCostCalculator():
         self.usePolygons = usePolygons        
         self.rasterBands = rasterBands
         self.operators = ["+","-","*","/","(",")"]
+        self.mathOperatorsWithTwoVar = ["pow","dist","comb", "copysign", "fmod", "ldexp", "remainder", "log", "atan2"]
     
     def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygons = None, edgesCrossingPolygons = None):        
         edge = self.graph.edge(edgeID)       
@@ -77,42 +78,45 @@ class AdvancedCostCalculator():
             return "False"        
                                 
         # translate if part
-        elif "if" in part:                     
-            expression = part.split(",")[0].split("[",1)[1]
+        elif "if" in part:                    
+            expression = part.split(";")[0].split("{",1)[1]
             variables = re.split("and|or|not|<|>|==|!=", expression) 
             varTranslations = []        
             
             for i in range (len(variables)):
                 variables[i] = variables[i].replace("=", "")
-                                       
-            for var in variables:
-                varTranslations.append(self.__translate(var, edgeID, sampledPointsLayer, edgesInPolygons, edgesCrossingPolygons))                                            
+              
             
+                                       
+            for var in variables:   
+                     
+                varTranslations.append(self.__translate(var, edgeID, sampledPointsLayer, edgesInPolygons, edgesCrossingPolygons))                                            
+                      
             counter = 0
             for var in variables:             
                 expression = expression.replace(var, str(varTranslations[counter]))  
                 counter+=1                                     
                     
-            v1 = self.__translate(part.split(",")[1], edgeID, sampledPointsLayer)
-            v2 = self.__translate(part.split(",")[2][:-1], edgeID, sampledPointsLayer)            
+            v1 = self.__translate(part.split(";")[1], edgeID, sampledPointsLayer)
+            v2 = self.__translate(part.split(";")[2][:-1], edgeID, sampledPointsLayer)            
             expression = expression.replace("and", " and ")
             expression = expression.replace("or", " or ")
             expression = expression.replace("not", " not ")
                                     
             # expression and variables to set are translated
-            return "if" + "[" + expression + "," + str(v1) + "," + str(v2) + "]"
-        
+            return "if" + "{" + expression + ";" + str(v1) + ";" + str(v2) + "}"
+                
         # python math method
         elif "math." in part:                     
-            mathOperation = part.split(".",1)[1].split("[")[0]
-            if "," in part:          
+            mathOperation = part.split(".",1)[1].split("%")[0]           
+            if mathOperation in self.mathOperatorsWithTwoVar:          
                 # recursive calls               
-                var1 = self.__translate(part.split("[")[1].split(",")[0], edgeID, sampledPointsLayer)
-                var2 = self.__translate(part.split("]")[0].split(",")[1], edgeID, sampledPointsLayer)
+                var1 = self.__translate(part.split("%")[1].split(",")[0], edgeID, sampledPointsLayer)
+                var2 = self.__translate(part.split("$")[0].split(",")[1], edgeID, sampledPointsLayer)
                 return "math." + mathOperation + "(" + var1 + "," + var2 + ")" 
             else:
                 # recursive call             
-                var = self.__translate(part.split("]")[0].split("[")[1], edgeID, sampledPointsLayer)
+                var = self.__translate(part.split("$")[0].split("%")[1], edgeID, sampledPointsLayer)
                 return "math." + mathOperation + "(" + var + ")"    
         
         # get specified field information from feature
@@ -203,9 +207,9 @@ class AdvancedCostCalculator():
                     totalClimb = totalClimb + abs(pointValuesForEdge[i] - pointValuesForEdge[i+1])
                 return str(totalClimb) 
                      
-        elif "random[" in part:
-            lb = part.split("[")[1].split(",")[0]
-            ub = part.split("]")[0].split(",")[1]
+        elif "rnd?" in part:
+            lb = part.split("?")[1].split(",")[0]
+            ub = part.split("&")[0].split(",")[1]
             
             try:
                 convertedLB = float(lb)
@@ -227,12 +231,12 @@ class AdvancedCostCalculator():
         :type part: String
         """            
         if "if" in part:                 
-            expression = part.split(",")[0].split("[",1)[1]                                   
+            expression = part.split(";")[0].split("{",1)[1]                                   
                       
             if eval(expression) == True:                
-                return part.split(",")[1]
+                return part.split(";")[1]
             else:
-                return part.split(",")[2].split("]")[0]
+                return part.split(";")[2].split("}")[0]
         
         return part
      

@@ -7,7 +7,7 @@ from ..models.ExtGraph import ExtGraph
 from ..models.QgsGraphLayer import QgsGraphLayer
 from .. import helperFunctions as helper
 
-from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
 from qgis.utils import iface
 
 
