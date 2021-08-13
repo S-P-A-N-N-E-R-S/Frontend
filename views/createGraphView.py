@@ -481,6 +481,9 @@ class CreateGraphView(BaseContentView):
     def getCRS(self):
         return self.dialog.create_graph_crs_input.crs()
 
+    def isRenderGraphChecked(self):
+        return self.dialog.create_graph_render_graph_checkbox.isChecked()
+
     # task overview
 
     def __getTaskStatus(self, status):

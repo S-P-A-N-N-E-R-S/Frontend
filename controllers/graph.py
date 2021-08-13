@@ -278,8 +278,13 @@ class CreateGraphController(BaseController):
 
         # add graph layer to project
         graphLayer.setName(graphName + "GraphLayer")
+
         if graphLayer.isValid():
             QgsProject.instance().addMapLayer(graphLayer)
+
+            # disable graph rendering if checkbox is not checked
+            if not self.view.isRenderGraphChecked():
+                QgsProject.instance().layerTreeRoot().findLayer(graphLayer).setItemVisibilityChecked(False)
         else:
             self.view.showError(self.tr("Created graph layer can not be loaded due to invalidity!"))
             success = False
