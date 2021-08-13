@@ -107,20 +107,48 @@ class QgsGraphMapTool(QgsMapTool):
             layout.addWidget(informationLabel)
 
             if self.mLayer.mGraph.distanceStrategy == "Advanced":
+                costs = []
+                
+                def _setNewCosts(idx, cost):
+                    costs[idx] = cost
+
+                def _updateCosts():
+                    edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeId, -1, -1, False)
+                    edgeUndoCommand.setNewCosts(costs)
+                    self.mLayer.mUndoStack.push(edgeUndoCommand)
+
+                applyButton = QPushButton("Apply")
+                applyButton.setVisible(True)
+                applyButton.setEnabled(False)
+                applyButton.clicked.connect(_updateCosts)
+
                 costGroupBox = QGroupBox("Edge Cost per Advanced Cost Function")
                 costLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
                 for i in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
                     costSpinBox = QDoubleSpinBox()
-                    costSpinBox.setValue(self.mLayer.mGraph.costOfEdge(edgeId, i))
+                    costs.append(self.mLayer.mGraph.costOfEdge(edgeId, i))
+                    costSpinBox.setValue(costs[i])
                     costSpinBox.setVisible(True)
+                    costSpinBox.valueChanged.connect(lambda: applyButton.setEnabled(True))
+                    costSpinBox.valueChanged.connect(lambda: _setNewCosts(i, costSpinBox.value()))
                     costLayout.addWidget(costSpinBox)
 
                 costGroupBox.setLayout(costLayout)
                 costGroupBox.setVisible(True)
                 layout.addWidget(costGroupBox)
 
+                layout.addWidget(applyButton)
+                
+            else:
+                distanceLabel = QLabel("Distance Strategy: " + self.mLayer.mGraph.distanceStrategy + ": " + str(self.mLayer.mGraph.costOfEdge(edgeId)))
+                distanceLabel.setWordWrap(False)
+                distanceLabel.setVisible(True)
+                distanceLabel.setStyleSheet("border: 1px solid black;")
+                layout.addWidget(distanceLabel)
+
             deleteEdgeButton = QPushButton("Delete")
             deleteEdgeButton.clicked.connect(lambda: self._deleteEdge(edgeId))
+            deleteEdgeButton.clicked.connect(win.done)
             deleteEdgeButton.setVisible(True)
             layout.addWidget(deleteEdgeButton)
 
@@ -248,10 +276,10 @@ class QgsGraphMapTool(QgsMapTool):
                 self.firstMarker.setIconType(QgsVertexMarker.ICON_DOUBLE_TRIANGLE)
                 self.firstMarker.setCenter(clickPosition)
             
-            elif vertexId < 0 and self.firstFound or self.advancedCosts and self.firstFound: # second RightClick (no vertex found)
-                self.__removeFirstFound()
+            # elif vertexId < 0 and self.firstFound or self.advancedCosts and self.firstFound: # second RightClick (no vertex found)
+            #     self.__removeFirstFound()
 
-            elif vertexId > 0 and self.firstFound and not self.ctrlPressed and not self.advancedCosts: # second RightClick
+            elif vertexId > 0 and self.firstFound and not self.ctrlPressed:# and not self.advancedCosts: # second RightClick
                 # add edge between firstFoundVertex and vertexId
                 # deletes edge if it already exits
                 self._addEdge(self.firstFoundVertex, vertexId)                

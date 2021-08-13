@@ -113,6 +113,16 @@ class ExtEdgeUndoCommand(QUndoCommand):
         for layer in mapLayers.values():
             if layer.id() == self.layerId:
                 self.mLayer = layer
+
+        if self.mLayer.mGraph.distanceStrategy == "Advanced":
+            self.mOldCosts = []
+            for functionIdx in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
+                self.mOldCosts.append(self.mLayer.mGraph.costOfEdge(self.mEdgeId, functionIdx))
+
+        self.mUpdateCosts = False
+        if self.mFromVertex == -1 and self.mToVertex == -1:
+            # only costs of edge have changed -> expect call of setNewCosts
+            self.mUpdateCosts = True 
     
     def id(self):
         return self.mEdgeId
@@ -131,9 +141,26 @@ class ExtEdgeUndoCommand(QUndoCommand):
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
 
+    def setNewCosts(self, newCosts):
+        """
+        Changing costs of edge instead of adding or deleting an edge.
+
+        :type newCosts: Float[]
+        """
+        self.mNewCosts = []
+        for i in range(len(newCosts)):
+            self.mNewCosts.append(newCosts[i])
+        self.mCostsChanged = True
+
     def redo(self):
+        # set new costs again
+        if self.mUpdateCosts:
+            for i in range(len(self.mNewCosts)):
+                self.mLayer.mGraph.setCostOfEdge(self.mEdgeId, i, self.mNewCosts[i])
+            self.undoString = "Undo: Set Costs of Edge " + str(self.mEdgeId) + " back."
+
         # delete edge again
-        if self.mDeleted:
+        elif self.mDeleted:
             self.__deleteEdge()
         
         # add edge again
@@ -143,8 +170,14 @@ class ExtEdgeUndoCommand(QUndoCommand):
         self.setText(self.undoString)
 
     def undo(self):
+        # set old costs again
+        if self.mUpdateCosts:
+            for i in range(len(self.mOldCosts)):
+                self.mLayer.mGraph.setCostOfEdge(self.mEdgeId, i, self.mOldCosts[i])
+            self.redoString = "Undo: Set new Costs of Edge " + str(self.mEdgeId) + " again."
+
         # add edge again
-        if self.mDeleted:
+        elif self.mDeleted:
             self.__addEdge()
         
         # delete edge again

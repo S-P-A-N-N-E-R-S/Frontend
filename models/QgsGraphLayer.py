@@ -311,6 +311,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
             # add edges to new ExtGraph and create corresponding features
             amountEdgeCostFunctions = graph.amountOfEdgeCostFunctions()
+            print("AmountEdgeCostFunctions: ", amountEdgeCostFunctions)
             for edgeId in graph.edges():
                 edge = graph.edge(edgeId)
 
@@ -326,9 +327,9 @@ class QgsGraphLayer(QgsPluginLayer):
                 self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), edgeId)
 
                 # set all cost functions
-                # for functionIdx in range(amountEdgeCostFunctions):
-                #     cost = edge.costOfEdge(edgeId, functionIdx)
-                #     self.mGraph.setCostOfEdge(edgeId, functionIdx, cost)
+                for functionIdx in range(amountEdgeCostFunctions):
+                    cost = graph.costOfEdge(edgeId, functionIdx)
+                    self.mGraph.setCostOfEdge(edgeId, functionIdx, cost)
         
     def getGraph(self):
         return self.mGraph
