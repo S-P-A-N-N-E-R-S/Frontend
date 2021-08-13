@@ -278,6 +278,11 @@ class CreateGraphController(BaseController):
 
         # add graph layer to project
         graphLayer.setName(graphName + "GraphLayer")
+
+        # disable graph rendering if checkbox is not checked
+        if not self.view.isRenderGraphChecked():
+            graphLayer.toggleRendering()
+
         if graphLayer.isValid():
             QgsProject.instance().addMapLayer(graphLayer)
         else:

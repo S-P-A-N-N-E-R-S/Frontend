@@ -1084,6 +1084,16 @@ QListWidget::item::selected {
                  </spacer>
                 </item>
                 <item>
+                 <widget class="QCheckBox" name="create_graph_render_graph_checkbox">
+                  <property name="text">
+                   <string>render graph</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <widget class="QPushButton" name="create_graph_create_btn">
                   <property name="toolTip">
                    <string>Create graph</string>
