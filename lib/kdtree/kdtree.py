@@ -392,7 +392,7 @@ class KDNode(Node):
         Squared distance between the current Node
         and the given point
         """       
-        r = range(self.dimensions)
+        r = range(self.dimensions)       
         return sum([self.axis_dist(point, i) for i in r])
 
 

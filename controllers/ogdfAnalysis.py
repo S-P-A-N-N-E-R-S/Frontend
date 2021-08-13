@@ -40,10 +40,10 @@ class OGDFAnalysisController(BaseController):
         if not graph:
             return
 
-        host = self.settings.value("protoplugin/host", "")
-        port = int(self.settings.value("protoplugin/port", 4711))
+        host = self.settings.value("ogdfplugin/host", "")
+        port = int(self.settings.value("ogdfplugin/port", 4711))
         # todo: pass authId to client
-        authId = self.settings.value("protoplugin/authId")
+        authId = self.settings.value("ogdfplugin/authId")
         if not (host and port):
             self.view.showError(self.tr("Please set host and port in options!"))
             return None
@@ -68,6 +68,10 @@ class OGDFAnalysisController(BaseController):
         self.view.showSuccess(self.tr("Analysis complete!"))
 
     def __getGraph(self):
+        """
+        Loads graph from input
+        :return:
+        """
         if not self.view.hasInput():
             self.view.showError(self.tr("Please select a graph!"))
             return None
@@ -77,8 +81,10 @@ class OGDFAnalysisController(BaseController):
             graphLayer = self.view.getInputLayer()
             if not isinstance(graphLayer, QgsGraphLayer):
                 self.view.showError(self.tr("The selected layer is not a graph layer!"))
-                return None
-            return graphLayer.getGraph()
+            if graphLayer.isValid():
+                return graphLayer.getGraph()
+            else:
+                self.view.showError(self.tr("The selected graph layer is invalid!"))
         else:
             # if file path as input
             path = self.view.getInputPath()
@@ -87,3 +93,4 @@ class OGDFAnalysisController(BaseController):
                 graph = ExtGraph()
                 graph.readGraphML(path)
                 return graph
+        return None

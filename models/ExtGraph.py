@@ -83,6 +83,7 @@ class ExtGraph(QObject):
         self.mConnectionType = "None"
         self.edgeWeights = []        
         self.vertexWeights = []
+        self.crs = None
 
         self.mVertices = {}
         self.mEdges = {}
@@ -193,13 +194,26 @@ class ExtGraph(QObject):
         elif self.distanceStrategy == "Geodesic":
             return self.geodesicDist(edgeID)
         
+        elif self.distanceStrategy == "Ellipsoidal":
+            return self.ellipsoidalDist(edgeID)
+                     
         #if the type is advanced the distances are set by the GraphBuilder directly
         elif self.distanceStrategy == "Advanced":          
             return self.edgeWeights[functionIndex][edgeID]
         
+        elif self.distanceStrategy == "None":
+            return None        
         else:
-            return 0
+            raise NameError("Unknown distance strategy")
     
+    
+    def ellipsoidalDist(self, edgeID):
+        edgeFromID = self.edge(edgeID)
+        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
+        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        distArea = QgsDistanceArea()
+        distArea.setEllipsoid(self.crs.ellipsoidAcronym())
+        return distArea.measureLine(fromPoint, toPoint)
     
     def euclideanDist(self, edgeID):
         edgeFromID = self.edge(edgeID)

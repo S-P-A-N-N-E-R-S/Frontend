@@ -14,10 +14,10 @@ class OptionsController(BaseController):
         self.authManager = QgsApplication.authManager()
 
         # show saved settings
-        host = self.settings.value("protoplugin/host", "")
-        port = self.settings.value("protoplugin/port", 4711)
-        username = self.settings.value("protoplugin/username", "")
-        savedAuthId = self.settings.value("protoplugin/authId")
+        host = self.settings.value("ogdfplugin/host", "")
+        port = self.settings.value("ogdfplugin/port", 4711)
+        username = self.settings.value("ogdfplugin/username", "")
+        savedAuthId = self.settings.value("ogdfplugin/authId")
 
         self.view.setHost(host)
         self.view.setPort(int(port))
@@ -31,22 +31,22 @@ class OptionsController(BaseController):
         port = self.view.getPort()
         username = self.view.getUsername()
         password = self.view.getPassword()
-        savedAuthId = self.settings.value("protoplugin/authId")
+        savedAuthId = self.settings.value("ogdfplugin/authId")
 
         # true if authId stored in authentication database
         hasAuth = savedAuthId and savedAuthId in self.authManager.configIds()
 
         # save settings
-        self.settings.setValue("protoplugin/host", host)
-        self.settings.setValue("protoplugin/port", port)
+        self.settings.setValue("ogdfplugin/host", host)
+        self.settings.setValue("ogdfplugin/port", port)
         # only save username if not empty
         if username:
-            self.settings.setValue("protoplugin/username", username)
+            self.settings.setValue("ogdfplugin/username", username)
 
         # save authentication
         if username and password:
             config = QgsAuthMethodConfig()
-            config.setName("protoplugin/serverAuth")
+            config.setName("ogdfplugin/serverAuth")
             config.setMethod("Basic")
             config.setConfig("username", username)
             config.setConfig("password", password)
@@ -60,7 +60,7 @@ class OptionsController(BaseController):
                 # create new config
                 hasAuth = self.authManager.storeAuthenticationConfig(config)
 
-            self.settings.setValue("protoplugin/authId", config.id())
+            self.settings.setValue("ogdfplugin/authId", config.id())
 
         elif username and hasAuth:
             # update username but remain password

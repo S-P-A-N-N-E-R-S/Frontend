@@ -21,11 +21,11 @@ class GraphBuilder:
     Options:
         - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN, DistanceNN
         - neighborNumber: int
-        - distance: float (euclidean distance)
+        - distance: (float, QgsUnitTypes::DistanceUnit) (euclidean distance)
         - nnAllowDoubleEdges": True, False
         - clusterNumber": int
         - edgeDirection: Undirected, Directed (do not use undirected with Nearest neighbor connectionType)
-        - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced
+        - distanceStrategy: Euclidean, Manhattan, Geodesic, Advanced, None
         - createGraphAsLayers: False, True
         - createRandomGraph: False, True
         - usePolygonsAsForbidden: False, True
@@ -58,7 +58,7 @@ class GraphBuilder:
         self.__options = {
             "connectionType": "Nearest neighbor",            
             "neighborNumber": 2,
-            "distance": 0.3,
+            "distance": (0.3, QgsUnitTypes.DistanceMeters),
             "nnAllowDoubleEdges": False,
             "clusterNumber": 5,
             "edgeDirection": "Directed",
@@ -258,6 +258,11 @@ class GraphBuilder:
         if not optionType in self.__options:
             raise KeyError("Option not found")
         self.__options[optionType] = value
+
+    def getOption(self, optionType):
+        if not optionType in self.__options:
+            raise KeyError("Option not found")
+        return self.__options[optionType]
     
     def setRandomOption(self, optionType, value):
         if not optionType in self.__randomOptions:
@@ -307,6 +312,13 @@ class GraphBuilder:
 
         self.kdTree = kdtree.create(points)
 
+        if self.__options["connectionType"] == "DistanceNN":            
+            if self.__options["createRandomGraph"] == True:
+                crsUnitRead = QgsCoordinateReferenceSystem("EPSG:4326")                
+            else:
+                crsUnitRead = self.vLayer.crs() 
+            
+
         for i in range(self.graph.vertexCount()):
             if self.task is not None and self.task.isCanceled():
                 return
@@ -316,8 +328,9 @@ class GraphBuilder:
             if self.__options["connectionType"] == "Nearest neighbor":
                 listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1)
             elif self.__options["connectionType"] == "DistanceNN":
-                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"],2))    
-            
+                # make distance transformation                                                                                                                                                                                                                      
+                    transDistValue = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                    
+                    listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2))                                              
             for j in range(1,len(listOfNeighbors)):
                 if self.__options["connectionType"] == "Nearest neighbor":
                     neighborPoint = listOfNeighbors[j][0].data
@@ -325,7 +338,7 @@ class GraphBuilder:
                     neighborPoint = listOfNeighbors[j]
                 self.graph.addEdge(i,neighborPoint[2])
             
-            if self.__options["nnAllowDoubleEdges"] == False:
+            if self.__options["connectionType"] == "Nearest neighbor" and self.__options["nnAllowDoubleEdges"] == False:
                 self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
 
     def __createCluster(self):
@@ -392,7 +405,7 @@ class GraphBuilder:
             if self.task is not None and self.task.isCanceled():
                 return
             point = self.graph.vertex(i).point()
-            listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"],2))
+            listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"][0],2))
             
             for j in range(1,len(listOfNeighbors)):
                 neighborPoint = listOfNeighbors[j]
@@ -619,6 +632,128 @@ class GraphBuilder:
                     shortestIndex = v
                      
         return shortestIndex
+                
+    def addVertex(self, vertexCoordinates): 
+        """
+        Methods adds the point given by its coordinates to the
+        graph attribute of the Graphbuilder. Get the modified 
+        ExtGraph object by using the getGraph() method.
+        
+        :type vertexCoordinates: list with x,y-Coordinates
+        :return list of edges
+        """ 
+        listOfEdges = []
+        addedEdgeIndices = []
+        numberOfEdgesOriginal = self.graph.edgeCount()
+        index = self.graph.addVertex(QgsPointXY(vertexCoordinates[0], vertexCoordinates[1]))
+        point = self.graph.vertex(index).point()
+        if self.__options["connectionType"] == "Complete":
+            for i in self.graph.vertices():
+                edgeId = self.graph.addEdge(i, index)
+                addedEdgeIndices.append(edgeId)
+                listOfEdges.append([edgeId, i,index])
+                if self.__options["edgeDirection"] == "Undirected":
+                    edgeId = self.graph.addEdge(i, index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, i,index])
+        
+        elif self.__options["connectionType"] == "Nearest neighbor" or self.__options["connectionType"] == "DistanceNN":                     
+            # if this is True the nodes got deleted
+            if self.__options["nnAllowDoubleEdges"] == False:
+                points = []
+                for i in self.graph.vertices():
+                    p = self.graph.vertex(i).point()
+                    points.append([p.x(),p.y(),i])        
+                self.kdTree = kdtree.create(points)
+            
+            else:
+                self.kdTree.add([point.x(),point.y(),index])  
+            
+            if self.__options["connectionType"] == "Nearest neighbor":                  
+                listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),index],self.__options["neighborNumber"]+1)
+                rangeStart = 1
+                rangeEnd = len(listOfNeighbors)
+            elif self.__options["connectionType"] == "DistanceNN":
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),index], pow(self.__options["distance"][0],2))
+                rangeStart = 0
+                rangeEnd = len(listOfNeighbors)-1
+                          
+            for j in range(rangeStart,rangeEnd):
+                if self.__options["connectionType"] == "Nearest neighbor": 
+                    neighborPoint = listOfNeighbors[j][0].data
+                elif self.__options["connectionType"] == "DistanceNN":
+                    neighborPoint = listOfNeighbors[j]    
+                
+                edgeId = self.graph.addEdge(index,neighborPoint[2])
+                addedEdgeIndices.append(edgeId)
+                listOfEdges.append([edgeId, index,neighborPoint[2]])
+                if self.__options["edgeDirection"] == "Undirected" or self.__options["nnAllowDoubleEdges"] == True:
+                    edgeId = self.graph.addEdge(neighborPoint[2], index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, neighborPoint[2],index])
+         
+        elif self.__options["connectionType"] == "ClusterComplete":
+            # search nearest point
+            neighborPoint = self.getNearestVertex(index)
+            
+            # add an edge to all the neighbors of the found nearest point
+            for i in self.graph.edges():
+                edge = self.graph.edge(i)
+                if edge.toVertex() == neighborPoint:
+                    edgeId = self.graph.addEdge(edge.fromVertex(), index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, edge.fromVertex(),index])
+                elif edge.fromVertex() == neighborPoint:
+                    edgeId = self.graph.addEdge(edge.toVertex(), index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, edge.toVertex(), index])
+
+            edgeId = self.graph.addEdge(neighborPoint, index)      
+            addedEdgeIndices.append(edgeId)
+            listOfEdges.append([edgeId, neighborPoint, index])  
+                                
+        elif self.__options["connectionType"] == "ClusterNN":
+            # search nearest point           
+            neighborPoint = self.getNearestVertex(index)          
+            self.layerWithClusterIDS.selectByIds([neighborPoint])
+            for feature in self.layerWithClusterIDS.selectedFeatures():                
+                idOfNearestCluster = feature["CLUSTER_ID"]              
+            
+            self.layerWithClusterIDS.selectAll()
+            #create kdtree with all the nodes from the same cluster
+            points = []
+            counter = 0
+            for feature in self.layerWithClusterIDS.getFeatures():
+                geom = feature.geometry()
+                if feature["CLUSTER_ID"] == idOfNearestCluster:                    
+                    points.append([geom.asPoint().x(),geom.asPoint().y(),counter])
+                counter+=1            
+            clusterKDTree = kdtree.create(points)
+            
+            listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(),index],self.__options["neighborNumber"]) 
+            for j in range(len(listOfNeighbors)):
+                neighborPoint = listOfNeighbors[j][0].data
+                edgeId = self.graph.addEdge(index, neighborPoint[2])
+                addedEdgeIndices.append(edgeId)
+                listOfEdges.append([edgeId, index, neighborPoint[2]]) 
+                if self.__options["edgeDirection"] == "Undirected" or self.__options["nnAllowDoubleEdges"] == True:
+                    edgeId = self.graph.addEdge(neighborPoint[2], index)
+                    addedEdgeIndices.append(edgeId)
+                    listOfEdges.append([edgeId, neighborPoint[2], index])        
+        
+        # # create AdvancedCostCalculator object with the necessary parameters
+        # costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
+        
+        # # call for every new edge
+        # for i in range(len(addedEdgeIndices)):
+        #     # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
+        #     # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
+        #     functionCounter = 0
+        #     for func in self.costFunctions:          
+        #         self.graph = costCalculator.setEdgeCosts(func,addedEdgeIndices[i],functionCounter)   
+        #         functionCounter+=1
+        
+        return listOfEdges
         
     def addVertices(self, vertexLayer):
         """
@@ -654,8 +789,10 @@ class GraphBuilder:
                                             self.__options["distance"])
 
         if self.__options["createRandomGraph"] == True:
+            self.graph.crs = "EPSG:4326"
             self.__createRandomVertices()
-        else:          
+        else:     
+            self.graph.crs = self.vLayer.crs()          
             if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
                 self.__createVerticesForPoints()
 
@@ -715,8 +852,18 @@ class GraphBuilder:
         # build graph
         graph = self.makeGraph()
 
-        # set graph to graph layer
-        graphLayer.setGraph(self.graph)
+        if self.__options["createRandomGraph"] == False:
+            graphLayer.setCrs(self.vLayer.crs())
+        else:
+            if isinstance(self.__randomOptions["area"], tuple):
+                _, inputCRS = self.__randomOptions["area"]
+                graphLayer.setCrs(QgsCoordinateReferenceSystem(inputCRS))
+            else:
+                graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+
+        if not self.task.isCanceled():
+            # set graph to graph layer
+            graphLayer.setGraph(self.graph)
 
         if self.task.isCanceled():
             # if task is canceled by User or QGIS

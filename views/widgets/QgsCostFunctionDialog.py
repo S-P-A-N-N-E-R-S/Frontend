@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QPushButton, QAbstractItemView
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.Qsci import QsciScintilla, QsciLexerPython
 
-from ...models.AdvancedCostCalculator import AdvancedCostCalculator
+from ...models.GraphBuilder import GraphBuilder
 
 
 class QgsExpressionItem(QStandardItem):
@@ -68,6 +68,16 @@ class QgsExpressionContext(QObject):
                         "expressionText": " if( ) ",
                         "helpText": self.tr("Tests a condition and returns a different result depending on the conditional "
                                             "check.")
+                    },
+                    {
+                        "label": self.tr("crossesPolygon"),
+                        "expressionText": "crossesPolygon ",
+                        "helpText": self.tr("Checks whether an edge crosses a polygon.")
+                    },
+                    {
+                        "label": self.tr("insidePolygon"),
+                        "expressionText": "insidePolygon ",
+                        "helpText": self.tr("Checks whether an edge is inside a polygon.")
                     },
                 ],
             },
@@ -615,6 +625,8 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         # self.codeEditor.setLexer(QsciLexerPython())
 
         self.codeEditor.textChanged.connect(self.costFunctionChanged)
+        # set up syntax check showing in status
+        self.codeEditor.textChanged.connect(self._updateStatusText)
 
         operatorPushButtons = self.operatorButtonBox.findChildren(QPushButton)
         for operatorButton in operatorPushButtons:
@@ -634,8 +646,36 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
 
         # change help text if item is changed
         self.expressionTreeView.selectionModel().currentChanged.connect(self._changeItemHelpText)
+        self.setStatus("No function is set")
+
+        # show initial help text
+        self.setHelpText(
+            """
+            <h1>Cost Function Builder</h1>
+            <p>The builder provides an easy method for creating cost functions.</p>
+            <h2>Usage</h2>
+            <p>On the left side there is the editor where the cost function can be entered. Below the editor are buttons 
+            with the most common functions. In the center there is a list of all available expressions that can 
+            be used in the cost function.</p>
+            <h2>Example</h2>
+            <p>if(field:ELEV > 100, raster[0]:sum, raster[0]:min)</p>
+            """
+        )
 
         self._loadTreeViewItems()
+
+    def _updateStatusText(self):
+        """
+        Performs syntax check and shows status
+        :return:
+        """
+        costFunction = self.costFunction()
+        if not costFunction:
+            statusText = "No function is set"
+        else:
+            fields = self.getVectorLayer().fields() if self.getVectorLayer() else []
+            statusText = GraphBuilder.syntaxCheck(costFunction, fields)
+        self.setStatus(statusText)
 
     def _treeItemDoubleClicked(self, modelIndex):
         """
@@ -759,6 +799,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     def setVectorLayer(self, vectorLayer):
         self.vectorLayer = vectorLayer
         self._loadTreeViewItems()
+        self._updateStatusText()
 
     def setRasterData(self, rasterData):
         """
