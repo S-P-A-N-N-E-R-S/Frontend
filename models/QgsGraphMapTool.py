@@ -22,6 +22,8 @@ class QgsGraphMapTool(QgsMapTool):
         self.ctrlPressed = False
 
     def activate(self):
+        print("QgsGraphMapTool activated")
+        self.advancedCosts = self.mLayer.mGraph.distanceStrategy == "Advanced"
         # emit self.activated()
         pass
 
@@ -126,6 +128,8 @@ class QgsGraphMapTool(QgsMapTool):
             win.adjustSize()
 
         else:
+            # advancedCosts prevent user from adding edges
+
             if self.mLayer.mGraph.edgeCount() == 0:
                 # now edges exist
                 self.mLayer.mDataProvider.setGeometryToPoint(False)
@@ -244,10 +248,10 @@ class QgsGraphMapTool(QgsMapTool):
                 self.firstMarker.setIconType(QgsVertexMarker.ICON_DOUBLE_TRIANGLE)
                 self.firstMarker.setCenter(clickPosition)
             
-            elif vertexId < 0 and self.firstFound: # second RightClick (no vertex found)
+            elif vertexId < 0 and self.firstFound or self.advancedCosts and self.firstFound: # second RightClick (no vertex found)
                 self.__removeFirstFound()
 
-            elif vertexId > 0 and self.firstFound and not self.ctrlPressed: # second RightClick
+            elif vertexId > 0 and self.firstFound and not self.ctrlPressed and not self.advancedCosts: # second RightClick
                 # add edge between firstFoundVertex and vertexId
                 # deletes edge if it already exits
                 self._addEdge(self.firstFoundVertex, vertexId)                

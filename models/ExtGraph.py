@@ -194,7 +194,7 @@ class ExtGraph(QObject):
             return self.geodesicDist(edgeID)
         
         #if the type is advanced the distances are set by the GraphBuilder directly
-        elif self.distanceStrategy == "Advanced":
+        elif self.distanceStrategy == "Advanced":          
             return self.edgeWeights[functionIndex][edgeID]
         
         else:
@@ -284,7 +284,7 @@ class ExtGraph(QObject):
         self.mVertices[vertex1].mOutgoingEdges.append(addIndex)
         self.mVertices[vertex2].mIncomingEdges.append(addIndex)
         self.mEdgeCount += 1
-        
+
         return addIndex
 
     def addVertex(self, point, idx=-1):
