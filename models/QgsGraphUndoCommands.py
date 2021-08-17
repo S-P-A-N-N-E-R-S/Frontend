@@ -164,7 +164,6 @@ class ExtEdgeUndoCommand(QUndoCommand):
     def redo(self):
         # set new costs again
         if self.mUpdateCosts or self.mCostsChanged:
-            print("TESTITEST")
             for i in range(len(self.mNewCosts)):
                 self.mLayer.mGraph.setCostOfEdge(self.mEdgeId, i, self.mNewCosts[i])
             self.undoString = "Set Costs of Edge " + str(self.mEdgeId) + " again."

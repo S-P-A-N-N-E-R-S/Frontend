@@ -12,13 +12,13 @@ from ..lib.kdtree import kdtree
 """
 Class extends the QgsGraph by adding a function costOfEdge
 which returns the distance between the two endpoint of an edge.
-Different metrics for this distance can be defined by setting 
+Different metrics for this distance can be defined by setting
 the distanceStrategy attribute of the class
 
 Strategies are divided in cost functions and already set weights
 """
 class ExtGraph(QObject):
-    
+
     #==ExtVertex===================================================================
     class ExtVertex:
         """
@@ -77,11 +77,11 @@ class ExtGraph(QObject):
             self.isHighlighted = highlighted
 
     #==ExtGraph Methods===============================================================
-    def __init__(self):        
+    def __init__(self):
         super().__init__()
         self.distanceStrategy = "Euclidean"
         self.mConnectionType = "None"
-        self.edgeWeights = []        
+        self.edgeWeights = []
         self.vertexWeights = []
         self.crs = None
 
@@ -107,9 +107,9 @@ class ExtGraph(QObject):
         self.kdTree = None
 
         self.mJobId = -1
-     
+
     def __del__(self):
-        print("Delete Graph")
+        # print("Delete Graph")
         del self.edgeWeights
         del self.vertexWeights
 
@@ -121,7 +121,7 @@ class ExtGraph(QObject):
 
         del self.mVertices
         del self.mEdges
-        
+
         del self.availableVertexIndices
         del self.availableEdgeIndices
 
@@ -130,15 +130,13 @@ class ExtGraph(QObject):
 
     def setDistanceStrategy(self, strategy):
         """
-        Function is called my the GraphBuilder every time the makeGraph 
+        Function is called my the GraphBuilder every time the makeGraph
         method is called.
-        
+
         :type strategy: String
         """
         self.distanceStrategy = strategy
-        if strategy == "Advanced":
-            print("ADVANCED")
-    
+
     def setConnectionType(self, connectionType):
         self.mConnectionType = connectionType
 
@@ -158,17 +156,17 @@ class ExtGraph(QObject):
     def setCostOfEdge(self, edgeID, functionIndex, cost):
         """
         Set cost of a specific edge.
-        
+
         :type functionIndex: Integer
         :type edgeID: Integer
         :type cost: Integer
         """
         while len(self.edgeWeights) <= functionIndex:
             self.edgeWeights.append([])
-        
+
         while len(self.edgeWeights[functionIndex]) <= edgeID:
             self.edgeWeights[functionIndex].append(-1)
-        
+
         self.edgeWeights[functionIndex][edgeID] = cost
 
 
@@ -178,7 +176,7 @@ class ExtGraph(QObject):
         depends on the set distance strategy and on the functionIndex.
         The functionIndex defines the cost function to use if multiple ones
         are given.
-        
+
         :type edgeID: Integer
         :type functionIndex: Integer
         :return cost of Edge
@@ -186,68 +184,68 @@ class ExtGraph(QObject):
         # differentiate between edge weights from cost functions and set weights from graph builder
         if self.distanceStrategy == "Euclidean":
             return self.euclideanDist(edgeID)
-        
+
         elif self.distanceStrategy == "Manhattan":
             return self.manhattanDist(edgeID)
-        
+
         # calculate geodesic distance using the Haversine formula
         elif self.distanceStrategy == "Geodesic":
             return self.geodesicDist(edgeID)
-        
+
         elif self.distanceStrategy == "Ellipsoidal":
             return self.ellipsoidalDist(edgeID)
-                     
+
         #if the type is advanced the distances are set by the GraphBuilder directly
         elif self.distanceStrategy == "Advanced":
             if len(self.edgeWeights) <= functionIndex or len(self.edgeWeights[functionIndex]) <= edgeID:
                 return 0
             return self.edgeWeights[functionIndex][edgeID]
-        
+
         elif self.distanceStrategy == "None":
-            return None        
+            return None
         else:
             raise NameError("Unknown distance strategy")
-    
-    
+
+
     def ellipsoidalDist(self, edgeID):
         edgeFromID = self.edge(edgeID)
         fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        toPoint = self.vertex(edgeFromID.toVertex()).point()
         distArea = QgsDistanceArea()
         distArea.setEllipsoid(self.crs.ellipsoidAcronym())
         return distArea.measureLine(fromPoint, toPoint)
-    
+
     def euclideanDist(self, edgeID):
         edgeFromID = self.edge(edgeID)
         fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-        toPoint = self.vertex(edgeFromID.toVertex()).point() 
-        euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2)) 
+        toPoint = self.vertex(edgeFromID.toVertex()).point()
+        euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
         return euclDist
-        
-    def manhattanDist(self, edgeID): 
+
+    def manhattanDist(self, edgeID):
         edgeFromID = self.edge(edgeID)
         fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        toPoint = self.vertex(edgeFromID.toVertex()).point()
         manhattenDist = abs(fromPoint.x()-toPoint.x()) + abs(fromPoint.y()-toPoint.y())
         return manhattenDist
-    
+
     def geodesicDist(self, edgeID):
         edgeFromID = self.edge(edgeID)
         fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-        toPoint = self.vertex(edgeFromID.toVertex()).point() 
+        toPoint = self.vertex(edgeFromID.toVertex()).point()
         radius = 6371000
         phi1 = math.radians(fromPoint.y())
-        phi2 = math.radians(toPoint.y())        
+        phi2 = math.radians(toPoint.y())
         deltaPhi = math.radians(toPoint.y()-fromPoint.y())
         deltaLambda = math.radians(toPoint.x()-fromPoint.x())
-        a = math.sin(deltaPhi/2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(deltaLambda / 2.0) ** 2    
-        c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))       
-        return radius*c  
-    
+        a = math.sin(deltaPhi/2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(deltaLambda / 2.0) ** 2
+        c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
+        return radius*c
+
     def distanceP2P(self, vertex1, vertex2):
         """
         Method to get the euclidean distance between two vertices
-        
+
         :type vertex1: Integer
         :type vertex2: Integer
         :return distance between vertices
@@ -255,12 +253,12 @@ class ExtGraph(QObject):
         fromPoint = self.vertex(vertex1).point()
         toPoint = self.vertex(vertex2).point()
         return math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
-        
-    
+
+
     def hasEdge(self, vertex1, vertex2):
         """
         Method searches for the edge between to vertices
-        
+
         :type vertex1: Integer
         :type vertex2: Integer
         :return Integer found edgeIdx, else -1
@@ -269,16 +267,16 @@ class ExtGraph(QObject):
             edge = self.mEdges[edgeIdx]
             if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
                 return edgeIdx
-        
+
         return -1
-        
+
         # for edgeIdx in self.mEdges:
-        #     edge = self.mEdges[edgeIdx]            
+        #     edge = self.mEdges[edgeIdx]
         #     if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
         #         return edgeIdx
-               
+
         # return -1
-                   
+
     def addEdge(self, vertex1, vertex2, idx=-1, highlighted=False):
         """
         Adds an edge with fromVertex vertex1 and toVertex2 to the ExtGraph
@@ -313,15 +311,15 @@ class ExtGraph(QObject):
 
         self.mVertices[addIndex] = self.ExtVertex(point)
         self.mVertexCount += 1
-        
+
         return addIndex
 
-    def addVertexWithEdges(self, vertexCoordinates): 
+    def addVertexWithEdges(self, vertexCoordinates):
         """
         Methods adds the point given by its coordinates to the
-        graph attribute of the Graphbuilder. Get the modified 
+        graph attribute of the Graphbuilder. Get the modified
         ExtGraph object by using the getGraph() method.
-        
+
         :type vertexCoordinates: list with x,y-Coordinates
         :return list of edges
         """
@@ -332,7 +330,7 @@ class ExtGraph(QObject):
                 points.append([point.x(),point.y()])
 
             self.kdTree = kdtree.create(points)
-        
+
         listOfEdges = []
         addedEdgeIndices = []
         numberOfEdgesOriginal = self.edgeCount()
@@ -347,34 +345,34 @@ class ExtGraph(QObject):
                     edgeId = self.addEdge(i, index)
                     addedEdgeIndices.append(edgeId)
                     listOfEdges.append([edgeId, i,index])
-        
-        elif self.mConnectionType == "Nearest neighbor" or self.mConnectionType == "DistanceNN":                     
+
+        elif self.mConnectionType == "Nearest neighbor" or self.mConnectionType == "DistanceNN":
             # if this is True the nodes got deleted
             if self.nnAllowDoubleEdges == False:
                 points = []
                 for i in self.vertices():
                     p = self.vertex(i).point()
-                    points.append([p.x(),p.y()])        
+                    points.append([p.x(),p.y()])
                 self.kdTree = kdtree.create(points)
-            
+
             else:
                 self.kdTree.add([point.x(),point.y()])
-            
+
             if self.mConnectionType == "Nearest neighbor":
                 listOfNeighbors = self.kdTree.search_knn([point.x(),point.y()],self.numberNeighbours+1)
                 rangeStart = 1
                 rangeEnd = len(listOfNeighbors)
             elif self.mConnectionType == "DistanceNN":
-                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(self.distance,2))    
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(self.distance,2))
                 rangeStart = 0
                 rangeEnd = len(listOfNeighbors)-1
-                          
+
             for j in range(rangeStart,rangeEnd):
-                if self.mConnectionType == "Nearest neighbor": 
+                if self.mConnectionType == "Nearest neighbor":
                     neighborPoint = listOfNeighbors[j][0].data
                 elif self.mConnectionType == "DistanceNN":
-                    neighborPoint = listOfNeighbors[j]    
-                
+                    neighborPoint = listOfNeighbors[j]
+
                 edgeId = self.addEdge(index,neighborPoint[2])
                 addedEdgeIndices.append(edgeId)
                 listOfEdges.append([edgeId, index,neighborPoint[2]])
@@ -382,14 +380,14 @@ class ExtGraph(QObject):
                     edgeId = self.addEdge(neighborPoint[2], index)
                     addedEdgeIndices.append(edgeId)
                     listOfEdges.append([edgeId, neighborPoint[2],index])
-         
+
         elif self.mConnectionType == "ClusterComplete":
             print("addVertexWithEdges not yet supported for ClusterComplete")
             return
-            
+
             # # search nearest point
             # neighborPoint = self.getNearestVertex(index)
-            
+
             # # add an edge to all the neighbors of the found nearest point
             # for i in self.edges():
             #     edge = self.edge(i)
@@ -402,54 +400,54 @@ class ExtGraph(QObject):
             #         addedEdgeIndices.append(edgeId)
             #         listOfEdges.append([edgeId, edge.toVertex(), index])
 
-            # edgeId = self.addEdge(neighborPoint, index)      
+            # edgeId = self.addEdge(neighborPoint, index)
             # addedEdgeIndices.append(edgeId)
-            # listOfEdges.append([edgeId, neighborPoint, index])  
-                                
+            # listOfEdges.append([edgeId, neighborPoint, index])
+
         elif self.mConnectionType == "ClusterNN":
             print("addVertexWithEdges not yet supported for ClusterNN")
             return
 
-            # # search nearest point           
-            # neighborPoint = self.getNearestVertex(index)          
+            # # search nearest point
+            # neighborPoint = self.getNearestVertex(index)
             # self.layerWithClusterIDS.selectByIds([neighborPoint])
-            # for feature in self.layerWithClusterIDS.selectedFeatures():                
-            #     idOfNearestCluster = feature["CLUSTER_ID"]              
-            
+            # for feature in self.layerWithClusterIDS.selectedFeatures():
+            #     idOfNearestCluster = feature["CLUSTER_ID"]
+
             # self.layerWithClusterIDS.selectAll()
             # #create kdtree with all the nodes from the same cluster
             # points = []
             # counter = 0
             # for feature in self.layerWithClusterIDS.getFeatures():
             #     geom = feature.geometry()
-            #     if feature["CLUSTER_ID"] == idOfNearestCluster:                    
+            #     if feature["CLUSTER_ID"] == idOfNearestCluster:
             #         points.append([geom.asPoint().x(),geom.asPoint().y(),counter])
-            #     counter+=1            
+            #     counter+=1
             # clusterKDTree = kdtree.create(points)
-            
-            # listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(),index],self.numberNeighbours) 
+
+            # listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(),index],self.numberNeighbours)
             # for j in range(len(listOfNeighbors)):
             #     neighborPoint = listOfNeighbors[j][0].data
             #     edgeId = self.addEdge(index, neighborPoint[2])
             #     addedEdgeIndices.append(edgeId)
-            #     listOfEdges.append([edgeId, index, neighborPoint[2]]) 
+            #     listOfEdges.append([edgeId, index, neighborPoint[2]])
             #     if self.edgeDirection == "Undirected" or self.nnAllowDoubleEdges == True:
             #         edgeId = self.addEdge(neighborPoint[2], index)
             #         addedEdgeIndices.append(edgeId)
-            #         listOfEdges.append([edgeId, neighborPoint[2], index])        
-        
+            #         listOfEdges.append([edgeId, neighborPoint[2], index])
+
         # # create AdvancedCostCalculator object with the necessary parameters
         # costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
-        
+
         # # call for every new edge
         # for i in range(len(addedEdgeIndices)):
         #     # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
         #     # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
         #     functionCounter = 0
-        #     for func in self.costFunctions:          
-        #         self = costCalculator.setEdgeCosts(func,addedEdgeIndices[i],functionCounter)   
+        #     for func in self.costFunctions:
+        #         self = costCalculator.setEdgeCosts(func,addedEdgeIndices[i],functionCounter)
         #         functionCounter+=1
-        
+
         print(listOfEdges)
         return listOfEdges
 
@@ -471,17 +469,17 @@ class ExtGraph(QObject):
         """
         if tolerance > 0:
             toleranceRect = QgsRectangle.fromCenterAndSize(vertex, tolerance, tolerance)
-        
+
         for idx in self.mVertices:
             checkVertex = self.vertex(idx)
-            
+
             if tolerance == 0 and checkVertex.point() == vertex:
                 return idx
             elif tolerance > 0 and toleranceRect.contains(checkVertex.point()):
                 return idx
 
         return -1
-    
+
     def vertex(self, idx):
         if idx in self.mVertices:
             return self.mVertices[idx]
@@ -542,112 +540,112 @@ class ExtGraph(QObject):
                 self.deleteEdge(edgeIdx)
                 deletedEdges.append(edgeIdx)
             vertex.mOutgoingEdges = []
-            
+
             del self.mVertices[idx]
             self.availableVertexIndices.append(idx)
             self.mVertexCount -= 1
-            
+
         return deletedEdges
-            
+
 
     def writeGraphML(self, path):
         """
         Write the graph into a .graphml format
-        
-        :type path: String       
+
+        :type path: String
         """
         file = open(path, "w")
         header = ['<?xml version="1.0" encoding="UTF-8"?>\n',
-            '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n',  
+            '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n',
             '\txmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n',
             '\txmlns:y="http://www.yworks.com/xml/graphml"\n',
             '\txsi:schemaLocation="http://graphml.graphdrawing.org/xmlns\n',
             '\t http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">\n',
             '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
-        
+
         file.writelines(header)
         file.write('\t<graph id="G" edgedefault="directed">\n')
-        
+
         for i in self.mVertices:
             nodeLine = '\t\t<node id="' + str(i) + '"/>\n'
-            file.write(nodeLine) 
+            file.write(nodeLine)
             file.write('\t\t\t<data key="d1">\n')
             file.write('\t\t\t\t<y:ShapeNode>\n')
             coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(self.vertex(i).point().x()) + '" y="' + str(self.vertex(i).point().y()) + '"/>\n'
             file.write(coordinates)
             file.write('\t\t\t\t</y:ShapeNode>\n')
             file.write('\t\t\t</data>\n')
-        
+
         for i in self.mEdges:
             edgeLine = '\t\t<edge source="' + str(self.edge(i).fromVertex()) + '" target="' + str(self.edge(i).toVertex()) + '"/>\n'
             file.write(edgeLine)
-        
+
         file.write("\t</graph>\n")
         file.write("</graphml>")
         file.close()
-       
-    def readGraphML(self, path):   
+
+    def readGraphML(self, path):
         """
         Read a .graphml file into a ExtGraph
-        
+
         :type path: String
-        """     
+        """
         file = open(path, "r")
         lines = file.readlines()
         nodeCoordinatesGiven = False
         edgeTypeDirection = "Directed"
         nodeIDs = []
-        
+
         for line in lines:
             if 'edgedefault="undirected"' in line:
-                edgeTypeDirection = "Undirected"                       
+                edgeTypeDirection = "Undirected"
             elif 'x="' in line and 'y="' in line:
                 nodeCoordinatesGiven = True
                 break
-                   
-        # maybe no coordinate are given in the .graphml file           
+
+        # maybe no coordinate are given in the .graphml file
         if nodeCoordinatesGiven == True:
             for line in lines:
                 if '<node' in line:
-                    nodeIDs.append(line.split('id="')[1].split('"')[0])                
-                
+                    nodeIDs.append(line.split('id="')[1].split('"')[0])
+
                 elif 'x="' in line:
                     xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
                     yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
-                    self.addVertex(QgsPointXY(xValue, yValue))                      
-                    
+                    self.addVertex(QgsPointXY(xValue, yValue))
+
                 elif '<edge' in line:
                     fromVertex = line.split('source="')[1].split('"')[0]
                     toVertex = line.split('target="')[1].split('"')[0]
                     fromVertexID = 0
                     toVertexID = 0
-                    
+
                     for i in range(len(nodeIDs)):
                         if nodeIDs[i] == fromVertex:
                             fromVertexID = i
                         elif nodeIDs[i] == toVertex:
-                            toVertexID = i                        
-                    
-                    self.addEdge(fromVertexID, toVertexID)                     
-                    if edgeTypeDirection == "Undirected":   
-                        self.addEdge(toVertexID, fromVertexID)      
-         
-        # if no coordinates are given assign random                             
+                            toVertexID = i
+
+                    self.addEdge(fromVertexID, toVertexID)
+                    if edgeTypeDirection == "Undirected":
+                        self.addEdge(toVertexID, fromVertexID)
+
+        # if no coordinates are given assign random
         else:
             for line in lines:
                 if '<node' in line:
-                    self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884))) 
+                    self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884)))
                     nodeIDs.append(line.split('id="')[1].split('"')[0])
-        
+
                 elif '<edge' in line:
                     fromVertex = line.split('source="')[1].split('"')[0]
                     toVertex = line.split('target="')[1].split('"')[0]
                     fromVertexID = 0
                     toVertexID = 0
-                    
+
                     for i in range(len(nodeIDs)):
                         if nodeIDs[i] == fromVertex:
                             fromVertexID = i
                         elif nodeIDs[i] == toVertex:
-                            toVertexID = i    
+                            toVertexID = i
                     self.addEdge(fromVertexID, toVertexID)

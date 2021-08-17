@@ -22,7 +22,7 @@ class QgsGraphMapTool(QgsMapTool):
         self.ctrlPressed = False
 
     def activate(self):
-        print("QgsGraphMapTool activated")
+        # print("QgsGraphMapTool activated")
         self.advancedCosts = self.mLayer.mGraph.distanceStrategy == "Advanced"
         # emit self.activated()
         pass
@@ -138,7 +138,6 @@ class QgsGraphMapTool(QgsMapTool):
             costLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
             def _updateCosts():
-                print("UpdateCosts")
                 count = 0
                 for child in costGroupBox.findChildren(QDoubleSpinBox):
                     costs[count] = child.value()
