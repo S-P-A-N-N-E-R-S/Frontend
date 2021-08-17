@@ -198,7 +198,9 @@ class ExtGraph(QObject):
             return self.ellipsoidalDist(edgeID)
                      
         #if the type is advanced the distances are set by the GraphBuilder directly
-        elif self.distanceStrategy == "Advanced":          
+        elif self.distanceStrategy == "Advanced":
+            if len(self.edgeWeights) <= functionIndex or len(self.edgeWeights[functionIndex]) <= edgeID:
+                return 0
             return self.edgeWeights[functionIndex][edgeID]
         
         elif self.distanceStrategy == "None":

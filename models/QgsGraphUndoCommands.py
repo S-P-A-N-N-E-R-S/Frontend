@@ -120,6 +120,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
                 self.mOldCosts.append(self.mLayer.mGraph.costOfEdge(self.mEdgeId, functionIdx))
 
         self.mUpdateCosts = False
+        self.mCostsChanged = False
         if self.mFromVertex == -1 and self.mToVertex == -1:
             # only costs of edge have changed -> expect call of setNewCosts
             self.mUpdateCosts = True 
@@ -138,6 +139,12 @@ class ExtEdgeUndoCommand(QUndoCommand):
         self.mEdgeId = self.mLayer.mGraph.addEdge(self.mFromVertex, self.mToVertex, self.mEdgeId)
         # TODO: remove edgeId from mGraph.__availableEdgeIndices
 
+        if self.mLayer.mGraph.distanceStrategy == "Advanced":
+            # on Advanced costs new edges will be initiated with 0 costs on every function index
+            amountEdgeCostFunctions = self.mLayer.mGraph.amountOfEdgeCostFunctions()
+            for idx in range(amountEdgeCostFunctions):
+                self.mLayer.mGraph.setCostOfEdge(self.mEdgeId, idx, 0)
+
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
 
@@ -147,17 +154,20 @@ class ExtEdgeUndoCommand(QUndoCommand):
 
         :type newCosts: Float[]
         """
+        print("SetNewCosts")
         self.mNewCosts = []
         for i in range(len(newCosts)):
+            print(newCosts[i])
             self.mNewCosts.append(newCosts[i])
         self.mCostsChanged = True
 
     def redo(self):
         # set new costs again
-        if self.mUpdateCosts:
+        if self.mUpdateCosts or self.mCostsChanged:
+            print("TESTITEST")
             for i in range(len(self.mNewCosts)):
                 self.mLayer.mGraph.setCostOfEdge(self.mEdgeId, i, self.mNewCosts[i])
-            self.undoString = "Undo: Set Costs of Edge " + str(self.mEdgeId) + " back."
+            self.undoString = "Set Costs of Edge " + str(self.mEdgeId) + " again."
 
         # delete edge again
         elif self.mDeleted:
@@ -171,10 +181,10 @@ class ExtEdgeUndoCommand(QUndoCommand):
 
     def undo(self):
         # set old costs again
-        if self.mUpdateCosts:
+        if self.mUpdateCosts or self.mCostsChanged:
             for i in range(len(self.mOldCosts)):
                 self.mLayer.mGraph.setCostOfEdge(self.mEdgeId, i, self.mOldCosts[i])
-            self.redoString = "Undo: Set new Costs of Edge " + str(self.mEdgeId) + " again."
+            self.redoString = "Reset new Costs of Edge " + str(self.mEdgeId) + "."
 
         # add edge again
         elif self.mDeleted:
@@ -187,4 +197,4 @@ class ExtEdgeUndoCommand(QUndoCommand):
         self.setText(self.redoString)
 
     def mergeWith(self, command):
-        pass
+        return False

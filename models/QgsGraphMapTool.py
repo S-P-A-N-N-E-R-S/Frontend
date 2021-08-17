@@ -92,71 +92,7 @@ class QgsGraphMapTool(QgsMapTool):
             return
 
         edgeId = self.mLayer.mGraph.hasEdge(p1, p2)
-        if edgeId >= 0:
-            win = QDialog(iface.mainWindow())
-            win.setVisible(True)
-
-            # QBoxLayout to add widgets to
-            layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
-
-            # QLabel with information about the GraphLayer
-            informationLabel = QLabel("Edge " +  str(edgeId))
-            informationLabel.setWordWrap(True)
-            informationLabel.setVisible(True)
-            informationLabel.setStyleSheet("border: 1px solid black;")
-            layout.addWidget(informationLabel)
-
-            if self.mLayer.mGraph.distanceStrategy == "Advanced":
-                costs = []
-                
-                def _setNewCosts(idx, cost):
-                    costs[idx] = cost
-
-                def _updateCosts():
-                    edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeId, -1, -1, False)
-                    edgeUndoCommand.setNewCosts(costs)
-                    self.mLayer.mUndoStack.push(edgeUndoCommand)
-
-                applyButton = QPushButton("Apply")
-                applyButton.setVisible(True)
-                applyButton.setEnabled(False)
-                applyButton.clicked.connect(_updateCosts)
-
-                costGroupBox = QGroupBox("Edge Cost per Advanced Cost Function")
-                costLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
-                for i in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
-                    costSpinBox = QDoubleSpinBox()
-                    costs.append(self.mLayer.mGraph.costOfEdge(edgeId, i))
-                    costSpinBox.setValue(costs[i])
-                    costSpinBox.setVisible(True)
-                    costSpinBox.valueChanged.connect(lambda: applyButton.setEnabled(True))
-                    costSpinBox.valueChanged.connect(lambda: _setNewCosts(i, costSpinBox.value()))
-                    costLayout.addWidget(costSpinBox)
-
-                costGroupBox.setLayout(costLayout)
-                costGroupBox.setVisible(True)
-                layout.addWidget(costGroupBox)
-
-                layout.addWidget(applyButton)
-                
-            else:
-                distanceLabel = QLabel("Distance Strategy: " + self.mLayer.mGraph.distanceStrategy + ": " + str(self.mLayer.mGraph.costOfEdge(edgeId)))
-                distanceLabel.setWordWrap(False)
-                distanceLabel.setVisible(True)
-                distanceLabel.setStyleSheet("border: 1px solid black;")
-                layout.addWidget(distanceLabel)
-
-            deleteEdgeButton = QPushButton("Delete")
-            deleteEdgeButton.clicked.connect(lambda: self._deleteEdge(edgeId))
-            deleteEdgeButton.clicked.connect(win.done)
-            deleteEdgeButton.setVisible(True)
-            layout.addWidget(deleteEdgeButton)
-
-            win.setLayout(layout)
-            win.adjustSize()
-
-        else:
-            # advancedCosts prevent user from adding edges
+        if edgeId < 0:
 
             if self.mLayer.mGraph.edgeCount() == 0:
                 # now edges exist
@@ -181,6 +117,71 @@ class QgsGraphMapTool(QgsMapTool):
             feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edgeId)])
 
             self.mLayer.mDataProvider.addFeature(feat, False)
+
+        # open edge window on found edge (possibility to set costs for newly added edges)
+        win = QDialog(iface.mainWindow())
+        win.setVisible(True)
+
+        # QBoxLayout to add widgets to
+        layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+
+        # QLabel with information about the GraphLayer
+        informationLabel = QLabel("Edge " +  str(edgeId))
+        informationLabel.setWordWrap(True)
+        informationLabel.setVisible(True)
+        informationLabel.setStyleSheet("border: 1px solid black;")
+        layout.addWidget(informationLabel)
+
+        if self.mLayer.mGraph.distanceStrategy == "Advanced":
+            costs = []
+            costGroupBox = QGroupBox("Edge Cost per Advanced Cost Function")
+            costLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+
+            def _updateCosts():
+                print("UpdateCosts")
+                count = 0
+                for child in costGroupBox.findChildren(QDoubleSpinBox):
+                    costs[count] = child.value()
+                    count += 1
+
+                edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeId, -1, -1, False)
+                edgeUndoCommand.setNewCosts(costs)
+                self.mLayer.mUndoStack.push(edgeUndoCommand)
+
+            applyButton = QPushButton("Apply")
+            applyButton.setVisible(True)
+            applyButton.setEnabled(False)
+            applyButton.clicked.connect(_updateCosts)
+
+            for i in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
+                costSpinBox = QDoubleSpinBox()
+                costs.append(self.mLayer.mGraph.costOfEdge(edgeId, i))
+                costSpinBox.setValue(costs[i])
+                costSpinBox.setVisible(True)
+                costSpinBox.valueChanged.connect(lambda: applyButton.setEnabled(True))
+                costLayout.addWidget(costSpinBox)
+
+            costGroupBox.setLayout(costLayout)
+            costGroupBox.setVisible(True)
+            layout.addWidget(costGroupBox)
+
+            layout.addWidget(applyButton)
+            
+        else:
+            distanceLabel = QLabel("Distance Strategy: " + self.mLayer.mGraph.distanceStrategy + ": " + str(self.mLayer.mGraph.costOfEdge(edgeId)))
+            distanceLabel.setWordWrap(False)
+            distanceLabel.setVisible(True)
+            distanceLabel.setStyleSheet("border: 1px solid black;")
+            layout.addWidget(distanceLabel)
+
+        deleteEdgeButton = QPushButton("Delete")
+        deleteEdgeButton.clicked.connect(lambda: self._deleteEdge(edgeId))
+        deleteEdgeButton.clicked.connect(win.done)
+        deleteEdgeButton.setVisible(True)
+        layout.addWidget(deleteEdgeButton)
+
+        win.setLayout(layout)
+        win.adjustSize()
 
     def _deleteVertex(self, idx):
         """
