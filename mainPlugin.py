@@ -79,7 +79,7 @@ class OGDFPlugin:
         self.optionsAction.setWhatsThis(self.tr("Options"))
         self.optionsAction.setStatusTip(self.tr("Options"))
 
-        self.defaultAction = QAction(QIcon(getImagePath("icon.png")), self.tr("Create example data"), self.iface.mainWindow())
+        self.defaultAction = QAction(QIcon(getImagePath("icon.svg")), self.tr("Create example data"), self.iface.mainWindow())
         self.defaultAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ExampleDataView))
         self.defaultAction.setWhatsThis(self.tr("Create example data"))
         self.defaultAction.setStatusTip(self.tr("Create example data"))
@@ -96,7 +96,7 @@ class OGDFPlugin:
 
         # create menu
         menu = QMenu("OGDF Plugin")
-        menu.setIcon(QIcon(getImagePath("icon.png")))
+        menu.setIcon(QIcon(getImagePath("icon.svg")))
         menu.addAction(self.exampleAction)
         menu.addAction(self.graphAction)
         menu.addAction(self.ogdfAnalysisAction)
