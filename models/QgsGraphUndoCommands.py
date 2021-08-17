@@ -154,10 +154,8 @@ class ExtEdgeUndoCommand(QUndoCommand):
 
         :type newCosts: Float[]
         """
-        print("SetNewCosts")
         self.mNewCosts = []
         for i in range(len(newCosts)):
-            print(newCosts[i])
             self.mNewCosts.append(newCosts[i])
         self.mCostsChanged = True
 

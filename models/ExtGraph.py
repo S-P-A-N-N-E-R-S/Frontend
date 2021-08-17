@@ -204,6 +204,7 @@ class ExtGraph(QObject):
         elif self.distanceStrategy == "None":
             return None
         else:
+            print("DistanceStrategy: ", self.distanceStrategy)
             raise NameError("Unknown distance strategy")
 
 

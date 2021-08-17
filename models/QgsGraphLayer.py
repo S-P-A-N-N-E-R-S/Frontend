@@ -471,6 +471,7 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph.clusterNumber = int(graphElem.attribute("clusterNumber"))
             self.mGraph.nnAllowDoubleEdges = graphElem.attribute("nnAllowDoubleEdges") == "True"
             self.mGraph.distance = float(graphElem.attribute("distance"))
+            self.mGraph.setDistanceStrategy(graphElem.attribute("distanceStrategy"))
 
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
@@ -540,8 +541,16 @@ class QgsGraphLayer(QgsPluginLayer):
                 toVertexId = int(elem.attribute("toVertex"))
                 eIdx = int(elem.attribute("id"))
                 self.mGraph.addEdge(fromVertexId, toVertexId, eIdx) # add cost at later state
-                # TODO: set correct function index
-                # self.mGraph.setCostOfEdge(eIdx, 0, float(elem.attribute("cost")))
+                
+                if self.mGraph.distanceStrategy != "Advanced":
+                    self.mGraph.setCostOfEdge(eIdx, 0, float(elem.attribute("edgeCost")))
+                else:
+                    costNodes = edgeNodes.at(edgeId).childNodes()
+                    for costIdx in range(costNodes.length()):
+                        costElem = costNodes.at(costIdx).toElement()
+                        functionIndex = int(costElem.attribute("functionIndex"))
+                        costValue = float(costElem.attribute("value"))
+                        self.mGraph.setCostOfEdge(eIdx, functionIndex, costValue)
 
                 # add feature for each edge
                 feat = QgsFeature()
@@ -578,6 +587,9 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.setAttribute("clusterNumber", self.mGraph.clusterNumber)
         graphNode.setAttribute("nnAllowDoubleEdges", str(self.mGraph.nnAllowDoubleEdges))
         graphNode.setAttribute("distance", str(self.mGraph.distance))
+        graphNode.setAttribute("distanceStrategy", self.mGraph.distanceStrategy)
+        if self.mGraph.distanceStrategy == "Advanced":
+            graphNode.setAttribute("edgeCostFunctions", self.mGraph.amountOfEdgeCostFunctions())
         node.appendChild(graphNode)
 
         # vertexNode saves all vertices with tis coordinates
@@ -611,7 +623,17 @@ class QgsGraphLayer(QgsPluginLayer):
                 edgeNode.setAttribute("id", edgeId)
                 edgeNode.setAttribute("toVertex", toVertex)
                 edgeNode.setAttribute("fromVertex", fromVertex)
-                edgeNode.setAttribute("edgeCost", str(self.mGraph.costOfEdge(edgeId)))
+                
+                # store edge costs
+                if self.mGraph.distanceStrategy != "Advanced":
+                    edgeNode.setAttribute("edgeCost", str(self.mGraph.costOfEdge(edgeId)))
+                else:
+                    for functionIndex in range(self.mGraph.amountOfEdgeCostFunctions()):
+                        costNode = doc.createElement("cost")
+                        costNode.setAttribute("functionIndex", functionIndex)
+                        costNode.setAttribute("value", str(self.mGraph.costOfEdge(edgeId, functionIndex)))
+                        edgeNode.appendChild(costNode)
+
                 edgesNode.appendChild(edgeNode)
                     
         return True
