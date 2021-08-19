@@ -3,7 +3,7 @@ from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QVariant, QPointF, Qt
-from qgis.PyQt.QtGui import QColor, QFont, QPainterPath
+from qgis.PyQt.QtGui import QColor, QFont, QPainterPath, QPen
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import (QDialog, QPushButton, QBoxLayout, QLabel,
                                     QFileDialog, QFrame, QApplication, QHBoxLayout,
@@ -41,8 +41,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         self.mShowLines = self.mLayer.mShowLines
 
     def __del__(self):
-        # print("Renderer Destructor")
-        pass
+        del self.rendererContext
 
     def render(self):
         return self.__drawGraph()
@@ -86,7 +85,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                     if self.mGraph.edgeCount() != 0 and self.mShowLines:
                         outgoing = vertex.outgoingEdges()
                         for outgoingEdgeId in range(len(outgoing)):
-                            # print("Id: ", id, ", OutgoingEdgeId: ", outgoingEdgeId)
                             edge = self.mGraph.edge(outgoing[outgoingEdgeId])
 
                             toPoint = self.mGraph.vertex(edge.toVertex()).point()
@@ -101,9 +99,12 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
                             painter.setPen(QColor('black'))
                             if edge.highlighted():
-                                painter.setPen(QColor('red'))
+                                highlightPen = QPen(QColor('red'))
+                                highlightPen.setWidth(2)
+                                painter.setPen(highlightPen)
                             painter.drawLine(toPoint, fromPoint)
 
+                            painter.setPen(QColor('black'))
                             if self.mShowDirection:
                                 arrowHead = self.__createArrowHead(toPoint, fromPoint)
                                 painter.setPen(QColor('red'))
@@ -208,6 +209,7 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mUndoStack = QUndoStack()
 
     def __del__(self):
+        print("GraphLayer Destructor")
         del self.mDataProvider
         self.nameChanged.disconnect(self.updateName)
         self.crsChanged.disconnect(self.updateCrs)
@@ -540,7 +542,8 @@ class QgsGraphLayer(QgsPluginLayer):
                 fromVertexId = int(elem.attribute("fromVertex"))
                 toVertexId = int(elem.attribute("toVertex"))
                 eIdx = int(elem.attribute("id"))
-                self.mGraph.addEdge(fromVertexId, toVertexId, eIdx) # add cost at later state
+                highlighted = elem.attribute("highlighted") == "True"
+                self.mGraph.addEdge(fromVertexId, toVertexId, eIdx, highlighted)
                 
                 if self.mGraph.distanceStrategy != "Advanced":
                     self.mGraph.setCostOfEdge(eIdx, 0, float(elem.attribute("edgeCost")))
@@ -623,6 +626,7 @@ class QgsGraphLayer(QgsPluginLayer):
                 edgeNode.setAttribute("id", edgeId)
                 edgeNode.setAttribute("toVertex", toVertex)
                 edgeNode.setAttribute("fromVertex", fromVertex)
+                edgeNode.setAttribute("highlighted", str(edge.highlighted()))
                 
                 # store edge costs
                 if self.mGraph.distanceStrategy != "Advanced":
@@ -753,7 +757,6 @@ class QgsGraphLayerType(QgsPluginLayerType):
         super().__init__(QgsGraphLayer.LAYER_TYPE)
 
     def __del__(self):
-        # print("QgsGraphLayerType Destructor")
         pass
 
     def createLayer(self):
@@ -766,8 +769,8 @@ class QgsGraphLayerType(QgsPluginLayerType):
         :type layer: QgsGraphLayer
         :return Boolean
         """
-        win = QDialog(iface.mainWindow())
-        win.setVisible(True)
+        self.win = QDialog(iface.mainWindow())
+        self.win.setVisible(True)
 
         # QBoxLayout to add widgets to
         layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
@@ -910,7 +913,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         redoButton.setVisible(True)
         layout.addWidget(redoButton)
 
-        win.setLayout(layout)
-        win.adjustSize()
+        self.win.setLayout(layout)
+        self.win.adjustSize()
 
         return True

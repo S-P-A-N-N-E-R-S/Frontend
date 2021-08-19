@@ -73,8 +73,8 @@ class ExtGraph(QObject):
         def highlighted(self):
             return self.isHighlighted
 
-        def setHighlight(self, highlighted):
-            self.isHighlighted = highlighted
+        def toggleHighlight(self):
+            self.isHighlighted = not self.isHighlighted
 
     #==ExtGraph Methods===============================================================
     def __init__(self):
@@ -109,14 +109,14 @@ class ExtGraph(QObject):
         self.mJobId = -1
 
     def __del__(self):
-        # print("Delete Graph")
+        # print("Delete Graph", self.mVertexCount, self.mEdgeCount)
         del self.edgeWeights
         del self.vertexWeights
 
-        for idx in self.mVertices:
+        for idx in list(self.mVertices):
             del self.mVertices[idx]
 
-        for idx in self.mEdges:
+        for idx in list(self.mEdges):
             del self.mEdges[idx]
 
         del self.mVertices
@@ -124,6 +124,11 @@ class ExtGraph(QObject):
 
         del self.availableVertexIndices
         del self.availableEdgeIndices
+
+        if self.kdTree:
+            del self.kdTree
+
+        del self.featureMatchings
 
     def setJobID(self, jobId):
         self.mJobId = jobId
@@ -270,13 +275,6 @@ class ExtGraph(QObject):
                 return edgeIdx
 
         return -1
-
-        # for edgeIdx in self.mEdges:
-        #     edge = self.mEdges[edgeIdx]
-        #     if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
-        #         return edgeIdx
-
-        # return -1
 
     def addEdge(self, vertex1, vertex2, idx=-1, highlighted=False):
         """

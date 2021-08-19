@@ -173,6 +173,12 @@ class QgsGraphMapTool(QgsMapTool):
             distanceLabel.setStyleSheet("border: 1px solid black;")
             layout.addWidget(distanceLabel)
 
+        highlightEdgeButton = QPushButton("Toggle Highlight")
+        highlightEdgeButton.clicked.connect(self.mLayer.mGraph.edge(edgeId).toggleHighlight)
+        highlightEdgeButton.clicked.connect(self.mLayer.triggerRepaint)
+        highlightEdgeButton.setVisible(True)
+        layout.addWidget(highlightEdgeButton)
+
         deleteEdgeButton = QPushButton("Delete")
         deleteEdgeButton.clicked.connect(lambda: self._deleteEdge(edgeId))
         deleteEdgeButton.clicked.connect(win.done)

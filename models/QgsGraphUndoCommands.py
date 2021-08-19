@@ -32,10 +32,8 @@ class ExtVertexUndoCommand(QUndoCommand):
             self.undoString += "Delete vertex " + str(self.mVertexId)
         else:
             self.undoString += "Move vertex " + str(self.mVertexId) + " back"
-
-        self.mText = self.undoString
                     
-        self.setText(self.mText)
+        self.setText(self.undoString)
         
         self.layerId = layerId
         mapLayers = QgsProject.instance().mapLayers()
@@ -43,6 +41,10 @@ class ExtVertexUndoCommand(QUndoCommand):
             if layer.id() == self.layerId:
                 self.mLayer = layer
     
+    def __del__(self):
+        del self.redoString
+        del self.undoString
+
     def id(self):
         return self.mVertexId
 
@@ -104,9 +106,8 @@ class ExtEdgeUndoCommand(QUndoCommand):
 
         self.redoString = "Redo: " + "Delete" if self.mDeleted else "Readd" + " edge " + str(self.mEdgeId) + " = (" + str(self.mFromVertex) + ", " + str(self.mToVertex) + ")"
         self.undoString = "Undo: " + "Readd" if self.mDeleted else "Delete" + " edge " + str(self.mEdgeId) + " = (" + str(self.mFromVertex) +  ", " +  str(self.mToVertex) + ")"
-        self.mText = self.undoString
                     
-        self.setText(self.mText)
+        self.setText(self.undoString)
         
         self.layerId = layerId
         mapLayers = QgsProject.instance().mapLayers()
@@ -125,6 +126,14 @@ class ExtEdgeUndoCommand(QUndoCommand):
             # only costs of edge have changed -> expect call of setNewCosts
             self.mUpdateCosts = True 
     
+    def __del__(self):
+        del self.redoString
+        del self.undoString
+        if self.mOldCosts:
+            del self.mOldCosts
+        if self.mNewCosts:
+            del self.mNewCosts
+
     def id(self):
         return self.mEdgeId
 
