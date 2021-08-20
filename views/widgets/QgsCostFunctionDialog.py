@@ -65,7 +65,7 @@ class QgsExpressionContext(QObject):
                 "expressions": [
                     {
                         "label": "if",
-                        "expressionText": " if( ) ",
+                        "expressionText": " if( ; ; ) ",
                         "helpText": self.tr("Tests a condition and returns a different result depending on the conditional "
                                             "check.")
                     },
@@ -99,6 +99,12 @@ class QgsExpressionContext(QObject):
                         "label": "geodesic",
                         "expressionText": "geodesic ",
                         "helpText": self.tr("Calculates the geodesic metric.")
+                    },
+                    {
+                        "label": "ellipsoidal",
+                        "expressionText": "ellipsoidal ",
+                        "helpText": self.tr("Calculation the ellipsoidal distance")
+                        
                     },
                 ],
             },
@@ -221,32 +227,12 @@ class QgsExpressionContext(QObject):
                         "label": "frexp",
                         "expressionText": " math.frexp( ) ",
                         "helpText": self.tr("Returns the mantissa and the exponent of a value.")
-                    },
-                    {
-                        "label": "fsum",
-                        "expressionText": " math.fsum( ) ",
-                        "helpText": self.tr("Returns the sum of all items in an iterable.")
-                    },
+                    },                   
                     {
                         "label": "gamma",
                         "expressionText": " math.gamma( ) ",
                         "helpText": self.tr("Returns the gamma function at x.")
-                    },
-                    {
-                        "label": "gcd",
-                        "expressionText": " math.gcd( ) ",
-                        "helpText": self.tr("Returns the greatest common divisor of two integers.")
-                    },
-                    {
-                        "label": "hypot",
-                        "expressionText": " math.hypot( ) ",
-                        "helpText": self.tr("Returns the Euclidean norm.")
-                    },
-                    {
-                        "label": "isclose",
-                        "expressionText": " math.isclose( ) ",
-                        "helpText": self.tr("Checks whether two values are close to each other, or not.")
-                    },
+                    },                                                 
                     {
                         "label": "isfinite",
                         "expressionText": " math.isfinite( ) ",
@@ -296,33 +282,17 @@ class QgsExpressionContext(QObject):
                         "label": "log2",
                         "expressionText": " math.log2( ) ",
                         "helpText": self.tr("Returns the value of the base 2 logarithm.")
-                    },
-                    {
-                        "label": "perm",
-                        "expressionText": " math.perm( ) ",
-                        "helpText": self.tr("Return the number of ways to choose k items from n items with order and without "
-                                    "repetition.")
-                    },
+                    },                  
                     {
                         "label": "pow",
                         "expressionText": " math.pow( ) ",
                         "helpText": self.tr("Returns the value of x to the power of y")
-                    },
-                    {
-                        "label": "prod",
-                        "expressionText": " math.prod( ) ",
-                        "helpText": self.tr("Returns the product of all the elements in an iterable.")
-                    },
+                    },                  
                     {
                         "label": "radians",
                         "expressionText": " math.radians( ) ",
                         "helpText": self.tr("Converts from degrees to radians.")
-                    },
-                    {
-                        "label": "random",
-                        "expressionText": " random ( ) ",
-                        "helpText": self.tr("Returns a random number.")
-                    },
+                    },                    
                     {
                         "label": "remainder",
                         "expressionText": " math.remainder( ) ",
@@ -360,6 +330,20 @@ class QgsExpressionContext(QObject):
                     },
                 ],
             },
+            
+            "Random": {
+                "label": self.tr("Random value"), 
+                "helpText": self.tr("Create a random Value between two defined values"),
+                "expressions": [
+                    {
+                        "label": "Random function",
+                        "expressionText": "random(value1, value2)",
+                        "helpText": self.tr("Random value between value1 and value2")
+                    },                           
+                ]
+            },
+            
+            
             "Operators": {
                 "label": self.tr("Operators"),
                 "helpText": self.tr("This group contains several common operators."),
@@ -424,6 +408,16 @@ class QgsExpressionContext(QObject):
                         "expressionText": " > ",
                         "helpText": self.tr("Compares two values and evaluates to 1 if the left value is greater than the right "
                                     "value.")
+                    },
+                    {
+                        "label": "<=",
+                        "expressionText": " <= ",
+                        "helpText": self.tr("Compares two values and evaluates to 1 if the left value is less or equal to the right value.")                                               
+                    },
+                    {
+                        "label": ">=",
+                        "expressionText": " >= ",
+                        "helpText": self.tr("Compares two values and evaluates to 1 if the left value is greater or equal to the right value.")   
                     },
                     {
                         "label": "==",
@@ -674,7 +668,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
             statusText = "No function is set"
         else:
             fields = self.getVectorLayer().fields() if self.getVectorLayer() else []
-            statusText = GraphBuilder.syntaxCheck(costFunction, fields)
+            statusText = GraphBuilder.syntaxCheck(costFunction, fields)[0]
         self.setStatus(statusText)
 
     def _treeItemDoubleClicked(self, modelIndex):
@@ -751,6 +745,12 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         for item in mathItems:
             self._addTreeItem(group, item)
 
+        group = "Random"
+        randomItems = self.expressionContext.getGroupExpressionItems(group)
+        for item in randomItems:
+            self._addTreeItem(group, item)    
+
+
         # Operators
         group = "Operators"
         operatorItems = self.expressionContext.getGroupExpressionItems(group)
@@ -780,7 +780,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         text = button.text()
         # add brackets to if text
         if "if" == text:
-            text = "if( )"
+            text = "if( ; ; )"
         self.insertEditorText(" " + text + " ")
 
     def _changeItemHelpText(self, currentItemIndex, previousItemIndex):

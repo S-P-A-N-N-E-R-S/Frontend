@@ -120,13 +120,6 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="expButton">
-            <property name="text">
-             <string>^</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QPushButton" name="openBracketButton">
             <property name="text">
              <string>(</string>
