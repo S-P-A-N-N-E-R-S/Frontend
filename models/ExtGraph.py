@@ -499,16 +499,18 @@ class ExtGraph(QObject):
 
             # remove edge from toVertex incomingEdges
             toVertex = self.vertex(edge.toVertex())
-            for edgeIdx in range(len(toVertex.mIncomingEdges)):
-                if toVertex.mIncomingEdges[edgeIdx] == idx:
-                    toVertex.mIncomingEdges.pop(edgeIdx)
-                    break
+            if toVertex:
+                for edgeIdx in range(len(toVertex.mIncomingEdges)):
+                    if toVertex.mIncomingEdges[edgeIdx] == idx:
+                        toVertex.mIncomingEdges.pop(edgeIdx)
+                        break
             # remove edge from fromVertex outgoingEdges
             fromVertex = self.vertex(edge.fromVertex())
-            for edgeIdx in range(len(fromVertex.mOutgoingEdges)):
-                if fromVertex.mOutgoingEdges[edgeIdx] == idx:
-                    fromVertex.mOutgoingEdges.pop(edgeIdx)
-                    break
+            if fromVertex:
+                for edgeIdx in range(len(fromVertex.mOutgoingEdges)):
+                    if fromVertex.mOutgoingEdges[edgeIdx] == idx:
+                        fromVertex.mOutgoingEdges.pop(edgeIdx)
+                        break
 
             del self.mEdges[idx]
             self.availableEdgeIndices.append(idx)
@@ -516,7 +518,7 @@ class ExtGraph(QObject):
             return True
         return False
 
-    def deleteVertex(self, idx):
+    def deleteVertex(self, idx, fromUndo=False):
         """
         Deletes a vertex and all outgoing and incoming edges of this vertex
 
@@ -530,19 +532,22 @@ class ExtGraph(QObject):
             # delete all incoming edges vertex is connected with
             for id in range(len(vertex.incomingEdges())):
                 edgeIdx = vertex.incomingEdges().pop(0)
-                self.deleteEdge(edgeIdx)
                 deletedEdges.append(edgeIdx)
             vertex.mIncomingEdges = []
             # delete all outgoing edges vertex is connected with
             for id in range(len(vertex.outgoingEdges())):
                 edgeIdx = vertex.outgoingEdges().pop(0)
-                self.deleteEdge(edgeIdx)
                 deletedEdges.append(edgeIdx)
             vertex.mOutgoingEdges = []
 
             del self.mVertices[idx]
             self.availableVertexIndices.append(idx)
             self.mVertexCount -= 1
+
+            if not fromUndo:
+                # undoCommand creates deleteEdgeCommands on its own and append it to the deleteVertexCommand
+                for i in deletedEdges:
+                    self.deleteEdge(i)
 
         return deletedEdges
 

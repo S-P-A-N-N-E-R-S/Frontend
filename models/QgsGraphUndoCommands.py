@@ -51,7 +51,23 @@ class ExtVertexUndoCommand(QUndoCommand):
     def redo(self):
         # delete vertex again
         if self.mOperation == "Delete":
-            deletedEdges = self.mLayer.mGraph.deleteVertex(self.mVertexId)
+            deletedEdges = self.mLayer.mGraph.deleteVertex(self.mVertexId, True)
+
+            if len(deletedEdges) > 0 and self.childCount() == 0:
+                # call child commands redo in order
+                for i in deletedEdges:
+                    edge = self.mLayer.mGraph.edge(i)
+                    fromVertex = edge.fromVertex()
+                    toVertex = edge.toVertex()
+
+                    # create child command and call its redo
+                    edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), i, fromVertex, toVertex, True, self)
+                    edgeUndoCommand.redo()
+            
+            elif self.childCount() != 0:
+                for i in range(self.childCount()):
+                    childCommand = self.child(i)
+                    childCommand.redo()
         
         # add vertex again
         elif self.mOperation == "Add":
@@ -69,7 +85,12 @@ class ExtVertexUndoCommand(QUndoCommand):
         if self.mOperation == "Delete":
             # TODO: availableVertexIndices
             self.mVertexId = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexId)
-        
+
+            # call childs commands undo in reverse order
+            for i in range(self.childCount() - 1, -1, -1):
+                childCommand = self.child(i)
+                childCommand.undo()
+
         # delete vertex again
         elif self.mOperation == "Add":
             deletedEdges = self.mLayer.mGraph.deleteVertex(self.mVertexId)
@@ -85,7 +106,7 @@ class ExtVertexUndoCommand(QUndoCommand):
         pass
 
 class ExtEdgeUndoCommand(QUndoCommand):
-    def __init__(self, layerId, edgeId, fromVertex, toVertex, deleted=True):
+    def __init__(self, layerId, edgeId, fromVertex, toVertex, deleted=True, parentCommand=None):
         """
         An edge command depends on the edges properties
         and on the command (delete or add) itself.
@@ -97,7 +118,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
         :type deleted: Bool True if the command was a deletion, an addition otherwise
         """
         # TODO: also include all cost functions adn highlights
-        super().__init__()
+        super().__init__(parentCommand)
         
         self.mEdgeId = edgeId
         self.mFromVertex = fromVertex
