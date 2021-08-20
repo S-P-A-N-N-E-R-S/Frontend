@@ -137,6 +137,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         dx = toPoint.x() - fromPoint.x()
         dy = toPoint.y() - fromPoint.y()
         length = math.sqrt(dx*dx + dy*dy)
+        if length == 0:
+            return arrowHead
         angle = math.radians(math.degrees(math.acos(dx / length)) + 45)
         
         if dy < 0:
