@@ -103,7 +103,7 @@ class QgsExpressionContext(QObject):
                     {
                         "label": "ellipsoidal",
                         "expressionText": "ellipsoidal ",
-                        "helpText": self.tr("Calculation the ellipsoidal distance")
+                        "helpText": self.tr("Calculates the ellipsoidal distance")
                         
                     },
                 ],
@@ -333,7 +333,7 @@ class QgsExpressionContext(QObject):
             
             "Random": {
                 "label": self.tr("Random value"), 
-                "helpText": self.tr("Create a random Value between two defined values"),
+                "helpText": self.tr("Create a random value between two defined values"),
                 "expressions": [
                     {
                         "label": "Random function",
