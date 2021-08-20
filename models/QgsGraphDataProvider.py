@@ -203,6 +203,14 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
             return self._lineFields
 
     def addFeature(self, feat, point, flags=None):
+        """
+        Adds a feature to the data provider
+
+        :type feat: QgsFeature
+        :type point: Bool True if added feature is point feature, False if feature is line feature
+        :type flags: ...
+        :return True
+        """
         if point:
             self._pointFeatures[feat.attribute(0)] = feat
             self._pointFeatureCount += 1
