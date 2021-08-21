@@ -264,7 +264,7 @@ class GraphBuilder:
                 closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)                
                 function = function[0:closingBracketIndex] + "$" + function[closingBracketIndex+1:]                                                                                                                                               
                 function = function[0:index] + function[index:].replace("(","%",1) 
-                if("rnd" in function[index:closingBracketIndex] or "if" in function[index:closingBracketIndex] or "math" in function[index:closingBracketIndex]):
+                if("rnd" in function[index+4:closingBracketIndex] or "if" in function[index+4:closingBracketIndex] or "math" in function[index+4:closingBracketIndex]):
                     return ("Nested construct in math", "")
                 
                 
