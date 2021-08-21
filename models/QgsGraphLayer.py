@@ -109,7 +109,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             # add text with edgeCost at line mid point
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                                painter.drawText(midPoint, str("%.3f" % self.mGraph.costOfEdge(outgoingEdgeId)))
+                                painter.drawText(midPoint, str("%.3f" % self.mGraph.costOfEdge(outgoing[outgoingEdgeId])))
 
             except Exception as err:
                 print(err)
