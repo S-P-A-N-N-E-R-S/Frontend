@@ -9,14 +9,10 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         self._request = request
         self._source = source
         self._index = 0
-        self._pointKeys = list(self._source._pointFeatures.keys())
-        self._lineKeys = list(self._source._lineFeatures.keys())
 
         self.point = point
 
     def __del__(self):
-        del self._pointKeys
-        del self._lineKeys
         del self._request
 
     def isValid(self):
@@ -35,8 +31,7 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
             if self._index >= len(self._source._pointFeatures):
                 return False
 
-            featIdx = self._pointKeys[self._index]
-            _feat = self._source._pointFeatures[featIdx]
+            _feat = self._source._pointFeatures[self._index]
             feat.setGeometry(_feat.geometry())
             feat.setFields(_feat.fields())
             feat.setAttributes(_feat.attributes())
@@ -47,8 +42,7 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
             if self._index >= len(self._source._lineFeatures):
                 return False
 
-            featIdx = self._lineKeys[self._index]
-            _feat = self._source._lineFeatures[featIdx]
+            _feat = self._source._lineFeatures[self._index]
             feat.setGeometry(_feat.geometry())
             feat.setFields(_feat.fields())
             feat.setAttributes(_feat.attributes())
@@ -67,22 +61,18 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         if self.point:
             if self._index + 1 < len(self._source._pointFeatures):
                 self._index += 1
-            return self._source._pointFeatures[self._pointKeys[self._index]]
+            return self._source._pointFeatures[self._index]
         
         else:
             if self._index + 1 < len(self._source._lineFeatures):
                 self._index += 1
-            return self._source._lineFeatures[self._lineKeys[self._index]]
+            return self._source._lineFeatures[self._index]
 
     def rewind(self):
-        self._pointKeys = list(self._source._pointFeatures.keys())
-        self._lineKeys = list(self._source._lineFeatures.keys())
         self._index = 0
         return True
 
     def close(self):
-        self._pointKeys = []
-        self._lineKeys = []
         self._index = -1
         return True
 
@@ -134,8 +124,8 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         self._providerOptions = providerOptions
         self._flags = flags
         
-        self._pointFeatures = {}
-        self._lineFeatures = {}
+        self._pointFeatures = []
+        self._lineFeatures = []
         
         self._pointFields = QgsFields()
         self._lineFields = QgsFields()
@@ -202,7 +192,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         else:
             return self._lineFields
 
-    def addFeature(self, feat, point, flags=None):
+    def addFeature(self, feat, point, idx=-1, flags=None):
         """
         Adds a feature to the data provider
 
@@ -211,11 +201,14 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         :type flags: ...
         :return True
         """
+        if idx < 0:
+            return False
+
         if point:
-            self._pointFeatures[feat.attribute(0)] = feat
+            self._pointFeatures.insert(idx, feat)
             self._pointFeatureCount += 1
         else:
-            self._lineFeatures[feat.attribute(0)] = feat
+            self._lineFeatures.insert(idx, feat)
             self._lineFeatureCount += 1
 
         # if self._spatialindex is not None:
@@ -223,14 +216,14 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
         return True
 
-    def deleteFeature(self, id, point):
-        if point and id in self._pointFeatures:
-            del self._pointFeatures[id]
+    def deleteFeature(self, idx, point):
+        if point and idx < self._pointFeatureCount:
+            del self._pointFeatures[idx]
             self._pointFeatureCount -= 1
         
             return True
-        elif not point and id in self._lineFeatures:
-            del self._lineFeatures[id]
+        elif not point and idx < self._lineFeatureCount:
+            del self._lineFeatures[idx]
             self._lineFeatureCount -= 1
 
             return True

@@ -24,16 +24,20 @@ class ExtGraph(QObject):
         """
         Inner class representing a vertex of the ExtGraph
         """
-        def __init__(self, point):
+        def __init__(self, point, id):
             self.mCoordinates = point
             self.mIncomingEdges = []
             self.mOutgoingEdges = []
+            self.mId = id
 
         def __del__(self):
             # print("Delete Vertex")
             del self.mCoordinates
             del self.mIncomingEdges
             del self.mOutgoingEdges
+
+        def id(self):
+            return self.mId
 
         def incomingEdges(self):
             return self.mIncomingEdges
@@ -52,10 +56,10 @@ class ExtGraph(QObject):
         """
         Inner class representing an edge of the ExtGraph
         """
-        def __init__(self, fromVertexIdx, toVertexIdx, highlighted=False):
-            # TODO: add costs list for an edge here?
-            self.mFromIdx = fromVertexIdx
-            self.mToIdx = toVertexIdx
+        def __init__(self, fromVertexID, toVertexID, id, highlighted=False):
+            self.mFromID = fromVertexID
+            self.mToID = toVertexID
+            self.mID = id
 
             # highlights used for marked edges by a server response
             self.isHighlighted = highlighted
@@ -63,12 +67,15 @@ class ExtGraph(QObject):
         def __del__(self):
             # print("Delete Edge")
             pass
+        
+        def id(self):
+            return self.mID
 
         def fromVertex(self):
-            return self.mFromIdx
+            return self.mFromID
 
         def toVertex(self):
-            return self.mToIdx
+            return self.mToID
 
         def highlighted(self):
             return self.isHighlighted
@@ -85,19 +92,20 @@ class ExtGraph(QObject):
         self.vertexWeights = []
         self.crs = None
 
-        self.mVertices = {}
-        self.mEdges = {}
+        self.mVertices = []
+        self.mEdges = []
 
         self.mEdgeCount = 0
         self.mVertexCount = 0
 
-        self.availableVertexIndices =[]
-        self.availableEdgeIndices = []
+        # next useable IDs for vertices and edges
+        self.mMaxEdgeID = 0
+        self.mMaxVertexID = 0
 
         # holds the feature IDs if lines where used to create graph
         self.featureMatchings = []
 
-        # information from GraphBuilder
+        # default information from GraphBuilder
         self.numberNeighbours = 20
         self.edgeDirection = "Directed"
         self.clusterNumber = 5
@@ -113,17 +121,14 @@ class ExtGraph(QObject):
         del self.edgeWeights
         del self.vertexWeights
 
-        for idx in list(self.mVertices):
+        for idx in range(self.mVertexCount - 1, -1, -1):
             del self.mVertices[idx]
 
-        for idx in list(self.mEdges):
+        for idx in range(self.mEdgeCount - 1, -1, -1):
             del self.mEdges[idx]
 
         del self.mVertices
         del self.mEdges
-
-        del self.availableVertexIndices
-        del self.availableEdgeIndices
 
         if self.kdTree:
             del self.kdTree
@@ -174,8 +179,7 @@ class ExtGraph(QObject):
 
         self.edgeWeights[functionIndex][edgeID] = cost
 
-
-    def costOfEdge(self, edgeID, functionIndex = 0):
+    def costOfEdge(self, edgeIdx, functionIndex = 0):
         """
         Function to get the weight of an edge. The returned value
         depends on the set distance strategy and on the functionIndex.
@@ -188,23 +192,24 @@ class ExtGraph(QObject):
         """
         # differentiate between edge weights from cost functions and set weights from graph builder
         if self.distanceStrategy == "Euclidean":
-            return self.euclideanDist(edgeID)
+            return self.euclideanDist(edgeIdx)
 
         elif self.distanceStrategy == "Manhattan":
-            return self.manhattanDist(edgeID)
+            return self.manhattanDist(edgeIdx)
 
         # calculate geodesic distance using the Haversine formula
         elif self.distanceStrategy == "Geodesic":
-            return self.geodesicDist(edgeID)
+            return self.geodesicDist(edgeIdx)
 
         elif self.distanceStrategy == "Ellipsoidal":
-            return self.ellipsoidalDist(edgeID)
+            return self.ellipsoidalDist(edgeIdx)
 
         #if the type is advanced the distances are set by the GraphBuilder directly
         elif self.distanceStrategy == "Advanced":
-            if len(self.edgeWeights) <= functionIndex or len(self.edgeWeights[functionIndex]) <= edgeID:
+            # here edgeID is actually only edgeIdx
+            if len(self.edgeWeights) <= functionIndex or len(self.edgeWeights[functionIndex]) <= edgeIdx:
                 return 0
-            return self.edgeWeights[functionIndex][edgeID]
+            return self.edgeWeights[functionIndex][edgeIdx]
 
         elif self.distanceStrategy == "None":
             return None
@@ -213,32 +218,32 @@ class ExtGraph(QObject):
             raise NameError("Unknown distance strategy")
 
 
-    def ellipsoidalDist(self, edgeID):
-        edgeFromID = self.edge(edgeID)
-        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-        toPoint = self.vertex(edgeFromID.toVertex()).point()
+    def ellipsoidalDist(self, edgeIdx):
+        edgeFromIdx = self.edge(edgeIdx)
+        fromPoint = self.vertex(edgeFromIdx.fromVertex()).point()
+        toPoint = self.vertex(edgeFromIdx.toVertex()).point()
         distArea = QgsDistanceArea()
         distArea.setEllipsoid(self.crs.ellipsoidAcronym())
         return distArea.measureLine(fromPoint, toPoint)
 
-    def euclideanDist(self, edgeID):
-        edgeFromID = self.edge(edgeID)
-        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-        toPoint = self.vertex(edgeFromID.toVertex()).point()
+    def euclideanDist(self, edgeIdx):
+        edgeFromIdx = self.edge(edgeIdx)
+        fromPoint = self.vertex(edgeFromIdx.fromVertex()).point()
+        toPoint = self.vertex(edgeFromIdx.toVertex()).point()
         euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
         return euclDist
 
-    def manhattanDist(self, edgeID):
-        edgeFromID = self.edge(edgeID)
-        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-        toPoint = self.vertex(edgeFromID.toVertex()).point()
+    def manhattanDist(self, edgeIdx):
+        edgeFromIdx = self.edge(edgeIdx)
+        fromPoint = self.vertex(edgeFromIdx.fromVertex()).point()
+        toPoint = self.vertex(edgeFromIdx.toVertex()).point()
         manhattenDist = abs(fromPoint.x()-toPoint.x()) + abs(fromPoint.y()-toPoint.y())
         return manhattenDist
 
-    def geodesicDist(self, edgeID):
-        edgeFromID = self.edge(edgeID)
-        fromPoint = self.vertex(edgeFromID.fromVertex()).point()
-        toPoint = self.vertex(edgeFromID.toVertex()).point()
+    def geodesicDist(self, edgeIdx):
+        edgeFromIdx = self.edge(edgeIdx)
+        fromPoint = self.vertex(edgeFromIdx.fromVertex()).point()
+        toPoint = self.vertex(edgeFromIdx.toVertex()).point()
         radius = 6371000
         phi1 = math.radians(fromPoint.y())
         phi2 = math.radians(toPoint.y())
@@ -248,7 +253,7 @@ class ExtGraph(QObject):
         c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
         return radius*c
 
-    def distanceP2P(self, vertex1, vertex2):
+    def distanceP2P(self, vertex1Idx, vertex2Idx):
         """
         Method to get the euclidean distance between two vertices
 
@@ -256,59 +261,167 @@ class ExtGraph(QObject):
         :type vertex2: Integer
         :return distance between vertices
         """
-        fromPoint = self.vertex(vertex1).point()
-        toPoint = self.vertex(vertex2).point()
+        fromPoint = self.vertex(vertex1Idx).point()
+        toPoint = self.vertex(vertex2Idx).point()
         return math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
 
 
-    def hasEdge(self, vertex1, vertex2):
+    def hasEdge(self, vertex1Idx, vertex2Idx):
         """
         Method searches for the edge between to vertices
 
-        :type vertex1: Integer
-        :type vertex2: Integer
+        :type vertex1Idx: Integer
+        :type vertex2Idx: Integer
         :return Integer found edgeIdx, else -1
         """
-        for edgeIdx in self.vertex(vertex1).outgoingEdges():
+        # TODO: check for undirected or directed edges
+        vertex1ID = self.vertex(vertex1Idx).id()
+        vertex2ID = self.vertex(vertex2Idx).id()
+
+        for edgeIdx in self.vertex(vertex1Idx).outgoingEdges():
             edge = self.mEdges[edgeIdx]
-            if edge.fromVertex() == vertex1 and edge.toVertex() == vertex2:
+            if edge.fromVertex() == vertex1ID and edge.toVertex() == vertex2ID:
                 return edgeIdx
 
         return -1
 
-    def addEdge(self, vertex1, vertex2, idx=-1, highlighted=False):
+    def findVertexByID(self, id, output=False):
+        """
+        Start binary search for vertex with id
+
+        :type id: Integer
+        :return Integer idx for found vertex with id
+        """
+        if id < self.mVertexCount and self.mVertices[id].id() == id:
+            # without much editing, this should be the case
+            return id
+        
+        return self.__binaryVertexByID(id, 0, self.mVertexCount - 1) 
+
+    def __binaryVertexByID(self, id, left, right):
+        if left > right:
+            return -1
+        
+        mid = math.floor((left + right) / 2)
+
+        midID = self.mVertices[mid].id()
+        if id == midID:
+            return mid
+        elif id > midID:
+            return self.__binaryVertexByID(id, mid + 1, right)
+        else:
+            return self.__binaryVertexByID(id, left, mid - 1)
+
+    def findEdgeByID(self, id):
+        """
+        Start binary search for edge with id
+
+        :type id: Integer
+        :return Integer idx for found edge with id
+        """
+        if id < self.mEdgeCount and self.mEdges[id].id() == id:
+            # without much editing, this should be the case
+            return id
+
+        return self.__binaryEdgeByID(id, 0, self.mEdgeCount - 1)
+
+    def __binaryEdgeByID(self, id, left, right):
+        if left > right:
+            return -1
+        
+        mid = math.floor((left + right) / 2)
+
+        midID = self.mEdges[mid].id()
+        if id == midID:
+            return mid
+        elif id > midID:
+            return self.__binaryEdgeByID(id, mid + 1, right)
+        else:
+            return self.__binaryEdgeByID(id, left, mid - 1)
+
+    def findVertex(self, vertex, tolerance=0):
+        """
+        Modified findVertex function to find a vertex within a tolerance square
+
+        :type vertex: QgsPointXY
+        :type tolerance: int
+        :return vertexId: Integer
+        """
+        if tolerance > 0:
+            toleranceRect = QgsRectangle.fromCenterAndSize(vertex, tolerance, tolerance)
+
+        for idx in range(self.mVertexCount):
+            checkVertex = self.vertex(idx)
+
+            if tolerance == 0 and checkVertex.point() == vertex:
+                return idx
+            elif tolerance > 0 and toleranceRect.contains(checkVertex.point()):
+                return idx
+
+        return -1
+    
+    def nextEdgeID(self):
+        return self.mMaxEdgeID
+
+    def addEdge(self, vertex1ID, vertex2ID, idx=-1, ID=-1):
         """
         Adds an edge with fromVertex vertex1 and toVertex2 to the ExtGraph
 
-        :type vertex1: Integer
-        :type vertex2: Integer
+        :type vertex1ID: Integer
+        :type vertex2ID: Integer
         :type idx: Integer add Edge with index idx, -1 if no custom index should be set
-        :type highlighted: Bool if the edge should be highlighted in the rendering process
         :return Integer index of added edge
         """
         addIndex = self.mEdgeCount
         if idx >= 0:
+            # mostly used by UndoCommands to maintain correct order of edges, enables binary search for ID
             addIndex = idx
-        elif len(self.availableEdgeIndices) > 0:
-            # check if other indices are available due to earlier delete
-            addIndex = self.availableEdgeIndices.pop(0)
 
-        self.mEdges[addIndex] = self.ExtEdge(vertex1, vertex2, highlighted)
-        self.mVertices[vertex1].mOutgoingEdges.append(addIndex)
-        self.mVertices[vertex2].mIncomingEdges.append(addIndex)
+        addedEdgeID = ID
+        if ID < 0:
+            addedEdgeID = self.mMaxEdgeID
+            self.mMaxEdgeID += 1
+
+        if addedEdgeID >= self.mMaxEdgeID:
+            self.mMaxEdgeID = addedEdgeID + 1
+        
+        addedEdge = self.ExtEdge(vertex1ID, vertex2ID, addedEdgeID)
+
+        self.mEdges.insert(addIndex, addedEdge)
+
+        # add entries for edgeWeights at the correct idx
+        for functionIdx in range(len(self.edgeWeights)):
+            # add default value 0
+            self.edgeWeights[functionIdx].insert(addIndex, 0)
+        
+        # register edge on from- and toVertices
+        self.mVertices[self.findVertexByID(vertex1ID)].mOutgoingEdges.append(addedEdge.id())
+        self.mVertices[self.findVertexByID(vertex2ID)].mIncomingEdges.append(addedEdge.id())
+        
         self.mEdgeCount += 1
 
         return addIndex
 
-    def addVertex(self, point, idx=-1):
+    def nextVertexID(self):
+        return self.mMaxVertexID
+
+    def addVertex(self, point, idx=-1, ID=-1):
         addIndex = self.mVertexCount
         if idx >= 0:
             addIndex = idx
-        elif len(self.availableVertexIndices) > 0:
-            # check if other indices are available due to earlier delete
-            addIndex = self.availableVertexIndices.pop(0)
 
-        self.mVertices[addIndex] = self.ExtVertex(point)
+        addedVertexID = ID
+        if ID < 0:
+            addedVertexID = self.mMaxVertexID
+            self.mMaxVertexID += 1
+
+        if addedVertexID >= self.mMaxVertexID:
+            self.mMaxVertexID = addedVertexID + 1
+
+        self.mVertices.insert(addIndex, self.ExtVertex(point, addedVertexID))
+
+        # TODO: add entry in vertexWeights if used later
+
         self.mVertexCount += 1
 
         return addIndex
@@ -322,6 +435,7 @@ class ExtGraph(QObject):
         :type vertexCoordinates: list with x,y-Coordinates
         :return list of edges
         """
+        # TODO: adapt whole function to arraystructure, make function work
         if not self.kdTree:
             points = []
             for i in self.vertices():
@@ -451,38 +565,17 @@ class ExtGraph(QObject):
         return listOfEdges
 
     def edge(self, idx):
-        if idx in self.mEdges:
+        if idx < self.mEdgeCount:
             return self.mEdges[idx]
-        return None
+        return -1
 
     def edgeCount(self):
         return self.mEdgeCount
 
-    def findVertex(self, vertex, tolerance=0):
-        """
-        Modified findVertex function to find a vertex within a tolerance square
-
-        :type vertex: QgsPointXY
-        :type tolerance: int
-        :return vertexId: Integer
-        """
-        if tolerance > 0:
-            toleranceRect = QgsRectangle.fromCenterAndSize(vertex, tolerance, tolerance)
-
-        for idx in self.mVertices:
-            checkVertex = self.vertex(idx)
-
-            if tolerance == 0 and checkVertex.point() == vertex:
-                return idx
-            elif tolerance > 0 and toleranceRect.contains(checkVertex.point()):
-                return idx
-
-        return -1
-
     def vertex(self, idx):
-        if idx in self.mVertices:
+        if idx < self.mVertexCount:
             return self.mVertices[idx]
-        return None
+        return -1
 
     def vertexCount(self):
         return self.mVertexCount
@@ -494,26 +587,38 @@ class ExtGraph(QObject):
         return self.mEdges
 
     def deleteEdge(self, idx):
-        if idx in self.mEdges:
+        """
+        Deletes an edge
+
+        :type idx: Integer, index of edge to delete
+        :return Bool
+        """
+        if idx < self.mEdgeCount:
             edge = self.mEdges[idx]
+            edgeID = edge.id()
 
             # remove edge from toVertex incomingEdges
-            toVertex = self.vertex(edge.toVertex())
+            toVertex = self.vertex(self.findVertexByID(edge.toVertex()))
             if toVertex:
                 for edgeIdx in range(len(toVertex.mIncomingEdges)):
-                    if toVertex.mIncomingEdges[edgeIdx] == idx:
+                    if toVertex.mIncomingEdges[edgeIdx] == edgeID:
                         toVertex.mIncomingEdges.pop(edgeIdx)
                         break
+            
             # remove edge from fromVertex outgoingEdges
-            fromVertex = self.vertex(edge.fromVertex())
+            fromVertex = self.vertex(self.findVertexByID(edge.fromVertex()))
             if fromVertex:
                 for edgeIdx in range(len(fromVertex.mOutgoingEdges)):
-                    if fromVertex.mOutgoingEdges[edgeIdx] == idx:
+                    if fromVertex.mOutgoingEdges[edgeIdx] == edgeID:
                         fromVertex.mOutgoingEdges.pop(edgeIdx)
                         break
 
             del self.mEdges[idx]
-            self.availableEdgeIndices.append(idx)
+            
+            # also remove entries from edgeWeights
+            for functionIdx in range(len(self.edgeWeights)):
+                del self.edgeWeights[functionIdx][idx]
+
             self.mEdgeCount -= 1
             return True
         return False
@@ -523,33 +628,36 @@ class ExtGraph(QObject):
         Deletes a vertex and all outgoing and incoming edges of this vertex
 
         :type idx: Integer, index of vertex to delete
-        :return list with indices of all edges deleted (may be empty)
+        :return list with ids of all edges deleted (may be empty)
 
         """
-        deletedEdges = []
-        if idx in self.mVertices:
+        deletedEdgeIDs = []
+        if idx < self.mVertexCount:
             vertex = self.mVertices[idx]
+
             # delete all incoming edges vertex is connected with
-            for id in range(len(vertex.incomingEdges())):
-                edgeIdx = vertex.incomingEdges().pop(0)
-                deletedEdges.append(edgeIdx)
+            for incomingIdx in range(len(vertex.incomingEdges())):
+                edgeID = vertex.incomingEdges().pop(0)
+                deletedEdgeIDs.append(edgeID)
             vertex.mIncomingEdges = []
+            
             # delete all outgoing edges vertex is connected with
-            for id in range(len(vertex.outgoingEdges())):
-                edgeIdx = vertex.outgoingEdges().pop(0)
-                deletedEdges.append(edgeIdx)
+            for outgoingIdx in range(len(vertex.outgoingEdges())):
+                edgeID = vertex.outgoingEdges().pop(0)
+                deletedEdgeIDs.append(edgeID)
             vertex.mOutgoingEdges = []
 
             del self.mVertices[idx]
-            self.availableVertexIndices.append(idx)
             self.mVertexCount -= 1
+
+            # TODO: remove entries from vertexWeights if used later
 
             if not fromUndo:
                 # undoCommand creates deleteEdgeCommands on its own and append it to the deleteVertexCommand
-                for i in deletedEdges:
-                    self.deleteEdge(i)
+                for id in deletedEdgeIDs:
+                    self.deleteEdge(self.findEdgeByID(id))
 
-        return deletedEdges
+        return deletedEdgeIDs
 
 
     def writeGraphML(self, path):
@@ -570,18 +678,20 @@ class ExtGraph(QObject):
         file.writelines(header)
         file.write('\t<graph id="G" edgedefault="directed">\n')
 
-        for i in self.mVertices:
-            nodeLine = '\t\t<node id="' + str(i) + '"/>\n'
+        for idx in range(self.mVertexCount):
+            vertex = self.vertex(idx)
+            nodeLine = '\t\t<node id="' + str(vertex.id()) + '"/>\n'
             file.write(nodeLine)
             file.write('\t\t\t<data key="d1">\n')
             file.write('\t\t\t\t<y:ShapeNode>\n')
-            coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(self.vertex(i).point().x()) + '" y="' + str(self.vertex(i).point().y()) + '"/>\n'
+            coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(vertex.point().x()) + '" y="' + str(vertex.point().y()) + '"/>\n'
             file.write(coordinates)
             file.write('\t\t\t\t</y:ShapeNode>\n')
             file.write('\t\t\t</data>\n')
 
-        for i in self.mEdges:
-            edgeLine = '\t\t<edge source="' + str(self.edge(i).fromVertex()) + '" target="' + str(self.edge(i).toVertex()) + '"/>\n'
+        for idx in range(self.mEdgeCount):
+            edge = self.edge(idx)
+            edgeLine = '\t\t<edge source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
             file.write(edgeLine)
 
         file.write("\t</graph>\n")
@@ -609,6 +719,7 @@ class ExtGraph(QObject):
 
         # maybe no coordinate are given in the .graphml file
         if nodeCoordinatesGiven == True:
+            vertexIDCount = 0
             for line in lines:
                 if '<node' in line:
                     nodeIDs.append(line.split('id="')[1].split('"')[0])
@@ -616,40 +727,57 @@ class ExtGraph(QObject):
                 elif 'x="' in line:
                     xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
                     yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
-                    self.addVertex(QgsPointXY(xValue, yValue))
+                    
+                    # add vertex with correct coordinates and ID
+                    self.addVertex(QgsPointXY(xValue, yValue), -1, nodeIDs[vertexIDCount])
+                    vertexIDCount += 1
 
                 elif '<edge' in line:
                     fromVertex = line.split('source="')[1].split('"')[0]
                     toVertex = line.split('target="')[1].split('"')[0]
-                    fromVertexID = 0
-                    toVertexID = 0
+                    # fromVertexID = 0
+                    # toVertexID = 0
 
-                    for i in range(len(nodeIDs)):
-                        if nodeIDs[i] == fromVertex:
-                            fromVertexID = i
-                        elif nodeIDs[i] == toVertex:
-                            toVertexID = i
+                    # for i in range(len(nodeIDs)):
+                    #     if nodeIDs[i] == fromVertex:
+                    #         fromVertexID = i
+                    #     elif nodeIDs[i] == toVertex:
+                    #         toVertexID = i
 
-                    self.addEdge(fromVertexID, toVertexID)
+                    # self.addEdge(fromVertexID, toVertexID)
+                    # if edgeTypeDirection == "Undirected":
+                    #     self.addEdge(toVertexID, fromVertexID)
+
+                    self.addEdge(fromVertex, toVertex)
                     if edgeTypeDirection == "Undirected":
-                        self.addEdge(toVertexID, fromVertexID)
+                        # TODO: direction in graph and hasEdge
+                        self.addEdge(toVertex, fromVertex)
 
         # if no coordinates are given assign random
         else:
+            vertexIDCount = 0
             for line in lines:
                 if '<node' in line:
-                    self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884)))
                     nodeIDs.append(line.split('id="')[1].split('"')[0])
+                    
+                    # add vertex with random coordinates and correct ID
+                    self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, nodeIDs[vertexIDCount]))
+                    vertexIDCount += 1
 
                 elif '<edge' in line:
                     fromVertex = line.split('source="')[1].split('"')[0]
                     toVertex = line.split('target="')[1].split('"')[0]
-                    fromVertexID = 0
-                    toVertexID = 0
+                    # fromVertexID = 0
+                    # toVertexID = 0
 
-                    for i in range(len(nodeIDs)):
-                        if nodeIDs[i] == fromVertex:
-                            fromVertexID = i
-                        elif nodeIDs[i] == toVertex:
-                            toVertexID = i
-                    self.addEdge(fromVertexID, toVertexID)
+                    # for i in range(len(nodeIDs)):
+                    #     if nodeIDs[i] == fromVertex:
+                    #         fromVertexID = i
+                    #     elif nodeIDs[i] == toVertex:
+                    #         toVertexID = i
+                    # self.addEdge(fromVertexID, toVertexID)
+                    
+                    self.addEdge(fromVertex, toVertex)
+                    if edgeTypeDirection == "Undirected":
+                        # TODO: direction in graph and hasEdge
+                        self.addEdge(toVertex, fromVertex)

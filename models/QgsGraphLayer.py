@@ -63,9 +63,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                 # used to convert map coordinates to canvas coordinates
                 converter = iface.mapCanvas().getCoordinateTransform()
                 
-                vertices = self.mGraph.vertices()
-                for id in vertices:
-                    vertex = self.mGraph.vertex(id)
+                for idx in range(self.mGraph.vertexCount()):
+                    vertex = self.mGraph.vertex(idx)
                     
                     # draw vertex
                     point = vertex.point()
@@ -84,11 +83,11 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                     # draw outgoing edges
                     if self.mGraph.edgeCount() != 0 and self.mShowLines:
                         outgoing = vertex.outgoingEdges()
-                        for outgoingEdgeId in range(len(outgoing)):
-                            edge = self.mGraph.edge(outgoing[outgoingEdgeId])
+                        for outgoingEdgeIdx in range(len(outgoing)):
+                            edge = self.mGraph.edge(self.mGraph.findEdgeByID(outgoing[outgoingEdgeIdx]))
 
-                            toPoint = self.mGraph.vertex(edge.toVertex()).point()
-                            fromPoint = self.mGraph.vertex(edge.fromVertex()).point()
+                            toPoint = self.mGraph.vertex(self.mGraph.findVertexByID(edge.toVertex())).point()
+                            fromPoint = vertex.point()
 
                             if mTransform.isValid():
                                 toPoint = mTransform.transform(toPoint)
@@ -114,7 +113,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             # add text with edgeCost at line mid point
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                                edgeCost = self.mGraph.costOfEdge(outgoingEdgeId)
+                                edgeCost = self.mGraph.costOfEdge(outgoing[outgoingEdgeIdx])
                                 if edgeCost % 1 == 0:
                                     painter.drawText(midPoint, str(edgeCost))
                                 else:
@@ -306,37 +305,38 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mLineFields.append(costField)
                 
             # add vertices to new ExtGraph (have to be added to ExtGraph before edges do -> inefficient)
-            for vertexId in graph.vertices():
-                vertex = graph.vertex(vertexId)
+            for vertexIdx in range(graph.vertexCount()):
+                vertex = graph.vertex(vertexIdx)
                 vertexPoint = vertex.point()
                 feat = QgsFeature()
                 feat.setGeometry(QgsGeometry.fromPointXY(vertexPoint))
 
-                feat.setAttributes([vertexId, vertexPoint.x(), vertexPoint.y()])
-                self.mDataProvider.addFeature(feat, True)
+                feat.setAttributes([vertex.id(), vertexPoint.x(), vertexPoint.y()])
+                self.mDataProvider.addFeature(feat, True, vertexIdx)
                 
-                self.mGraph.addVertex(vertex.point(), vertexId)
+                self.mGraph.addVertex(vertex.point(), -1, vertex.id())
 
             # add edges to new ExtGraph and create corresponding features
             amountEdgeCostFunctions = graph.amountOfEdgeCostFunctions()
-            for edgeId in graph.edges():
-                edge = graph.edge(edgeId)
+            for edgeIdx in range(graph.edgeCount()):
+                edge = graph.edge(edgeIdx)
 
                 feat = QgsFeature()
                 fromVertex = graph.vertex(edge.fromVertex()).point()
                 toVertex = graph.vertex(edge.toVertex()).point()
                 feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-                feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), graph.costOfEdge(edgeId)])
+                # features only save one value for edge cost even if multiple cost functions are given
+                feat.setAttributes([edge.id(), edge.fromVertex(), edge.toVertex(), graph.costOfEdge(edgeIdx)])
 
-                self.mDataProvider.addFeature(feat, False)
+                self.mDataProvider.addFeature(feat, False, edgeIdx)
 
-                self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), edgeId)
+                self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), -1, edge.id())
 
                 # set all cost functions
                 for functionIdx in range(amountEdgeCostFunctions):
-                    cost = graph.costOfEdge(edgeId, functionIdx)
-                    self.mGraph.setCostOfEdge(edgeId, functionIdx, cost)
+                    cost = graph.costOfEdge(edgeIdx, functionIdx)
+                    self.mGraph.setCostOfEdge(edgeIdx, functionIdx, cost)
         
     def getGraph(self):
         return self.mGraph
@@ -527,49 +527,54 @@ class QgsGraphLayer(QgsPluginLayer):
 
 
         # get vertex information and add them to graph
-        for vertexId in range(vertexNodes.length()):
-            if vertexNodes.at(vertexId).isElement():
-                elem = vertexNodes.at(vertexId).toElement()
+        for vertexIdx in range(vertexNodes.length()):
+            if vertexNodes.at(vertexIdx).isElement():
+                elem = vertexNodes.at(vertexIdx).toElement()
                 vertex = QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y")))
-                vIdx = int(elem.attribute("id"))
-                self.mGraph.addVertex(vertex, vIdx)
+                vID = int(elem.attribute("id"))
+                self.mGraph.addVertex(vertex, -1, vID)
                 
                 # add feature for each vertex
                 feat = QgsFeature()
                 feat.setGeometry(QgsGeometry.fromPointXY(vertex))
 
-                feat.setAttributes([vIdx, vertex.x(), vertex.y()])
-                self.mDataProvider.addFeature(feat, True)
+                feat.setAttributes([vID, vertex.x(), vertex.y()])
+                self.mDataProvider.addFeature(feat, True, vertexIdx)
 
         # get edge information and add them to graph
-        for edgeId in range(edgeNodes.length()):
-            if edgeNodes.at(edgeId).isElement():
-                elem = edgeNodes.at(edgeId).toElement()
-                fromVertexId = int(elem.attribute("fromVertex"))
-                toVertexId = int(elem.attribute("toVertex"))
-                eIdx = int(elem.attribute("id"))
+        for edgeIdx in range(edgeNodes.length()):
+            if edgeNodes.at(edgeIdx).isElement():
+                elem = edgeNodes.at(edgeIdx).toElement()
+                fromVertexID = int(elem.attribute("fromVertex"))
+                toVertexID = int(elem.attribute("toVertex"))
+                eID = int(elem.attribute("id"))
                 highlighted = elem.attribute("highlighted") == "True"
-                self.mGraph.addEdge(fromVertexId, toVertexId, eIdx, highlighted)
+                
+                addedIdx = self.mGraph.addEdge(fromVertexID, toVertexID, -1, eID)
+                
+                if highlighted:
+                    self.mGraph.edge(addedIdx).toggleHighlight()
                 
                 if self.mGraph.distanceStrategy != "Advanced":
-                    self.mGraph.setCostOfEdge(eIdx, 0, float(elem.attribute("edgeCost")))
+                    # TODO: is this necessary? this maybe even does not lead to anything
+                    self.mGraph.setCostOfEdge(addedIdx, 0, float(elem.attribute("edgeCost")))
                 else:
-                    costNodes = edgeNodes.at(edgeId).childNodes()
+                    costNodes = edgeNodes.at(edgeIdx).childNodes()
                     for costIdx in range(costNodes.length()):
                         costElem = costNodes.at(costIdx).toElement()
                         functionIndex = int(costElem.attribute("functionIndex"))
                         costValue = float(costElem.attribute("value"))
-                        self.mGraph.setCostOfEdge(eIdx, functionIndex, costValue)
+                        self.mGraph.setCostOfEdge(addedIdx, functionIndex, costValue)
 
                 # add feature for each edge
                 feat = QgsFeature()
-                fromVertex = self.mGraph.vertex(fromVertexId).point()
-                toVertex = self.mGraph.vertex(toVertexId).point()
+                fromVertex = self.mGraph.vertex(self.mGraph.findVertexByID(fromVertexID)).point()
+                toVertex = self.mGraph.vertex(self.mGraph.findVertexByID(toVertexID)).point()
                 feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-                feat.setAttributes([eIdx, fromVertexId, toVertexId, self.mGraph.costOfEdge(eIdx)])
+                feat.setAttributes([eID, fromVertexID, toVertexID, self.mGraph.costOfEdge(addedIdx)])
 
-                self.mDataProvider.addFeature(feat, False)                
+                self.mDataProvider.addFeature(feat, False, addedIdx)
 
         return True
 
@@ -606,59 +611,59 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.appendChild(verticesNode)
 
         # edgeNode saves all edges with its vertices ids
-        # TODO: also save cost information stored in ExtGraph (merge necessary beforehand)
         edgesNode = doc.createElement("edges")
         graphNode.appendChild(edgesNode)
 
         # store vertices
-        for vertexId in self.mGraph.vertices():
+        for vertexIdx in range(self.mGraph.vertexCount()):
             # QgsPointXY TODO: support for QgsPointZ?
-            point = self.mGraph.vertex(vertexId).point()
+            vertex = self.mGraph.vertex(vertexIdx)
+            point = vertex.point()
 
             # store vertex information (coordinates have to be string to avoid implicit conversion to int)
-            self.__writeVertexXML(doc, verticesNode, vertexId, point.x(), point.y())
+            self.__writeVertexXML(doc, verticesNode, vertex.id(), point.x(), point.y())
 
         if self.mGraph.edgeCount() != 0:
             # store only edges if available
             
-            for edgeId in self.mGraph.edges():
-                edge = self.mGraph.edge(edgeId)
+            for edgeIdx in range(self.mGraph.edgeCount()):
+                edge = self.mGraph.edge(edgeIdx)
                 
                 fromVertex = edge.fromVertex()
                 toVertex = edge.toVertex()
 
                 # store edge information
                 edgeNode = doc.createElement("edge")
-                edgeNode.setAttribute("id", edgeId)
+                edgeNode.setAttribute("id", edge.id())
                 edgeNode.setAttribute("toVertex", toVertex)
                 edgeNode.setAttribute("fromVertex", fromVertex)
                 edgeNode.setAttribute("highlighted", str(edge.highlighted()))
                 
                 # store edge costs
                 if self.mGraph.distanceStrategy != "Advanced":
-                    edgeNode.setAttribute("edgeCost", str(self.mGraph.costOfEdge(edgeId)))
+                    edgeNode.setAttribute("edgeCost", str(self.mGraph.costOfEdge(edgeIdx)))
                 else:
                     for functionIndex in range(self.mGraph.amountOfEdgeCostFunctions()):
                         costNode = doc.createElement("cost")
                         costNode.setAttribute("functionIndex", functionIndex)
-                        costNode.setAttribute("value", str(self.mGraph.costOfEdge(edgeId, functionIndex)))
+                        costNode.setAttribute("value", str(self.mGraph.costOfEdge(edgeIdx, functionIndex)))
                         edgeNode.appendChild(costNode)
 
                 edgesNode.appendChild(edgeNode)
                     
         return True
 
-    def __writeVertexXML(self, doc, node, id, x, y):
+    def __writeVertexXML(self, doc, node, vertexID, x, y):
         """Writes given vertex information to XML.
 
         :type doc: QDomDocument
         :type node: QDomNode
-        :type vertexId: Integer
+        :type vertexID: Integer
         :type x: Float
         :type y: Float
         """
         vertexNode = doc.createElement("vertex")
-        vertexNode.setAttribute("id", id)
+        vertexNode.setAttribute("id", vertexID)
         # store coordinates as strings to avoid implicite conversion from float to int
         vertexNode.setAttribute("x", str(x))
         vertexNode.setAttribute("y", str(y))
@@ -669,8 +674,9 @@ class QgsGraphLayer(QgsPluginLayer):
         self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.mLayerType)
 
     def extent(self):
-        for vertexId in self.mGraph.mVertices:
-            self._extent.combineExtentWith(self.mGraph.mVertices[vertexId].point())
+        # TODO: maybe improve extent in add/deleteVertex
+        for vertexIdx in range(self.mGraph.vertexCount()):
+            self._extent.combineExtentWith(self.mGraph.vertex(vertexIdx).point())
 
         return self._extent
 
