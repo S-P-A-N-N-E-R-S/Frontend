@@ -6,15 +6,24 @@ from qgis.PyQt.QtCore import *
 from qgis.core import *
 from qgis.gui import *
 from qgis.analysis import *
+from qgis.utils import *
 
 from .views.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath, getPluginPath
+from .network.client import Client
+from .network.exceptions import NetworkClientError, ParseError
 
 from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
 
 import os
 
+
 class OGDFPlugin:
+    # holds all running jobs keys
+    activeRequestsKeys = []
+    # contains all available server requests and responses
+    requests = {}  # keep alive until qgis is closed
+    responses = {}  # keep alive until qgis is closed
 
     def __init__(self, iface):
         """
@@ -41,6 +50,25 @@ class OGDFPlugin:
         QgsProject.instance().layersWillBeRemoved.connect(self.deleteLayers)
 
         self.initActions()
+
+        # # get available handlers from server
+        OGDFPlugin.fetchHandlers()
+
+    @staticmethod
+    def fetchHandlers():
+        """
+        fetches all available handlers from server
+        :return:
+        """
+        settings = QgsSettings()
+        host = settings.value("ogdfplugin/host", "")
+        port = int(settings.value("ogdfplugin/port", 4711))
+        if host and port:
+            try:
+                with Client(host, port) as client:
+                    OGDFPlugin.requests, OGDFPlugin.responses = client.getAvailableHandlers()
+            except (NetworkClientError, ParseError) as error:
+                iface.messageBar().pushMessage("OGDF Plugin Error", str(error), level=Qgis.Critical)
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.

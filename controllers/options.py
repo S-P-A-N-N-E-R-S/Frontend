@@ -1,4 +1,5 @@
 from .base import BaseController
+from .. import mainPlugin
 
 from qgis.core import QgsSettings, QgsApplication, QgsAuthMethodConfig
 
@@ -39,6 +40,8 @@ class OptionsController(BaseController):
         # save settings
         self.settings.setValue("ogdfplugin/host", host)
         self.settings.setValue("ogdfplugin/port", port)
+        # fetch available handlers
+        mainPlugin.OGDFPlugin.fetchHandlers()
         # only save username if not empty
         if username:
             self.settings.setValue("ogdfplugin/username", username)

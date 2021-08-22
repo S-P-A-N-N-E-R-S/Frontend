@@ -48,78 +48,7 @@ class QgsOGDFParametersWidget(QWidget):
             FieldInformation.FieldType.VERTEX_ID: self._getVertexData,
         }
 
-        # todo remove test data
-        self.fields = {
-            "1": {
-                "type": FieldInformation.FieldType.GRAPH,
-                "label": "Graph",
-                "default": "",
-                "required": True,
-            },
-            "2": {"type": FieldInformation.FieldType.VERTEX_ID,
-                  "label": "Start-Knoten",
-                  "default": "",
-                  "required": True,
-            },
-            "3": {
-                "type": FieldInformation.FieldType.VERTEX_ID,
-                "label": "Ziel-Knoten",
-                "default": "",
-                "required": True,
-            },
-            "4": {
-                "type": FieldInformation.FieldType.BOOL,
-                "label": "Graph zusammenhängend?",
-                "default": True,
-                "required": True,
-            },
-            "5": {
-                "type": FieldInformation.FieldType.INT,
-                "label": "Gib eine Zahl ein",
-                "default": 45,
-                "required": True,
-            },
-            "6": {
-                "type": FieldInformation.FieldType.DOUBLE,
-                "label": "Gib eine Gleitkommazahl ein",
-                "default": 3555.73,
-                "required": True,
-            },
-            "7": {
-                "type": FieldInformation.FieldType.STRING,
-                "label": "Welchen Graph-Typ magst du am meisten?",
-                "default": "Spanner",
-                "required": True,
-            },
-            "8": {
-                "type": FieldInformation.FieldType.CHOICE,
-                "label": "Weiterer Test",
-                "default": "Test2",
-                "required": True,
-                "choices": {
-                    "Test": "testData",
-                    "Test2": "testData2",
-                }
-            },
-            "13": {
-                "type": FieldInformation.FieldType.LITERAL,
-                "label": "Diese Daten müssen durchgeschliffen werden",
-                "default": "Nicht sichtbar",
-                "required": True,
-            },
-            "9": {
-                "type": FieldInformation.FieldType.EDGE_COSTS,
-                "label": "Gebe die Kantenkostenfunktion an",
-                "default": "",
-                "required": True,
-            },
-            "10": {
-                "type": FieldInformation.FieldType.VERTEX_COSTS,
-                "label": "Gebe die Vertexkostenfunktion an",
-                "default": "",
-                "required": False,
-            },
-        }
+        self.fields = {}
 
         # array of widget tuples (labelWidget, InputWidget)
         self.fieldWidgets = {}
