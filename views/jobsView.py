@@ -2,7 +2,9 @@ from .baseContentView import BaseContentView
 from ..controllers.jobs import JobsController
 from ..helperFunctions import getVectorFileFilter
 
-from PyQt5.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
+
+from qgis.PyQt.QtWidgets import QListWidgetItem
 
 
 class JobsView(BaseContentView):
@@ -28,16 +30,10 @@ class JobsView(BaseContentView):
         # initial refresh jobs
         self.controller.refreshJobs()
 
-    def addJob(self, jobName):
-        self.dialog.ogdf_jobs_list.addItem(jobName)
-
-    def addJobs(self, jobs):
-        """
-        :param jobs: job names
-        :type jobs: list of strings
-        :return:
-        """
-        self.dialog.ogdf_jobs_list.addItems(jobs)
+    def addJob(self, jobName, jobData=None):
+        jobItem = QListWidgetItem(jobName)
+        jobItem.setData(Qt.UserRole, jobData)
+        self.dialog.ogdf_jobs_list.addItem(jobItem)
 
     def clearJobs(self):
         self.dialog.ogdf_jobs_list.clear()
@@ -58,7 +54,9 @@ class JobsView(BaseContentView):
 
     def getCurrentJob(self):
         item = self.dialog.ogdf_jobs_list.currentItem()
-        return item.text()
+        if item is None:
+            return None
+        return item.text(), item.data(Qt.UserRole)
 
     # status text
 

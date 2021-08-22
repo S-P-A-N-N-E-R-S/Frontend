@@ -3,17 +3,12 @@ import os
 from qgis.core import QgsSettings, QgsApplication, QgsProject
 
 from .base import BaseController
-from ..models.GraphBuilder import GraphBuilder
-from ..models.ExtGraph import ExtGraph
-from ..models.QgsGraphLayer import QgsGraphLayer
-
+from .. import mainPlugin
 from ..exceptions import FieldRequiredError
 
 # client imports
 from ..network.client import Client
-from ..network.requests.shortestPathRequest import ShortestPathRequest
-from ..network.responses.shortestPathResponse import ShortestPathResponse
-from ..network.exceptions import NetworkClientError
+from ..network.exceptions import NetworkClientError, ParseError
 
 
 class OGDFAnalysisController(BaseController):
@@ -28,27 +23,24 @@ class OGDFAnalysisController(BaseController):
         self.settings = QgsSettings()
         self.authManager = QgsApplication.authManager()
 
-        self.host = self.settings.value("ogdfplugin/host", "")
-        self.port = int(self.settings.value("ogdfplugin/port", 4711))
-
-        self.view.addAnalysis(self.tr("shortest path"), "shortest path")
-
         # add available analysis
-        # with Client(self.host, self.port) as client:
-        #     try:
-        #         client.getAvailableHandlers()
-        #         for requestName in client.requestTypes:
-        #             request = client.requestTypes[requestName]
-        #             self.view.addAnalysis(requestName, request)
-        #     except NetworkClientError as e:
-        #         self.view.showError(str(e))
+        if mainPlugin.OGDFPlugin.requests:
+            for requestKey, request in mainPlugin.OGDFPlugin.requests.items:
+                self.view.addAnalysis(request.name, requestKey)
 
     def runJob(self):
         # todo: pass authId to client
         authId = self.settings.value("ogdfplugin/authId")
-        if not (self.host and self.port):
+        host = self.settings.value("ogdfplugin/host", "")
+        port = int(self.settings.value("ogdfplugin/port", 4711))
+        if not (host and port):
             self.view.showError(self.tr("Please set host and port in options!"))
-            return None
+            return
+
+        analysisLabel, requestKey = self.view.getAnalysis()
+        if requestKey is None:
+            self.view.showError(self.tr("No analysis selected!"))
+            return
 
         # get user parameter fields data
         try:
@@ -58,29 +50,20 @@ class OGDFAnalysisController(BaseController):
             return
 
         # set field data into request
-        analysisLabel, request = self.view.getAnalysis()
+        request = mainPlugin.OGDFPlugin.requests[requestKey]
         for key in parameterFieldsData:
             fieldData = parameterFieldsData[key]
             request.setFieldData(key, fieldData)
 
-        # with Client(self.host, self.port) as client:
-        #     shortPathRequest = ShortestPathRequest(graph, startNodeIndex, endNodeIndex)
-        #     _msgLength = client.send(shortPathRequest)
-        #
-        #     try:
-        #         # receive response
-        #         response = ShortestPathResponse(ExtGraph())
-        #         client.recv(response)
-        #     except NetworkClientError as e:
-        #         self.view.showError(str(e))
-
-        # # show graph in qgis
-        # builder = GraphBuilder()
-        # builder.setGraph(response.graph)
-        # graphLayer = builder.createGraphLayer(False)
-        # graphLayer.setName("ResultGraphLayer")
-        # QgsProject.instance().addMapLayer(graphLayer)
-        # self.view.showSuccess(self.tr("Analysis complete!"))
+        try:
+            with Client(host, port) as client:
+                client.send(request)
+                if requestKey not in mainPlugin.OGDFPlugin.activeRequestsKeys:
+                    mainPlugin.OGDFPlugin.activeRequestsKeys.append(requestKey)
+        except NetworkClientError as error:
+            self.view.showError(str(error))  # show error
+        except ParseError as error:
+            self.view.showError(str(error))  # show error
 
     # def __getGraph(self):
     #     """
