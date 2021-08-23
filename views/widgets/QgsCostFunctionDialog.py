@@ -71,13 +71,24 @@ class QgsExpressionContext(QObject):
                     },
                     {
                         "label": self.tr("crossesPolygon"),
-                        "expressionText": "crossesPolygon ",
+                        "expressionText": "crossesPolygon",
                         "helpText": self.tr("Checks whether an edge crosses a polygon.")
                     },
                     {
                         "label": self.tr("insidePolygon"),
-                        "expressionText": "insidePolygon ",
+                        "expressionText": "insidePolygon",
                         "helpText": self.tr("Checks whether an edge is inside a polygon.")
+                    },
+                    {
+                        "label": self.tr("pixelValue"),
+                        "expressionText": "raster[]:pixelValue",
+                        "helpText": self.tr("Check if one pixel value of a raster data satisfies the condition. Only usable with raster data")
+                    },
+                    {
+                        "label": self.tr("percentOfValues"),
+                        "expressionText": "raster[]:percentOfValues()",
+                        "helpText": self.tr("Check if a specified percentage of pixel values satisfy the condition. Only usable with raster data")
+                        
                     },
                 ],
             },
@@ -87,22 +98,22 @@ class QgsExpressionContext(QObject):
                 "expressions": [
                     {
                         "label": "euclidean",
-                        "expressionText": "euclidean ",
+                        "expressionText": "euclidean",
                         "helpText": self.tr("Calculates the euclidean metric.")
                     },
                     {
                         "label": "manhattan",
-                        "expressionText": "manhattan ",
+                        "expressionText": "manhattan",
                         "helpText": self.tr("Calculates the manhattan metric.")
                     },
                     {
                         "label": "geodesic",
-                        "expressionText": "geodesic ",
+                        "expressionText": "geodesic",
                         "helpText": self.tr("Calculates the geodesic metric.")
                     },
                     {
                         "label": "ellipsoidal",
-                        "expressionText": "ellipsoidal ",
+                        "expressionText": "ellipsoidal",
                         "helpText": self.tr("Calculates the ellipsoidal distance")
                         
                     },
@@ -119,213 +130,213 @@ class QgsExpressionContext(QObject):
                 "expressions": [
                     {
                         "label": "acos",
-                        "expressionText": " math.acos( ) ",
+                        "expressionText": " math.acos( )",
                         "helpText": self.tr("Returns the inverse cosine of a value in radians.")
                     },
                     {
                         "label": "acosh",
-                        "expressionText": " math.acosh( ) ",
+                        "expressionText": " math.acosh( )",
                         "helpText": self.tr("Returns the inverse hyperbolic cosine of a value in radians.")
                     },
                     {
                         "label": "asin",
-                        "expressionText": " math.asin( ) ",
+                        "expressionText": " math.asin( )",
                         "helpText": self.tr("Returns the arc sine of a value in radians.")
                     },
                     {
                         "label": "asinh",
-                        "expressionText": " math.asinh( ) ",
+                        "expressionText": " math.asinh( )",
                         "helpText": self.tr("Returns the inverse hyperbolic sine of a value in radians.")
                     },
                     {
                         "label": "atan",
-                        "expressionText": " math.atan( ) ",
+                        "expressionText": " math.atan( )",
                         "helpText": self.tr("Returns the arc tangent of a value in radians.")
                     },
                     {
                         "label": "atan2",
-                        "expressionText": " math.atan2( ) ",
+                        "expressionText": " math.atan2( )",
                         "helpText": self.tr("Returns the arc tangent of y, x values in radians.")
                     },
                     {
                         "label": "ceil",
-                        "expressionText": " math.ceil( ) ",
+                        "expressionText": " math.ceil( )",
                         "helpText": self.tr("Rounds a number upwards.")
                     },
                     {
                         "label": "comb",
-                        "expressionText": " math.comb( ) ",
+                        "expressionText": " math.comb( )",
                         "helpText": self.tr("Returns number of ways to choose k items from n items without repetition and without "
                                     "order.")
                     },
                     {
                         "label": "copysign",
-                        "expressionText": " math.copysign( ) ",
+                        "expressionText": " math.copysign( )",
                         "helpText": self.tr("Return a float with the magnitude of x but the sign of y.")
                     },
                     {
                         "label": "cos",
-                        "expressionText": " math.cos( ) ",
+                        "expressionText": " math.cos( )",
                         "helpText": self.tr("Returns cosine of an angle.")
                     },
                     {
                         "label": "cosh",
-                        "expressionText": " math.cosh( ) ",
+                        "expressionText": " math.cosh( )",
                         "helpText": self.tr("Returns the hyperbolic cosine of an angle.")
                     },
                     {
                         "label": "degrees",
-                        "expressionText": " math.degrees( ) ",
+                        "expressionText": " math.degrees( )",
                         "helpText": self.tr("Converts from radians to degrees.")
                     },
                     {
                         "label": "dist",
-                        "expressionText": " math.dist( ) ",
+                        "expressionText": " math.dist( )",
                         "helpText": self.tr("Returns the Euclidean distance between two points.")
                     },
                     {
                         "label": "erf",
-                        "expressionText": " math.erf( ) ",
+                        "expressionText": " math.erf( )",
                         "helpText": self.tr("Returns the error function of a value.")
                     },
                     {
                         "label": "erfc",
-                        "expressionText": " math.erfc( ) ",
+                        "expressionText": " math.erfc( )",
                         "helpText": self.tr("Returns the complementary error function of a value.")
                     },
                     {
                         "label": "exp",
-                        "expressionText": " math.exp( ) ",
+                        "expressionText": " math.exp( )",
                         "helpText": self.tr("Returns exponential of an value.")
                     },
                     {
                         "label": "expm1",
-                        "expressionText": " math.expm1( ) ",
+                        "expressionText": " math.expm1( )",
                         "helpText": self.tr("Returns E**x - 1.")
                     },
                     {
                         "label": "fabs",
-                        "expressionText": " math.fabs( ) ",
+                        "expressionText": " math.fabs( )",
                         "helpText": self.tr("Returns the absolute value of a value.")
                     },
                     {
                         "label": "factorial",
-                        "expressionText": " math.factorial( ) ",
+                        "expressionText": " math.factorial( )",
                         "helpText": self.tr("Returns the factorial of a value.")
                     },
                     {
                         "label": "floor",
-                        "expressionText": " math.floor( ) ",
+                        "expressionText": " math.floor( )",
                         "helpText": self.tr("Rounds a number downwards.")
                     },
                     {
                         "label": "fmod",
-                        "expressionText": " math.fmod( ) ",
+                        "expressionText": " math.fmod( )",
                         "helpText": self.tr("Returns the modulo of a value.")
                     },
                     {
                         "label": "frexp",
-                        "expressionText": " math.frexp( ) ",
+                        "expressionText": " math.frexp( )",
                         "helpText": self.tr("Returns the mantissa and the exponent of a value.")
                     },                   
                     {
                         "label": "gamma",
-                        "expressionText": " math.gamma( ) ",
+                        "expressionText": " math.gamma( )",
                         "helpText": self.tr("Returns the gamma function at x.")
                     },                                                 
                     {
                         "label": "isfinite",
-                        "expressionText": " math.isfinite( ) ",
+                        "expressionText": " math.isfinite( )",
                         "helpText": self.tr("Checks whether a number is finite.")
                     },
                     {
                         "label": "isinf",
-                        "expressionText": " math.isinf( ) ",
+                        "expressionText": " math.isinf( )",
                         "helpText": self.tr("Checks whether a number is infinite.")
                     },
                     {
                         "label": "isnan",
-                        "expressionText": " math.isnan( ) ",
+                        "expressionText": " math.isnan( )",
                         "helpText": self.tr("Checks whether a value is NaN (not a number).")
                     },
                     {
                         "label": "isqrt",
-                        "expressionText": " math.isqrt( ) ",
+                        "expressionText": " math.isqrt( )",
                         "helpText": self.tr("Rounds a square root number downwards to the nearest integer.")
                     },
                     {
                         "label": "ldexp",
-                        "expressionText": " math.ldexp( ) ",
+                        "expressionText": " math.ldexp( )",
                         "helpText": self.tr("Returns the inverse of frexp() which is x * (2**i) of the given numbers x and i.")
                     },
                     {
                         "label": "lgamma",
-                        "expressionText": " math.lgamma( ) ",
+                        "expressionText": " math.lgamma( )",
                         "helpText": self.tr("Returns the log gamma value of x.")
                     },
                     {
                         "label": "log",
-                        "expressionText": " math.log( ) ",
+                        "expressionText": " math.log( )",
                         "helpText": self.tr("Returns the value of the logarithm of the passed value and base.")
                     },
                     {
                         "label": "log10",
-                        "expressionText": " math.log10( ) ",
+                        "expressionText": " math.log10( )",
                         "helpText": self.tr("Returns the value of the base 10 logarithm of the passed expression.")
                     },
                     {
                         "label": "log1p",
-                        "expressionText": " math.log1p( ) ",
+                        "expressionText": " math.log1p( )",
                         "helpText": self.tr("Returns the value of the natural logarithm of 1+x.")
                     },
                     {
                         "label": "log2",
-                        "expressionText": " math.log2( ) ",
+                        "expressionText": " math.log2( )",
                         "helpText": self.tr("Returns the value of the base 2 logarithm.")
                     },                  
                     {
                         "label": "pow",
-                        "expressionText": " math.pow( ) ",
+                        "expressionText": " math.pow( )",
                         "helpText": self.tr("Returns the value of x to the power of y")
                     },                  
                     {
                         "label": "radians",
-                        "expressionText": " math.radians( ) ",
+                        "expressionText": " math.radians( )",
                         "helpText": self.tr("Converts from degrees to radians.")
                     },                    
                     {
                         "label": "remainder",
-                        "expressionText": " math.remainder( ) ",
+                        "expressionText": " math.remainder( )",
                         "helpText": self.tr("Returns the IEEE 754-style remainder of x with respect to y")
                     },
                     {
                         "label": "sin",
-                        "expressionText": " math.sin( ) ",
+                        "expressionText": " math.sin( )",
                         "helpText": self.tr("Returns the sine of an angle.")
                     },
                     {
                         "label": "sinh",
-                        "expressionText": " math.sinh( ) ",
+                        "expressionText": " math.sinh( )",
                         "helpText": self.tr("Returns the hyperbolic sine of angle.")
                     },
                     {
                         "label": "sqrt",
-                        "expressionText": " math.sqrt( ) ",
+                        "expressionText": " math.sqrt( )",
                         "helpText": self.tr("Returns square root of a value.")
                     },
                     {
                         "label": "tan",
-                        "expressionText": " math.tan( ) ",
+                        "expressionText": " math.tan( )",
                         "helpText": self.tr("Returns the tangent of an angle.")
                     },
                     {
                         "label": "tanh",
-                        "expressionText": " math.tanh( ) ",
+                        "expressionText": " math.tanh( )",
                         "helpText": self.tr("Returns the hyperbolic tangent of an angle.")
                     },
                     {
                         "label": "trunc",
-                        "expressionText": " math.trunc( ) ",
+                        "expressionText": " math.trunc( )",
                         "helpText": self.tr("Returns the truncated integer part of a value.")
                     },
                 ],
@@ -375,12 +386,12 @@ class QgsExpressionContext(QObject):
                     },
                     {
                         "label": "(",
-                        "expressionText": " ( ",
+                        "expressionText": "(",
                         "helpText": self.tr("Opening round bracket.")
                     },
                     {
                         "label": ")",
-                        "expressionText": " ) ",
+                        "expressionText": ")",
                         "helpText": self.tr("Closing round bracket.")
                     },
                     {
@@ -442,67 +453,67 @@ class QgsExpressionContext(QObject):
                 "expressions": [
                     {
                         "label": "sum",
-                        "expressionText": "sum ",
+                        "expressionText": "sum",
                         "helpText": self.tr("Returns the raster sum of an edge.")
                     },
                     {
                         "label": "mean",
-                        "expressionText": "mean ",
+                        "expressionText": "mean",
                         "helpText": self.tr("Returns the raster mean of an edge.")
                     },
                     {
                         "label": "median",
-                        "expressionText": "median ",
+                        "expressionText": "median",
                         "helpText": self.tr("Returns the raster median of an edge.")
                     },
                     {
                         "label": "min",
-                        "expressionText": "min ",
+                        "expressionText": "min",
                         "helpText": self.tr("Returns the raster minimum of an edge.")
                     },
                     {
                         "label": "max",
-                        "expressionText": "max ",
+                        "expressionText": "max",
                         "helpText": self.tr("Returns the raster maximum of an edge.")
                     },
                     {
                         "label": "variance",
-                        "expressionText": "variance ",
+                        "expressionText": "variance",
                         "helpText": self.tr("Returns the raster variance of an edge.")
                     },
                     {
                         "label": "standDev",
-                        "expressionText": "standDev ",
+                        "expressionText": "standDev",
                         "helpText": self.tr("Returns the raster standard deviation of an edge.")
                     },
                     {
                         "label": "gradientSum",
-                        "expressionText": "gradientSum ",
+                        "expressionText": "gradientSum",
                         "helpText": self.tr("Returns the raster gradient sum of an edge.")
                     },
                     {
                         "label": "gradientMin",
-                        "expressionText": "gradientMin ",
+                        "expressionText": "gradientMin",
                         "helpText": self.tr("Returns the raster gradient minimum of an edge.")
                     },
                     {
                         "label": "gradientMax",
-                        "expressionText": "gradientMax ",
+                        "expressionText": "gradientMax",
                         "helpText": self.tr("Returns the raster variance of an edge.")
                     },
                     {
                         "label": "ascent",
-                        "expressionText": "ascent ",
+                        "expressionText": "ascent",
                         "helpText": self.tr("Returns the raster ascent of an edge.")
                     },
                     {
                         "label": "descent",
-                        "expressionText": "descent ",
+                        "expressionText": "descent",
                         "helpText": self.tr("Returns the raster descent of an edge.")
                     },
                     {
                         "label": "totalClimb",
-                        "expressionText": "totalClimb ",
+                        "expressionText": "totalClimb",
                         "helpText": self.tr("Returns the raster total climb of an edge.")
                     },
                 ],

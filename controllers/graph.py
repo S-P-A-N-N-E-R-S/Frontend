@@ -75,7 +75,7 @@ class CreateGraphController(BaseController):
         self.view.showInfo(self.tr("Start graph building.."))
         self.view.insertLogText("Start graph building..\n")
         builder = GraphBuilder()
-        builder.setOption("createGraphAsLayers", False)
+        builder.setOption("createGraphAsLayers",False)
         graphName = "New"   # default name
 
         # raster data

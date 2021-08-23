@@ -133,7 +133,7 @@ class ExtGraph(QObject):
         :return cost of Edge
         """                  
         # differentiate between edge weights from cost functions and set weights from graph builder        
-        if self.distanceStrategy == "Euclidean":                                                                    
+        if self.distanceStrategy == "Euclidean":                                                                   
             return self.euclideanDist(edgeID)
         
         elif self.distanceStrategy == "Manhattan":

@@ -173,7 +173,7 @@ class GraphBuilder:
         formulaParts = re.split("\+|-|\*|/", costFunction)
         possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
         possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance",
-                                  "standDev", "gradientSum", "gradientMin", "gradientMax"]
+                                  "standDev", "gradientSum", "gradientMin", "gradientMax", "pixelValue"]
         
         possibleFields = []
         for field in fields:
@@ -185,10 +185,18 @@ class GraphBuilder:
             if not (var in possibleMetrics or var.isnumeric() or "." in var or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):
                 return ("Invalid operand", "")
             
-            if "raster[" in var:
-                analysisType = re.split("<|>|,|\)|==", var.split("]:")[1])[0]                
-                if not analysisType in possibleRasterAnalysis:
-                    return ("Invalid raster analysis", "")  
+            compOp = re.compile('<|>|=')
+            
+            if "raster[" in var:  
+                indexNumber = var.split("[")[1].split("]")[0]
+                if not indexNumber.isnumeric():
+                    return ("Index necessary to reference raster data", "")
+                            
+            if "raster[" in var and compOp.search(var):
+                analysisType = re.split("<|>|,|\)|==", var.split("]:")[1])[0]   
+                             
+                if not analysisType in possibleRasterAnalysis and not("percentOfValues" in analysisType):
+                    return ("Invalid raster analysis", "")                                
             
             if "field:" in var:
                 fieldName= re.split("<|>|,|\)", var.split("field:")[1])[0]  
@@ -251,23 +259,34 @@ class GraphBuilder:
                 for part in ifParts:
                     if len(part) == 0:
                         return ("Values in if construct necessary", "") 
-                               
+                      
         # replace math brackets      
         found = True
         while(found):
             found = False    
             regex = re.compile(r'math.[a-z]+\(')            
             res = regex.search(function)            
-            if res != None:
+            if res != None:                               
                 index = res.start()                                      
                 found = True                                                                                        
                 closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)                
                 function = function[0:closingBracketIndex] + "$" + function[closingBracketIndex+1:]                                                                                                                                               
                 function = function[0:index] + function[index:].replace("(","%",1) 
-                if("rnd" in function[index:closingBracketIndex] or "if" in function[index:closingBracketIndex] or "math" in function[index:closingBracketIndex]):
+                if("rnd" in function[index+4:closingBracketIndex] or "if" in function[index+4:closingBracketIndex] or "math" in function[index+4:closingBracketIndex]):
                     return ("Nested construct in math", "")
                 
+                number = function[index:].split("$")[0].split("%")[1]
                 
+                if not "," in number and (not number.isnumeric() and not "field:" in number and not "raster" in number):
+                    return ("At least one operand in math construct necessary", "")
+                
+                if "," in number:
+                    multNumbers = number.split(",")
+                    if len(multNumbers) > 2:
+                        return ("Only operations with two variables supported", "")
+                    for n in multNumbers:                       
+                        if not n.isnumeric() and not "field:" in n and not "raster" in n:
+                            return("All variables must be ","")
         return ("Valid function", function) 
     
     def getCostFunction(self, index):
@@ -880,6 +899,7 @@ class GraphBuilder:
         if not self.task.isCanceled():
             # set graph to graph layer
             graphLayer.setGraph(self.graph)
+                       
 
         if self.task.isCanceled():
             # if task is canceled by User or QGIS

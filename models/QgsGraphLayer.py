@@ -109,7 +109,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             # add text with edgeCost at line mid point
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                                painter.drawText(midPoint, str("%.3f" % self.mGraph.costOfEdge(outgoingEdgeId)))
+                                painter.drawText(midPoint, str("%.3f" % self.mGraph.costOfEdge(outgoing[outgoingEdgeId])))
 
             except Exception as err:
                 print(err)
@@ -523,7 +523,6 @@ class QgsGraphLayer(QgsPluginLayer):
                 fromVertex = self.mGraph.vertex(fromVertexId).point()
                 toVertex = self.mGraph.vertex(toVertexId).point()
                 feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
-
                 feat.setAttributes([eIdx, fromVertexId, toVertexId, self.mGraph.costOfEdge(eIdx)])
 
                 self.mDataProvider.addFeature(feat, False)                
@@ -580,7 +579,7 @@ class QgsGraphLayer(QgsPluginLayer):
                 edgeNode = doc.createElement("edge")
                 edgeNode.setAttribute("id", edgeId)
                 edgeNode.setAttribute("toVertex", toVertex)
-                edgeNode.setAttribute("fromVertex", fromVertex)
+                edgeNode.setAttribute("fromVertex", fromVertex)               
                 edgeNode.setAttribute("edgeCost", str(self.mGraph.costOfEdge(edgeId)))
                 edgesNode.appendChild(edgeNode)
                     
