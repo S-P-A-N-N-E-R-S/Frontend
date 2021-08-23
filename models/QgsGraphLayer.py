@@ -307,12 +307,15 @@ class QgsGraphLayer(QgsPluginLayer):
             # add vertices to new ExtGraph (have to be added to ExtGraph before edges do -> inefficient)
             for vertexIdx in range(graph.vertexCount()):
                 vertex = graph.vertex(vertexIdx)
-                vertexPoint = vertex.point()
-                feat = QgsFeature()
-                feat.setGeometry(QgsGeometry.fromPointXY(vertexPoint))
+                # vertexPoint = vertex.point()
+                # feat = QgsFeature()
+                # feat.setGeometry(QgsGeometry.fromPointXY(vertexPoint))
 
-                feat.setAttributes([vertex.id(), vertexPoint.x(), vertexPoint.y()])
-                self.mDataProvider.addFeature(feat, True, vertexIdx)
+                # feat.setAttributes([vertex.id(), vertexPoint.x(), vertexPoint.y()])
+                # self.mDataProvider.addFeature(feat, True, vertexIdx)
+                
+                # self.mGraph.addVertex(vertex.point(), -1, vertex.id())
+
                 
                 self.mGraph.addVertex(vertex.point(), -1, vertex.id())
 
@@ -321,15 +324,15 @@ class QgsGraphLayer(QgsPluginLayer):
             for edgeIdx in range(graph.edgeCount()):
                 edge = graph.edge(edgeIdx)
 
-                feat = QgsFeature()
-                fromVertex = graph.vertex(edge.fromVertex()).point()
-                toVertex = graph.vertex(edge.toVertex()).point()
-                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+                # feat = QgsFeature()
+                # fromVertex = graph.vertex(edge.fromVertex()).point()
+                # toVertex = graph.vertex(edge.toVertex()).point()
+                # feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-                # features only save one value for edge cost even if multiple cost functions are given
-                feat.setAttributes([edge.id(), edge.fromVertex(), edge.toVertex(), graph.costOfEdge(edgeIdx)])
+                # # features only save one value for edge cost even if multiple cost functions are given
+                # feat.setAttributes([edge.id(), edge.fromVertex(), edge.toVertex(), graph.costOfEdge(edgeIdx)])
 
-                self.mDataProvider.addFeature(feat, False, edgeIdx)
+                # self.mDataProvider.addFeature(feat, False, edgeIdx)
 
                 self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), -1, edge.id())
 
@@ -340,6 +343,45 @@ class QgsGraphLayer(QgsPluginLayer):
         
     def getGraph(self):
         return self.mGraph
+
+    def __buildFeatures(self):
+        if self.exportPoints:
+            # build point features
+            for vertexIdx in range(self.mGraph.vertexCount()):
+                vertex = self.mGraph.vertex(vertexIdx)
+                vertexPoint = vertex.point()
+
+                feat = QgsFeature()
+                feat.setGeometry(QgsGeometry.fromPointXY(vertexPoint))
+
+                feat.setAttributes([vertex.id(), vertexPoint.x(), vertexPoint.y()])
+                self.mDataProvider.addFeature(feat, True, vertexIdx)
+
+        if self.exportLines:
+            # build line features
+            for edgeIdx in range(self.mGraph.edgeCount()):
+                edge = self.mGraph.edge(edgeIdx)
+
+                feat = QgsFeature()
+                fromVertex = self.mGraph.vertex(self.mGraph.findVertexByID(edge.fromVertex())).point()
+                toVertex = self.mGraph.vertex(self.mGraph.findVertexByID(edge.toVertex())).point()
+                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+
+                # features only save one value for edge cost even if multiple cost functions are given
+                feat.setAttributes([edge.id(), edge.fromVertex(), edge.toVertex(), self.mGraph.costOfEdge(edgeIdx)])
+
+                self.mDataProvider.addFeature(feat, False, edgeIdx)
+
+    def __destroyFeatures(self):
+        if self.exportPoints:
+            # destroy point features (to maybe save space)
+            for vertexIdx in range(self.mGraph.vertexCount()):
+                self.mDataProvider.deleteFeature(vertexIdx, True)
+            
+        if self.exportLines:
+            # destroy line features (to maybe save space)
+            for edgeIdx in range(self.mGraph.edgeCount()):
+                self.mDataProvider.deleteFeature(edgeIdx, False)
 
     def exportToFile(self):
         """
@@ -384,6 +426,8 @@ class QgsGraphLayer(QgsPluginLayer):
         else:
             return False
 
+        self.__buildFeatures()
+
         if self.exportPoints:
             # write point features in QgsVectorFileWriter (save features in selected file)
             pointWriter = QgsVectorFileWriter(pointFileName, "utf-8", self.fields(True),
@@ -412,6 +456,8 @@ class QgsGraphLayer(QgsPluginLayer):
             
             del lineWriter
 
+        self.__destroyFeatures()
+
         return True
 
     def createVectorLayer(self):
@@ -421,26 +467,32 @@ class QgsGraphLayer(QgsPluginLayer):
         vPDp = vPointLayer.dataProvider()
         vLDp = vLineLayer.dataProvider()
 
-        # add attributes to pointLayer
-        vPointLayer.startEditing()
-        for field in self.mPointFields:
-            vPointLayer.addAttribute(field)
-        vPointLayer.commitChanges()
+        self.__buildFeatures()
 
-        # add attributes to lineLayer
-        vLineLayer.startEditing()
-        for field in self.mLineFields:
-            vLineLayer.addAttribute(field)
-        vLineLayer.commitChanges()
+        if self.exportPoints:
+            # add attributes to pointLayer
+            vPointLayer.startEditing()
+            for field in self.mPointFields:
+                vPointLayer.addAttribute(field)
+            vPointLayer.commitChanges()
 
-        for feat in self.mDataProvider.getFeatures(True):
-            vPDp.addFeature(feat)
+            for feat in self.mDataProvider.getFeatures(True):
+                vPDp.addFeature(feat)
 
-        for feat in self.mDataProvider.getFeatures(False):
-            vLDp.addFeature(feat)
+        if self.exportLines:
+            # add attributes to lineLayer
+            vLineLayer.startEditing()
+            for field in self.mLineFields:
+                vLineLayer.addAttribute(field)
+            vLineLayer.commitChanges()
+
+            for feat in self.mDataProvider.getFeatures(False):
+                vLDp.addFeature(feat)
 
         vPointLayer.setCrs(self.crs())
         vLineLayer.setCrs(self.crs())
+
+        self.__destroyFeatures()
 
         return [vPointLayer, vLineLayer]
 

@@ -59,13 +59,12 @@ class ExtVertexUndoCommand(QUndoCommand):
         else:
             self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint)
             self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
-            print(self.mVertexID, self.mLayer.mGraph.vertex(self.mVertexIdx).id())
 
-        feat = QgsFeature()
-        feat.setGeometry(QgsGeometry.fromPointXY(self.mOldPoint))
+        # feat = QgsFeature()
+        # feat.setGeometry(QgsGeometry.fromPointXY(self.mOldPoint))
 
-        feat.setAttributes([self.mVertexID, self.mOldPoint.x(), self.mOldPoint.y()])
-        self.mLayer.dataProvider().addFeature(feat, True, self.mVertexIdx)
+        # feat.setAttributes([self.mVertexID, self.mOldPoint.x(), self.mOldPoint.y()])
+        # self.mLayer.dataProvider().addFeature(feat, True, self.mVertexIdx)
 
         # call childs commands undo in reverse order
         for i in range(self.childCount() - 1, -1, -1):
@@ -77,7 +76,7 @@ class ExtVertexUndoCommand(QUndoCommand):
 
         deletedEdges = self.mLayer.mGraph.deleteVertex(self.mVertexIdx, True)
 
-        self.mLayer.dataProvider().deleteFeature(self.mVertexIdx, True)
+        # self.mLayer.dataProvider().deleteFeature(self.mVertexIdx, True)
 
         if len(deletedEdges) > 0 and self.childCount() == 0:
             # call child commands redo in order
@@ -146,7 +145,6 @@ class ExtEdgeUndoCommand(QUndoCommand):
         :type toVertexIdx: Integer
         :type deleted: Bool True if the command was a deletion, an addition otherwise
         """
-        # TODO: also include all cost functions adn highlights
         super().__init__(parentCommand)
         
         self.layerId = layerId
@@ -198,7 +196,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
     def __deleteEdge(self):
         self.mLayer.mGraph.deleteEdge(self.mEdgeIdx)
 
-        self.mLayer.dataProvider().deleteFeature(self.mEdgeIdx, False)
+        # self.mLayer.dataProvider().deleteFeature(self.mEdgeIdx, False)
         
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
@@ -212,14 +210,14 @@ class ExtEdgeUndoCommand(QUndoCommand):
             for functionIdx in range(amountEdgeCostFunctions):
                 self.mLayer.mGraph.setCostOfEdge(self.mEdgeIdx, functionIdx, 0)
 
-        feat = QgsFeature()
-        fromVertex = self.mLayer.mGraph.vertex(self.mFromVertexIdx).point()
-        toVertex = self.mLayer.mGraph.vertex(self.mToVertexIdx).point()
-        feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+        # feat = QgsFeature()
+        # fromVertex = self.mLayer.mGraph.vertex(self.mFromVertexIdx).point()
+        # toVertex = self.mLayer.mGraph.vertex(self.mToVertexIdx).point()
+        # feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-        feat.setAttributes([self.mEdgeID, self.mFromVertexID, self.mToVertexID, self.mLayer.mGraph.costOfEdge(self.mEdgeIdx)])
+        # feat.setAttributes([self.mEdgeID, self.mFromVertexID, self.mToVertexID, self.mLayer.mGraph.costOfEdge(self.mEdgeIdx)])
 
-        self.mLayer.dataProvider().addFeature(feat, False, self.mEdgeIdx)
+        # self.mLayer.dataProvider().addFeature(feat, False, self.mEdgeIdx)
 
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
