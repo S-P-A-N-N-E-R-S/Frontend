@@ -177,7 +177,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.hasEdges = False
 
-        self.mLayerType = QgsGraphLayerType()
+        # self.mLayerType = QgsGraphLayerType()
 
         self.mDataProvider = QgsGraphDataProvider("Point")
         self.mPointFields = QgsFields()
@@ -200,8 +200,6 @@ class QgsGraphLayer(QgsPluginLayer):
         self.crsChanged.connect(self.updateCrs)
 
         self.mTransform = QgsCoordinateTransform() # default is invalid
-
-        self.mMapTool = QgsGraphMapTool(iface.mapCanvas(), self)
 
         self.isEditing = False
 
@@ -783,11 +781,15 @@ class QgsGraphLayer(QgsPluginLayer):
         if self.isEditing and not willBeDeleted:
             QApplication.setOverrideCursor(Qt.CrossCursor)
             self.oldMapTool = iface.mapCanvas().mapTool()
+
+            self.mMapTool = QgsGraphMapTool(iface.mapCanvas(), self)
             iface.mapCanvas().setMapTool(self.mMapTool)
 
         elif not self.isEditing:
             QApplication.restoreOverrideCursor()
             iface.mapCanvas().setMapTool(self.oldMapTool)
+            
+            del self.mMapTool
 
     def isEditable(self):
         return True
