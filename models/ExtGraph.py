@@ -369,7 +369,8 @@ class ExtGraph(QObject):
 
         :type vertex1ID: Integer
         :type vertex2ID: Integer
-        :type idx: Integer add Edge with index idx, -1 if no custom index should be set
+        :type idx: Integer add Edge with index idx, default -1 to be used, non-default only used by QUndoCommands
+        :type ID: Integer EdgeID
         :return Integer index of added edge
         """
         addIndex = self.mEdgeCount
@@ -406,6 +407,14 @@ class ExtGraph(QObject):
         return self.mMaxVertexID
 
     def addVertex(self, point, idx=-1, ID=-1):
+        """
+        Adds a vertex with coordinates point to ExtGraph
+
+        :type point: QgsPointXY
+        :type idx: Integer add Vertex with index idx, default -1 to be used, non-default only used by QUndoCommands
+        :type ID: Integer VertexID
+        :return Integer index of added edge
+        """
         addIndex = self.mVertexCount
         if idx >= 0:
             addIndex = idx
@@ -628,6 +637,7 @@ class ExtGraph(QObject):
         Deletes a vertex and all outgoing and incoming edges of this vertex
 
         :type idx: Integer, index of vertex to delete
+        :type fromUndo: Bool non-default only used by QUndoCommand
         :return list with ids of all edges deleted (may be empty)
 
         """
