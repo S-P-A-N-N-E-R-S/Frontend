@@ -482,7 +482,7 @@ class GraphBuilder:
 
         # add points and connection to network if additional points are given
         # use kd tree to get the nearest point
-        if self.__options["useAdditionalPoints"] == True:
+        if self.__options["useAdditionalPoints"] == True:           
             points = []
             for i in range(self.graph.vertexCount()):
                 point = self.graph.vertex(i).point()
@@ -492,11 +492,13 @@ class GraphBuilder:
             self.kdTree = kdtree.create(points)
             counter = 0
             for feature in self.additionalPointLayer.getFeatures():
+               
                 if self.task is not None and self.task.isCanceled():
                     return
                 counter+=1
                 geom = feature.geometry()
                 pointID = self.graph.addVertex(geom.asPoint())
+                
                 nearestPointID = self.kdTree.search_knn([self.graph.vertex(pointID).point().x(),self.graph.vertex(pointID).point().y(), counter],2)[1][0].data[2]
                 self.graph.addEdge(pointID, nearestPointID)
 

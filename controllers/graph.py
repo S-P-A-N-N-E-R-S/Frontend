@@ -109,6 +109,9 @@ class CreateGraphController(BaseController):
             if not additionalPointLayer.isValid():
                 self.view.showWarning(self.tr("Additional point layer is invalid!"))
                 return
+            if additionalPointLayer.crs() != self.view.getInputLayer().crs():
+                self.view.showWarning(self.tr("Invalid crs of additional point layer"))
+                return
             builder.setAdditionalPointLayer(additionalPointLayer)
 
         # set options
