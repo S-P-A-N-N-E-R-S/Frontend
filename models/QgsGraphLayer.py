@@ -7,7 +7,7 @@ from qgis.PyQt.QtGui import QColor, QFont, QPainterPath, QPen
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import (QDialog, QPushButton, QBoxLayout, QLabel,
                                     QFileDialog, QFrame, QApplication, QHBoxLayout,
-                                    QRadioButton, QGroupBox, QUndoStack, QToolButton)
+                                    QRadioButton, QGroupBox, QUndoStack, QToolButton, QSpinBox)
 
 import random, math
 
@@ -39,6 +39,8 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         self.mShowText = self.mLayer.mShowEdgeText
         self.mShowDirection = self.mLayer.mShowDirection
         self.mShowLines = self.mLayer.mShowLines
+
+        self.mRenderedCostFunction = self.mLayer.mRenderedCostFunction
 
     def __del__(self):
         del self.rendererContext
@@ -113,7 +115,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             # add text with edgeCost at line mid point
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                                edgeCost = self.mGraph.costOfEdge(outgoing[outgoingEdgeIdx])
+                                edgeCost = self.mGraph.costOfEdge(outgoing[outgoingEdgeIdx], self.mRenderedCostFunction)
                                 if edgeCost % 1 == 0:
                                     painter.drawText(midPoint, str(edgeCost))
                                 else:
@@ -195,6 +197,8 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mShowLines = True
 
         self.mRandomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+        self.mRenderedCostFunction = 0
 
         self.nameChanged.connect(self.updateName)
         self.crsChanged.connect(self.updateCrs)
@@ -815,6 +819,9 @@ class QgsGraphLayer(QgsPluginLayer):
         self.triggerRepaint()
         iface.mapCanvas().refresh()
 
+    def changeRenderedCostFunction(self, idx):
+        self.mRenderedCostFunction = idx
+
 class QgsGraphLayerType(QgsPluginLayerType):
     """
     When loading a project containing a QgsGraphLayer, a factory class is needed.
@@ -895,6 +902,19 @@ class QgsGraphLayerType(QgsPluginLayerType):
         toggleTextButton.setVisible(hasEdges) # don't show this button when graph has no edges
         toggleTextButton.clicked.connect(layer.toggleText)
         layout.addWidget(toggleTextButton)
+
+        # spinbox to choose which advanced values to render
+        if layer.mGraph.distanceStrategy == "Advanced":
+            costFunctionLabel = QLabel("Choose Cost Function")
+            costFunctionLabel.setVisible(True)
+            costFunctionSpinBox = QSpinBox()
+            costFunctionSpinBox.setMinimum(0)
+            costFunctionSpinBox.setMaximum(layer.mGraph.amountOfEdgeCostFunctions() - 1)
+            costFunctionSpinBox.valueChanged.connect(layer.changeRenderedCostFunction)
+            costFunctionSpinBox.setVisible(True)
+            layout.addWidget(costFunctionLabel)
+            layout.addWidget(costFunctionSpinBox)
+
 
         # button to toggle drawing of arrowHead to show edge direction
         toggleDirectionButton = QPushButton(tr("Toggle Direction"))
