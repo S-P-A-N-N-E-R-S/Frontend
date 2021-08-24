@@ -31,7 +31,6 @@ class ExtGraph(QObject):
             self.mId = id
 
         def __del__(self):
-            # print("Delete Vertex")
             del self.mCoordinates
             del self.mIncomingEdges
             del self.mOutgoingEdges
@@ -65,7 +64,6 @@ class ExtGraph(QObject):
             self.isHighlighted = highlighted
 
         def __del__(self):
-            # print("Delete Edge")
             pass
         
         def id(self):
@@ -117,7 +115,6 @@ class ExtGraph(QObject):
         self.mJobId = -1
 
     def __del__(self):
-        # print("Delete Graph", self.mVertexCount, self.mEdgeCount)
         del self.edgeWeights
         del self.vertexWeights
 

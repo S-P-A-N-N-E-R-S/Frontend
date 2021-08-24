@@ -178,6 +178,5 @@ class OGDFPlugin:
 
     def deleteLayers(self, layers):
             for l in layers:
-                print(QgsProject.instance().mapLayer(l).name())
                 delLayer = QgsProject.instance().mapLayer(l)
                 del delLayer

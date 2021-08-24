@@ -209,23 +209,15 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self._extent = QgsRectangle()
 
-        self.willBeDeleted.connect(lambda: self.toggleEdit(True))
+        self.willBeDeleted.connect(lambda: self.deleteLater("debug"))
 
         self.doRender = True
 
         self.mUndoStack = QUndoStack()
 
-    def __del__(self):
-        print("GraphLayer Destructor")
+    def deleteLater(self, dummy):
+        self.toggleEdit(True)
         del self.mDataProvider
-        self.nameChanged.disconnect(self.updateName)
-        self.crsChanged.disconnect(self.updateCrs)
-        self.willBeDeleted.disconnect(self.toggleEdit)
-        
-        if self.isEditing:
-            QApplication.restoreOverrideCursor()
-            iface.mapCanvas().setMapTool(self.oldMapTool)
-            del self.mMapTool
         
         del self.mTransform
         del self._extent
@@ -234,6 +226,9 @@ class QgsGraphLayer(QgsPluginLayer):
         del self.mLineFields
 
         del self.mGraph
+
+    def __del__(self):
+        pass
         
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
@@ -783,6 +778,7 @@ class QgsGraphLayer(QgsPluginLayer):
         self.isEditing = not self.isEditing
 
         if self.isEditing and not willBeDeleted:
+            # start edit mode
             QApplication.setOverrideCursor(Qt.CrossCursor)
             self.oldMapTool = iface.mapCanvas().mapTool()
 
@@ -850,19 +846,19 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
         # QLabel with information about the GraphLayer
         informationLabel = QLabel(layer.mName +
-                        "\n Vertices: " + str(layer.getGraph().vertexCount()) +
-                        "\n Edges: " + str(layer.getGraph().edgeCount()) +
-                        "\n CRS: " + layer.crs().authid())
+                        "\n " + tr("Vertices") + ": " + str(layer.getGraph().vertexCount()) +
+                        "\n " + tr("Edges") + ": " + str(layer.getGraph().edgeCount()) +
+                        "\n " + tr("CRS") + ": " + layer.crs().authid())
         informationLabel.setWordWrap(True)
         informationLabel.setVisible(True)
         informationLabel.setStyleSheet("border: 1px solid black;")
         layout.addWidget(informationLabel)
         
         # QLabel with information about the layers fields
-        pointFieldsText = "PointFields:"
+        pointFieldsText = tr("PointFields") + ":"
         for field in layer.fields(True):
             pointFieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
-        lineFieldsText = "LineFields:"
+        lineFieldsText = tr("LineFields") + ":"
         for field in layer.fields(False):
             lineFieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
         fieldsText = pointFieldsText + "\n" + lineFieldsText
@@ -886,13 +882,13 @@ class QgsGraphLayerType(QgsPluginLayerType):
         hasEdges = layer.getGraph().edgeCount() != 0
 
         # button to toggle drawing of complete layer
-        toggleRenderButton = QPushButton("Toggle Rendering")
+        toggleRenderButton = QPushButton(tr("Toggle Rendering"))
         toggleRenderButton.setVisible(True)
         toggleRenderButton.clicked.connect(layer.toggleRendering)
         layout.addWidget(toggleRenderButton)
 
         # button to toggle drawing of lines / edges
-        toggleLinesButton = QPushButton("Toggle Lines")
+        toggleLinesButton = QPushButton(tr("Toggle Lines"))
         toggleLinesButton.setVisible(hasEdges)
         toggleLinesButton.clicked.connect(layer.toggleLines)
         layout.addWidget(toggleLinesButton)
@@ -905,7 +901,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
         # spinbox to choose which advanced values to render
         if layer.mGraph.distanceStrategy == "Advanced":
-            costFunctionLabel = QLabel("Choose Cost Function")
+            costFunctionLabel = QLabel(tr("Choose Cost Function"))
             costFunctionLabel.setVisible(True)
             costFunctionSpinBox = QSpinBox()
             costFunctionSpinBox.setMinimum(0)
@@ -927,12 +923,12 @@ class QgsGraphLayerType(QgsPluginLayerType):
         fileSeparator.setLineWidth(1)
         layout.addWidget(fileSeparator)
 
-        selectExportTypeGroup = QGroupBox("Export Type")
-        onlyPointsRadio = QRadioButton("Only Points")
+        selectExportTypeGroup = QGroupBox(tr("Export Type"))
+        onlyPointsRadio = QRadioButton(tr("Only Points"))
         onlyPointsRadio.toggled.connect(lambda:layer.toggleExportType(onlyPointsRadio))
-        onlyLinesRadio = QRadioButton("Only Lines")
+        onlyLinesRadio = QRadioButton(tr("Only Lines"))
         onlyLinesRadio.toggled.connect(lambda:layer.toggleExportType(onlyLinesRadio))
-        bothRadio = QRadioButton("Both")
+        bothRadio = QRadioButton(tr("Both"))
         bothRadio.toggled.connect(lambda:layer.toggleExportType(bothRadio))
         bothRadio.setChecked(True)
         
@@ -972,30 +968,30 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(editSeparator)
 
         # button to enable editing
-        editButton = QPushButton("Toggle Editing")
+        editButton = QPushButton(tr("Toggle Editing"))
         editButton.clicked.connect(layer.toggleEdit)
         editButton.setVisible(True)
-        editButton.setToolTip("List of Options:"\
-                                +"\n LeftClick: Add Vertex without Edges"\
-                                +"\n CTRL+LeftClick: Add Vertex with Edges"\
-                                +"\n RightClick: Select Vertex"\
-                                +"\n  1) Select Vertex"\
-                                +"\n  2) Move Vertex (without Edges) on LeftClick"\
-                                +"\n  3) Move Vertex (with Edges) on CTRL+LeftClick"\
-                                +"\n  4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)"\
-                                +"\n  5) Remove Vertex on CTRL+RightClick"\
-                                +"\n  6) 2nd RightClick not on Vertex removes Selection")
+        editButton.setToolTip(tr("List of Options") + ":"\
+                                +"\n " + tr("LeftClick: Add Vertex without Edges")\
+                                +"\n " + tr("CTRL+LeftClick: Add Vertex with Edges")\
+                                +"\n " + tr("RightClick: Select Vertex")\
+                                +"\n " + tr(" 1) Select Vertex")\
+                                +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
+                                +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
+                                +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
+                                +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
+                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection"))
         layout.addWidget(editButton)
 
         # undo button
         undoButton = QToolButton()
-        undoButton.setDefaultAction(layer.mUndoStack.createUndoAction(undoButton, "Undo"))
+        undoButton.setDefaultAction(layer.mUndoStack.createUndoAction(undoButton))
         undoButton.setVisible(True)
         layout.addWidget(undoButton)
 
         # redo button
         redoButton = QToolButton()
-        redoButton.setDefaultAction(layer.mUndoStack.createRedoAction(redoButton, "Redo"))
+        redoButton.setDefaultAction(layer.mUndoStack.createRedoAction(redoButton))
         redoButton.setVisible(True)
         layout.addWidget(redoButton)
 
