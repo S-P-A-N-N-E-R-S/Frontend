@@ -217,30 +217,30 @@ class ExtGraph(QObject):
 
     def ellipsoidalDist(self, edgeIdx):
         edgeFromIdx = self.edge(edgeIdx)
-        fromPoint = self.vertex(edgeFromIdx.fromVertex()).point()
-        toPoint = self.vertex(edgeFromIdx.toVertex()).point()
+        fromPoint = self.vertex(self.findVertexByID(edgeFromIdx.fromVertex())).point()
+        toPoint = self.vertex(self.findVertexByID(edgeFromIdx.toVertex())).point()
         distArea = QgsDistanceArea()
         distArea.setEllipsoid(self.crs.ellipsoidAcronym())
         return distArea.measureLine(fromPoint, toPoint)
 
     def euclideanDist(self, edgeIdx):
         edgeFromIdx = self.edge(edgeIdx)
-        fromPoint = self.vertex(edgeFromIdx.fromVertex()).point()
-        toPoint = self.vertex(edgeFromIdx.toVertex()).point()
+        fromPoint = self.vertex(self.findVertexByID(edgeFromIdx.fromVertex())).point()
+        toPoint = self.vertex(self.findVertexByID(edgeFromIdx.toVertex())).point()
         euclDist = math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
         return euclDist
 
     def manhattanDist(self, edgeIdx):
         edgeFromIdx = self.edge(edgeIdx)
-        fromPoint = self.vertex(edgeFromIdx.fromVertex()).point()
-        toPoint = self.vertex(edgeFromIdx.toVertex()).point()
+        fromPoint = self.vertex(self.findVertexByID(edgeFromIdx.fromVertex())).point()
+        toPoint = self.vertex(self.findVertexByID(edgeFromIdx.toVertex())).point()
         manhattenDist = abs(fromPoint.x()-toPoint.x()) + abs(fromPoint.y()-toPoint.y())
         return manhattenDist
 
     def geodesicDist(self, edgeIdx):
         edgeFromIdx = self.edge(edgeIdx)
-        fromPoint = self.vertex(edgeFromIdx.fromVertex()).point()
-        toPoint = self.vertex(edgeFromIdx.toVertex()).point()
+        fromPoint = self.vertex(self.findVertexByID(edgeFromIdx.fromVertex())).point()
+        toPoint = self.vertex(self.findVertexByID(edgeFromIdx.toVertex())).point()
         radius = 6371000
         phi1 = math.radians(fromPoint.y())
         phi2 = math.radians(toPoint.y())
@@ -254,8 +254,8 @@ class ExtGraph(QObject):
         """
         Method to get the euclidean distance between two vertices
 
-        :type vertex1: Integer
-        :type vertex2: Integer
+        :type vertex1Idx: Integer
+        :type vertex2Idx: Integer
         :return distance between vertices
         """
         fromPoint = self.vertex(vertex1Idx).point()
