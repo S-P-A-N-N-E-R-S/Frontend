@@ -160,21 +160,21 @@ class ExtGraph(QObject):
     def amountOfEdgeCostFunctions(self):
         return len(self.edgeWeights)
 
-    def setCostOfEdge(self, edgeID, functionIndex, cost):
+    def setCostOfEdge(self, edgeIdx, functionIndex, cost):
         """
         Set cost of a specific edge.
 
         :type functionIndex: Integer
-        :type edgeID: Integer
+        :type edgeIdx: Integer
         :type cost: Integer
         """
         while len(self.edgeWeights) <= functionIndex:
             self.edgeWeights.append([])
 
-        while len(self.edgeWeights[functionIndex]) <= edgeID:
+        while len(self.edgeWeights[functionIndex]) <= edgeIdx:
             self.edgeWeights[functionIndex].append(-1)
 
-        self.edgeWeights[functionIndex][edgeID] = cost
+        self.edgeWeights[functionIndex][edgeIdx] = cost
 
     def costOfEdge(self, edgeIdx, functionIndex = 0):
         """
