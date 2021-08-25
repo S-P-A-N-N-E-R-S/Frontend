@@ -193,6 +193,8 @@ class GraphBuilder:
                     return ("Index necessary to reference raster data", "")
                             
             if "raster[" in var and compOp.search(var):
+                if not "]:" in var:
+                    return ("Raster analysis not set", "")
                 analysisType = re.split("<|>|,|\)|==", var.split("]:")[1])[0]   
                              
                 if not analysisType in possibleRasterAnalysis and not("percentOfValues" in analysisType):
