@@ -7,7 +7,7 @@ from ..models.ExtGraph import ExtGraph
 from ..models.QgsGraphLayer import QgsGraphLayer
 from .. import helperFunctions as helper
 
-from qgis.core import QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
 from qgis.utils import iface
 
 
@@ -75,7 +75,7 @@ class CreateGraphController(BaseController):
         self.view.showInfo(self.tr("Start graph building.."))
         self.view.insertLogText("Start graph building..\n")
         builder = GraphBuilder()
-        builder.setOption("createGraphAsLayers", False)
+        builder.setOption("createGraphAsLayers",False)
         graphName = "New"   # default name
 
         # raster data
@@ -108,6 +108,9 @@ class CreateGraphController(BaseController):
         if additionalPointLayer:
             if not additionalPointLayer.isValid():
                 self.view.showWarning(self.tr("Additional point layer is invalid!"))
+                return
+            if additionalPointLayer.crs() != self.view.getInputLayer().crs():
+                self.view.showWarning(self.tr("Invalid crs of additional point layer"))
                 return
             builder.setAdditionalPointLayer(additionalPointLayer)
 
