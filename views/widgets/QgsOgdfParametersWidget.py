@@ -66,6 +66,7 @@ class QgsOGDFParametersWidget(QWidget):
         :param fields: fields dictionary
         """
         self.fields = fields
+        self._createParameterWidgets()
 
     def getParameterFields(self):
         return self.fields

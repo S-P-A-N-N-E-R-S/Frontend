@@ -3,6 +3,7 @@ from ..controllers.ogdfAnalysis import OGDFAnalysisController
 from ..models.ExtGraph import ExtGraph
 from ..models.QgsGraphLayer import QgsGraphLayer
 from .widgets.QgsOgdfParametersWidget import QgsOGDFParametersWidget
+from .. import mainPlugin
 
 from qgis.core import QgsMapLayerProxyModel
 from qgis.PyQt.QtWidgets import QLabel
@@ -15,7 +16,6 @@ class OGDFAnalysisView(BaseContentView):
     def __init__(self, dialog):
         super().__init__(dialog)
         self.name = "ogdf analysis"
-        self.controller = OGDFAnalysisController(self)
 
         # # setup graph input
         # self.dialog.ogdf_analysis_graph_input.setFilters(QgsMapLayerProxyModel.PluginLayer)
@@ -36,11 +36,14 @@ class OGDFAnalysisView(BaseContentView):
         # change analysis parameters
         self.dialog.ogdf_analysis_analysis_input.currentIndexChanged.connect(self._analysisChanged)
 
+        self.controller = OGDFAnalysisController(self)
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
 
     def _analysisChanged(self):
-        label, request = self.getAnalysis()
-        self.setParameterFields(request.getFieldInfo())
+        requestName, requestKey = self.getAnalysis()
+        request = mainPlugin.OGDFPlugin.requests.get(requestKey)
+        if request:
+            self.setParameterFields(request.getFieldInfo())
 
     # def hasInput(self):
     #     """

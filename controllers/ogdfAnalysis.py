@@ -25,7 +25,7 @@ class OGDFAnalysisController(BaseController):
 
         # add available analysis
         if mainPlugin.OGDFPlugin.requests:
-            for requestKey, request in mainPlugin.OGDFPlugin.requests.items:
+            for requestKey, request in mainPlugin.OGDFPlugin.requests.items():
                 self.view.addAnalysis(request.name, requestKey)
 
     def runJob(self):
