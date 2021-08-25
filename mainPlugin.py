@@ -38,6 +38,8 @@ class OGDFPlugin:
             self.translator.load(locale_path)
             QCoreApplication.installTranslator(self.translator)
 
+        QgsProject.instance().layersWillBeRemoved.connect(self.deleteLayers)
+
         self.initActions()
 
     def tr(self, message):
@@ -129,6 +131,7 @@ class OGDFPlugin:
         plugin_menu.removeAction(self.menuAction)
 
         QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
+        QgsProject.instance().layersWillBeRemoved.disconnect(self.deleteLayers)
 
     def reloadPluginLayers(self):
         """Re-reads and reloads plugin layers
@@ -172,4 +175,8 @@ class OGDFPlugin:
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
             os.rmdir(directory)
-            
+
+    def deleteLayers(self, layers):
+            for l in layers:
+                delLayer = QgsProject.instance().mapLayer(l)
+                del delLayer

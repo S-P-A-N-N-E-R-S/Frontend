@@ -3,8 +3,9 @@ from qgis.gui import QgsMapTool, QgsVertexMarker
 from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QPoint, Qt
+from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QDoubleSpinBox, QGroupBox
 
-# from .GraphBuilder import GraphBuilder
+from .QgsGraphUndoCommands import ExtVertexUndoCommand, ExtEdgeUndoCommand
 
 class QgsGraphMapTool(QgsMapTool):
     """
@@ -21,76 +22,150 @@ class QgsGraphMapTool(QgsMapTool):
         self.ctrlPressed = False
 
     def activate(self):
-        print("QgsGraphMapTool activated")
+        # print("QgsGraphMapTool activated")
         self.advancedCosts = self.mLayer.mGraph.distanceStrategy == "Advanced"
         # emit self.activated()
         pass
 
     def deactivate(self):
-        print("QgsGraphMapTool deactivated")
         # emit self.deactivated()
         pass
 
-    def _addVertex(self, point):
+    def _addVertex(self, point, movePoint=False):
         """
         Adds a vertex to the Graphlayers graph.
         Also adds the vertex as feature to the layers DataProvider if necessary.
 
         :type point: QgsPointXY
+        :type movePoint: Bool instead of adding new vertex, move fristFoundVertex
         """
-        feat = QgsFeature()
-        feat.setGeometry(QgsGeometry.fromPointXY(point))
+        # add new vertex
+        if not movePoint:  
+            vertexIdx = self.mLayer.mGraph.vertexCount()
 
-        feat.setAttributes([self.mLayer.mGraph.vertexCount(), point.x(), point.y()])
-        self.mLayer.dataProvider().addFeature(feat, True)
+            vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), vertexIdx, point, "Add")
 
-        self.mLayer.mGraph.addVertex(point)
+        # move vertex
+        else:
+            oldPos = self.mLayer.mGraph.vertex(self.firstFoundVertexIdx).point()
+            
+            vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), self.firstFoundVertexIdx, oldPos, "Move", point)
+        
+        self.mLayer.mUndoStack.push(vertexUndoCommand)
 
-    def _addEdge(self, p1, p2):
-        """
-        Adds an edge to the Graphlayers graph.
-        Also adds the edge as feature to the layers DataProvider if necessary.
+    def _deleteEdge(self, edgeIdx):
+        if edgeIdx >= 0:
+            edge = self.mLayer.mGraph.edge(edgeIdx)
 
-        Deletes the edge from the Graphlayers graph if it already existed.
-        Also deletes the corresponding features from the Graphlayers DataProvider.
+            # delete possibly existing edge            
+            fromVertexIdx = self.mLayer.mGraph.findVertexByID(edge.fromVertex())
+            toVertexIdx = self.mLayer.mGraph.findVertexByID(edge.toVertex())
+            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, fromVertexIdx, toVertexIdx, True)
+            self.mLayer.mUndoStack.push(edgeUndoCommand)
 
-        :type p1: Integer
-        :type p2: Integer
-        """
-        if p1 == p2:
-            return
-
-        edgeId = self.mLayer.mGraph.hasEdge(p1, p2)
-        if edgeId >= 0:
-            # delete possibly existing edge
-            self.mLayer.mGraph.deleteEdge(edgeId)
-            self.mLayer.mDataProvider.deleteFeature(edgeId, False)
+            self.mLayer.mDataProvider.deleteFeature(edgeIdx, False)
 
             if self.mLayer.mGraph.edgeCount() == 0:
                 # no edges exist anymore
                 self.mLayer.mDataProvider.setGeometryToPoint(True)
-        
-        else:
-            # advancedCosts prevent user from adding edges
 
+    def _addEdge(self, p1Idx, p2Idx):
+        """
+        Adds an edge to the Graphlayers graph.
+        Also adds the edge as feature to the layers DataProvider if necessary.
+
+        For existing edges, a new Dialog for this edge will be opened.
+
+        :type p1: Integer
+        :type p2: Integer
+        """
+        if p1Idx == p2Idx:
+            return
+
+        edgeIdx = self.mLayer.mGraph.hasEdge(p1Idx, p2Idx)
+        if edgeIdx < 0:
             if self.mLayer.mGraph.edgeCount() == 0:
                 # now edges exist
                 self.mLayer.mDataProvider.setGeometryToPoint(False)
             
             # add new edge
-            edgeId = self.mLayer.mGraph.addEdge(p1, p2)
+            edgeIdx = self.mLayer.mGraph.edgeCount()
+
+            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, p1Idx, p2Idx, False)
+            self.mLayer.mUndoStack.push(edgeUndoCommand)
             
-            edge = self.mLayer.mGraph.edge(edgeId)
+            edge = self.mLayer.mGraph.edge(edgeIdx)
 
-            feat = QgsFeature()
-            fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
-            toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
-            feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+        # open edge window on found edge (possibility to set costs for newly added edges)
+        win = QDialog(iface.mainWindow())
+        win.setVisible(True)
 
-            feat.setAttributes([edgeId, edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edgeId)])
+        # QBoxLayout to add widgets to
+        layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
-            self.mLayer.mDataProvider.addFeature(feat, False)
+        # QLabel with information about the GraphLayer
+        edge = self.mLayer.mGraph.edge(edgeIdx)
+        informationLabel = QLabel("Edge " +  str(edge.id()))
+        informationLabel.setWordWrap(True)
+        informationLabel.setVisible(True)
+        informationLabel.setStyleSheet("border: 1px solid black;")
+        layout.addWidget(informationLabel)
 
+        if self.mLayer.mGraph.distanceStrategy == "Advanced":
+            costs = []
+            costGroupBox = QGroupBox("Edge Cost per Advanced Cost Function")
+            costLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+
+            def _updateCosts():
+                count = 0
+                for child in costGroupBox.findChildren(QDoubleSpinBox):
+                    costs[count] = child.value()
+                    count += 1
+
+                edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, -1, -1, False)
+                edgeUndoCommand.setNewCosts(costs)
+                self.mLayer.mUndoStack.push(edgeUndoCommand)
+
+            applyButton = QPushButton("Apply")
+            applyButton.setVisible(True)
+            applyButton.setEnabled(False)
+            applyButton.clicked.connect(_updateCosts)
+
+            for i in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
+                costSpinBox = QDoubleSpinBox()
+                costs.append(self.mLayer.mGraph.costOfEdge(edgeIdx, i))
+                costSpinBox.setValue(costs[i])
+                costSpinBox.setVisible(True)
+                costSpinBox.valueChanged.connect(lambda: applyButton.setEnabled(True))
+                costLayout.addWidget(costSpinBox)
+
+            costGroupBox.setLayout(costLayout)
+            costGroupBox.setVisible(True)
+            layout.addWidget(costGroupBox)
+
+            layout.addWidget(applyButton)
+            
+        else:
+            distanceLabel = QLabel("Distance Strategy: " + self.mLayer.mGraph.distanceStrategy + ": " + str(self.mLayer.mGraph.costOfEdge(edgeIdx)))
+            distanceLabel.setWordWrap(False)
+            distanceLabel.setVisible(True)
+            distanceLabel.setStyleSheet("border: 1px solid black;")
+            layout.addWidget(distanceLabel)
+
+        highlightEdgeButton = QPushButton("Toggle Highlight")
+        highlightEdgeButton.clicked.connect(self.mLayer.mGraph.edge(edgeIdx).toggleHighlight)
+        highlightEdgeButton.clicked.connect(self.mLayer.triggerRepaint)
+        highlightEdgeButton.setVisible(True)
+        layout.addWidget(highlightEdgeButton)
+
+        deleteEdgeButton = QPushButton("Delete")
+        deleteEdgeButton.clicked.connect(lambda: self._deleteEdge(edgeIdx))
+        deleteEdgeButton.clicked.connect(win.done)
+        deleteEdgeButton.setVisible(True)
+        layout.addWidget(deleteEdgeButton)
+
+        win.setLayout(layout)
+        win.adjustSize()
 
     def _deleteVertex(self, idx):
         """
@@ -99,13 +174,12 @@ class QgsGraphMapTool(QgsMapTool):
 
         :type idx: Integer
         """
-        deletedEdges = self.mLayer.mGraph.deleteVertex(idx)
+        oldPos = self.mLayer.mGraph.vertex(idx).point()
+
+        vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), idx, oldPos, "Delete")
+        self.mLayer.mUndoStack.push(vertexUndoCommand)
         
         self.mLayer.mDataProvider.deleteFeature(idx, True)
-        
-        for edgeId in deletedEdges:
-            self.mLayer.mDataProvider.deleteFeature(edgeId, False)
-
 
     def canvasPressEvent(self, event):
         """
@@ -131,75 +205,70 @@ class QgsGraphMapTool(QgsMapTool):
                     self._addVertex(clickPosition)
                 
                 else: # move firstFoundVertex to new position
-                    # deleteVertex firstFoundVertex, addVertex (without edges) on clicked position
-                    self._deleteVertex(self.firstFoundVertex)
-                    
-                    self._addVertex(clickPosition)
+                    self._addVertex(clickPosition, True)
                     
                     self.__removeFirstFound()
 
-            # else: # CTRL + LeftClick
-            #     builder = GraphBuilder()
-            #     builder.setOption("connectionType", self.mLayer.mGraph.connectionType())
-            #     builder.setGraph(self.mLayer.mGraph)
-
-            #     if not self.firstFound and not self.advancedCosts:
-            #         # use addVertex from GraphBuilder to also add edges
-            #         addedEdges = builder.addVertex([clickPosition.x(), clickPosition.y()])
-            #         self.__removeFirstFound()
-            #     elif self.firstFound and not self.advancedCosts:
-            #         # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
-            #         self._deleteVertex(self.firstFoundVertex)
+            else: # CTRL + LeftClick
+                if not self.advancedCosts:
+                    print("addVertexWithEdges")
+                    if not self.firstFound:
+                        # use addVertex from GraphBuilder to also add edges
+                        addedEdges = self.mLayer.mGraph.addVertexWithEdges([clickPosition.x(), clickPosition.y()])
+                        self.__removeFirstFound()
+                    elif self.firstFound:
+                        # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
+                        self._deleteVertex(self.firstFoundVertexIdx)
+                        
+                        # use addVertex from GraphBuilder to also add edges
+                        addedEdges = self.mLayer.mGraph.addVertexWithEdges([clickPosition.x(), clickPosition.y()])
+                        self.__removeFirstFound()
                     
-            #         # use addVertex from GraphBuilder to also add edges
-            #         addedEdges = builder.addVertex([clickPosition.x(), clickPosition.y()])
-            #         self.__removeFirstFound()
-                
-            #     # add Features from added vertices and lines from GraphBuilder
-            #     feat = QgsFeature()
-            #     feat.setGeometry(QgsGeometry.fromPointXY(clickPosition))
+                    # add Features from added vertices and lines from GraphBuilder
+                    # feat = QgsFeature()
+                    # feat.setGeometry(QgsGeometry.fromPointXY(clickPosition))
 
-            #     feat.setAttributes([self.mLayer.mGraph.vertexCount(), clickPosition.x(), clickPosition.y()])
-            #     self.mLayer.dataProvider().addFeature(feat, True)
+                    # feat.setAttributes([self.mLayer.mGraph.vertexCount(), clickPosition.x(), clickPosition.y()])
+                    # self.mLayer.dataProvider().addFeature(feat, True) # TODO: adjust to new addFeature parameters
 
-            #     for edge in addedEdges:
-            #         edge = self.mLayer.mGraph.edge(edge[0])
+                    # for edge in addedEdges:
+                    #     edge = self.mLayer.mGraph.edge(edge[0])
 
-            #         feat = QgsFeature()
-            #         fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
-            #         toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
-            #         feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
+                    #     feat = QgsFeature()
+                    #     fromVertex = self.mLayer.mGraph.vertex(edge.fromVertex()).point()
+                    #     toVertex = self.mLayer.mGraph.vertex(edge.toVertex()).point()
+                    #     feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-            #         feat.setAttributes([edge[0], edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edge[0])], False)
+                    #     feat.setAttributes([edge[0], edge.fromVertex(), edge.toVertex(), self.mLayer.mGraph.costOfEdge(edge[0])], False)
 
-            #         self.mLayer.mDataProvider.addFeature(feat, False)
+                    #     self.mLayer.mDataProvider.addFeature(feat, False, edge[0])
 
         elif event.button() == Qt.RightButton: # RightClick
 
-            # TODO: find a way to set a satisfying tolerance for the checkup
-            vertexId = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
+            vertexIdx = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
             
-            if vertexId > 0 and not self.firstFound and not self.ctrlPressed: # first RightClick
+            if vertexIdx >= 0 and not self.firstFound and not self.ctrlPressed: # first RightClick
                 # mark first found vertex
                 self.firstFound = True
-                self.firstFoundVertex = vertexId
+                self.firstFoundVertexIdx = vertexIdx
+                self.firstFoundVertexID = self.mLayer.mGraph.vertex(vertexIdx).id()
                 self.firstMarker = QgsVertexMarker(iface.mapCanvas())
                 self.firstMarker.setIconType(QgsVertexMarker.ICON_DOUBLE_TRIANGLE)
                 self.firstMarker.setCenter(clickPosition)
             
-            elif vertexId < 0 and self.firstFound or self.advancedCosts and self.firstFound: # second RightClick (no vertex found)
+            elif vertexIdx < 0 and self.firstFound: # second RightClick (no vertex found)
                 self.__removeFirstFound()
 
-            elif vertexId > 0 and self.firstFound and not self.ctrlPressed and not self.advancedCosts: # second RightClick
-                # add edge between firstFoundVertex and vertexId
-                # deletes edge if it already exits
-                self._addEdge(self.firstFoundVertex, vertexId)                
+            elif vertexIdx > 0 and self.firstFound and not self.ctrlPressed: # second RightClick
+                # add edge between firstFoundVertexID and vertexID
+                # shows edge edit window if it already exits
+                self._addEdge(self.firstFoundVertexIdx, vertexIdx)
                 
                 self.__removeFirstFound()
 
-            elif vertexId > 0 and self.firstFound and self.ctrlPressed: # second CTRL + RightClick
+            elif vertexIdx > 0 and self.firstFound and self.ctrlPressed: # second CTRL + RightClick
                 # remove vertex if found on click
-                self._deleteVertex(vertexId)
+                self._deleteVertex(vertexIdx)
 
                 self.__removeFirstFound()
         

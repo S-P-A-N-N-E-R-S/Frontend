@@ -21,11 +21,11 @@ class QgsVertexPickerMapTool(QgsMapTool):
         self.canvas = canvas
         self.layer = layer
 
-        self.selectedVertexId = None
+        self.selectedVertexIdx = None
 
     def activate(self):
         super().activate()
-        self.selectedVertexId = None
+        self.selectedVertexIdx = None
 
     def canvasReleaseEvent(self, event):
         """
@@ -40,19 +40,19 @@ class QgsVertexPickerMapTool(QgsMapTool):
         clickPosition = converter.toMapCoordinates(clickPosition)
         clickPosition = self.layer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
-        vertexId = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
+        vertexIdx = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
 
-        if vertexId >= 0:
-            self.selectedVertexId = vertexId
-            self.vertexSelected.emit(vertexId)
+        if vertexIdx >= 0:
+            self.selectedVertexIdx = vertexIdx
+            self.vertexSelected.emit(vertexIdx)
 
     def keyReleaseEvent(self, event):
         # cancel selection
         if event.key() == Qt.Key_Escape:
             self.canceled.emit()
 
-    def getSelectedVertexId(self):
-        return self.selectedVertexId
+    def getSelectedVertexIdx(self):
+        return self.selectedVertexIdx
 
 
 class QgsGraphVertexPickerWidget(QWidget):
@@ -108,10 +108,10 @@ class QgsGraphVertexPickerWidget(QWidget):
         # graph layer is prioritized
         graph = self.graphLayer.getGraph() if self.graphLayer is not None else self.graph
         if graph is not None:
-            for vertexId in range(graph.vertexCount()):
-                vertex = graph.vertex(vertexId).point()
+            for vertexIdx in range(graph.vertexCount()):
+                vertex = graph.vertex(vertexIdx).point()
                 self.comboBox.addItem("Vertex ID: {} [Point({})]".format(
-                    vertexId, vertex.toString(2)), vertexId)
+                    graph.vertex(vertexIdx).id(), vertex.toString(2)), graph.vertex(vertexIdx).id())
 
     def _selectOnCanvas(self):
         """
@@ -126,13 +126,13 @@ class QgsGraphVertexPickerWidget(QWidget):
         self.mapTool.vertexSelected.connect(self._vertexSelected)
         self.mapTool.canceled.connect(self._deactivateMapTool)
 
-    def _vertexSelected(self, vertexId):
+    def _vertexSelected(self, vertexIdx):
         """
         Set selected vertex in combobox
         :param vertexId:
         :return:
         """
-        self.comboBox.setCurrentIndex(self.comboBox.findData(vertexId))
+        self.comboBox.setCurrentIndex(self.comboBox.findData(vertexIdx))
         self._deactivateMapTool()
 
     def _deactivateMapTool(self):

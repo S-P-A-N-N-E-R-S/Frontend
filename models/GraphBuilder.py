@@ -807,7 +807,7 @@ class GraphBuilder:
             raise TypeError("Not a point geometry")
         for feat in vertexLayer.getFeatures():            
             geom = feat.geometry()
-            addVertex([geom.asPoint().x(),geom.asPoint().y()])
+            self.graph.addVertexWithEdges([geom.asPoint().x(),geom.asPoint().y()])
 
     def getGraph(self):
         return self.graph   
@@ -826,6 +826,9 @@ class GraphBuilder:
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
         self.graph.setConnectionType(self.__options["connectionType"])
+        self.graph.setGraphBuilderInformation(self.__options["neighborNumber"], self.__options["edgeDirection"],
+                                            self.__options["clusterNumber"], self.__options["nnAllowDoubleEdges"],
+                                            self.__options["distance"])
 
         if self.__options["createRandomGraph"] == True:
             self.graph.crs = "EPSG:4326"

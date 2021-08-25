@@ -48,22 +48,22 @@ class QgsEdgePickerMapTool(QgsMapTool):
         clickPosition = converter.toMapCoordinates(clickPosition)
         clickPosition = self.layer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
-        vertexId = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
+        vertexIdx = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
 
-        if vertexId >= 0:
+        if vertexIdx >= 0:
             if self._firstVertex is None:
                 # select first edge vertex
-                self._firstVertex = vertexId
+                self._firstVertex = vertexIdx
                 self._firstVertexMarker = QgsVertexMarker(iface.mapCanvas())
                 self._firstVertexMarker.setIconType(QgsVertexMarker.ICON_BOX)
                 self._firstVertexMarker.setCenter(clickPosition)
             else:
                 # select second vertex
-                self._secondVertex = vertexId
-                edgeId = self.layer.mGraph.hasEdge(self._firstVertex, self._secondVertex)
-                if edgeId >= 0:
-                    self.selectedEdgeId = edgeId
-                    self.edgeSelected.emit(edgeId)
+                self._secondVertex = vertexIdx
+                edgeIdx = self.layer.mGraph.hasEdge(self.layer.mGraph.vertex(self._firstVertex).id(), self.layer.mGRaph.vertex(self._secondVertex).id())
+                if edgeIdx >= 0:
+                    self.selectedEdgeIdx = edgeIdx
+                    self.edgeSelected.emit(edgeIdx)
                 # remove first vertex
                 self._firstVertex = None
                 # remove marker from canvas
@@ -89,8 +89,8 @@ class QgsEdgePickerMapTool(QgsMapTool):
             iface.mapCanvas().scene().removeItem(self._firstVertexMarker)
             self._firstVertexMarker = None
 
-    def getSelectedEdgeId(self):
-        return self.selectedEdgeId
+    def getSelectedEdgeIdx(self):
+        return self.selectedEdgeIdx
 
 
 class QgsGraphEdgePickerWidget(QWidget):
@@ -146,12 +146,12 @@ class QgsGraphEdgePickerWidget(QWidget):
         # graph layer is prioritized
         graph = self.graphLayer.getGraph() if self.graphLayer is not None else self.graph
         if graph is not None:
-            for edgeId in range(graph.edgeCount()):
-                edge = graph.edge(edgeId)
-                fromVertex = graph.vertex(edge.fromVertex()).point()
-                toVertex = graph.vertex(edge.toVertex()).point()
+            for edgeIdx in range(graph.edgeCount()):
+                edge = graph.edge(edgeIdx)
+                fromVertex = graph.vertex(graph.findVertexByID(edge.fromVertex())).point()
+                toVertex = graph.vertex(graph.findVertexByID(edge.toVertex())).point()
                 self.comboBox.addItem("Edge ID: {} [FromPoint({}), ToPoint({})]".format(
-                    edgeId, fromVertex.toString(2), toVertex.toString(2)), edgeId)
+                    graph.edge(edgeIdx).id(), fromVertex.toString(2), toVertex.toString(2)), graph.edge(edgeIdx).id())
 
     def _selectOnCanvas(self):
         """
@@ -166,13 +166,13 @@ class QgsGraphEdgePickerWidget(QWidget):
         self.mapTool.edgeSelected.connect(self._edgeSelected)
         self.mapTool.canceled.connect(self._deactivateMapTool)
 
-    def _edgeSelected(self, edgeId):
+    def _edgeSelected(self, edgeIdx):
         """
         Set selected edge in combobox
         :param edgeId:
         :return:
         """
-        self.comboBox.setCurrentIndex(self.comboBox.findData(edgeId))
+        self.comboBox.setCurrentIndex(self.comboBox.findData(edgeIdx))
         self._deactivateMapTool()
 
     def _deactivateMapTool(self):
