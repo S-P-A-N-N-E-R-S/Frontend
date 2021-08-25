@@ -1299,22 +1299,21 @@ QListWidget::item::selected {
                             <property name="title">
                              <string>Analysis Parameters</string>
                             </property>
-                            <layout class="QVBoxLayout" name="verticalLayout_14">
-                             <item>
-                              <spacer name="verticalSpacer_6">
-                               <property name="orientation">
-                                <enum>Qt::Vertical</enum>
-                               </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>20</width>
-                                 <height>40</height>
-                                </size>
-                               </property>
-                              </spacer>
-                             </item>
-                            </layout>
+                            <layout class="QVBoxLayout" name="verticalLayout_14"/>
                            </widget>
+                          </item>
+                          <item>
+                           <spacer name="verticalSpacer_6">
+                            <property name="orientation">
+                             <enum>Qt::Vertical</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>20</width>
+                              <height>40</height>
+                             </size>
+                            </property>
+                           </spacer>
                           </item>
                          </layout>
                         </item>
