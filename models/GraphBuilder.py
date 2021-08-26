@@ -218,7 +218,7 @@ class GraphBuilder:
                     return ("Incorrect use of random function", "")
                 randomRangeValues = function[index+4:closingBracketIndex-3].split(",")
                 for v in randomRangeValues:                                  
-                    if not v.isnumeric() or "." in v:
+                    if not v.isnumeric() and not "." in v and not v in possibleMetrics:
                         return ("Incorrect use of random function", "")
         
         # check all if constructs
@@ -307,7 +307,8 @@ class GraphBuilder:
                 number = function[index:].split("$")[0].split("%")[1]
                 
                 if not "," in number and (not number.isnumeric() and not "field:" in number and not "raster" in number):
-                    return ("At least one operand in math construct necessary", "")
+                    if not number in possibleMetrics:
+                        return ("At least one operand in math construct necessary", "")
                 
                 if "," in number:
                     multNumbers = number.split(",")
@@ -315,7 +316,8 @@ class GraphBuilder:
                         return ("Only operations with two variables supported", "")
                     for n in multNumbers:                       
                         if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n:
-                            return("Invalid value in math construct ","")
+                            if not number in possibleMetrics:
+                                return("Invalid value in math construct ","")
          
         # raster check       
         regex = re.compile(r'raster\[[0-9]*\]:?')

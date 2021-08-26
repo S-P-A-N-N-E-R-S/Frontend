@@ -231,7 +231,7 @@ class AdvancedCostCalculator():
         elif "rnd?" in part:
             lb = part.split("?")[1].split(",")[0]
             ub = part.split("&")[0].split(",")[1]
-            
+                       
             try:
                 convertedLB = float(lb)
                 convertedUB = float(ub)
@@ -240,6 +240,19 @@ class AdvancedCostCalculator():
             except ValueError:
                 pass
           
+            translated = False
+                        
+            if not lb.isnumeric():
+                lb = self.__translate(lb, edgeID, sampledPointsLayer)
+                translated = True
+            if not ub.isnumeric():
+                ub = self.__translate(ub, edgeID, sampledPointsLayer)
+                translated = True
+            if translated == True:
+                convertedLB = float(lb)
+                convertedUB = float(ub)
+                return random.uniform(convertedLB,convertedUB)
+            
             return random.randint(int(lb),int(ub))
         
         return str("0")
