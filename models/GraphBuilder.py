@@ -67,6 +67,7 @@ class GraphBuilder:
             "createGraphAsLayers": True,
             "createRandomGraph": True,          
             "usePolygonsAsForbidden": False,
+            "usePolygonsInCostFunction": False,
             "useAdditionalPoints": False
         }
 
@@ -139,8 +140,8 @@ class GraphBuilder:
         """       
         self.__options["distanceStrategy"] = "Advanced"
                                                
-        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields())             
-        if syntaxCheckResult[0] == "Valid function":
+        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), self.__options["usePolygonsInCostFunction"])             
+        if syntaxCheckResult[0] == "No error found":
             function = syntaxCheckResult[1]
             self.costFunctions.append(function)
                 
@@ -159,11 +160,9 @@ class GraphBuilder:
                     return closingBracketIndex                        
                       
             closingBracketIndex+=1
-    
-    
-    
+        
     @staticmethod                   
-    def syntaxCheck(function, fields):
+    def syntaxCheck(function, fields, numberOfRasterData, polygonsSet):
         """
         Checks if the function is valid and exchanges the brackets with other
         symbols to enable future analysis
@@ -174,37 +173,17 @@ class GraphBuilder:
         possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
         possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance",
                                   "standDev", "gradientSum", "gradientMin", "gradientMax", "pixelValue"]
-        
+        comparisonOperators = ["<",">","==",]
+               
         possibleFields = []
         for field in fields:
             possibleFields.append(field.name())
-         
-            
+                    
         for i in range(len(formulaParts)):
             var = formulaParts[i]            
             if not (var in possibleMetrics or var.isnumeric() or "." in var or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):
                 return ("Invalid operand", "")
-            
-            compOp = re.compile('<|>|=')
-            
-            if "raster[" in var:  
-                indexNumber = var.split("[")[1].split("]")[0]
-                if not indexNumber.isnumeric():
-                    return ("Index necessary to reference raster data", "")
-                            
-            if "raster[" in var and compOp.search(var):
-                if not "]:" in var:
-                    return ("Raster analysis not set", "")
-                analysisType = re.split("<|>|,|\)|==", var.split("]:")[1])[0]   
-                             
-                if not analysisType in possibleRasterAnalysis and not("percentOfValues" in analysisType):
-                    return ("Invalid raster analysis", "")                                
-            
-            if "field:" in var:
-                fieldName= re.split("<|>|,|\)", var.split("field:")[1])[0]  
-                if not fieldName in possibleFields:
-                    return ("Invalid field name", "")
-                             
+                                        
         # check parentheses
         openList = ["[","("]
         closeList = ["]",")"]
@@ -221,6 +200,9 @@ class GraphBuilder:
         if len(stack) != 0:
             return ("Unbalanced parentheses", "")        
      
+        if ("insidePolygon" in function or "crossesPolygon" in function) and polygonsSet == False:
+            return ("No polygon layer set", "")
+     
         # check all random operands   
         found = True
         while(found):
@@ -233,7 +215,7 @@ class GraphBuilder:
                 function = function[0:closingBracketIndex] + "&" + function[closingBracketIndex+1:]                                                         
                 function = function.replace("random(","rnd?",1)                
                 if not "," in function[index:closingBracketIndex]:
-                    return ("Incorrect use of random function1", "")
+                    return ("Incorrect use of random function", "")
                 randomRangeValues = function[index+4:closingBracketIndex-3].split(",")
                 for v in randomRangeValues:                                  
                     if not v.isnumeric() or "." in v:
@@ -256,13 +238,58 @@ class GraphBuilder:
                     return ("Two values in if function necessary", "")
                 
                 if "if(" in function[index:closingBracketIndex]:
-                    return ("Nested if construct", "")
+                    return ("Nested if construct not allowed", "")
                                          
                 for part in ifParts:
                     if len(part) == 0:
                         return ("Values in if construct necessary", "") 
-                      
-        # replace math brackets      
+                             
+                compOpSearch = re.compile(r'<|>|==')
+                res = compOpSearch.search(ifParts[0])
+                if res == None:
+                    return ("Missing comparison operator","")
+
+                # check percentOfValues operator
+                findPercentOfValuesRegex = re.compile(r'percentOfValues\(?[0-9]*\)?')
+                percentParts = findPercentOfValuesRegex.findall(ifParts[0])
+                for percentPart in percentParts:
+                    if not "(" in percentPart or not ")" in percentPart:
+                        return ("Percentage value missing", "")
+                    if not (percentPart.split("(")[1].split(")")[0]).isnumeric():
+                        return ("No integer number as percentage given", "")
+
+                
+                andOrSeperatedParts = re.split("or|and", ifParts[0])
+                for andOrPart in andOrSeperatedParts:              
+                    comparedOperands = re.split(r'<|>|==', andOrPart)
+                    if len(comparedOperands) != 2:
+                        return ("Error in if condition", "")
+                    if "if{" in comparedOperands[0]:
+                        firstOperand = comparedOperands[0].split("if{")[1]
+                    else:
+                        firstOperand = comparedOperands[0]    
+                    secondOperand = comparedOperands[1]
+                    secondOperand = secondOperand.replace("=","")
+                    possOperandsRegex = re.compile(r'field|crossesPolygon|insidePolygon|math|raster|rnd|True|False')
+                    res = possOperandsRegex.search(firstOperand)
+                    if res == None and not firstOperand.isnumeric():
+                        return ("Error in first operand of if construct", "")                 
+                    res = possOperandsRegex.search(secondOperand)                              
+                    if res == None and not secondOperand.isnumeric():
+                        return ("Error in second operand of if construct", "")
+                     
+                    #check polygons set if polygon function used
+                    if firstOperand == "crossesPolygon" and secondOperand != "True" and secondOperand != "False":
+                         return ("crossesPolygon can only be compared to False or True", "")
+                    if firstOperand == "insidePolygon" and secondOperand != "True" and secondOperand != "False": 
+                        return ("insidePolygon can only be compared to False or True", "") 
+                          
+                if not "math" in ifParts[1] and not "raster" in ifParts[1] and not "rnd" in ifParts[1] and not ifParts[1].isnumeric() and not "." in ifParts[1]:
+                    return ("Invalid value in if construct", "")        
+                if not "math" in ifParts[2] and not "raster" in ifParts[2] and not "rnd" in ifParts[1] and not ifParts[2].isnumeric() and not "." in ifParts[1]:
+                    return ("Invalid value in if construct", "")      
+                                     
+        # check math constructs   
         found = True
         while(found):
             found = False    
@@ -287,9 +314,52 @@ class GraphBuilder:
                     if len(multNumbers) > 2:
                         return ("Only operations with two variables supported", "")
                     for n in multNumbers:                       
-                        if not n.isnumeric() and not "field:" in n and not "raster" in n:
-                            return("All variables must be ","")
-        return ("Valid function", function) 
+                        if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n:
+                            return("Invalid value in math construct ","")
+         
+        # raster check       
+        regex = re.compile(r'raster\[[0-9]*\]:?')
+        res = regex.findall(function)
+        for matchString in res:
+         
+            rasterIndexNumber = matchString.split("[")[1].split("]")[0]
+            if not rasterIndexNumber.isnumeric():
+                return ("Index necessary to reference raster data", "")
+            if not ":" in matchString:
+                return(": missing after index of raster data", "")
+            
+            if int(rasterIndexNumber) > numberOfRasterData-1 or int(rasterIndexNumber) < 0:
+                return ("Invalid index of raster data","")               
+        
+        regex = re.compile(r'raster\[[0-9]+\]:[A-z]*')
+        res = regex.findall(function)
+        for matchString in res:               
+            analysisType = re.split("<|>|,|\)|=", matchString.split("]:")[1])[0]  
+            if not analysisType in possibleRasterAnalysis and not("percentOfValues" in analysisType):
+                return ("Invalid raster analysis", "")    
+       
+        # fields check
+        foundFieldConstruct = False 
+        regex = re.compile(r'field:?')  
+        res = regex.findall(function)
+        for matchString in res:        
+            foundFieldConstruct = True      
+            if not ":" in matchString:
+                return (": missing after field", "")
+        
+        fieldSet = False  
+        regex = re.compile(r'field:[A-z]+')   
+        res = regex.findall(function)  
+        for matchString in res: 
+            fieldSet = True
+            fieldName = matchString.split("field:")[1]
+            if not fieldName in possibleFields:
+                return ("Invalid field name", "")     
+        
+        if foundFieldConstruct == True and fieldSet == False:
+            return ("No field name defined","")
+                            
+        return ("No error found", function) 
     
     def getCostFunction(self, index):
         return self.costFunctions[index]
