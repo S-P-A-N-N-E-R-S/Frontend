@@ -197,9 +197,6 @@ class ExtEdgeUndoCommand(QUndoCommand):
         self.mLayer.mGraph.deleteEdge(self.mEdgeIdx)
 
         # self.mLayer.dataProvider().deleteFeature(self.mEdgeIdx, False)
-        
-        self.mLayer.triggerRepaint()
-        iface.mapCanvas().refresh()
 
     def __addEdge(self):
         self.mEdgeIdx = self.mLayer.mGraph.addEdge(self.mFromVertexID, self.mToVertexID, self.mEdgeIdx, self.mEdgeID)
@@ -218,9 +215,6 @@ class ExtEdgeUndoCommand(QUndoCommand):
         # feat.setAttributes([self.mEdgeID, self.mFromVertexID, self.mToVertexID, self.mLayer.mGraph.costOfEdge(self.mEdgeIdx)])
 
         # self.mLayer.dataProvider().addFeature(feat, False, self.mEdgeIdx)
-
-        self.mLayer.triggerRepaint()
-        iface.mapCanvas().refresh()
 
     def setNewCosts(self, newCosts):
         """
@@ -264,6 +258,9 @@ class ExtEdgeUndoCommand(QUndoCommand):
 
         self.setText(self.undoString)
 
+        self.mLayer.triggerRepaint()
+        iface.mapCanvas().refresh()
+
     def undo(self):
         # set old costs again
         if self.mUpdateCosts or self.mCostsChanged:
@@ -280,6 +277,9 @@ class ExtEdgeUndoCommand(QUndoCommand):
             self.__deleteEdge()
 
         self.setText(self.redoString)
+
+        self.mLayer.triggerRepaint()
+        iface.mapCanvas().refresh()
 
     def mergeWith(self, command):
         return False

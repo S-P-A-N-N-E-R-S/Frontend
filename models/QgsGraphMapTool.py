@@ -133,6 +133,7 @@ class QgsGraphMapTool(QgsMapTool):
 
             for i in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
                 costSpinBox = QDoubleSpinBox()
+                costSpinBox.setMaximum(2147483647)
                 costs.append(self.mLayer.mGraph.costOfEdge(edgeIdx, i))
                 costSpinBox.setValue(costs[i])
                 costSpinBox.setVisible(True)
@@ -245,7 +246,7 @@ class QgsGraphMapTool(QgsMapTool):
 
         elif event.button() == Qt.RightButton: # RightClick
 
-            vertexIdx = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
+            vertexIdx = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 8)
             
             if vertexIdx >= 0 and not self.firstFound and not self.ctrlPressed: # first RightClick
                 # mark first found vertex
