@@ -405,11 +405,6 @@ class QgsExpressionContext(QObject):
                         "helpText": self.tr("Returns 1 when condition a or b is true.")
                     },
                     {
-                        "label": "not",
-                        "expressionText": " not ",
-                        "helpText": self.tr("Negates a condition.")
-                    },
-                    {
                         "label": "<",
                         "expressionText": " < ",
                         "helpText": self.tr("Compares two values and evaluates to 1 if the left value is less than the right value.")
