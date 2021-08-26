@@ -100,7 +100,7 @@ def saveLayer(layer, layerName, type, path=None, format=None):
     return None
 
 
-def saveGraph(graph, graphLayer, graphName="", savePath=None):
+def saveGraph(graph, graphLayer, graphName="", savePath=None, renderGraph=True):
         """
         Saves graph or created graph layers to destination and adds the created layers to project
         :param graph: ExtGraph
@@ -148,6 +148,10 @@ def saveGraph(graph, graphLayer, graphName="", savePath=None):
         graphLayer.setName(graphName + "GraphLayer")
         if graphLayer.isValid():
             QgsProject.instance().addMapLayer(graphLayer)
+
+            # disable graph rendering if checkbox is not checked
+            if not renderGraph:
+                QgsProject.instance().layerTreeRoot().findLayer(graphLayer).setItemVisibilityChecked(False)
         else:
             errorMsg = tr("Created graph layer can not be loaded due to invalidity!")
             success = False

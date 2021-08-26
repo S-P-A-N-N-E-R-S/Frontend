@@ -60,10 +60,8 @@ class OGDFAnalysisController(BaseController):
                 client.send(request)
                 if requestKey not in mainPlugin.OGDFPlugin.activeRequestsKeys:
                     mainPlugin.OGDFPlugin.activeRequestsKeys.append(requestKey)
-        except NetworkClientError as error:
-            self.view.showError(str(error))  # show error
-        except ParseError as error:
-            self.view.showError(str(error))  # show error
+        except (NetworkClientError, ParseError) as error:
+            self.view.showError(str(error), self.tr("Network Error"))  # show error
 
     # def __getGraph(self):
     #     """

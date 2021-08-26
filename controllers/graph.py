@@ -164,7 +164,7 @@ class CreateGraphController(BaseController):
             if graphCrs and graphCrs.isValid():
                 graphLayer.setCrs(graphCrs)
 
-            success, errorMsg = helper.saveGraph(graph, graphLayer, graphName, savePath)
+            success, errorMsg = helper.saveGraph(graph, graphLayer, graphName, savePath, self.view.isRenderGraphChecked())
             if not success:
                 self.view.showError(errorMsg)
             else:
@@ -227,7 +227,7 @@ class CreateGraphController(BaseController):
 
                 # save graph to destination
                 savePath = self.view.getSavePath()
-                success, errorMsg = helper.saveGraph(graph, graphLayer, graphName, savePath)
+                success, errorMsg = helper.saveGraph(graph, graphLayer, graphName, savePath, self.view.isRenderGraphChecked())
                 if not success:
                     self.view.showError(errorMsg)
                 else:
