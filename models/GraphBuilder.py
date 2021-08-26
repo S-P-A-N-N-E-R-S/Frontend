@@ -270,7 +270,7 @@ class GraphBuilder:
                         firstOperand = comparedOperands[0]    
                     secondOperand = comparedOperands[1]
                     secondOperand = secondOperand.replace("=","")
-                    possOperandsRegex = re.compile(r'field|crossesPolygon|insidePolygon|math|raster|rnd|True|False')
+                    possOperandsRegex = re.compile(r'field|crossesPolygon|insidePolygon|math|raster|rnd|True|False|euclidean|manhattan|geodesic|ellipsoidal')
                     res = possOperandsRegex.search(firstOperand)
                     if res == None and not firstOperand.isnumeric():
                         return ("Error in first operand of if construct", "")                 

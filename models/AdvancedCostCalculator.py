@@ -254,7 +254,6 @@ class AdvancedCostCalculator():
         if "if" in part:                 
             expression = part.split(";")[0].split("{",1)[1]                                   
             expressionParts = re.split("and|or", expression)          
-            
             for expPart in expressionParts: 
                 if "pixelValue" in expPart:                    
                     listString = expPart.split("(")[1].split(")")[0]
@@ -289,7 +288,7 @@ class AdvancedCostCalculator():
                         expression = expression.replace(expPart, " True ")
                     else:
                         expression = expression.replace(expPart, " False ")       
-          
+                        
             if eval(expression) == True:              
                 return part.split(";")[1]
             else:
