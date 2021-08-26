@@ -172,7 +172,7 @@ class CreateGraphController(BaseController):
         if costFunctions and builder.getOption("distanceStrategy") == "Advanced":
             for index, costFunction in enumerate(costFunctions):
                 status = builder.addCostFunction(costFunction)
-                if not status == "Valid function":
+                if not status == "No error found":
                     self.view.showError(format(status), self.tr("Error in cost function with index {}").format(index))
                     return
 

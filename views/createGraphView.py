@@ -286,6 +286,7 @@ class CreateGraphView(BaseContentView):
         costFunctionDialog = QgsCostFunctionDialog()
         costFunctionDialog.setCostFunction(self.getCostFunction(index))
         costFunctionDialog.setVectorLayer(self.getInputLayer())
+        costFunctionDialog.setPolygonLayer(self.getPolygonCostLayer())
         costFunctionDialog.setRasterData(self.getRasterData())
         # load cost function when ok button is clicked
         costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction(), index))

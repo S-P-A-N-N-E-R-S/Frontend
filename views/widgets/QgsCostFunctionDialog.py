@@ -611,7 +611,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     """
     costFunctionChanged = pyqtSignal()
 
-    def __init__(self, parent=None, vectorLayer=None, rasterData=None):
+    def __init__(self, parent=None, vectorLayer=None, rasterData=None, polygonLayer = None):
         """
         Constructor
         :type rasterData: Array of raster inputs and each input is a tuple: (layer, band)
@@ -623,6 +623,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
 
         self.vectorLayer = vectorLayer
         self.rasterData = rasterData
+        self.polygonLayer = polygonLayer
 
         self.codeEditor.setWrapMode(QsciScintilla.WrapWord)
 
@@ -663,7 +664,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
             with the most common functions. In the center there is a list of all available expressions that can 
             be used in the cost function.</p>
             <h2>Example</h2>
-            <p>if(field:ELEV > 100, raster[0]:sum, raster[0]:min)</p>
+            <p>if(field:ELEV > 100; raster[0]:sum; raster[0]:min)</p>
             """
         )
 
@@ -678,8 +679,15 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         if not costFunction:
             statusText = "No function is set"
         else:
-            fields = self.getVectorLayer().fields() if self.getVectorLayer() else []
-            statusText = GraphBuilder.syntaxCheck(costFunction, fields)[0]
+            fields = self.getVectorLayer().fields() if self.getVectorLayer() else []            
+            if self.rasterData == None:
+                numberOfRasterData = 100
+            else:
+                numberOfRasterData = len(self.rasterData)    
+            polygonsSet = False
+            if self.polygonLayer != None:
+                polygonsSet = True  
+            statusText = GraphBuilder.syntaxCheck(costFunction, fields, numberOfRasterData, polygonsSet)[0]
         self.setStatus(statusText)
 
     def _treeItemDoubleClicked(self, modelIndex):
@@ -824,6 +832,9 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
 
     def getVectorLayer(self):
         return self.vectorLayer
+
+    def setPolygonLayer(self, polygonLayer):
+        self.polygonLayer = polygonLayer
 
     def costFunction(self):
         return self.codeEditor.text()
