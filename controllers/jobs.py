@@ -25,33 +25,47 @@ class JobsController(BaseController):
             self.view.showWarning(self.tr("Please select a job."))
             return
 
-        jobName, requestKey = self.view.getCurrentJob()
-        response = mainPlugin.OGDFPlugin.responses[requestKey]
+        # jobName, requestKey = self.view.getCurrentJob()
+        # response = mainPlugin.OGDFPlugin.responses[requestKey]
 
-        resultGraph = ExtGraph()  # empty(?) ExtGraph which will contain result
-        response.setFieldData(response.graphKey, resultGraph)
+        # resultGraph = ExtGraph()  # empty(?) ExtGraph which will contain result
+        # response.setFieldData(response.graphKey, resultGraph)
 
-        for idx, edgeCostFieldKey in enumerate(response.getEdgeCostFields()):
-            response.setFieldData(edgeCostFieldKey, idx)  # costfunction index for each edgeCostField
+        # for idx, edgeCostFieldKey in enumerate(response.getEdgeCostFields()):
+        #     response.setFieldData(edgeCostFieldKey, idx)  # costfunction index for each edgeCostField
 
-        for idx, vertexCostFieldKey in enumerate(response.getVertexCostFields()):
-            response.setFieldData(vertexCostFieldKey, idx)  # costfunction index for each vertexCostField
+        # for idx, vertexCostFieldKey in enumerate(response.getVertexCostFields()):
+        #     response.setFieldData(vertexCostFieldKey, idx)  # costfunction index for each vertexCostField
 
-        # get response
-        host = self.settings.value("ogdfplugin/host", "")
-        port = int(self.settings.value("ogdfplugin/port", 4711))
+        # # get response
+        # host = self.settings.value("ogdfplugin/host", "")
+        # port = int(self.settings.value("ogdfplugin/port", 4711))
+        # try:
+        #     with Client(host, port) as client:
+        #         client.recv(response)
+        # except NetworkClientError as error:
+        #     self.view.showError(str(error))
+        # except ParseError as error:
+        #     self.view.showError(str(error))
+
+        # Get result from finished job
         try:
-            with Client(host, port) as client:
-                client.recv(response)
+            with Client("127.0.0.1", 4711) as client:
+                response = client.getJobResult(int(self.view.getCurrentJob()[0]))
         except NetworkClientError as error:
             self.view.showError(str(error))
         except ParseError as error:
             self.view.showError(str(error))
 
+        print(response.getGraph().mEdges)
+        print(response.getGraph().mVertices)
+
         # show graph in qgis
         graphLayer = QgsGraphLayer()
-        graphLayer.setGraph(resultGraph)
-        success, errorMsg = helper.saveGraph(resultGraph, graphLayer, self.tr("Result"), self.view.getDestinationFilePath())
+        # graphLayer.setGraph(resultGraph)
+        # success, errorMsg = helper.saveGraph(resultGraph, graphLayer, self.tr("Result"), self.view.getDestinationFilePath())
+        graphLayer.setGraph(response.getGraph())
+        success, errorMsg = helper.saveGraph(response.getGraph(), graphLayer, self.tr("Result"), self.view.getDestinationFilePath())
         if not success:
             self.view.showError(errorMsg)
 
@@ -73,11 +87,17 @@ class JobsController(BaseController):
     def refreshJobs(self):
         self.view.clearJobs()
 
-        requestsKeys = mainPlugin.OGDFPlugin.activeRequestsKeys
-
-        # add jobs
-        for key in requestsKeys:
-            self.view.addJob(mainPlugin.OGDFPlugin.requests[key].name, key)
+        # get response
+        try:
+            with Client("127.0.0.1", 4711) as client:
+                states = client.getJobStatus()
+                # add jobs
+                for job in states:
+                    self.view.addJob(str(job), str(job))
+        except NetworkClientError as error:
+            self.view.showError(str(error))
+        except ParseError as error:
+            self.view.showError(str(error))
 
     def abortJob(self):
         pass
