@@ -26,12 +26,12 @@ class JobsController(BaseController):
         self.view.setResultVisible(False)
 
         self.STATUS_TEXTS = {
-            StatusType.UNKNOWN_STATUS: "unknown",
-            StatusType.WAITING: "waiting",
-            StatusType.RUNNING: "running",
-            StatusType.SUCCESS: "success",
-            StatusType.FAILED: "failed",
-            StatusType.ABORTED: "unknown",
+            StatusType.UNKNOWN_STATUS: self.tr("unknown"),
+            StatusType.WAITING: self.tr("waiting"),
+            StatusType.RUNNING: self.tr("running"),
+            StatusType.SUCCESS: self.tr("success"),
+            StatusType.FAILED: self.tr("failed"),
+            StatusType.ABORTED: self.tr("unknown"),
         }
 
     def fetchResult(self):
