@@ -23,6 +23,9 @@ class OGDFAnalysisController(BaseController):
         self.settings = QgsSettings()
         self.authManager = QgsApplication.authManager()
 
+        # initial hide description text browser
+        self.view.setDescriptionVisible(False)
+
         # add available analysis
         if mainPlugin.OGDFPlugin.requests:
             for requestKey, request in mainPlugin.OGDFPlugin.requests.items():
@@ -58,8 +61,6 @@ class OGDFAnalysisController(BaseController):
         try:
             with Client(host, port) as client:
                 client.send(request)
-                if requestKey not in mainPlugin.OGDFPlugin.activeRequestsKeys:
-                    mainPlugin.OGDFPlugin.activeRequestsKeys.append(requestKey)
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))  # show error
 

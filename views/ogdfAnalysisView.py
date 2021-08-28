@@ -44,6 +44,9 @@ class OGDFAnalysisView(BaseContentView):
         request = mainPlugin.OGDFPlugin.requests.get(requestKey)
         if request:
             self.setParameterFields(request.getFieldInfo())
+            # show description
+            self.setDescriptionHtml(request.description)
+            self.setDescriptionVisible(request.description != "")
 
     # def hasInput(self):
     #     """
@@ -129,6 +132,29 @@ class OGDFAnalysisView(BaseContentView):
         :return: dictionary with field key and corresponding value
         """
         return self.ogdfParametersWidget.getParameterFieldsData()
+
+    # description text
+
+    def setDescriptionVisible(self, visible):
+        self.dialog.ogdf_analysis_description_textbrowser.setVisible(visible)
+
+    def isDescriptionVisible(self):
+        self.dialog.ogdf_analysis_description_textbrowser.isVisible()
+
+    def setDescriptionText(self, text):
+        self.dialog.ogdf_analysis_description_textbrowser.setPlainText(text)
+
+    def setDescriptionHtml(self, text):
+        self.dialog.ogdf_analysis_description_textbrowser.setHtml(text)
+
+    def clearDescription(self):
+        self.dialog.ogdf_analysis_description_textbrowser.clear()
+
+    def getDescriptionText(self):
+        return self.dialog.ogdf_analysis_description_textbrowser.toPlainText()
+
+    def getDescriptionHtml(self):
+        return self.dialog.ogdf_analysis_description_textbrowser.toHtml()
 
     # log
 
