@@ -27,8 +27,16 @@ class JobsView(BaseContentView):
         # set save path formats
         self.dialog.ogdf_jobs_output.setFilter("GraphML (*.graphml );;" + getVectorFileFilter())
 
+        # change job status text
+        self.dialog.ogdf_jobs_list.currentItemChanged.connect(self._changeStatusText)
+
         # initial refresh jobs
         self.controller.refreshJobs()
+
+    def _changeStatusText(self):
+        if self.getCurrentJob() is not None:
+            job, status = self.getCurrentJob()
+            self.setStatusText('job status is "{}"'.format(status))
 
     def addJob(self, jobName, jobData=None):
         jobItem = QListWidgetItem(jobName)
