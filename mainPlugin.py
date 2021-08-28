@@ -19,8 +19,6 @@ import os
 
 
 class OGDFPlugin:
-    # holds all running jobs keys
-    activeRequestsKeys = []
     # contains all available server requests and responses
     requests = {}  # keep alive until qgis is closed
     responses = {}  # keep alive until qgis is closed

@@ -298,8 +298,8 @@ QListWidget::item::selected {
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>756</width>
-                         <height>969</height>
+                         <width>335</width>
+                         <height>973</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1126,79 +1126,107 @@ QListWidget::item::selected {
                    <attribute name="title">
                     <string>Parameters</string>
                    </attribute>
-                   <layout class="QVBoxLayout" name="verticalLayout_19">
+                   <layout class="QVBoxLayout" name="verticalLayout_14">
                     <item>
-                     <widget class="QScrollArea" name="scrollArea_2">
-                      <property name="widgetResizable">
-                       <bool>true</bool>
+                     <widget class="QSplitter" name="splitter_2">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
                       </property>
-                      <widget class="QWidget" name="scrollAreaWidgetContents">
-                       <property name="geometry">
-                        <rect>
-                         <x>0</x>
-                         <y>0</y>
-                         <width>770</width>
-                         <height>630</height>
-                        </rect>
+                      <widget class="QScrollArea" name="scrollArea_2">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                         <horstretch>1</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
                        </property>
-                       <layout class="QVBoxLayout" name="verticalLayout_27">
-                        <item>
-                         <layout class="QVBoxLayout" name="verticalLayout_21">
-                          <property name="sizeConstraint">
-                           <enum>QLayout::SetDefaultConstraint</enum>
-                          </property>
-                          <item>
-                           <widget class="QLabel" name="ogdf_analysis_job_label">
-                            <property name="text">
-                             <string>Job name</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
-                           <widget class="QLineEdit" name="ogdf_analysis_job_input">
-                            <property name="toolTip">
-                             <string>Enter name of job</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
-                           <widget class="QLabel" name="ogdf_analysis_analysis_label">
-                            <property name="text">
-                             <string>Analysis</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
-                           <widget class="QComboBox" name="ogdf_analysis_analysis_input">
-                            <property name="toolTip">
-                             <string>Select analysis</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
-                           <widget class="QGroupBox" name="ogdf_analysis_parameters_box">
-                            <property name="title">
-                             <string>Analysis Parameters</string>
-                            </property>
-                            <layout class="QVBoxLayout" name="verticalLayout_14"/>
-                           </widget>
-                          </item>
-                          <item>
-                           <spacer name="verticalSpacer_6">
-                            <property name="orientation">
-                             <enum>Qt::Vertical</enum>
-                            </property>
-                            <property name="sizeHint" stdset="0">
-                             <size>
-                              <width>20</width>
-                              <height>40</height>
-                             </size>
-                            </property>
-                           </spacer>
-                          </item>
-                         </layout>
-                        </item>
-                       </layout>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="widgetResizable">
+                        <bool>true</bool>
+                       </property>
+                       <widget class="QWidget" name="scrollAreaWidgetContents">
+                        <property name="geometry">
+                         <rect>
+                          <x>0</x>
+                          <y>0</y>
+                          <width>510</width>
+                          <height>630</height>
+                         </rect>
+                        </property>
+                        <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0">
+                         <item>
+                          <layout class="QVBoxLayout" name="verticalLayout_21">
+                           <property name="sizeConstraint">
+                            <enum>QLayout::SetDefaultConstraint</enum>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="ogdf_analysis_job_label">
+                             <property name="text">
+                              <string>Job name</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QLineEdit" name="ogdf_analysis_job_input">
+                             <property name="toolTip">
+                              <string>Enter name of job</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QLabel" name="ogdf_analysis_analysis_label">
+                             <property name="text">
+                              <string>Analysis</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QComboBox" name="ogdf_analysis_analysis_input">
+                             <property name="toolTip">
+                              <string>Select analysis</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QGroupBox" name="ogdf_analysis_parameters_box">
+                             <property name="title">
+                              <string>Analysis Parameters</string>
+                             </property>
+                             <layout class="QVBoxLayout" name="verticalLayout_31"/>
+                            </widget>
+                           </item>
+                           <item>
+                            <spacer name="verticalSpacer_6">
+                             <property name="orientation">
+                              <enum>Qt::Vertical</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>20</width>
+                               <height>40</height>
+                              </size>
+                             </property>
+                            </spacer>
+                           </item>
+                          </layout>
+                         </item>
+                        </layout>
+                       </widget>
+                      </widget>
+                      <widget class="QTextBrowser" name="ogdf_analysis_description_textbrowser">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="sizeAdjustPolicy">
+                        <enum>QAbstractScrollArea::AdjustIgnored</enum>
+                       </property>
                       </widget>
                      </widget>
                     </item>
