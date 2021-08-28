@@ -31,7 +31,7 @@ class JobsController(BaseController):
             StatusType.RUNNING: self.tr("running"),
             StatusType.SUCCESS: self.tr("success"),
             StatusType.FAILED: self.tr("failed"),
-            StatusType.ABORTED: self.tr("unknown"),
+            StatusType.ABORTED: self.tr("aborted"),
         }
 
     def fetchResult(self):
