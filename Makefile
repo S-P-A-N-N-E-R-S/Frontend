@@ -40,7 +40,7 @@ SOURCES = \
 
 PLUGINNAME = ogdf_plugin
 
-PY_FILES = __init__.py mainPlugin.py helperFunctions.py
+PY_FILES = __init__.py mainPlugin.py helperFunctions.py exceptions.py
 DIRECTORIES = controllers lib models resources views network i18n
 EXTRAS = metadata.txt
 
@@ -109,8 +109,9 @@ derase:
 
 proto:
 	mkdir -p network/protocol/build
-	protoc --proto_path=network/protocol/protos/ --python_out=network/protocol/build/ network/protocol/protos/*.proto
+	protoc --proto_path=network/protocol/protos/ --python_out=network/protocol/build/ network/protocol/protos/*.proto network/protocol/protos/handlers/*.proto
 	sed -i 's/^\(import.*pb2\)/from . \1/g' network/protocol/build/*.py
+	sed -i 's/^\(import.*pb2\)/from .. \1/g' network/protocol/build/handlers/*.py
 
 clean_proto:
 	rm -Rf network/protocol/build
