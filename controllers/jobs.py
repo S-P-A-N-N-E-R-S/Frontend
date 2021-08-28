@@ -7,6 +7,7 @@ from .. import mainPlugin
 from ..network.client import Client
 from ..network.exceptions import NetworkClientError, ParseError
 from ..network.protocol.build.available_handlers_pb2 import ResultInformation
+from ..network.protocol.build.status_pb2 import StatusType
 
 from qgis.core import QgsSettings
 
@@ -24,6 +25,14 @@ class JobsController(BaseController):
 
         self.view.setResultVisible(False)
 
+        self.STATUS_TEXTS = {
+            StatusType.UNKNOWN_STATUS: "unknown",
+            StatusType.WAITING: "waiting",
+            StatusType.RUNNING: "running",
+            StatusType.SUCCESS: "success",
+            StatusType.FAILED: "failed",
+            StatusType.ABORTED: "unknown",
+        }
 
     def fetchResult(self):
         if self.view.getCurrentJob() is None:
@@ -77,7 +86,8 @@ class JobsController(BaseController):
                 states = client.getJobStatus()
                 # add jobs
                 for job in states:
-                    self.view.addJob(str(job), str(job))
+                    jobStatus = states[job].get("status", "")
+                    self.view.addJob(str(job), self.STATUS_TEXTS.get(jobStatus, "status not supported"))
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
 
