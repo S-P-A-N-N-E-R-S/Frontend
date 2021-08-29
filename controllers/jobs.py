@@ -48,6 +48,7 @@ class JobsController(BaseController):
                 response = client.getJobResult(int(self.view.getCurrentJob()[0]))
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
+            return
 
         # print(response.getGraph().mEdges)
         # print(response.getGraph().mVertices)
