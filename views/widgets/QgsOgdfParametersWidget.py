@@ -199,7 +199,7 @@ class QgsOGDFParametersWidget(QWidget):
         spinBoxWidget = QSpinBox()
         # highest minimum and maximum
         spinBoxWidget.setRange(-2147483648, 2147483647)
-        if field.get("default"):
+        if field.get("default") and isinstance(field.get("default"), int):
             spinBoxWidget.setValue(field.get("default"))
         return spinBoxWidget
 
@@ -208,7 +208,8 @@ class QgsOGDFParametersWidget(QWidget):
         # highest minimum and maximum
         spinBoxWidget.setRange(-sys.float_info.min, sys.float_info.max)
         spinBoxWidget.setDecimals(6)
-        if field.get("default"):
+        spinBoxWidget.setValue(1.0)  # default value
+        if field.get("default") and isinstance(field.get("default"), float):
             spinBoxWidget.setValue(field.get("default"))
         return spinBoxWidget
 
@@ -223,7 +224,7 @@ class QgsOGDFParametersWidget(QWidget):
             choiceData = choices[choice]
             comboBoxWidget.addItem(choice, choiceData)
         # select default item if exist
-        comboBoxWidget.setCurrentIndex(comboBoxWidget.findText(field.get("default")))
+        comboBoxWidget.setCurrentIndex(comboBoxWidget.findText(str(field.get("default"))))
         return comboBoxWidget
 
     def _createGraphWidget(self, field):
