@@ -54,6 +54,7 @@ class OGDFAnalysisController(BaseController):
 
         # set field data into request
         request = mainPlugin.OGDFPlugin.requests[requestKey]
+        request.resetData()
         for key in parameterFieldsData:
             fieldData = parameterFieldsData[key]
             request.setFieldData(key, fieldData)
