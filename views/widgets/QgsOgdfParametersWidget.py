@@ -178,15 +178,17 @@ class QgsOGDFParametersWidget(QWidget):
                     inputWidget.clear()
                     if graph is not None:
                         # todo: assumption that graph has at least one edge cost function
-                        numberFunctions = len(graph.edgeWeights) if len(graph.edgeWeights) > 0 else 1
-                        for index in range(numberFunctions):
-                            inputWidget.addItem(self.tr("Kanten-Kostenfunktion {}").format(index + 1), index)
+                        if graph.distanceStrategy == "Advanced":
+                            for index in range(len(graph.edgeWeights)):
+                                inputWidget.addItem(self.tr("Edge Cost Function {}").format(index + 1), index)
+                        else:
+                            inputWidget.addItem(self.tr("{} Costs").format(graph.distanceStrategy), 0)
                 # select vertex cost function index
                 elif field.get("type") == FieldInformation.FieldType.VERTEX_COSTS:
                     inputWidget.clear()
                     if graph is not None:
                         for index in range(len(graph.vertexWeights)):
-                            inputWidget.addItem(self.tr("Vertex-Kostenfunktion {}").format(index + 1), index)
+                            inputWidget.addItem(self.tr("Vertex Cost Function {}").format(index + 1), index)
 
     # functions to create field widgets
 
