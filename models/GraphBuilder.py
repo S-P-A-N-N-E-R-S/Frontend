@@ -766,10 +766,6 @@ class GraphBuilder:
                 edgeId = self.graph.addEdge(i, index)
                 addedEdgeIndices.append(edgeId)
                 listOfEdges.append([edgeId, i,index])
-                if self.__options["edgeDirection"] == "Undirected":
-                    edgeId = self.graph.addEdge(i, index)
-                    addedEdgeIndices.append(edgeId)
-                    listOfEdges.append([edgeId, i,index])
         
         elif self.__options["connectionType"] == "Nearest neighbor" or self.__options["connectionType"] == "DistanceNN":                     
             # if this is True the nodes got deleted
@@ -801,7 +797,7 @@ class GraphBuilder:
                 edgeId = self.graph.addEdge(index,neighborPoint[2])
                 addedEdgeIndices.append(edgeId)
                 listOfEdges.append([edgeId, index,neighborPoint[2]])
-                if self.__options["edgeDirection"] == "Undirected" or self.__options["nnAllowDoubleEdges"] == True:
+                if self.__options["nnAllowDoubleEdges"] == True:
                     edgeId = self.graph.addEdge(neighborPoint[2], index)
                     addedEdgeIndices.append(edgeId)
                     listOfEdges.append([edgeId, neighborPoint[2],index])
@@ -850,7 +846,7 @@ class GraphBuilder:
                 edgeId = self.graph.addEdge(index, neighborPoint[2])
                 addedEdgeIndices.append(edgeId)
                 listOfEdges.append([edgeId, index, neighborPoint[2]]) 
-                if self.__options["edgeDirection"] == "Undirected" or self.__options["nnAllowDoubleEdges"] == True:
+                if self.__options["nnAllowDoubleEdges"] == True:
                     edgeId = self.graph.addEdge(neighborPoint[2], index)
                     addedEdgeIndices.append(edgeId)
                     listOfEdges.append([edgeId, neighborPoint[2], index])        
@@ -894,7 +890,7 @@ class GraphBuilder:
 
         :return ExtGraph
         """
-        self.graph = ExtGraph()
+        self.graph = ExtGraph()       
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
         self.graph.setConnectionType(self.__options["connectionType"])
@@ -923,15 +919,6 @@ class GraphBuilder:
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:      
             self.__createGraphForLineGeometry()
 
-        # add every edge again in opposite direction if its an undirected graph
-        if self.__options["edgeDirection"] == "Undirected":
-            if self.task is not None and self.task.isCanceled():
-                return
-            eCount = self.graph.edgeCount()
-            for i in range(eCount):
-                edge = self.graph.edge(i)
-                self.graph.addEdge(edge.toVertex(), edge.fromVertex())  
-
         # remove edges that cross the polygons
         if self.__options["usePolygonsAsForbidden"] == True:
             self.__removeIntersectingEdges()
@@ -950,7 +937,7 @@ class GraphBuilder:
         if self.__options["createGraphAsLayers"] == True:
             self.createVertexLayer(True)
             self.createEdgeLayer(True)
-
+              
         return self.graph
 
     def makeGraphTask(self, task, graphLayer, graphName=""):

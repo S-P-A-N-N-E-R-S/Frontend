@@ -460,10 +460,6 @@ class ExtGraph(QObject):
                 edgeId = self.addEdge(i, index)
                 addedEdgeIndices.append(edgeId)
                 listOfEdges.append([edgeId, i,index])
-                if self.edgeDirection == "Undirected":
-                    edgeId = self.addEdge(i, index)
-                    addedEdgeIndices.append(edgeId)
-                    listOfEdges.append([edgeId, i,index])
 
         elif self.mConnectionType == "Nearest neighbor" or self.mConnectionType == "DistanceNN":
             # if this is True the nodes got deleted
@@ -495,7 +491,7 @@ class ExtGraph(QObject):
                 edgeId = self.addEdge(index,neighborPoint[2])
                 addedEdgeIndices.append(edgeId)
                 listOfEdges.append([edgeId, index,neighborPoint[2]])
-                if self.edgeDirection == "Undirected" or self.nnAllowDoubleEdges == True:
+                if self.nnAllowDoubleEdges == True:
                     edgeId = self.addEdge(neighborPoint[2], index)
                     addedEdgeIndices.append(edgeId)
                     listOfEdges.append([edgeId, neighborPoint[2],index])
@@ -755,10 +751,7 @@ class ExtGraph(QObject):
                     # if edgeTypeDirection == "Undirected":
                     #     self.addEdge(toVertexID, fromVertexID)
 
-                    self.addEdge(fromVertex, toVertex)
-                    if edgeTypeDirection == "Undirected":
-                        # TODO: direction in graph and hasEdge
-                        self.addEdge(toVertex, fromVertex)
+                    self.addEdge(fromVertex, toVertex)                    
 
         # if no coordinates are given assign random
         else:
@@ -785,6 +778,4 @@ class ExtGraph(QObject):
                     # self.addEdge(fromVertexID, toVertexID)
                     
                     self.addEdge(fromVertex, toVertex)
-                    if edgeTypeDirection == "Undirected":
-                        # TODO: direction in graph and hasEdge
-                        self.addEdge(toVertex, fromVertex)
+                   
