@@ -61,6 +61,7 @@ class OGDFAnalysisController(BaseController):
         try:
             with Client(host, port) as client:
                 client.send(request)
+                self.view.showSuccess("Job started!")
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))  # show error
 
