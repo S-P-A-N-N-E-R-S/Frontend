@@ -32,9 +32,7 @@ class GraphBuilder:
 
     Random options:
         - numberOfVertices: int
-        - area: Area of the globe you want the random Graph to be in. Can be one of the specified countries or user defined
-        
-
+        - area: Area of the globe you want the random Graph to be in. Can be one of the specified countries or user defined        
     """    
     def __init__(self):
         """
@@ -319,11 +317,15 @@ class GraphBuilder:
                             if not number in possibleMetrics:
                                 return("Invalid value in math construct ","")
          
-        # raster check       
+        # raster check           
+        regex = re.compile(r'raster\[?[a-z]*\]?:?[A-z]*')
+        res = regex.search(function)
+        if res != None and not "[" in res.group():
+            return ("Index necessary to reference raster data", "")
+                   
         regex = re.compile(r'raster\[[0-9]*\]:?')
         res = regex.findall(function)
-        for matchString in res:
-         
+        for matchString in res:        
             rasterIndexNumber = matchString.split("[")[1].split("]")[0]
             if not rasterIndexNumber.isnumeric():
                 return ("Index necessary to reference raster data", "")
@@ -890,7 +892,8 @@ class GraphBuilder:
 
         :return ExtGraph
         """
-        self.graph = ExtGraph()       
+        self.graph = ExtGraph()
+        
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
         self.graph.setConnectionType(self.__options["connectionType"])
@@ -936,8 +939,8 @@ class GraphBuilder:
         # create the layers for QGIS
         if self.__options["createGraphAsLayers"] == True:
             self.createVertexLayer(True)
-            self.createEdgeLayer(True)
-              
+            self.createEdgeLayer(True)                  
+          
         return self.graph
 
     def makeGraphTask(self, task, graphLayer, graphName=""):
