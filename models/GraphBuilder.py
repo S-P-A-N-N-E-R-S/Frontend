@@ -319,9 +319,10 @@ class GraphBuilder:
          
         # raster check           
         regex = re.compile(r'raster\[?[a-z]*\]?:?[A-z]*')
-        res = regex.search(function)
-        if res != None and not "[" in res.group():
-            return ("Index necessary to reference raster data", "")
+        res = regex.findall(function)
+        for matchString in res:                      
+            if not "[" in matchString:
+                return ("Index necessary to reference raster data", "")
                    
         regex = re.compile(r'raster\[[0-9]*\]:?')
         res = regex.findall(function)
