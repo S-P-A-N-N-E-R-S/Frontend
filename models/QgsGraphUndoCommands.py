@@ -32,17 +32,17 @@ class ExtVertexUndoCommand(QUndoCommand):
         self.mOldPoint = oldPoint
         self.mNewPoint = newPoint
         self.mOperation = operation
-
-        self.undoString = "Undo: "
+        
+        self.undoString = ""
         if self.mOperation == "Delete":
-            self.undoString += "Readd vertex " + str(self.mVertexID)
+            self.undoString = "Readd vertex " + str(self.mVertexID)
         elif self.mOperation == "Add":
             self.mVertexID = self.mLayer.mGraph.nextVertexID()
-            self.undoString += "Delete vertex " + str(self.mVertexID)
+            self.undoString = "Delete vertex " + str(self.mVertexID)
         else:
-            self.undoString += "Move vertex " + str(self.mVertexID) + " back"
+            self.undoString = "Move vertex " + str(self.mVertexID) + " back"
         
-        self.redoString = "Redo: " + self.mOperation + " vertex " + str(self.mVertexID)
+        self.redoString = self.mOperation + " vertex " + str(self.mVertexID)
                     
         self.setText(self.undoString)
     
@@ -112,7 +112,7 @@ class ExtVertexUndoCommand(QUndoCommand):
         iface.mapCanvas().refresh()
     
     def undo(self):
-        # add vertex again
+        # readd vertex again
         if self.mOperation == "Delete":
             self._addVertex(True)
 
@@ -173,9 +173,12 @@ class ExtEdgeUndoCommand(QUndoCommand):
 
         elif not (self.mFromVertexID == -1 or self.mToVertexID == -1):
 
-            self.redoString = "Redo: " + "Delete" if self.mDeleted else "Readd" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) + ", " + str(self.mToVertexID) + ")"
-            self.undoString = "Undo: " + "Readd" if self.mDeleted else "Delete" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
-                        
+            self.redoString = "Delete" if self.mDeleted else "Readd" 
+            self.undoString = "Readd" if self.mDeleted else "Delete"
+            
+            self.redoString += " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
+            self.undoString += " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
+
             self.setText(self.undoString)
 
         if self.mLayer.mGraph.distanceStrategy == "Advanced":
@@ -235,8 +238,8 @@ class ExtEdgeUndoCommand(QUndoCommand):
         elif self.mToVertexID == -1:
             self.mToVertexID = id
 
-        self.redoString = "Redo: " + "Delete" if self.mDeleted else "Readd" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) + ", " + str(self.mToVertexID) + ")"
-        self.undoString = "Undo: " + "Readd" if self.mDeleted else "Delete" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
+        self.redoString = "Delete" if self.mDeleted else "Readd" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) + ", " + str(self.mToVertexID) + ")"
+        self.undoString = "Readd" if self.mDeleted else "Delete" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
                     
         self.setText(self.undoString)
 
