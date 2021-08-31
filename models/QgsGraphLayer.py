@@ -119,7 +119,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             # add text with edgeCost at line mid point
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                                edgeCost = self.mGraph.costOfEdge(outgoingEdgeId, self.mRenderedCostFunction)
+                                edgeCost = self.mGraph.costOfEdge(edgeIdx, self.mRenderedCostFunction)
                                 if edgeCost % 1 == 0:
                                     painter.drawText(midPoint, str(edgeCost))
                                 else:
