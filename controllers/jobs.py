@@ -39,12 +39,9 @@ class JobsController(BaseController):
             self.view.showWarning(self.tr("Please select a job."))
             return
 
-        host = self.settings.value("ogdfplugin/host", "")
-        port = int(self.settings.value("ogdfplugin/port", 4711))
-
         # Get result from finished job
         try:
-            with Client(host, port) as client:
+            with Client(helper.getHost(), helper.getPort()) as client:
                 response = client.getJobResult(int(self.view.getCurrentJob()[0]))
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
@@ -78,12 +75,9 @@ class JobsController(BaseController):
     def refreshJobs(self):
         self.view.clearJobs()
 
-        host = self.settings.value("ogdfplugin/host", "")
-        port = int(self.settings.value("ogdfplugin/port", 4711))
-
         # get response
         try:
-            with Client(host, port) as client:
+            with Client(helper.getHost(), helper.getPort()) as client:
                 states = client.getJobStatus()
                 # add jobs
                 for job in states:

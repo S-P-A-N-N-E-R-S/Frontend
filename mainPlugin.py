@@ -9,7 +9,7 @@ from qgis.analysis import *
 from qgis.utils import *
 
 from .views.pluginDialog import PluginDialog
-from .helperFunctions import getImagePath, getPluginPath
+from .helperFunctions import getImagePath, getPluginPath, getPort, getHost
 from .network.client import Client
 from .network.exceptions import NetworkClientError, ParseError
 
@@ -58,15 +58,11 @@ class OGDFPlugin:
         fetches all available handlers from server
         :return:
         """
-        settings = QgsSettings()
-        host = settings.value("ogdfplugin/host", "")
-        port = int(settings.value("ogdfplugin/port", 4711))
-        if host and port:
-            try:
-                with Client(host, port) as client:
-                    OGDFPlugin.requests, OGDFPlugin.responses = client.getAvailableHandlers()
-            except (NetworkClientError, ParseError) as error:
-                iface.messageBar().pushMessage("OGDF Plugin Error", str(error), level=Qgis.Critical)
+        try:
+            with Client(getHost(), getPort()) as client:
+                OGDFPlugin.requests, OGDFPlugin.responses = client.getAvailableHandlers()
+        except (NetworkClientError, ParseError) as error:
+            iface.messageBar().pushMessage("OGDF Plugin Error", str(error), level=Qgis.Critical)
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
