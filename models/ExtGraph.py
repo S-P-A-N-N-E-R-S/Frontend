@@ -628,16 +628,18 @@ class ExtGraph(QObject):
             edgeID = edge.id()
 
             # remove edge from toVertex incomingEdges
-            toVertex = self.vertex(self.findVertexByID(edge.toVertex()))
-            if toVertex:
+            toVertexIdx = self.findVertexByID(edge.toVertex())
+            if not toVertexIdx == -1:
+                toVertex = self.vertex(toVertexIdx)
                 for edgeIdx in range(len(toVertex.mIncomingEdges)):
                     if toVertex.mIncomingEdges[edgeIdx] == edgeID:
                         toVertex.mIncomingEdges.pop(edgeIdx)
                         break
             
             # remove edge from fromVertex outgoingEdges
-            fromVertex = self.vertex(self.findVertexByID(edge.fromVertex()))
-            if fromVertex:
+            fromVertexIdx = self.findVertexByID(edge.fromVertex())
+            if not fromVertexIdx == -1:
+                fromVertex = self.vertex(fromVertexIdx)
                 for edgeIdx in range(len(fromVertex.mOutgoingEdges)):
                     if fromVertex.mOutgoingEdges[edgeIdx] == edgeID:
                         fromVertex.mOutgoingEdges.pop(edgeIdx)
