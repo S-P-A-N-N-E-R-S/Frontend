@@ -5,6 +5,7 @@ from qgis.core import QgsSettings, QgsApplication, QgsProject
 from .base import BaseController
 from .. import mainPlugin
 from ..exceptions import FieldRequiredError
+from .. import helperFunctions as helper
 
 # client imports
 from ..network.client import Client
@@ -34,11 +35,6 @@ class OGDFAnalysisController(BaseController):
     def runJob(self):
         # todo: pass authId to client
         authId = self.settings.value("ogdfplugin/authId")
-        host = self.settings.value("ogdfplugin/host", "")
-        port = int(self.settings.value("ogdfplugin/port", 4711))
-        if not (host and port):
-            self.view.showError(self.tr("Please set host and port in options!"))
-            return
 
         analysisLabel, requestKey = self.view.getAnalysis()
         if requestKey is None:
@@ -60,7 +56,7 @@ class OGDFAnalysisController(BaseController):
             request.setFieldData(key, fieldData)
 
         try:
-            with Client(host, port) as client:
+            with Client(helper.getHost(), helper.getPort()) as client:
                 client.send(request)
                 self.view.showSuccess("Job started!")
         except (NetworkClientError, ParseError) as error:
