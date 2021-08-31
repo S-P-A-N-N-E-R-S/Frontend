@@ -4,7 +4,17 @@ from qgis.PyQt.QtCore import QCoreApplication
 
 from os.path import abspath, join, dirname, splitext, basename
 
-from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsProcessingParameterVectorDestination
+from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
+
+
+def getHost():
+    """ Get the server host address"""
+    return QgsSettings().value("ogdfplugin/host", "localhost")
+
+
+def getPort():
+    """ Get the server port address"""
+    return int(QgsSettings().value("ogdfplugin/port", 4711))
 
 
 def getPluginPath():
