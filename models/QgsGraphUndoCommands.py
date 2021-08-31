@@ -162,25 +162,27 @@ class ExtEdgeUndoCommand(QUndoCommand):
         self.mFromVertexIdx = fromVertexIdx
         self.mToVertexIdx = toVertexIdx
 
-        self.mFromVertexID = self.mLayer.mGraph.vertex(fromVertexIdx).id()
-        self.mToVertexID = self.mLayer.mGraph.vertex(toVertexIdx).id()
-        self.mDeleted = deleted
+        self.mUpdateCosts = False
+        self.mCostsChanged = False
+        if self.mFromVertexIdx == -1 and self.mToVertexIdx == -1:
+            # only costs of edge have changed -> expect call of setNewCosts
+            self.mUpdateCosts = True
 
-        self.redoString = "Redo: " + "Delete" if self.mDeleted else "Readd" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) + ", " + str(self.mToVertexID) + ")"
-        self.undoString = "Undo: " + "Readd" if self.mDeleted else "Delete" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
-                    
-        self.setText(self.undoString)
+        else:    
+
+            self.mFromVertexID = self.mLayer.mGraph.vertex(fromVertexIdx).id()
+            self.mToVertexID = self.mLayer.mGraph.vertex(toVertexIdx).id()
+            self.mDeleted = deleted
+
+            self.redoString = "Redo: " + "Delete" if self.mDeleted else "Readd" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) + ", " + str(self.mToVertexID) + ")"
+            self.undoString = "Undo: " + "Readd" if self.mDeleted else "Delete" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
+                        
+            self.setText(self.undoString)
 
         if self.mLayer.mGraph.distanceStrategy == "Advanced":
             self.mOldCosts = []
             for functionIdx in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
-                self.mOldCosts.append(self.mLayer.mGraph.costOfEdge(self.mEdgeIdx, functionIdx))
-
-        self.mUpdateCosts = False
-        self.mCostsChanged = False
-        if self.mFromVertexID == -1 and self.mToVertexID == -1:
-            # only costs of edge have changed -> expect call of setNewCosts
-            self.mUpdateCosts = True 
+                self.mOldCosts.append(self.mLayer.mGraph.costOfEdge(self.mEdgeIdx, functionIdx)) 
     
     def __del__(self):
         del self.redoString
