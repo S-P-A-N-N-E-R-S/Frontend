@@ -471,11 +471,12 @@ class ExtGraph(QObject):
         :type vertexCoordinates: list with x,y-Coordinates
         :return list of edges
         """
+        print("Add Vertex With Edges")
         # TODO: adapt whole function to arraystructure, make function work
         if not self.kdTree:
             points = []
-            for i in self.vertices():
-                point = self.vertex(i).point()
+            for idx in range(self.mVertexCount):
+                point = self.vertex(idx).point()
                 points.append([point.x(),point.y()])
 
             self.kdTree = kdtree.create(points)
@@ -484,23 +485,21 @@ class ExtGraph(QObject):
         addedEdgeIndices = []
         numberOfEdgesOriginal = self.edgeCount()
         index = self.addVertex(QgsPointXY(vertexCoordinates[0], vertexCoordinates[1]))
+        addedVertexID = self.vertex(index).id()
         point = self.vertex(index).point()
         if self.mConnectionType == "Complete":
-            for i in self.vertices():
-                edgeId = self.addEdge(i, index)
-                addedEdgeIndices.append(edgeId)
-                listOfEdges.append([edgeId, i,index])
-                if self.edgeDirection == "Undirected":
-                    edgeId = self.addEdge(i, index)
-                    addedEdgeIndices.append(edgeId)
-                    listOfEdges.append([edgeId, i,index])
+            for vertexIdx in range(self.mVertexCount):
+                vertexID = self.vertex(vertexIdx).id()
+                edgeIdx = self.addEdge(vertexID, addedVertexID)
+                addedEdgeIndices.append(edgeIdx)
+                listOfEdges.append([edgeIdx, vertexID, addedVertexID])
 
         elif self.mConnectionType == "Nearest neighbor" or self.mConnectionType == "DistanceNN":
             # if this is True the nodes got deleted
             if self.nnAllowDoubleEdges == False:
                 points = []
-                for i in self.vertices():
-                    p = self.vertex(i).point()
+                for idx in range(self.mVertexCount):
+                    p = self.vertex(idx).point()
                     points.append([p.x(),p.y()])
                 self.kdTree = kdtree.create(points)
 
@@ -508,7 +507,7 @@ class ExtGraph(QObject):
                 self.kdTree.add([point.x(),point.y()])
 
             if self.mConnectionType == "Nearest neighbor":
-                listOfNeighbors = self.kdTree.search_knn([point.x(),point.y()],self.numberNeighbours+1)
+                listOfNeighbors = self.kdTree.search_knn([point.x(),point.y()], self.numberNeighbours+1)
                 rangeStart = 1
                 rangeEnd = len(listOfNeighbors)
             elif self.mConnectionType == "DistanceNN":
@@ -522,13 +521,14 @@ class ExtGraph(QObject):
                 elif self.mConnectionType == "DistanceNN":
                     neighborPoint = listOfNeighbors[j]
 
-                edgeId = self.addEdge(index,neighborPoint[2])
-                addedEdgeIndices.append(edgeId)
-                listOfEdges.append([edgeId, index,neighborPoint[2]])
-                if self.edgeDirection == "Undirected" or self.nnAllowDoubleEdges == True:
-                    edgeId = self.addEdge(neighborPoint[2], index)
-                    addedEdgeIndices.append(edgeId)
-                    listOfEdges.append([edgeId, neighborPoint[2],index])
+                neighborID = self.vertex(self.findVertex(QgsPointXY(neighborPoint[0], neighborPoint[1]))).id()
+                edgeIdx = self.addEdge(addedVertexID, neighborID)
+                addedEdgeIndices.append(edgeIdx)
+                listOfEdges.append([edgeIdx, addedVertexID, neighborID])
+                if self.nnAllowDoubleEdges == True:
+                    edgeId = self.addEdge(neighborID, addedVertexID)
+                    addedEdgeIndices.append(edgeIdx)
+                    listOfEdges.append([edgeIdx, neighborID, addedVertexID])
 
         elif self.mConnectionType == "ClusterComplete":
             print("addVertexWithEdges not yet supported for ClusterComplete")
