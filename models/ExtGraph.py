@@ -390,7 +390,7 @@ class ExtGraph(QObject):
     def nextEdgeID(self):
         return self.mMaxEdgeID
 
-    def addEdge(self, vertex1ID, vertex2ID, idx=-1, ID=-1):
+    def addEdge(self, vertex1ID, vertex2ID, idx=-1, ID=-1, highlighted=False):
         """
         Adds an edge with fromVertex vertex1 and toVertex2 to the ExtGraph
 
@@ -398,6 +398,7 @@ class ExtGraph(QObject):
         :type vertex2ID: Integer
         :type idx: Integer add Edge with index idx, default -1 to be used, non-default only used by QUndoCommands
         :type ID: Integer EdgeID
+        :type highlightd: Bool
         :return Integer index of added edge
         """
         addIndex = self.mEdgeCount
@@ -413,7 +414,7 @@ class ExtGraph(QObject):
         if addedEdgeID >= self.mMaxEdgeID:
             self.mMaxEdgeID = addedEdgeID + 1
         
-        addedEdge = self.ExtEdge(vertex1ID, vertex2ID, addedEdgeID)
+        addedEdge = self.ExtEdge(vertex1ID, vertex2ID, addedEdgeID, highlighted)
 
         self.mEdges.insert(addIndex, addedEdge)
 
@@ -462,7 +463,7 @@ class ExtGraph(QObject):
 
         return addIndex
 
-    def addVertexWithEdges(self, vertexCoordinates):
+    def addVertexWithEdges(self, vertexCoordinates, fromUndo=False):
         """
         Methods adds the point given by its coordinates to the
         graph attribute of the Graphbuilder. Get the modified
@@ -471,7 +472,6 @@ class ExtGraph(QObject):
         :type vertexCoordinates: list with x,y-Coordinates
         :return list of edges
         """
-        print("Add Vertex With Edges")
         # TODO: adapt whole function to arraystructure, make function work
         if not self.kdTree:
             points = []
@@ -490,7 +490,10 @@ class ExtGraph(QObject):
         if self.mConnectionType == "Complete":
             for vertexIdx in range(self.mVertexCount):
                 vertexID = self.vertex(vertexIdx).id()
-                edgeIdx = self.addEdge(vertexID, addedVertexID)
+                if not fromUndo:
+                    edgeIdx = self.addEdge(vertexID, addedVertexID)
+                else:
+                    edgeIdx = self.edgeCount() + len(listOfEdges)
                 addedEdgeIndices.append(edgeIdx)
                 listOfEdges.append([edgeIdx, vertexID, addedVertexID])
 
@@ -522,11 +525,17 @@ class ExtGraph(QObject):
                     neighborPoint = listOfNeighbors[j]
 
                 neighborID = self.vertex(self.findVertex(QgsPointXY(neighborPoint[0], neighborPoint[1]))).id()
-                edgeIdx = self.addEdge(addedVertexID, neighborID)
+                if not fromUndo:
+                    edgeIdx = self.addEdge(addedVertexID, neighborID)
+                else:
+                    edgeIdx = self.edgeCount() + len(listOfEdges)
                 addedEdgeIndices.append(edgeIdx)
                 listOfEdges.append([edgeIdx, addedVertexID, neighborID])
                 if self.nnAllowDoubleEdges == True:
-                    edgeId = self.addEdge(neighborID, addedVertexID)
+                    if not fromUndo:
+                        edgeIdx = self.addEdge(addedVertexID, neighborID)
+                    else:
+                        edgeIdx = self.edgeCount() + len(listOfEdges)
                     addedEdgeIndices.append(edgeIdx)
                     listOfEdges.append([edgeIdx, neighborID, addedVertexID])
 
@@ -597,7 +606,6 @@ class ExtGraph(QObject):
         #         self = costCalculator.setEdgeCosts(func,addedEdgeIndices[i],functionCounter)
         #         functionCounter+=1
 
-        print(listOfEdges)
         return listOfEdges
 
     def edge(self, idx):

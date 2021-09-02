@@ -52,6 +52,17 @@ class QgsGraphMapTool(QgsMapTool):
         
         self.mLayer.mUndoStack.push(vertexUndoCommand)
 
+    def _addVertexWithEdges(self, point):
+        """
+        Adds a vertex to the Graphlayers graph.
+        Also adds edges according to the chosen GraphBuilder settings.
+
+        :type point: QgsPointXY
+        """
+        vertexIdx = self.mLayer.mGraph.vertexCount()
+        vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), vertexIdx, point, "AddWithEdges")
+        self.mLayer.mUndoStack.push(vertexUndoCommand)
+
     def _deleteEdge(self, edgeIdx):
         if edgeIdx >= 0:
             edge = self.mLayer.mGraph.edge(edgeIdx)
@@ -205,17 +216,18 @@ class QgsGraphMapTool(QgsMapTool):
 
             else: # CTRL + LeftClick
                 if not self.advancedCosts:
-                    print("addVertexWithEdges")
                     if not self.firstFound:
                         # use addVertex from GraphBuilder to also add edges
-                        addedEdges = self.mLayer.mGraph.addVertexWithEdges([clickPosition.x(), clickPosition.y()])
+                        self._addVertexWithEdges(clickPosition)
+
                         self.__removeFirstFound()
                     elif self.firstFound:
                         # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
                         self._deleteVertex(self.firstFoundVertexIdx)
                         
                         # use addVertex from GraphBuilder to also add edges
-                        addedEdges = self.mLayer.mGraph.addVertexWithEdges([clickPosition.x(), clickPosition.y()])
+                        self._addVertexWithEdges(clickPosition)
+
                         self.__removeFirstFound()
 
         elif event.button() == Qt.RightButton: # RightClick

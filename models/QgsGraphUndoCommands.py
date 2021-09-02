@@ -28,7 +28,7 @@ class ExtVertexUndoCommand(QUndoCommand):
 
         self.mVertexIdx = vertexIdx
         self.mVertexID = -1
-        if operation != "Add":
+        if operation != "Add" and operation != "AddWithEdges":
             self.mVertexID = self.mLayer.mGraph.vertex(vertexIdx).id()
         self.mOldPoint = oldPoint
         self.mNewPoint = newPoint
@@ -40,11 +40,14 @@ class ExtVertexUndoCommand(QUndoCommand):
         elif self.mOperation == "Add":
             self.mVertexID = self.mLayer.mGraph.nextVertexID()
             self.undoString = "Delete vertex " + str(self.mVertexID)
+        elif self.mOperation == "AddWithEdges":
+            self.mVertexID = self.mLayer.mGraph.nextVertexID()
+            self.undoString = "Delete vertex " + str(self.mVertexID) + " and its edges"
         else:
             self.undoString = "Move vertex " + str(self.mVertexID) + " back"
         
         self.redoString = self.mOperation + " vertex " + str(self.mVertexID)
-                    
+
         self.setText(self.undoString)
     
     def __del__(self):
@@ -54,16 +57,19 @@ class ExtVertexUndoCommand(QUndoCommand):
     def id(self):
         return self.mVertexID
 
-    def _addVertex(self):
+    def _addVertex(self, fromWithEdges=False):
         self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexIdx, self.mVertexID)
         self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
 
         # call childs commands undo in reverse order
         for i in range(self.childCount() - 1, -1, -1):
             childCommand = self.child(i)
-            childCommand.undo()
+            if fromWithEdges:
+                childCommand.redo()
+            else:
+                childCommand.undo()
 
-    def _deleteVertex(self):
+    def _deleteVertex(self, fromWithEdges=False):
         delVertID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
 
         deletedEdges = self.mLayer.mGraph.deleteVertex(self.mVertexIdx, True)
@@ -82,10 +88,30 @@ class ExtVertexUndoCommand(QUndoCommand):
         elif self.childCount() != 0:
             for i in range(self.childCount()):
                 childCommand = self.child(i)
-                childCommand.redo()
+                if fromWithEdges:
+                    childCommand.undo()
+                else:
+                    childCommand.redo()
+    
+    def _addVertexWithEdges(self):
+        if self.childCount() == 0:
+            addedEdges = self.mLayer.mGraph.addVertexWithEdges([self.mOldPoint.x(), self.mOldPoint.y()], True)
+            self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
+            
+            # call child commands redo in order
+            for edge in addedEdges:
+                edgeIdx = edge[0]
+                fromID = edge[1]
+                toID = edge[2]
+
+                # create child command and call its redo
+                edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, fromID, toID, False, self)
+                edgeUndoCommand.redo()
+
+        else:
+            self._addVertex(True)
 
     def redo(self):
-
         # delete vertex again
         if self.mOperation == "Delete":
             self._deleteVertex()
@@ -94,6 +120,10 @@ class ExtVertexUndoCommand(QUndoCommand):
         elif self.mOperation == "Add":
             self._addVertex()
         
+        # add vertex and its edges again
+        elif self.mOperation == "AddWithEdges":
+            self._addVertexWithEdges()
+
         # move vertex again
         else:
             self.mLayer.mGraph.vertex(self.mVertexIdx).setNewPoint(self.mNewPoint)
@@ -107,8 +137,8 @@ class ExtVertexUndoCommand(QUndoCommand):
             self._addVertex()
 
         # delete vertex again
-        elif self.mOperation == "Add":
-            self._deleteVertex()
+        elif self.mOperation == "Add" or self.mOperation == "AddWithEdges":
+            self._deleteVertex(self.mOperation == "AddWithEdges")
 
         # move vertex back
         else:
@@ -192,7 +222,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
         self.mLayer.mGraph.deleteEdge(self.mEdgeIdx)
 
     def __addEdge(self):
-        self.mEdgeIdx = self.mLayer.mGraph.addEdge(self.mFromVertexID, self.mToVertexID, self.mEdgeIdx, self.mEdgeID)
+        self.mEdgeIdx = self.mLayer.mGraph.addEdge(self.mFromVertexID, self.mToVertexID, self.mEdgeIdx, self.mEdgeID, True)
 
         if self.mLayer.mGraph.distanceStrategy == "Advanced":
             # on Advanced costs new edges will be initiated with 0 costs on every function index
