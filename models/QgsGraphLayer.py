@@ -312,15 +312,6 @@ class QgsGraphLayer(QgsPluginLayer):
             # add vertices to new ExtGraph (have to be added to ExtGraph before edges do -> inefficient)
             for vertexIdx in range(graph.vertexCount()):
                 vertex = graph.vertex(vertexIdx)
-                # vertexPoint = vertex.point()
-                # feat = QgsFeature()
-                # feat.setGeometry(QgsGeometry.fromPointXY(vertexPoint))
-
-                # feat.setAttributes([vertex.id(), vertexPoint.x(), vertexPoint.y()])
-                # self.mDataProvider.addFeature(feat, True, vertexIdx)
-                
-                # self.mGraph.addVertex(vertex.point(), -1, vertex.id())
-
                 
                 self.mGraph.addVertex(vertex.point(), -1, vertex.id())
 
@@ -328,16 +319,6 @@ class QgsGraphLayer(QgsPluginLayer):
             amountEdgeCostFunctions = graph.amountOfEdgeCostFunctions()
             for edgeIdx in range(graph.edgeCount()):
                 edge = graph.edge(edgeIdx)
-
-                # feat = QgsFeature()
-                # fromVertex = graph.vertex(edge.fromVertex()).point()
-                # toVertex = graph.vertex(edge.toVertex()).point()
-                # feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
-
-                # # features only save one value for edge cost even if multiple cost functions are given
-                # feat.setAttributes([edge.id(), edge.fromVertex(), edge.toVertex(), graph.costOfEdge(edgeIdx)])
-
-                # self.mDataProvider.addFeature(feat, False, edgeIdx)
 
                 self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), -1, edge.id())
 
@@ -590,13 +571,6 @@ class QgsGraphLayer(QgsPluginLayer):
                 vertex = QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y")))
                 vID = int(elem.attribute("id"))
                 self.mGraph.addVertex(vertex, -1, vID)
-                
-                # add feature for each vertex
-                feat = QgsFeature()
-                feat.setGeometry(QgsGeometry.fromPointXY(vertex))
-
-                feat.setAttributes([vID, vertex.x(), vertex.y()])
-                self.mDataProvider.addFeature(feat, True, vertexIdx)
 
         # get edge information and add them to graph
         for edgeIdx in range(edgeNodes.length()):
@@ -622,16 +596,6 @@ class QgsGraphLayer(QgsPluginLayer):
                         functionIndex = int(costElem.attribute("functionIndex"))
                         costValue = float(costElem.attribute("value"))
                         self.mGraph.setCostOfEdge(addedIdx, functionIndex, costValue)
-
-                # add feature for each edge
-                feat = QgsFeature()
-                fromVertex = self.mGraph.vertex(self.mGraph.findVertexByID(fromVertexID)).point()
-                toVertex = self.mGraph.vertex(self.mGraph.findVertexByID(toVertexID)).point()
-                feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
-
-                feat.setAttributes([eID, fromVertexID, toVertexID, self.mGraph.costOfEdge(addedIdx)])
-
-                self.mDataProvider.addFeature(feat, False, addedIdx)
 
         return True
 

@@ -58,12 +58,6 @@ class ExtVertexUndoCommand(QUndoCommand):
         self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexIdx, self.mVertexID)
         self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
 
-        # feat = QgsFeature()
-        # feat.setGeometry(QgsGeometry.fromPointXY(self.mOldPoint))
-
-        # feat.setAttributes([self.mVertexID, self.mOldPoint.x(), self.mOldPoint.y()])
-        # self.mLayer.dataProvider().addFeature(feat, True, self.mVertexIdx)
-
         # call childs commands undo in reverse order
         for i in range(self.childCount() - 1, -1, -1):
             childCommand = self.child(i)
@@ -73,8 +67,6 @@ class ExtVertexUndoCommand(QUndoCommand):
         delVertID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
 
         deletedEdges = self.mLayer.mGraph.deleteVertex(self.mVertexIdx, True)
-
-        # self.mLayer.dataProvider().deleteFeature(self.mVertexIdx, True)
 
         if len(deletedEdges) > 0 and self.childCount() == 0:
             # call child commands redo in order
@@ -199,8 +191,6 @@ class ExtEdgeUndoCommand(QUndoCommand):
     def __deleteEdge(self):
         self.mLayer.mGraph.deleteEdge(self.mEdgeIdx)
 
-        # self.mLayer.dataProvider().deleteFeature(self.mEdgeIdx, False)
-
     def __addEdge(self):
         self.mEdgeIdx = self.mLayer.mGraph.addEdge(self.mFromVertexID, self.mToVertexID, self.mEdgeIdx, self.mEdgeID)
 
@@ -209,15 +199,6 @@ class ExtEdgeUndoCommand(QUndoCommand):
             amountEdgeCostFunctions = self.mLayer.mGraph.amountOfEdgeCostFunctions()
             for functionIdx in range(amountEdgeCostFunctions):
                 self.mLayer.mGraph.setCostOfEdge(self.mEdgeIdx, functionIdx, 0)
-
-        # feat = QgsFeature()
-        # fromVertex = self.mLayer.mGraph.vertex(self.mFromVertexIdx).point()
-        # toVertex = self.mLayer.mGraph.vertex(self.mToVertexIdx).point()
-        # feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
-
-        # feat.setAttributes([self.mEdgeID, self.mFromVertexID, self.mToVertexID, self.mLayer.mGraph.costOfEdge(self.mEdgeIdx)])
-
-        # self.mLayer.dataProvider().addFeature(feat, False, self.mEdgeIdx)
 
     def setNewCosts(self, newCosts):
         """
