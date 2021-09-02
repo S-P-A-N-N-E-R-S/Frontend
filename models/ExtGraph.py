@@ -95,8 +95,9 @@ class ExtGraph(QObject):
 
         # Set to true while building the graph to indicate that the arrays are
         # sorted by uid, so binary search is possible
-        self.verticesSorted = False
-        self.edgesSorted = False
+        # TODO default value
+        self.verticesSorted = True
+        self.edgesSorted = True
 
         self.mEdgeCount = 0
         self.mVertexCount = 0

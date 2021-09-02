@@ -57,13 +57,11 @@ class QgsGraphMapTool(QgsMapTool):
         if edgeIdx >= 0:
             edge = self.mLayer.mGraph.edge(edgeIdx)
 
-            # delete possibly existing edge            
-            fromVertexIdx = self.mLayer.mGraph.findVertexByID(edge.fromVertex())
-            toVertexIdx = self.mLayer.mGraph.findVertexByID(edge.toVertex())
-            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, fromVertexIdx, toVertexIdx, True)
+            # delete possibly existing edge
+            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, edge.fromVertex(), edge.toVertex(), True)
             self.mLayer.mUndoStack.push(edgeUndoCommand)
 
-            self.mLayer.mDataProvider.deleteFeature(edgeIdx, False)
+            # self.mLayer.mDataProvider.deleteFeature(edgeIdx, False)
 
             if self.mLayer.mGraph.edgeCount() == 0:
                 # no edges exist anymore
@@ -91,10 +89,8 @@ class QgsGraphMapTool(QgsMapTool):
             # add new edge
             edgeIdx = self.mLayer.mGraph.edgeCount()
 
-            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, p1Idx, p2Idx, False)
+            edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, self.mLayer.mGraph.vertex(p1Idx).id(), self.mLayer.mGraph.vertex(p2Idx).id(), False)
             self.mLayer.mUndoStack.push(edgeUndoCommand)
-            
-            edge = self.mLayer.mGraph.edge(edgeIdx)
 
         # open edge window on found edge (possibility to set costs for newly added edges)
         win = QDialog(iface.mainWindow())

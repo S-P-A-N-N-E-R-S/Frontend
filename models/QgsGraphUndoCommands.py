@@ -27,6 +27,7 @@ class ExtVertexUndoCommand(QUndoCommand):
                 self.mLayer = layer
 
         self.mVertexIdx = vertexIdx
+        self.mVertexID = -1
         if operation != "Add":
             self.mVertexID = self.mLayer.mGraph.vertex(vertexIdx).id()
         self.mOldPoint = oldPoint
@@ -53,12 +54,9 @@ class ExtVertexUndoCommand(QUndoCommand):
     def id(self):
         return self.mVertexID
 
-    def _addVertex(self, readd=False):
-        if readd:
-            self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexIdx, self.mVertexID)
-        else:
-            self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint)
-            self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
+    def _addVertex(self):
+        self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexIdx, self.mVertexID)
+        self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
 
         # feat = QgsFeature()
         # feat.setGeometry(QgsGeometry.fromPointXY(self.mOldPoint))
@@ -114,7 +112,7 @@ class ExtVertexUndoCommand(QUndoCommand):
     def undo(self):
         # readd vertex again
         if self.mOperation == "Delete":
-            self._addVertex(True)
+            self._addVertex()
 
         # delete vertex again
         elif self.mOperation == "Add":
@@ -172,6 +170,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
             self.mUpdateCosts = True
 
         elif not (self.mFromVertexID == -1 or self.mToVertexID == -1):
+            # edge delete does not come from deleteVertex
 
             self.redoString = "Delete" if self.mDeleted else "Readd" 
             self.undoString = "Readd" if self.mDeleted else "Delete"
