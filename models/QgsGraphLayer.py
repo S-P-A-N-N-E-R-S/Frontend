@@ -264,6 +264,10 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph.setConnectionType(graph.mConnectionType)
             self.mGraph.setDistanceStrategy(graph.distanceStrategy)
 
+            self.mGraph.setGraphBuilderInformation(graph.numberNeighbours, graph.edgeDirection,
+                                                    graph.clusterNumber, graph.nnAllowDoubleEdges,
+                                                    graph.distance)
+
             advanced = False
             if self.mGraph.distanceStrategy == "Advanced":
                 advanced = True
@@ -531,7 +535,7 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph.edgeDirection = graphElem.attribute("edgeDirection")
             self.mGraph.clusterNumber = int(graphElem.attribute("clusterNumber"))
             self.mGraph.nnAllowDoubleEdges = graphElem.attribute("nnAllowDoubleEdges") == "True"
-            self.mGraph.distance = float(graphElem.attribute("distance"))
+            self.mGraph.distance = float(graphElem.attribute("distance")), int(graphElem.attribute("distanceUnit"))
             self.mGraph.setDistanceStrategy(graphElem.attribute("distanceStrategy"))
 
         verticesNode = graphNode.firstChild()
@@ -653,7 +657,8 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.setAttribute("edgeDirection", self.mGraph.edgeDirection)
         graphNode.setAttribute("clusterNumber", self.mGraph.clusterNumber)
         graphNode.setAttribute("nnAllowDoubleEdges", str(self.mGraph.nnAllowDoubleEdges))
-        graphNode.setAttribute("distance", str(self.mGraph.distance))
+        graphNode.setAttribute("distance", str(self.mGraph.distance[0]))
+        graphNode.setAttribute("distanceUnit", self.mGraph.distance[1])
         graphNode.setAttribute("distanceStrategy", self.mGraph.distanceStrategy)
         if self.mGraph.distanceStrategy == "Advanced":
             graphNode.setAttribute("edgeCostFunctions", self.mGraph.amountOfEdgeCostFunctions())
@@ -918,7 +923,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
         # button to toggle drawing of arrowHead to show edge direction
         toggleDirectionButton = QPushButton(tr("Toggle Direction"))
-        toggleDirectionButton.setVisible(hasEdges)
+        toggleDirectionButton.setVisible(hasEdges and layer.mGraph.edgeDirection == "Directed")
         toggleDirectionButton.clicked.connect(layer.toggleDirection)
         layout.addWidget(toggleDirectionButton)
 

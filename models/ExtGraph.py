@@ -156,11 +156,11 @@ class ExtGraph(QObject):
     def connectionType(self):
         return self.mConnectionType
 
-    def setGraphBuilderInformation(self, numberNeighbours, edgeDirection, clusterNumber, nnAllowDoubleEgdes, distance):
+    def setGraphBuilderInformation(self, numberNeighbours, edgeDirection, clusterNumber, nnAllowDoubleEdges, distance):
         self.numberNeighbours = numberNeighbours
         self.edgeDirection = edgeDirection
         self.clusterNumber = clusterNumber
-        self.nnAllowDoubleEdges = nnAllowDoubleEgdes
+        self.nnAllowDoubleEdges = nnAllowDoubleEdges
         self.distance = distance
 
     def amountOfEdgeCostFunctions(self):
@@ -277,15 +277,21 @@ class ExtGraph(QObject):
         :type vertex2Idx: Integer
         :return Integer found edgeIdx, else -1
         """
-        # TODO: check for undirected or directed edges
         vertex1ID = self.vertex(vertex1Idx).id()
         vertex2ID = self.vertex(vertex2Idx).id()
 
         for edgeIdx in self.vertex(vertex1Idx).outgoingEdges():
             edge = self.mEdges[edgeIdx]
+
             if edge.fromVertex() == vertex1ID and edge.toVertex() == vertex2ID:
                 return edgeIdx
 
+        if self.edgeDirection == "Undirected":
+            for edgeIdx in self.vertex(vertex1Idx).incomingEdges():
+                edge = self.mEdges[edgeIdx]
+
+                if edge.fromVertex() == vertex2ID and edge.toVertex() == vertex1ID:
+                    return edgeIdx
         return -1
 
     def findVertexByID(self, id, output=False):
