@@ -326,6 +326,8 @@ class QgsGraphLayer(QgsPluginLayer):
                 for functionIdx in range(amountEdgeCostFunctions):
                     cost = graph.costOfEdge(edgeIdx, functionIdx)
                     self.mGraph.setCostOfEdge(edgeIdx, functionIdx, cost)
+
+            self.mGraph.calculateSize()
         
     def getGraph(self):
         return self.mGraph

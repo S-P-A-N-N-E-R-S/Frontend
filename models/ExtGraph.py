@@ -4,7 +4,7 @@ from qgis.analysis import *
 
 from qgis.PyQt.QtCore import QObject
 
-import math
+import math, sys
 from random import *
 
 from ..lib.kdtree import kdtree
@@ -28,15 +28,25 @@ class ExtGraph(QObject):
             self.mCoordinates = point
             self.mIncomingEdges = []
             self.mOutgoingEdges = []
-            self.mId = id
+            self.mID = id
 
         def __del__(self):
             del self.mCoordinates
             del self.mIncomingEdges
             del self.mOutgoingEdges
 
+        def calculateSize(self):
+            size = 0
+
+            size += sys.getsizeof(self.mCoordinates)
+            size += sys.getsizeof(self.mIncomingEdges)
+            size += sys.getsizeof(self.mOutgoingEdges)
+            size += sys.getsizeof(self.mID)
+
+            return size
+
         def id(self):
-            return self.mId
+            return self.mID
 
         def incomingEdges(self):
             return self.mIncomingEdges
@@ -65,6 +75,16 @@ class ExtGraph(QObject):
 
         def __del__(self):
             pass
+
+        def calculateSize(self):
+            size = 0
+
+            size += sys.getsizeof(self.mFromID)
+            size += sys.getsizeof(self.mToID)
+            size += sys.getsizeof(self.mID)
+            size += sys.getsizeof(self.isHighlighted)
+
+            return size
         
         def id(self):
             return self.mID
@@ -137,6 +157,46 @@ class ExtGraph(QObject):
             del self.kdTree
 
         del self.featureMatchings
+
+    def calculateSize(self):
+        size = 0
+
+        verticesSize = 0
+        for idx in range(self.mVertexCount):
+            verticesSize += self.mVertices[idx].calculateSize()
+        size += verticesSize
+
+        edgesSize = 0
+        for idx in range(self.mEdgeCount):
+            edgesSize += self.mEdges[idx].calculateSize()
+        size += edgesSize
+
+        size += sys.getsizeof(self.distanceStrategy)
+        size += sys.getsizeof(self.mConnectionType)
+        size += sys.getsizeof(self.edgeWeights)
+        size += sys.getsizeof(self.vertexWeights)
+
+        size += sys.getsizeof(self.verticesSorted)
+        size += sys.getsizeof(self.edgesSorted)
+        size += sys.getsizeof(self.mEdgeCount)
+        size += sys.getsizeof(self.mVertexCount)
+
+        size += sys.getsizeof(self.mMaxEdgeID)
+        size += sys.getsizeof(self.mMaxVertexID)
+
+        size += sys.getsizeof(self.featureMatchings)
+
+        size += sys.getsizeof(self.numberNeighbours)
+        size += sys.getsizeof(self.edgeDirection)
+        size += sys.getsizeof(self.clusterNumber)
+        size += sys.getsizeof(self.nnAllowDoubleEdges)
+        size += sys.getsizeof(self.distance)
+
+        size += sys.getsizeof(self.kdTree)
+
+        size += sys.getsizeof(self.mJobId)
+
+        print("VC: ", self.mVertexCount, ", EC: ", self.mEdgeCount, "\nComplete: ", size/1000000, ", Vertices: ", verticesSize/1000000, ", Edges: ", edgesSize/1000000)
 
     def setJobID(self, jobId):
         self.mJobId = jobId
