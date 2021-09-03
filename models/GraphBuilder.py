@@ -535,27 +535,57 @@ class GraphBuilder:
         very edge is a vertex in the graph and an edge is added between them.
         """
         # get all the lines and set end nodes as vertices and connections as edges
+        vertexHash = {}
+        lastVertexID = None
         for feature in self.vLayer.getFeatures():
             if self.task is not None and self.task.isCanceled():
                 return
             geom = feature.geometry()
             if QgsWkbTypes.isMultiType(geom.wkbType()):
                 for part in geom.asMultiPolyline():
-                    for i in range(len(part)):
-                        addedID = self.graph.addVertex(part[i]) 
-                        if i!=0:                               
-                            self.graph.addEdge(addedID-1, addedID)
-                            self.graph.featureMatchings.append(feature)
-
+                    for i in range(len(part)):                   
+                        if part[i].toString() in vertexHash:                            
+                            searchVertex = vertexHash[part[i].toString()]
+                            if i!=0:                               
+                                self.graph.addEdge(lastVertexID, searchVertex)
+                                self.graph.featureMatchings.append(feature)
+                            lastVertexID = searchVertex                                                       
+                        else:                                                          
+                            addedID = self.graph.addVertex(part[i])   
+                            vertexHash[part[i].toString()] = addedID                                                                                         
+                            if i!=0:                               
+                                self.graph.addEdge(lastVertexID, addedID)
+                                self.graph.featureMatchings.append(feature)
+                            lastVertexID = addedID    
             else:                        
                 vertices = geom.asPolyline()                       
                 for i in range(len(vertices)-1):
                     startVertex = vertices[i]
-                    endVertex = vertices[i+1]
-                    id1 = self.graph.addVertex(startVertex)
-                    id2 = self.graph.addVertex(endVertex)                    
-                    self.graph.addEdge(id1, id2)
-                    self.graph.featureMatchings.append(feature)
+                    endVertex = vertices[i+1]                  
+                    if startVertex.toString() in vertexHash and endVertex.toString() in vertexHash:
+                        searchVertex1 = vertexHash[startVertex.toString()]
+                        searchVertex2 = vertexHash[endVertex.toString()]
+                        self.graph.addEdge(searchVertex1, searchVertex2)
+                    
+                    elif startVertex.toString() in vertexHash:
+                        searchVertex = vertexHash[startVertex.toString()]
+                        id2 = self.graph.addVertex(endVertex) 
+                        vertexHash[endVertex.toString()] = id2
+                        self.graph.addEdge(searchVertex, id2)
+                    
+                    elif endVertex.toString() in vertexHash:
+                        searchVertex = vertexHash[endVertex.toString()]
+                        id1 = self.graph.addVertex(startVertex)
+                        vertexHash[startVertex.toString()] = id1
+                        self.graph.addEdge(id1, searchVertex)
+                    
+                    else:                                          
+                        id1 = self.graph.addVertex(startVertex)
+                        id2 = self.graph.addVertex(endVertex)  
+                        vertexHash[startVertex.toString()] = id1
+                        vertexHash[endVertex.toString()] = id2                  
+                        self.graph.addEdge(id1, id2)
+                        self.graph.featureMatchings.append(feature) 
 
         # add points and connection to network if additional points are given
         # use kd tree to get the nearest point
