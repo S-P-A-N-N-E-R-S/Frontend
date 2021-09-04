@@ -165,11 +165,13 @@ class ExtGraph(QObject):
         for idx in range(self.mVertexCount):
             verticesSize += self.mVertices[idx].calculateSize()
         size += verticesSize
+        size += sys.getsizeof(self.mVertices)
 
         edgesSize = 0
         for idx in range(self.mEdgeCount):
             edgesSize += self.mEdges[idx].calculateSize()
         size += edgesSize
+        size += sys.getsizeof(self.mEdges)
 
         size += sys.getsizeof(self.distanceStrategy)
         size += sys.getsizeof(self.mConnectionType)
@@ -196,7 +198,13 @@ class ExtGraph(QObject):
 
         size += sys.getsizeof(self.mJobId)
 
-        print("VC: ", self.mVertexCount, ", EC: ", self.mEdgeCount, "\nComplete: ", size/1000000, ", Vertices: ", verticesSize/1000000, ", Edges: ", edgesSize/1000000)
+        file = open("ArraySize.txt", "a")
+        sizeString = str(self.mVertexCount) + ";" + str(size/1000000) + "\n"
+        file.write(sizeString)
+
+        file.close()
+
+        # print("VC: ", self.mVertexCount, ", EC: ", self.mEdgeCount, "\nComplete: ", size/1000000, ", Vertices: ", verticesSize/1000000, ", Edges: ", edgesSize/1000000)
 
     def setJobID(self, jobId):
         self.mJobId = jobId
