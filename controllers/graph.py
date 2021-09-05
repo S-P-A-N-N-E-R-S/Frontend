@@ -88,12 +88,14 @@ class CreateGraphController(BaseController):
                 builder.setRasterLayer(rasterLayer, rasterBand)
 
         # polygon cost layer
-        polygonCostLayer = self.view.getPolygonCostLayer()
-        if polygonCostLayer:
+        polygonCostLayers = self.view.getPolygonCostLayers()
+        for idx, polygonCostLayer in enumerate(polygonCostLayers):
             if not polygonCostLayer.isValid():
-                self.view.showWarning(self.tr("Polygon cost layer is invalid!"))
+                self.view.showWarning(self.tr("Polygon cost layer[{}] is invalid!").format(idx))
                 return
+            # todo: pass multiple polygon layer for cost function
             builder.setPolygonsForCostFunction(polygonCostLayer)
+            break  # todo: to be removed
 
         # polygon forbidden area
         forbiddenAreaLayer = self.view.getForbiddenAreaLayer()
