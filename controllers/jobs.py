@@ -39,10 +39,15 @@ class JobsController(BaseController):
             self.view.showWarning(self.tr("Please select a job."))
             return
 
+        job, status = self.view.getCurrentJob()
+        if status != self.STATUS_TEXTS[StatusType.SUCCESS]:
+            self.view.showWarning(self.tr("Selected job status is not successful."))
+            return
+
         # Get result from finished job
         try:
             with Client(helper.getHost(), helper.getPort()) as client:
-                response = client.getJobResult(int(self.view.getCurrentJob()[0]))
+                response = client.getJobResult(int(job))
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
             return
