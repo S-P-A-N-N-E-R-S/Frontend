@@ -50,12 +50,12 @@ class CreateGraphController(BaseController):
         self.view.addDistanceStrategy(self.tr("None"), "None")
 
         # load possibly available active tasks into table and reconnect slots
-        self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
         for taskTuple in CreateGraphController.activeGraphTasks:
             task, taskId = taskTuple
             task.statusChanged.connect(
                 lambda: self.view.updateTaskInTable(task, taskId)
             )
+        self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
 
     def createGraph(self):
         """
@@ -190,10 +190,10 @@ class CreateGraphController(BaseController):
         CreateGraphController.activeGraphTasks.append((graphTask, taskId))
 
         # add task to table
-        self.view.addTaskToTable(graphTask, taskId)
         graphTask.statusChanged.connect(
             lambda: self.view.updateTaskInTable(graphTask, taskId)  # update task if status changed
         )
+        self.view.addTaskToTable(graphTask, taskId)
 
     def completed(self, exception, result=None):
         """
