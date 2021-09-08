@@ -61,464 +61,465 @@ class QgsExpressionContext(QObject):
         self.groups = {
             "Conditionals": {
                 "label": self.tr("Conditionals"),
-                "helpText": self.tr("This group contains functions to handle conditional checks in expressions."),
+                "description": self.tr("This group contains functions to handle conditional checks in expressions."),
                 "expressions": [
                     {
                         "label": "if",
                         "expressionText": " if( ; ; ) ",
-                        "helpText": self.tr("Tests a condition and returns a different result depending on the conditional "
-                                            "check.")
+                        "description": self.tr("Tests a condition and returns a different result depending on the conditional check.")
                     },
                     {
                         "label": self.tr("crossesPolygon"),
                         "expressionText": "crossesPolygon",
-                        "helpText": self.tr("Checks whether an edge crosses a polygon.")
+                        "description": self.tr("Checks whether an edge crosses a polygon.")
                     },
                     {
                         "label": self.tr("insidePolygon"),
                         "expressionText": "insidePolygon",
-                        "helpText": self.tr("Checks whether an edge is inside a polygon.")
+                        "description": self.tr("Checks whether an edge is inside a polygon.")
                     },
                     {
                         "label": self.tr("pixelValue"),
                         "expressionText": "raster[]:pixelValue",
-                        "helpText": self.tr("Check if one pixel value of a raster data satisfies the condition. Only usable with raster data")
+                        "description": self.tr("Check if one pixel value of a raster data satisfies the condition. Only usable with raster data")
                     },
                     {
                         "label": self.tr("percentOfValues"),
                         "expressionText": "raster[]:percentOfValues()",
-                        "helpText": self.tr("Check if a specified percentage of pixel values satisfy the condition. Only usable with raster data")
+                        "description": self.tr("Check if a specified percentage of pixel values satisfy the condition. Only usable with raster data")
                         
                     },
                 ],
             },
             "Distances": {
                 "label": self.tr("Distances"),
-                "helpText": self.tr("This group contains distances to use in the cost calculation."),
+                "description": self.tr("This group contains distances to use in the cost calculation."),
                 "expressions": [
                     {
                         "label": "euclidean",
                         "expressionText": "euclidean",
-                        "helpText": self.tr("Calculates the euclidean metric.")
+                        "description": self.tr("Calculates the euclidean metric.")
                     },
                     {
                         "label": "manhattan",
                         "expressionText": "manhattan",
-                        "helpText": self.tr("Calculates the manhattan metric.")
+                        "description": self.tr("Calculates the manhattan metric.")
                     },
                     {
                         "label": "geodesic",
                         "expressionText": "geodesic",
-                        "helpText": self.tr("Calculates the geodesic metric.")
+                        "description": self.tr("Calculates the geodesic metric.")
                     },
                     {
                         "label": "ellipsoidal",
                         "expressionText": "ellipsoidal",
-                        "helpText": self.tr("Calculates the ellipsoidal distance")
+                        "description": self.tr("Calculates the ellipsoidal distance")
                         
                     },
                 ],
             },
             "Fields": {
                 "label": self.tr("Fields"),
-                "helpText": self.tr("This group contains numeric fields from the selected vector layer."),
+                "description": self.tr("This group contains numeric fields from the selected vector layer."),
                 "expressions": [],
             },
             "Math": {
                 "label": self.tr("Math"),
-                "helpText": self.tr("This group contains math functions."),
+                "description": self.tr("This group contains math functions."),
                 "expressions": [
                     {
                         "label": "acos",
                         "expressionText": " math.acos( )",
-                        "helpText": self.tr("Returns the inverse cosine of a value in radians.")
+                        "description": self.tr("Returns the inverse cosine of a value in radians."),
+                        # "syntax": self.tr("acos(value)"),
+                        # "example": self.tr("acos(0.5) → 1.0471975511966")
                     },
                     {
                         "label": "acosh",
                         "expressionText": " math.acosh( )",
-                        "helpText": self.tr("Returns the inverse hyperbolic cosine of a value in radians.")
+                        "description": self.tr("Returns the inverse hyperbolic cosine of a value in radians.")
                     },
                     {
                         "label": "asin",
                         "expressionText": " math.asin( )",
-                        "helpText": self.tr("Returns the arc sine of a value in radians.")
+                        "description": self.tr("Returns the arc sine of a value in radians.")
                     },
                     {
                         "label": "asinh",
                         "expressionText": " math.asinh( )",
-                        "helpText": self.tr("Returns the inverse hyperbolic sine of a value in radians.")
+                        "description": self.tr("Returns the inverse hyperbolic sine of a value in radians.")
                     },
                     {
                         "label": "atan",
                         "expressionText": " math.atan( )",
-                        "helpText": self.tr("Returns the arc tangent of a value in radians.")
+                        "description": self.tr("Returns the arc tangent of a value in radians.")
                     },
                     {
                         "label": "atan2",
                         "expressionText": " math.atan2( )",
-                        "helpText": self.tr("Returns the arc tangent of y, x values in radians.")
+                        "description": self.tr("Returns the arc tangent of y, x values in radians.")
                     },
                     {
                         "label": "ceil",
                         "expressionText": " math.ceil( )",
-                        "helpText": self.tr("Rounds a number upwards.")
+                        "description": self.tr("Rounds a number upwards.")
                     },
                     {
                         "label": "comb",
                         "expressionText": " math.comb( )",
-                        "helpText": self.tr("Returns number of ways to choose k items from n items without repetition and without "
+                        "description": self.tr("Returns number of ways to choose k items from n items without repetition and without "
                                     "order.")
                     },
                     {
                         "label": "copysign",
                         "expressionText": " math.copysign( )",
-                        "helpText": self.tr("Return a float with the magnitude of x but the sign of y.")
+                        "description": self.tr("Return a float with the magnitude of x but the sign of y.")
                     },
                     {
                         "label": "cos",
                         "expressionText": " math.cos( )",
-                        "helpText": self.tr("Returns cosine of an angle.")
+                        "description": self.tr("Returns cosine of an angle.")
                     },
                     {
                         "label": "cosh",
                         "expressionText": " math.cosh( )",
-                        "helpText": self.tr("Returns the hyperbolic cosine of an angle.")
+                        "description": self.tr("Returns the hyperbolic cosine of an angle.")
                     },
                     {
                         "label": "degrees",
                         "expressionText": " math.degrees( )",
-                        "helpText": self.tr("Converts from radians to degrees.")
+                        "description": self.tr("Converts from radians to degrees.")
                     },
                     {
                         "label": "dist",
                         "expressionText": " math.dist( )",
-                        "helpText": self.tr("Returns the Euclidean distance between two points.")
+                        "description": self.tr("Returns the Euclidean distance between two points.")
                     },
                     {
                         "label": "erf",
                         "expressionText": " math.erf( )",
-                        "helpText": self.tr("Returns the error function of a value.")
+                        "description": self.tr("Returns the error function of a value.")
                     },
                     {
                         "label": "erfc",
                         "expressionText": " math.erfc( )",
-                        "helpText": self.tr("Returns the complementary error function of a value.")
+                        "description": self.tr("Returns the complementary error function of a value.")
                     },
                     {
                         "label": "exp",
                         "expressionText": " math.exp( )",
-                        "helpText": self.tr("Returns exponential of an value.")
+                        "description": self.tr("Returns exponential of an value.")
                     },
                     {
                         "label": "expm1",
                         "expressionText": " math.expm1( )",
-                        "helpText": self.tr("Returns E**x - 1.")
+                        "description": self.tr("Returns E**x - 1.")
                     },
                     {
                         "label": "fabs",
                         "expressionText": " math.fabs( )",
-                        "helpText": self.tr("Returns the absolute value of a value.")
+                        "description": self.tr("Returns the absolute value of a value.")
                     },
                     {
                         "label": "factorial",
                         "expressionText": " math.factorial( )",
-                        "helpText": self.tr("Returns the factorial of a value.")
+                        "description": self.tr("Returns the factorial of a value.")
                     },
                     {
                         "label": "floor",
                         "expressionText": " math.floor( )",
-                        "helpText": self.tr("Rounds a number downwards.")
+                        "description": self.tr("Rounds a number downwards.")
                     },
                     {
                         "label": "fmod",
                         "expressionText": " math.fmod( )",
-                        "helpText": self.tr("Returns the modulo of a value.")
+                        "description": self.tr("Returns the modulo of a value.")
                     },
                     {
                         "label": "frexp",
                         "expressionText": " math.frexp( )",
-                        "helpText": self.tr("Returns the mantissa and the exponent of a value.")
+                        "description": self.tr("Returns the mantissa and the exponent of a value.")
                     },                   
                     {
                         "label": "gamma",
                         "expressionText": " math.gamma( )",
-                        "helpText": self.tr("Returns the gamma function at x.")
+                        "description": self.tr("Returns the gamma function at x.")
                     },                                                 
                     {
                         "label": "isfinite",
                         "expressionText": " math.isfinite( )",
-                        "helpText": self.tr("Checks whether a number is finite.")
+                        "description": self.tr("Checks whether a number is finite.")
                     },
                     {
                         "label": "isinf",
                         "expressionText": " math.isinf( )",
-                        "helpText": self.tr("Checks whether a number is infinite.")
+                        "description": self.tr("Checks whether a number is infinite.")
                     },
                     {
                         "label": "isnan",
                         "expressionText": " math.isnan( )",
-                        "helpText": self.tr("Checks whether a value is NaN (not a number).")
+                        "description": self.tr("Checks whether a value is NaN (not a number).")
                     },
                     {
                         "label": "isqrt",
                         "expressionText": " math.isqrt( )",
-                        "helpText": self.tr("Rounds a square root number downwards to the nearest integer.")
+                        "description": self.tr("Rounds a square root number downwards to the nearest integer.")
                     },
                     {
                         "label": "ldexp",
                         "expressionText": " math.ldexp( )",
-                        "helpText": self.tr("Returns the inverse of frexp() which is x * (2**i) of the given numbers x and i.")
+                        "description": self.tr("Returns the inverse of frexp() which is x * (2**i) of the given numbers x and i.")
                     },
                     {
                         "label": "lgamma",
                         "expressionText": " math.lgamma( )",
-                        "helpText": self.tr("Returns the log gamma value of x.")
+                        "description": self.tr("Returns the log gamma value of x.")
                     },
                     {
                         "label": "log",
                         "expressionText": " math.log( )",
-                        "helpText": self.tr("Returns the value of the logarithm of the passed value and base.")
+                        "description": self.tr("Returns the value of the logarithm of the passed value and base.")
                     },
                     {
                         "label": "log10",
                         "expressionText": " math.log10( )",
-                        "helpText": self.tr("Returns the value of the base 10 logarithm of the passed expression.")
+                        "description": self.tr("Returns the value of the base 10 logarithm of the passed expression.")
                     },
                     {
                         "label": "log1p",
                         "expressionText": " math.log1p( )",
-                        "helpText": self.tr("Returns the value of the natural logarithm of 1+x.")
+                        "description": self.tr("Returns the value of the natural logarithm of 1+x.")
                     },
                     {
                         "label": "log2",
                         "expressionText": " math.log2( )",
-                        "helpText": self.tr("Returns the value of the base 2 logarithm.")
+                        "description": self.tr("Returns the value of the base 2 logarithm.")
                     },                  
                     {
                         "label": "pow",
                         "expressionText": " math.pow( )",
-                        "helpText": self.tr("Returns the value of x to the power of y")
+                        "description": self.tr("Returns the value of x to the power of y")
                     },                  
                     {
                         "label": "radians",
                         "expressionText": " math.radians( )",
-                        "helpText": self.tr("Converts from degrees to radians.")
+                        "description": self.tr("Converts from degrees to radians.")
                     },                    
                     {
                         "label": "remainder",
                         "expressionText": " math.remainder( )",
-                        "helpText": self.tr("Returns the IEEE 754-style remainder of x with respect to y")
+                        "description": self.tr("Returns the IEEE 754-style remainder of x with respect to y")
                     },
                     {
                         "label": "sin",
                         "expressionText": " math.sin( )",
-                        "helpText": self.tr("Returns the sine of an angle.")
+                        "description": self.tr("Returns the sine of an angle.")
                     },
                     {
                         "label": "sinh",
                         "expressionText": " math.sinh( )",
-                        "helpText": self.tr("Returns the hyperbolic sine of angle.")
+                        "description": self.tr("Returns the hyperbolic sine of angle.")
                     },
                     {
                         "label": "sqrt",
                         "expressionText": " math.sqrt( )",
-                        "helpText": self.tr("Returns square root of a value.")
+                        "description": self.tr("Returns square root of a value.")
                     },
                     {
                         "label": "tan",
                         "expressionText": " math.tan( )",
-                        "helpText": self.tr("Returns the tangent of an angle.")
+                        "description": self.tr("Returns the tangent of an angle.")
                     },
                     {
                         "label": "tanh",
                         "expressionText": " math.tanh( )",
-                        "helpText": self.tr("Returns the hyperbolic tangent of an angle.")
+                        "description": self.tr("Returns the hyperbolic tangent of an angle.")
                     },
                     {
                         "label": "trunc",
                         "expressionText": " math.trunc( )",
-                        "helpText": self.tr("Returns the truncated integer part of a value.")
+                        "description": self.tr("Returns the truncated integer part of a value.")
                     },
                 ],
             },
             "Random": {
                 "label": self.tr("Random value"), 
-                "helpText": self.tr("Create a random value between two defined values"),
+                "description": self.tr("Create a random value between two defined values"),
                 "expressions": [
                     {
                         "label": "Random function",
                         "expressionText": "random(value1, value2)",
-                        "helpText": self.tr("Random value between value1 and value2")
+                        "description": self.tr("Random value between value1 and value2")
                     },                           
                 ]
             },
             "Operators": {
                 "label": self.tr("Operators"),
-                "helpText": self.tr("This group contains several common operators."),
+                "description": self.tr("This group contains several common operators."),
                 "expressions": [
                     {
                         "label": "+",
                         "expressionText": " + ",
-                        "helpText": self.tr("Addition of two values.")
+                        "description": self.tr("Addition of two values.")
                     },
                     {
                         "label": "-",
                         "expressionText": " - ",
-                        "helpText": self.tr("Subtraction of two values.")
+                        "description": self.tr("Subtraction of two values.")
                     },
                     {
                         "label": "*",
                         "expressionText": " * ",
-                        "helpText": self.tr("Multiplication of two values.")
+                        "description": self.tr("Multiplication of two values.")
                     },
                     {
                         "label": "/",
                         "expressionText": " / ",
-                        "helpText": self.tr("Division of two values.")
+                        "description": self.tr("Division of two values.")
                     },
                     {
                         "label": "[]",
                         "expressionText": "[ ]",
-                        "helpText": self.tr("Index operator.")
+                        "description": self.tr("Index operator.")
                     },
                     {
                         "label": "(",
                         "expressionText": "(",
-                        "helpText": self.tr("Opening round bracket.")
+                        "description": self.tr("Opening round bracket.")
                     },
                     {
                         "label": ")",
                         "expressionText": ")",
-                        "helpText": self.tr("Closing round bracket.")
+                        "description": self.tr("Closing round bracket.")
                     },
                     {
                         "label": "and",
                         "expressionText": " and ",
-                        "helpText": self.tr("Returns 1 when condition a and b are true.")
+                        "description": self.tr("Returns 1 when condition a and b are true.")
                     },
                     {
                         "label": "or",
                         "expressionText": " or ",
-                        "helpText": self.tr("Returns 1 when condition a or b is true.")
+                        "description": self.tr("Returns 1 when condition a or b is true.")
                     },
                     {
                         "label": "<",
                         "expressionText": " < ",
-                        "helpText": self.tr("Compares two values and evaluates to 1 if the left value is less than the right value.")
+                        "description": self.tr("Compares two values and evaluates to 1 if the left value is less than the right value.")
                     },
                     {
                         "label": ">",
                         "expressionText": " > ",
-                        "helpText": self.tr("Compares two values and evaluates to 1 if the left value is greater than the right "
+                        "description": self.tr("Compares two values and evaluates to 1 if the left value is greater than the right "
                                     "value.")
                     },
                     {
                         "label": "<=",
                         "expressionText": " <= ",
-                        "helpText": self.tr("Compares two values and evaluates to 1 if the left value is less or equal to the right value.")                                               
+                        "description": self.tr("Compares two values and evaluates to 1 if the left value is less or equal to the right value.")
                     },
                     {
                         "label": ">=",
                         "expressionText": " >= ",
-                        "helpText": self.tr("Compares two values and evaluates to 1 if the left value is greater or equal to the right value.")   
+                        "description": self.tr("Compares two values and evaluates to 1 if the left value is greater or equal to the right value.")
                     },
                     {
                         "label": "==",
                         "expressionText": " == ",
-                        "helpText": self.tr("Compares two values and evaluates to 1 if they are equal.")
+                        "description": self.tr("Compares two values and evaluates to 1 if they are equal.")
                     },
                     {
                         "label": "!=",
                         "expressionText": " != ",
-                        "helpText": self.tr("Compares two values and evaluates to 1 if they are unequal.")
+                        "description": self.tr("Compares two values and evaluates to 1 if they are unequal.")
                     },
                 ],
             },
             "Polygons": {
                 "label": self.tr("Polygons"),
-                "helpText": self.tr("This group contains the selected polygon layers."),
+                "description": self.tr("This group contains the selected polygon layers."),
                 "expressions": [],
             },
             "Raster Data": {
                 "label": self.tr("Raster Data"),
-                "helpText": self.tr("This group contains the selected raster data."),
+                "description": self.tr("This group contains the selected raster data."),
                 "expressions": [],
             },
             "Raster": {
                 "label": self.tr("Raster"),
-                "helpText": self.tr("This group contains raster functions which calculate raster statistics and values for each edge."),
+                "description": self.tr("This group contains raster functions which calculate raster statistics and values for each edge."),
                 "expressions": [
                     {
                         "label": "sum",
                         "expressionText": "sum",
-                        "helpText": self.tr("Returns the raster sum of an edge.")
+                        "description": self.tr("Returns the raster sum of an edge.")
                     },
                     {
                         "label": "mean",
                         "expressionText": "mean",
-                        "helpText": self.tr("Returns the raster mean of an edge.")
+                        "description": self.tr("Returns the raster mean of an edge.")
                     },
                     {
                         "label": "median",
                         "expressionText": "median",
-                        "helpText": self.tr("Returns the raster median of an edge.")
+                        "description": self.tr("Returns the raster median of an edge.")
                     },
                     {
                         "label": "min",
                         "expressionText": "min",
-                        "helpText": self.tr("Returns the raster minimum of an edge.")
+                        "description": self.tr("Returns the raster minimum of an edge.")
                     },
                     {
                         "label": "max",
                         "expressionText": "max",
-                        "helpText": self.tr("Returns the raster maximum of an edge.")
+                        "description": self.tr("Returns the raster maximum of an edge.")
                     },
                     {
                         "label": "variance",
                         "expressionText": "variance",
-                        "helpText": self.tr("Returns the raster variance of an edge.")
+                        "description": self.tr("Returns the raster variance of an edge.")
                     },
                     {
                         "label": "standDev",
                         "expressionText": "standDev",
-                        "helpText": self.tr("Returns the raster standard deviation of an edge.")
+                        "description": self.tr("Returns the raster standard deviation of an edge.")
                     },
                     {
                         "label": "gradientSum",
                         "expressionText": "gradientSum",
-                        "helpText": self.tr("Returns the raster gradient sum of an edge.")
+                        "description": self.tr("Returns the raster gradient sum of an edge.")
                     },
                     {
                         "label": "gradientMin",
                         "expressionText": "gradientMin",
-                        "helpText": self.tr("Returns the raster gradient minimum of an edge.")
+                        "description": self.tr("Returns the raster gradient minimum of an edge.")
                     },
                     {
                         "label": "gradientMax",
                         "expressionText": "gradientMax",
-                        "helpText": self.tr("Returns the raster variance of an edge.")
+                        "description": self.tr("Returns the raster variance of an edge.")
                     },
                     {
                         "label": "ascent",
                         "expressionText": "ascent",
-                        "helpText": self.tr("Returns the raster ascent of an edge.")
+                        "description": self.tr("Returns the raster ascent of an edge.")
                     },
                     {
                         "label": "descent",
                         "expressionText": "descent",
-                        "helpText": self.tr("Returns the raster descent of an edge.")
+                        "description": self.tr("Returns the raster descent of an edge.")
                     },
                     {
                         "label": "totalClimb",
                         "expressionText": "totalClimb",
-                        "helpText": self.tr("Returns the raster total climb of an edge.")
+                        "description": self.tr("Returns the raster total climb of an edge.")
                     },
                 ],
             },
         }
-        self.fieldHelpText = self.tr("Double-click to add field to expression editor.")
-        self.polygonsHelpText = self.tr("Double-click to add polygon layer to expression editor.")
-        self.rasterDataHelpText = self.tr("Double-click to add raster data to expression editor.")
+        self.fieldDescription = self.tr("Double-click to add field to expression editor.")
+        self.polygonsDescription = self.tr("Double-click to add polygon layer to expression editor.")
+        self.rasterDataDescription = self.tr("Double-click to add raster data to expression editor.")
 
     def getGroupExpressionItems(self, group):
         """
@@ -529,10 +530,12 @@ class QgsExpressionContext(QObject):
         groupExpressionItems = []
         for expression in self.groups.get(group, {}).get("expressions", []):
             label = expression.get("label", "")
-            helpText = expression.get("helpText", "")
+            description = expression.get("description", "")
+            syntax = expression.get("syntax", "")
+            example = expression.get("example", "")
             expressionItem = QgsExpressionItem(label,
                                                expression.get("expressionText", ""),
-                                               self.formatHelpText(group, label, helpText),
+                                               self.formatHelpText(group, label, description, syntax, example),
                                                QgsExpressionItem.ItemType.Expression
                                                )
             groupExpressionItems.append(expressionItem)
@@ -556,7 +559,7 @@ class QgsExpressionContext(QObject):
         :return:
         """
         return QgsExpressionItem(field, " field:" + field + " ",
-                                 self.formatHelpText(group, field, self.fieldHelpText),
+                                 self.formatHelpText(group, field, self.fieldDescription),
                                  QgsExpressionItem.ItemType.Expression)
 
     def getPolygonItem(self, group, label, polygonIndex):
@@ -568,7 +571,7 @@ class QgsExpressionContext(QObject):
         :return:
         """
         return QgsExpressionItem(label, " polygon[{}]:".format(polygonIndex),
-                                 self.formatHelpText(group, label, self.polygonsHelpText),
+                                 self.formatHelpText(group, label, self.polygonsDescription),
                                  QgsExpressionItem.ItemType.Expression)
 
     def getRasterDataItem(self, group, label, rasterIndex):
@@ -580,17 +583,19 @@ class QgsExpressionContext(QObject):
         :return:
         """
         return QgsExpressionItem(label, " raster[{}]:".format(rasterIndex),
-                                 self.formatHelpText(group, label, self.rasterDataHelpText),
+                                 self.formatHelpText(group, label, self.rasterDataDescription),
                                  QgsExpressionItem.ItemType.Expression)
 
-    def formatHelpText(self, group, expression, helpText):
+    def formatHelpText(self, group, expression, description, syntax="", example=""):
         """
         Formats the help text by appending a title to the text.
         :param expression: name of expression
         :param group:
-        :param helpText:
+        :param description:
         :return:
         """
+        helpText = ""
+
         # set help title
         title = self.tr("expression {}").format(expression)
         if group == "Conditionals" or group == "Math" or group == "Raster":
@@ -601,15 +606,25 @@ class QgsExpressionContext(QObject):
             title = self.tr("operator {}").format(expression)
         elif group == "Fields" or group == "Raster Data" or group == "Polygons":
             title = self.tr("group {}").format(group)
+        helpText += "<h2>" + html.escape(title) + "</h2>"
 
-        return "<h2>{}</h2><p>{}</p>".format(html.escape(title), helpText)
+        # add description
+        helpText += "<p>" + description + "</p>"
+
+        if syntax:
+            helpText += "<h3>Syntax</h3><p>" + syntax + "</p>"
+
+        if example:
+            helpText += "<h3>Example</h3><p>" + example + "</p>"
+
+        return helpText
 
     def getGroupHelpText(self, group):
         groupLabel = self.groups.get(group, {}).get("label", group)
-        groupHelpText = self.groups.get(group, {}).get("helpText", "")
+        groupDescription = self.groups.get(group, {}).get("description", "")
         title = self.tr("group {}").format(groupLabel)
 
-        return "<h2>{}</h2><p>{}</p>".format(html.escape(title), groupHelpText)
+        return "<h2>{}</h2><p>{}</p>".format(html.escape(title), groupDescription)
 
 
 QgsCostFunctionDialogUi, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'QgsCostFunctionDialog.ui'))
