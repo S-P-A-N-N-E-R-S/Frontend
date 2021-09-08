@@ -59,7 +59,7 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>300</width>
+           <width>260</width>
            <height>16777215</height>
           </size>
          </property>
@@ -171,6 +171,9 @@
            <property name="text">
             <string>Status:</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
           </widget>
          </item>
          <item>
@@ -182,7 +185,13 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>None</string>
+            <string>None </string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
