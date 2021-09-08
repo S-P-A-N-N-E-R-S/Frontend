@@ -341,7 +341,6 @@ class QgsExpressionContext(QObject):
                     },
                 ],
             },
-            
             "Random": {
                 "label": self.tr("Random value"), 
                 "helpText": self.tr("Create a random value between two defined values"),
@@ -353,8 +352,6 @@ class QgsExpressionContext(QObject):
                     },                           
                 ]
             },
-            
-            
             "Operators": {
                 "label": self.tr("Operators"),
                 "helpText": self.tr("This group contains several common operators."),
@@ -437,6 +434,11 @@ class QgsExpressionContext(QObject):
                     },
                 ],
             },
+            "Polygons": {
+                "label": self.tr("Polygons"),
+                "helpText": self.tr("This group contains the selected polygon layers."),
+                "expressions": [],
+            },
             "Raster Data": {
                 "label": self.tr("Raster Data"),
                 "helpText": self.tr("This group contains the selected raster data."),
@@ -515,6 +517,7 @@ class QgsExpressionContext(QObject):
             },
         }
         self.fieldHelpText = self.tr("Double-click to add field to expression editor.")
+        self.polygonsHelpText = self.tr("Double-click to add polygon layer to expression editor.")
         self.rasterDataHelpText = self.tr("Double-click to add raster data to expression editor.")
 
     def getGroupExpressionItems(self, group):
@@ -556,9 +559,21 @@ class QgsExpressionContext(QObject):
                                  self.formatHelpText(group, field, self.fieldHelpText),
                                  QgsExpressionItem.ItemType.Expression)
 
+    def getPolygonItem(self, group, label, polygonIndex):
+        """
+        Returns a polygon expression item
+        :param polygonIndex: array index of polygon layer
+        :param group: name of field group
+        :param label: label of polygon
+        :return:
+        """
+        return QgsExpressionItem(label, " polygon[{}]:".format(polygonIndex),
+                                 self.formatHelpText(group, label, self.polygonsHelpText),
+                                 QgsExpressionItem.ItemType.Expression)
+
     def getRasterDataItem(self, group, label, rasterIndex):
         """
-        Returns a field expression item
+        Returns a raster expression item
         :param rasterIndex: array index of raster data
         :param group: name of field group
         :param label: label of raster data
@@ -584,7 +599,7 @@ class QgsExpressionContext(QObject):
             title = self.tr("distance {}").format(expression)
         elif group == "Operators":
             title = self.tr("operator {}").format(expression)
-        elif group == "Fields" or group == "Raster Data":
+        elif group == "Fields" or group == "Raster Data" or group == "Polygons":
             title = self.tr("group {}").format(group)
 
         return "<h2>{}</h2><p>{}</p>".format(html.escape(title), helpText)
@@ -606,7 +621,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     """
     costFunctionChanged = pyqtSignal()
 
-    def __init__(self, parent=None, vectorLayer=None, rasterData=None, polygonLayer = None):
+    def __init__(self, parent=None, vectorLayer=None, rasterData=None, polygonLayers=None):
         """
         Constructor
         :type rasterData: Array of raster inputs and each input is a tuple: (layer, band)
@@ -618,7 +633,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
 
         self.vectorLayer = vectorLayer
         self.rasterData = rasterData
-        self.polygonLayer = polygonLayer
+        self.polygonLayers = polygonLayers
 
         self.codeEditor.setWrapMode(QsciScintilla.WrapWord)
 
@@ -679,9 +694,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
                 numberOfRasterData = 100
             else:
                 numberOfRasterData = len(self.rasterData)    
-            polygonsSet = False
-            if self.polygonLayer != None:
-                polygonsSet = True  
+            polygonsSet = self.polygonLayers is not None
             statusText = GraphBuilder.syntaxCheck(costFunction, fields, numberOfRasterData, polygonsSet)[0]
         self.setStatus(statusText)
 
@@ -771,6 +784,12 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         for item in operatorItems:
             self._addTreeItem(group, item)
 
+        # Polygons
+        group = "Polygons"
+        if self.polygonLayers:
+            for index, layer in enumerate(self.polygonLayers):
+                self._addTreeItem(group, self.expressionContext.getPolygonItem(group, layer.name(), index))
+
         # Raster Data
         group = "Raster Data"
         if self.rasterData:
@@ -828,8 +847,9 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     def getVectorLayer(self):
         return self.vectorLayer
 
-    def setPolygonLayer(self, polygonLayer):
-        self.polygonLayer = polygonLayer
+    def setPolygonLayers(self, polygonLayers):
+        self.polygonLayers = polygonLayers
+        self._loadTreeViewItems()
 
     def costFunction(self):
         return self.codeEditor.text()

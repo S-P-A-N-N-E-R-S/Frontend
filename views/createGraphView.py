@@ -189,7 +189,7 @@ class CreateGraphView(BaseContentView):
         """
         _, distanceStrategy = self.getDistanceStrategy()
         self.dialog.create_graph_costfunction_widget.setEnabled(distanceStrategy == "Advanced")
-        self.dialog.create_graph_polycost_input.setEnabled(distanceStrategy == "Advanced")
+        self.dialog.create_graph_polycost_widget.setEnabled(distanceStrategy == "Advanced")
         self.dialog.create_graph_rasterdata_widget.setEnabled(distanceStrategy == "Advanced")
 
     def _addRasterDataInput(self):
@@ -320,8 +320,7 @@ class CreateGraphView(BaseContentView):
         costFunctionDialog = QgsCostFunctionDialog()
         costFunctionDialog.setCostFunction(self.getCostFunction(index))
         costFunctionDialog.setVectorLayer(self.getInputLayer())
-        # todo: pass multiple polygon layer for cost function
-        costFunctionDialog.setPolygonLayer(self.getPolygonCostLayers()[0])
+        costFunctionDialog.setPolygonLayers(self.getPolygonCostLayers())
         costFunctionDialog.setRasterData(self.getRasterData())
         # load cost function when ok button is clicked
         costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction(), index))
