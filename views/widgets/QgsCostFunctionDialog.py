@@ -66,7 +66,9 @@ class QgsExpressionContext(QObject):
                     {
                         "label": "if",
                         "expressionText": " if( ; ; ) ",
-                        "description": self.tr("Tests a condition and returns a different result depending on the conditional check.")
+                        "description": self.tr("Tests a condition and returns a different result depending on the conditional check."),
+                        "syntax": self.tr("if(condition; exprIfTrue; exprIfFalse)"),
+                        "example": self.tr("if[field:ELEV > 100, raster[0]:sum, raster[0]:min]")
                     },
                     {
                         "label": self.tr("crossesPolygon"),
@@ -131,214 +133,296 @@ class QgsExpressionContext(QObject):
                         "label": "acos",
                         "expressionText": " math.acos( )",
                         "description": self.tr("Returns the inverse cosine of a value in radians."),
-                        # "syntax": self.tr("acos(value)"),
-                        # "example": self.tr("acos(0.5) → 1.0471975511966")
+                        "syntax": self.tr("acos(value)"),
+                        "example": self.tr("acos(0.5) → 1.0471975511966"),
                     },
                     {
                         "label": "acosh",
                         "expressionText": " math.acosh( )",
-                        "description": self.tr("Returns the inverse hyperbolic cosine of a value in radians.")
+                        "description": self.tr("Returns the inverse hyperbolic cosine of a value in radians."),
+                        "syntax": self.tr("acosh(value)"),
+                        "example": self.tr("acosh(50) → 4.6050701709847"),
                     },
                     {
                         "label": "asin",
                         "expressionText": " math.asin( )",
-                        "description": self.tr("Returns the arc sine of a value in radians.")
+                        "description": self.tr("Returns the arc sine of a value in radians."),
+                        "syntax": self.tr("asin(value)"),
+                        "example": self.tr("asin(1.0) → 1.5707963267949"),
                     },
                     {
                         "label": "asinh",
                         "expressionText": " math.asinh( )",
-                        "description": self.tr("Returns the inverse hyperbolic sine of a value in radians.")
+                        "description": self.tr("Returns the inverse hyperbolic sine of a value in radians."),
+                        "syntax": self.tr("asinh(value)"),
+                        "example": self.tr("asinh(50) → 4.6052701709914"),
                     },
                     {
                         "label": "atan",
                         "expressionText": " math.atan( )",
-                        "description": self.tr("Returns the arc tangent of a value in radians.")
+                        "description": self.tr("Returns the arc tangent of a value in radians."),
+                        "syntax": self.tr("atan(value)"),
+                        "example": self.tr("atan(0.5) → 0.463647609000806"),
                     },
                     {
                         "label": "atan2",
                         "expressionText": " math.atan2( )",
-                        "description": self.tr("Returns the arc tangent of y, x values in radians.")
+                        "description": self.tr("Returns the arc tangent of y, x values in radians."),
+                        "syntax": self.tr("atan2(dy,dx)"),
+                        "example": self.tr("atan2(1.0, 1.732) → 0.523611477769969"),
                     },
                     {
                         "label": "ceil",
                         "expressionText": " math.ceil( )",
-                        "description": self.tr("Rounds a number upwards.")
+                        "description": self.tr("Rounds a number upwards."),
+                        "syntax": self.tr("ceil(value)"),
+                        "example": self.tr("ceil(4.9) → 5"),
                     },
                     {
                         "label": "comb",
                         "expressionText": " math.comb( )",
                         "description": self.tr("Returns number of ways to choose k items from n items without repetition and without "
-                                    "order.")
+                                    "order."),
+                        "syntax": self.tr("comb(n,k)"),
+                        "example": self.tr("comb(7, 5) → 21"),
                     },
                     {
                         "label": "copysign",
                         "expressionText": " math.copysign( )",
-                        "description": self.tr("Return a float with the magnitude of x but the sign of y.")
+                        "description": self.tr("Return a float with the magnitude of x but the sign of y."),
+                        "syntax": self.tr("copysign(x,y)"),
+                        "example": self.tr("copysign(-20, 14.75) → 20.0"),
                     },
                     {
                         "label": "cos",
                         "expressionText": " math.cos( )",
-                        "description": self.tr("Returns cosine of an angle.")
+                        "description": self.tr("Returns cosine of an angle."),
+                        "syntax": self.tr("cos(angle)"),
+                        "example": self.tr("cos(1.571) → 0.000796326710733263"),
                     },
                     {
                         "label": "cosh",
                         "expressionText": " math.cosh( )",
-                        "description": self.tr("Returns the hyperbolic cosine of an angle.")
+                        "description": self.tr("Returns the hyperbolic cosine of an angle."),
+                        "syntax": self.tr("cosh(angle)"),
+                        "example": self.tr("cosh(1.571) → 2.5096472436284736"),
                     },
                     {
                         "label": "degrees",
                         "expressionText": " math.degrees( )",
-                        "description": self.tr("Converts from radians to degrees.")
+                        "description": self.tr("Converts from radians to degrees."),
+                        "syntax": self.tr("degrees(radians)"),
+                        "example": self.tr("degrees(3.14159) → 180"),
                     },
                     {
                         "label": "dist",
                         "expressionText": " math.dist( )",
-                        "description": self.tr("Returns the Euclidean distance between two points.")
+                        "description": self.tr("Returns the Euclidean distance between two points."),
+                        "syntax": self.tr("dist(point1,point2)"),
+                        "example": self.tr("dist([3,3], [6,12]) → 9.486832980505138"),
                     },
                     {
                         "label": "erf",
                         "expressionText": " math.erf( )",
-                        "description": self.tr("Returns the error function of a value.")
+                        "description": self.tr("Returns the error function of a value."),
+                        "syntax": self.tr("erf(value)"),
+                        "example": self.tr("erf(0.5) → 0.5204998778130465"),
                     },
                     {
                         "label": "erfc",
                         "expressionText": " math.erfc( )",
-                        "description": self.tr("Returns the complementary error function of a value.")
+                        "description": self.tr("Returns the complementary error function of a value."),
+                        "syntax": self.tr("erfc(value)"),
+                        "example": self.tr("erfc(0.5) → 0.4795001221869535"),
                     },
                     {
                         "label": "exp",
                         "expressionText": " math.exp( )",
-                        "description": self.tr("Returns exponential of an value.")
+                        "description": self.tr("Returns exponential of an value."),
+                        "syntax": self.tr("exp(value)"),
+                        "example": self.tr("exp(1.0) → 2.71828182845905"),
                     },
                     {
                         "label": "expm1",
                         "expressionText": " math.expm1( )",
-                        "description": self.tr("Returns E**x - 1.")
+                        "description": self.tr("Returns exponential value of a value - 1."),
+                        "syntax": self.tr("expm1(value)"),
+                        "example": self.tr("expm1(10) → 22025.465794806718"),
                     },
                     {
                         "label": "fabs",
                         "expressionText": " math.fabs( )",
-                        "description": self.tr("Returns the absolute value of a value.")
+                        "description": self.tr("Returns the absolute value of a value."),
+                        "syntax": self.tr("fabs(value)"),
+                        "example": self.tr("fabs(-12.21) → 12.21"),
                     },
                     {
                         "label": "factorial",
                         "expressionText": " math.factorial( )",
-                        "description": self.tr("Returns the factorial of a value.")
+                        "description": self.tr("Returns the factorial of a value."),
+                        "syntax": self.tr("factorial(value)"),
+                        "example": self.tr("factorial(7) → 5040"),
                     },
                     {
                         "label": "floor",
                         "expressionText": " math.floor( )",
-                        "description": self.tr("Rounds a number downwards.")
+                        "description": self.tr("Rounds a number downwards."),
+                        "syntax": self.tr("floor(value)"),
+                        "example": self.tr("floor(4.9) → 4"),
                     },
                     {
                         "label": "fmod",
                         "expressionText": " math.fmod( )",
-                        "description": self.tr("Returns the modulo of a value.")
+                        "description": self.tr("Returns the modulo of x divided by y."),
+                        "syntax": self.tr("fmod(x,y)"),
+                        "example": self.tr("fmod(14, 4) → 2.0"),
                     },
                     {
                         "label": "frexp",
                         "expressionText": " math.frexp( )",
-                        "description": self.tr("Returns the mantissa and the exponent of a value.")
+                        "description": self.tr("Returns the mantissa and the exponent of a value."),
+                        "syntax": self.tr("frexp(value)"),
+                        "example": self.tr("frexp(6) → (0.75, 3)"),
                     },                   
                     {
                         "label": "gamma",
                         "expressionText": " math.gamma( )",
-                        "description": self.tr("Returns the gamma function at x.")
+                        "description": self.tr("Returns the gamma function at x."),
+                        "syntax": self.tr("gamma(x)"),
+                        "example": self.tr("gamma(10) → 362880.0"),
                     },                                                 
                     {
                         "label": "isfinite",
                         "expressionText": " math.isfinite( )",
-                        "description": self.tr("Checks whether a number is finite.")
+                        "description": self.tr("Checks whether a number is finite."),
+                        "syntax": self.tr("isfinite(number)"),
+                        "example": self.tr("isfinite(float('inf')) → False"),
                     },
                     {
                         "label": "isinf",
                         "expressionText": " math.isinf( )",
-                        "description": self.tr("Checks whether a number is infinite.")
+                        "description": self.tr("Checks whether a number is infinite."),
+                        "syntax": self.tr("isinf(number)"),
+                        "example": self.tr("isfinite(float('inf')) → True"),
                     },
                     {
                         "label": "isnan",
                         "expressionText": " math.isnan( )",
-                        "description": self.tr("Checks whether a value is NaN (not a number).")
+                        "description": self.tr("Checks whether a value is NaN (not a number)."),
+                        "syntax": self.tr("isnan(value)"),
+                        "example": self.tr("isnan(20)) → False"),
                     },
                     {
                         "label": "isqrt",
                         "expressionText": " math.isqrt( )",
-                        "description": self.tr("Rounds a square root number downwards to the nearest integer.")
+                        "description": self.tr("Rounds a square root number downwards to the nearest integer."),
+                        "syntax": self.tr("isqrt(value)"),
+                        "example": self.tr("isqrt(10)) → 3"),
                     },
                     {
                         "label": "ldexp",
                         "expressionText": " math.ldexp( )",
-                        "description": self.tr("Returns the inverse of frexp() which is x * (2**i) of the given numbers x and i.")
+                        "description": self.tr("Returns the inverse of frexp() which is x * (2**i) of the given numbers x and i."),
+                        "syntax": self.tr("ldexp(x,i)"),
+                        "example": self.tr("ldexp(5, 3)) → 40.0"),
                     },
                     {
                         "label": "lgamma",
                         "expressionText": " math.lgamma( )",
-                        "description": self.tr("Returns the log gamma value of x.")
+                        "description": self.tr("Returns the log gamma value of x."),
+                        "syntax": self.tr("lgamma(x)"),
+                        "example": self.tr("lgamma(5)) → 3.178053830347945"),
                     },
                     {
                         "label": "log",
                         "expressionText": " math.log( )",
-                        "description": self.tr("Returns the value of the logarithm of the passed value and base.")
+                        "description": self.tr("Returns the value of the logarithm of the passed value and base."),
+                        "syntax": self.tr("log(base,value)"),
+                        "example": self.tr("log(2, 32) → 5"),
                     },
                     {
                         "label": "log10",
                         "expressionText": " math.log10( )",
-                        "description": self.tr("Returns the value of the base 10 logarithm of the passed expression.")
+                        "description": self.tr("Returns the value of the base 10 logarithm of the passed expression."),
+                        "syntax": self.tr("log10(value)"),
+                        "example": self.tr("log10(1) → 0"),
                     },
                     {
                         "label": "log1p",
                         "expressionText": " math.log1p( )",
-                        "description": self.tr("Returns the value of the natural logarithm of 1+x.")
+                        "description": self.tr("Returns the value of the natural logarithm of 1+x."),
+                        "syntax": self.tr("log1p(x)"),
+                        "example": self.tr("log1p(3) → 1.3862943611198906"),
                     },
                     {
                         "label": "log2",
                         "expressionText": " math.log2( )",
-                        "description": self.tr("Returns the value of the base 2 logarithm.")
+                        "description": self.tr("Returns the value of the base 2 logarithm of a value."),
+                        "syntax": self.tr("log2(value)"),
+                        "example": self.tr("log2(5) → 2.321928094887362"),
                     },                  
                     {
                         "label": "pow",
                         "expressionText": " math.pow( )",
-                        "description": self.tr("Returns the value of x to the power of y")
+                        "description": self.tr("Returns the value of x to the power of y"),
+                        "syntax": self.tr("pow(x,y)"),
+                        "example": self.tr("pow(4, 3) → 64.0"),
                     },                  
                     {
                         "label": "radians",
                         "expressionText": " math.radians( )",
-                        "description": self.tr("Converts from degrees to radians.")
+                        "description": self.tr("Converts from degrees to radians."),
+                        "syntax": self.tr("radians(degrees)"),
+                        "example": self.tr("radians(180) → 3.14159"),
                     },                    
                     {
                         "label": "remainder",
                         "expressionText": " math.remainder( )",
-                        "description": self.tr("Returns the IEEE 754-style remainder of x with respect to y")
+                        "description": self.tr("Returns the IEEE 754-style remainder of x with respect to y"),
+                        "syntax": self.tr("remainder(x,y)"),
+                        "example": self.tr("remainder(5, 2) → 1.0"),
                     },
                     {
                         "label": "sin",
                         "expressionText": " math.sin( )",
-                        "description": self.tr("Returns the sine of an angle.")
+                        "description": self.tr("Returns the sine of an angle."),
+                        "syntax": self.tr("sin(angle)"),
+                        "example": self.tr("sin(1.571) → 0.999999682931835"),
                     },
                     {
                         "label": "sinh",
                         "expressionText": " math.sinh( )",
-                        "description": self.tr("Returns the hyperbolic sine of angle.")
+                        "description": self.tr("Returns the hyperbolic sine of angle."),
+                        "syntax": self.tr("sinh(angle)"),
+                        "example": self.tr("sinh(0.4) → 0.4107523258028155"),
                     },
                     {
                         "label": "sqrt",
                         "expressionText": " math.sqrt( )",
-                        "description": self.tr("Returns square root of a value.")
+                        "description": self.tr("Returns square root of a value."),
+                        "syntax": self.tr("sqrt(value)"),
+                        "example": self.tr("sqrt(9) → 3"),
                     },
                     {
                         "label": "tan",
                         "expressionText": " math.tan( )",
-                        "description": self.tr("Returns the tangent of an angle.")
+                        "description": self.tr("Returns the tangent of an angle."),
+                        "syntax": self.tr("tan(angle)"),
+                        "example": self.tr("tan(1.0) → 1.5574077246549"),
                     },
                     {
                         "label": "tanh",
                         "expressionText": " math.tanh( )",
-                        "description": self.tr("Returns the hyperbolic tangent of an angle.")
+                        "description": self.tr("Returns the hyperbolic tangent of an angle."),
+                        "syntax": self.tr("tanh(angle)"),
+                        "example": self.tr("tanh(1.0) → 0.7615941559557649"),
                     },
                     {
                         "label": "trunc",
                         "expressionText": " math.trunc( )",
-                        "description": self.tr("Returns the truncated integer part of a value.")
+                        "description": self.tr("Returns the truncated integer part of a value."),
+                        "syntax": self.tr("trunc(value)"),
+                        "example": self.tr("trunc(2.45) → 2"),
                     },
                 ],
             },
@@ -349,7 +433,9 @@ class QgsExpressionContext(QObject):
                     {
                         "label": "Random function",
                         "expressionText": "random(value1, value2)",
-                        "description": self.tr("Random value between value1 and value2")
+                        "description": self.tr("Random value between value1 and value2"),
+                        "syntax": self.tr("random(value1,value2)"),
+                        "example": self.tr("random(5, 60) → 6.4803846462162"),
                     },                           
                 ]
             },
