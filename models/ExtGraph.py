@@ -102,6 +102,7 @@ class ExtGraph(QObject):
 
         # holds the feature IDs if lines where used to create graph
         self.featureMatchings = []
+        self.pointsToFeatureHash = {}
 
         # default information from GraphBuilder
         self.numberNeighbours = 20
