@@ -47,7 +47,7 @@ class GraphBuilder:
         self.additionalPointLayer = QgsVectorLayer()
         self.costFunctions = []
         self.rasterBands = []
-        self.polygonsForCostFunction = QgsVectorLayer()
+        self.polygonsForCostFunction = []
         self.kdTree = None
         self.layerWithClusterIDS = None
         # is set if graph builder is running as task
@@ -79,7 +79,7 @@ class GraphBuilder:
             raise TypeError("Not a polygon geometry")
         
         self.__options["usePolygonsInCostFunction"] = True
-        self.polygonsForCostFunction = vectorLayer
+        self.polygonsForCostFunction.append(vectorLayer)
     
     def setForbiddenAreas(self, vectorLayer):
         """
@@ -138,7 +138,7 @@ class GraphBuilder:
         """       
         self.__options["distanceStrategy"] = "Advanced"
                                                
-        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), self.__options["usePolygonsInCostFunction"])             
+        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), len(self.polygonsForCostFunction))             
         if syntaxCheckResult[0] == "No error found":
             function = syntaxCheckResult[1]
             self.costFunctions.append(function)
@@ -160,7 +160,7 @@ class GraphBuilder:
             closingBracketIndex+=1
         
     @staticmethod                   
-    def syntaxCheck(function, fields, numberOfRasterData, polygonsSet):
+    def syntaxCheck(function, fields, numberOfRasterData, numberOfPolygons):
         """
         Checks if the function is valid and exchanges the brackets with other
         symbols to enable future analysis
@@ -200,9 +200,7 @@ class GraphBuilder:
                     return ("Unbalanced parentheses", "")    
         if len(stack) != 0:
             return ("Unbalanced parentheses", "")        
-     
-        if ("insidePolygon" in function or "crossesPolygon" in function) and polygonsSet == False:
-            return ("No polygon layer set", "")
+         
      
         # check all random operands   
         partCounter = 1 
@@ -228,6 +226,7 @@ class GraphBuilder:
                         toReturn = "Error in random function " + str(partCounter) + ": Math function can not be used inside random function"
                         return(toReturn, "")
                 partCounter+=1
+        
         # check all if constructs
         partCounter = 1 
         found = True
@@ -283,7 +282,7 @@ class GraphBuilder:
                         firstOperand = comparedOperands[0]    
                     secondOperand = comparedOperands[1]
                     secondOperand = secondOperand.replace("=","")
-                    possOperandsRegex = re.compile(r'field|crossesPolygon|insidePolygon|math|raster|rnd|True|False|euclidean|manhattan|geodesic|ellipsoidal')
+                    possOperandsRegex = re.compile(r'field|polygon|math|raster|rnd|True|False|euclidean|manhattan|geodesic|ellipsoidal')
                     res = possOperandsRegex.search(firstOperand)
                     if res == None and not firstOperand.isnumeric():
                         toReturn = "Error in first operand of if construct " + str(partCounter) + ": Invalid first operand of comparison"
@@ -294,10 +293,10 @@ class GraphBuilder:
                         return (toReturn, "")
                      
                     #check polygons set if polygon function used
-                    if firstOperand == "crossesPolygon" and secondOperand != "True" and secondOperand != "False":
+                    if "crossesPolygon" in firstOperand and secondOperand != "True" and secondOperand != "False":
                         toReturn = "Error in if construct " + str(partCounter) + ": crossesPolygon can only be compared to False or True"
                         return (toReturn, "")
-                    if firstOperand == "insidePolygon" and secondOperand != "True" and secondOperand != "False": 
+                    if "insidePolygon" in firstOperand and secondOperand != "True" and secondOperand != "False": 
                         toReturn = "Error in if construct " + str(partCounter) + ": insidePolygon can only be compared to False or True"
                         return (toReturn, "")                        
                           
@@ -309,6 +308,26 @@ class GraphBuilder:
                     return (toReturn, "")      
                 
                 partCounter+=1                     
+        
+        # check all polygon constructs
+        partCounter = 1
+        regex = re.compile(r'polygon\[?[0-9]?\]?:?[A-z]*')
+        res = regex.findall(function)
+        for matchString in res:
+            if not "[" in matchString or not "]" in matchString or not ":" in matchString:
+                toReturn = "Error in polygon construct " + str(partCounter) + ": No index given"
+                return (toReturn, "")
+            number = matchString.split("[")[1].split("]")[0]
+            if not number.isnumeric:
+                toReturn = "Error in polygon construct " + str(partCounter) + ": No index given"
+                return (toReturn, "")
+            if int(number) >= numberOfPolygons or int(number) < 0:
+                toReturn = "Error in polygon construct " + str(partCounter) + ": No valid index given"
+                return (toReturn, "")
+            if not ":crossesPolygon" in matchString and not ":insidePolygon" in matchString:
+                toReturn = "Error in polygon construct " + str(partCounter) + ": Define valid analysis for polygons"
+                return (toReturn, "")
+            partCounter+=1
         
         # check math constructs    
         partCounter = 1                      

@@ -44,7 +44,7 @@ class AdvancedCostCalculator():
         self.formulaParts = []
         self.aStarAlgObjects = [None] * len(self.rLayers)
     
-    def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygons = None, edgesCrossingPolygons = None):          
+    def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygonsList = None, edgesCrossingPolygonsList = None):          
         # check if part string was already translated
         for i in range(len(self.translatedParts)):
             if self.formulaParts[i] == part:
@@ -73,19 +73,27 @@ class AdvancedCostCalculator():
         
         elif part == "ellipsoidal":
             return str(self.graph.ellipsoidalDist(edgeID))
-        
-        elif part == "crossesPolygon":                              
-            for feature in edgesCrossingPolygons.getFeatures():
+               
+        # translate polygon construct
+        regex = re.compile(r'polygon\[[0-9]\]:crossesPolygon')
+        res = regex.search(part)
+        if res != None:
+            index = int(res.group().split("[")[1].split("]")[0])
+            for feature in edgesCrossingPolygonsList[index].getFeatures():
                 if edgeID == feature["ID"]:
                     return "True"                       
-            return "False"        
-            
-        elif part == "insidePolygon":                                        
-            for feature in edgesInPolygons.getFeatures():
-                if edgeID == feature["ID"]:                        
+            return "False" 
+                      
+        # translate polygon construct
+        regex = re.compile(r'polygon\[[0-9]\]:insidePolygon')
+        res = regex.search(part)
+        if res != None:
+            index = int(res.group().split("[")[1].split("]")[0])
+            for feature in edgesInPolygonsList[index].getFeatures():
+                if edgeID == feature["ID"]:
                     return "True"                       
-            return "False"        
-                                
+            return "False" 
+                                            
         # translate if part
         elif "if" in part:                    
             expression = part.split(";")[0].split("{",1)[1]
@@ -96,7 +104,7 @@ class AdvancedCostCalculator():
                 variables[i] = variables[i].replace("=", "")
                                                   
             for var in variables:                       
-                varTranslations.append(self.__translate(var, edgeID, sampledPointsLayer, edgesInPolygons, edgesCrossingPolygons))                                            
+                varTranslations.append(self.__translate(var, edgeID, sampledPointsLayer, edgesInPolygonsList, edgesCrossingPolygonsList))                                            
                       
             counter = 0
             for var in variables:             
@@ -375,20 +383,28 @@ class AdvancedCostCalculator():
             rasterIndex = int(matchString.split("[")[1].split("]")[0])
             self.aStarAlgObjects[rasterIndex] = AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs())
         
+        edgesInPolygonsList = []
+        edgesCrossingPolygonsList = []
         edgesInPolygons = QgsVectorLayer()
         edgesCrossingPolygons = QgsVectorLayer()
+        
+        
         # check if polygons for cost functions are set
-        if self.polygons.featureCount() > 0:
+        if len(self.polygons) > 0:
             # check if edgeLayer was already created
             if len(self.rLayers) == 0:
                 edgeLayer = self.__createEdgeLayer()
-            if "insidePolygon" in costFunction:                
-                polygonResult = processing.run("native:extractbylocation", {"INPUT": edgeLayer, "PREDICATE": 6, "INTERSECT": self.polygons, "OUTPUT": "memory:"})
-                edgesInPolygons = polygonResult["OUTPUT"]               
-            if "crossesPolygon" in costFunction:
-                polygonResult = processing.run("native:extractbylocation", {"INPUT": edgeLayer, "PREDICATE": 7, "INTERSECT": self.polygons, "OUTPUT": "memory:"})
-                edgesCrossingPolygons = polygonResult["OUTPUT"]
-                          
+            for polygon in self.polygons:
+                       
+                if "insidePolygon" in costFunction:                
+                    polygonResult = processing.run("native:extractbylocation", {"INPUT": edgeLayer, "PREDICATE": 6, "INTERSECT": polygon, "OUTPUT": "memory:"})
+                    edgesInPolygons = polygonResult["OUTPUT"]  
+                    edgesInPolygonsList.append(edgesInPolygons)             
+                if "crossesPolygon" in costFunction:
+                    polygonResult = processing.run("native:extractbylocation", {"INPUT": edgeLayer, "PREDICATE": 7, "INTERSECT": polygon, "OUTPUT": "memory:"})
+                    edgesCrossingPolygons = polygonResult["OUTPUT"]
+                    edgesCrossingPolygonsList.append(edgesCrossingPolygons)
+                                    
         costFunction = costFunction.replace(" ", "").replace('"', '')           
         self.formulaParts = re.split("\+|-|\*|/", costFunction)
         variables = []
@@ -404,7 +420,7 @@ class AdvancedCostCalculator():
             # call function to translate the  parts            
             for j in range(len(self.formulaParts)):
                    
-                self.translatedParts.append(self.__translate(self.formulaParts[j], i, sampledPointsLayers, edgesInPolygons, edgesCrossingPolygons))  
+                self.translatedParts.append(self.__translate(self.formulaParts[j], i, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList))  
                                                                                                                     
             # after all variables are translated to numbers if conditions can be evaluated
             for j in range(len(self.formulaParts)):

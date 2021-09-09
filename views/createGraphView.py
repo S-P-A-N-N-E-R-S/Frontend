@@ -318,10 +318,11 @@ class CreateGraphView(BaseContentView):
         :return:
         """
         costFunctionDialog = QgsCostFunctionDialog()
-        costFunctionDialog.setCostFunction(self.getCostFunction(index))
+        
         costFunctionDialog.setVectorLayer(self.getInputLayer())
         costFunctionDialog.setPolygonLayers(self.getPolygonCostLayers())
         costFunctionDialog.setRasterData(self.getRasterData())
+        costFunctionDialog.setCostFunction(self.getCostFunction(index))
         # load cost function when ok button is clicked
         costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction(), index))
         costFunctionDialog.exec()

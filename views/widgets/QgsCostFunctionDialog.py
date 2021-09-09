@@ -722,7 +722,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     """
     costFunctionChanged = pyqtSignal()
 
-    def __init__(self, parent=None, vectorLayer=None, rasterData=None, polygonLayers=None):
+    def __init__(self, parent=None, vectorLayer=None, rasterData=[], polygonLayers=[]):
         """
         Constructor
         :type rasterData: Array of raster inputs and each input is a tuple: (layer, band)
@@ -791,12 +791,9 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
             statusText = "No function is set"
         else:
             fields = self.getVectorLayer().fields() if self.getVectorLayer() else []            
-            if self.rasterData == None:
-                numberOfRasterData = 100
-            else:
-                numberOfRasterData = len(self.rasterData)    
-            polygonsSet = self.polygonLayers is not None
-            statusText = GraphBuilder.syntaxCheck(costFunction, fields, numberOfRasterData, polygonsSet)[0]
+           
+            numberOfRasterData = len(self.rasterData)   
+            statusText = GraphBuilder.syntaxCheck(costFunction, fields, numberOfRasterData, len(self.polygonLayers))[0]
         self.setStatus(statusText)
 
     def _treeItemDoubleClicked(self, modelIndex):
@@ -958,10 +955,12 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     def setCostFunction(self, costFunction):
         self.codeEditor.setText(costFunction)
         self.codeEditor.setFocus()
+        #self._updateStatusText
 
     def insertEditorText(self, text):
         self.codeEditor.insertText(text)
         self.codeEditor.setFocus()
+        #self._updateStatusText
 
     def setHelpText(self, text):
         self.helpText.setText(text)
