@@ -72,6 +72,9 @@ class CreateGraphView(BaseContentView):
         # set up add raster data button
         self.dialog.create_graph_raster_plus_btn.clicked.connect(self._addRasterDataInput)
 
+        # set up add polygon cost button
+        self.dialog.create_graph_polycost_plus_btn.clicked.connect(self._addPolygonCostInput)
+
         # set up advance cost widget button
         self.dialog.create_graph_costfunction_define_btn.clicked.connect(lambda: self._showCostFunctionDialog(0))
 
@@ -186,7 +189,7 @@ class CreateGraphView(BaseContentView):
         """
         _, distanceStrategy = self.getDistanceStrategy()
         self.dialog.create_graph_costfunction_widget.setEnabled(distanceStrategy == "Advanced")
-        self.dialog.create_graph_polycost_input.setEnabled(distanceStrategy == "Advanced")
+        self.dialog.create_graph_polycost_widget.setEnabled(distanceStrategy == "Advanced")
         self.dialog.create_graph_rasterdata_widget.setEnabled(distanceStrategy == "Advanced")
 
     def _addRasterDataInput(self):
@@ -200,7 +203,7 @@ class CreateGraphView(BaseContentView):
         button.setText("➖")
         button.setToolTip(self.tr("Remove raster input"))
         button.clicked.disconnect()
-        button.clicked.connect(lambda: self._removeLayoutFromWidget("create_graph_rasterdata_widget", lastLayout))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_rasterdata_widget, lastLayout))
 
         layerComboBox = QgsMapLayerComboBox()
         layerComboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -218,7 +221,7 @@ class CreateGraphView(BaseContentView):
         addButton = QPushButton("➕")
         addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
         addButton.setMaximumSize(25, 25)
-        addButton.setToolTip(self.tr("Add raster layer"))
+        addButton.setToolTip(self.tr("Add raster input"))
         addButton.clicked.connect(self._addRasterDataInput)
 
         layout = QHBoxLayout()
@@ -227,6 +230,38 @@ class CreateGraphView(BaseContentView):
         layout.addWidget(addButton)
 
         self.dialog.create_graph_rasterdata_widget.layout().addLayout(layout)
+
+    def _addPolygonCostInput(self):
+        """
+        Appends a new polygon cost input line
+        :return:
+        """
+        #  change add button to remove button
+        lastLayout = self.dialog.create_graph_polycost_widget.layout().itemAt(self.dialog.create_graph_polycost_widget.layout().count() - 1)
+        button = lastLayout.itemAt(lastLayout.count() - 1).widget()
+        button.setText("➖")
+        button.setToolTip(self.tr("Remove polygon input"))
+        button.clicked.disconnect()
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_polycost_widget, lastLayout))
+
+        layerComboBox = QgsMapLayerComboBox()
+        layerComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        layerComboBox.setAllowEmptyLayer(True)
+        layerComboBox.setCurrentIndex(0)
+        layerComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
+        layerComboBox.setToolTip(self.tr("Select input layer"))
+
+        addButton = QPushButton("➕")
+        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        addButton.setMaximumSize(25, 25)
+        addButton.setToolTip(self.tr("Add polygon input"))
+        addButton.clicked.connect(self._addPolygonCostInput)
+
+        layout = QHBoxLayout()
+        layout.addWidget(layerComboBox)
+        layout.addWidget(addButton)
+
+        self.dialog.create_graph_polycost_widget.layout().addLayout(layout)
 
     def _addCostFunctionInput(self):
         """
@@ -240,7 +275,7 @@ class CreateGraphView(BaseContentView):
         button.setText("➖")
         button.setToolTip(self.tr("Remove cost function"))
         button.clicked.disconnect()
-        button.clicked.connect(lambda: self._removeLayoutFromWidget("create_graph_costfunction_widget", lastLayout))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_costfunction_widget, lastLayout))
 
         costLineEdit = QLineEdit()
         costLineEdit.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
@@ -273,7 +308,6 @@ class CreateGraphView(BaseContentView):
         :param layout to be deleted
         :return:
         """
-        widget = getattr(self.dialog, widget)
         for i in reversed(range(layout.count())):
             layout.itemAt(i).widget().deleteLater()
         widget.layout().removeItem(layout)
@@ -284,10 +318,11 @@ class CreateGraphView(BaseContentView):
         :return:
         """
         costFunctionDialog = QgsCostFunctionDialog()
-        costFunctionDialog.setCostFunction(self.getCostFunction(index))
+        
         costFunctionDialog.setVectorLayer(self.getInputLayer())
-        costFunctionDialog.setPolygonLayer(self.getPolygonCostLayer())
+        costFunctionDialog.setPolygonLayers(self.getPolygonCostLayers())
         costFunctionDialog.setRasterData(self.getRasterData())
+        costFunctionDialog.setCostFunction(self.getCostFunction(index))
         # load cost function when ok button is clicked
         costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction(), index))
         costFunctionDialog.exec()
@@ -439,8 +474,18 @@ class CreateGraphView(BaseContentView):
                 rasterData.append((rasterLayer, rasterBand))
         return rasterData
 
-    def getPolygonCostLayer(self):
-        return self.dialog.create_graph_polycost_input.currentLayer()
+    def getPolygonCostLayers(self):
+        """
+        Collects all not empty user selected polygon cost layers
+        :return: Array of polygon layers
+        """
+        polygonLayers = []
+        for i in range(self.dialog.create_graph_polycost_widget.layout().count()):
+            inputLayout = self.dialog.create_graph_polycost_widget.layout().itemAt(i)
+            polygonLayer = inputLayout.itemAt(0).widget().currentLayer()
+            if polygonLayer is not None:
+                polygonLayers.append(polygonLayer)
+        return polygonLayers
 
     def getForbiddenAreaLayer(self):
         return self.dialog.create_graph_forbiddenarea_input.currentLayer()
