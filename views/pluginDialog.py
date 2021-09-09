@@ -24,8 +24,8 @@
 import os
 from enum import Enum
 
-from qgis.PyQt import uic
-from qgis.PyQt import QtWidgets
+from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt.QtCore import Qt
 
 from .exampleDataView import ExampleDataView
 from .createGraphView import CreateGraphView
@@ -62,6 +62,9 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
         # left navigation
         self.menu_list.currentRowChanged.connect(self.stacked_content_views.setCurrentIndex)
 
+        # display dialog as window with minimize and maximize buttons
+        self.setWindowFlags(Qt.Window)
+
         # setup each content view
         self.contentViews = [
             ExampleDataView(self),
@@ -76,6 +79,4 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
 
     def setView(self, View):
         self.menu_list.setCurrentRow(View.value)
-
-
-
+        self.activateWindow()

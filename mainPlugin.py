@@ -22,6 +22,7 @@ class OGDFPlugin:
         :type iface: QgisInterface
         """
         self.iface = iface
+        self.dialog = None
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -118,9 +119,13 @@ class OGDFPlugin:
         plugin_menu.addMenu(menu)
 
     def openView(self, view):
-        dialog = PluginDialog()
-        dialog.setView(view)
-        dialog.exec()
+        if self.dialog is None:
+            self.dialog = PluginDialog()
+            self.dialog.setView(view)
+            self.dialog.exec()
+            self.dialog = None
+        else:
+            self.dialog.setView(view)
 
     def unload(self):
         # remove toolbar entry
