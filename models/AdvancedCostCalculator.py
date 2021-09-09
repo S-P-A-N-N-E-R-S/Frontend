@@ -4,6 +4,7 @@ from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 from .ExtGraph import ExtGraph
+from .AStarOnRasterData import *
 import random
 from qgis import processing
 import math
@@ -12,7 +13,6 @@ import re
 import statistics
 import time
 import numpy as np
-
 
 
 class AdvancedCostCalculator():
@@ -40,8 +40,16 @@ class AdvancedCostCalculator():
         self.rasterBands = rasterBands
         self.operators = ["+","-","*","/","(",")"]
         self.mathOperatorsWithTwoVar = ["pow","dist","comb", "copysign", "fmod", "ldexp", "remainder", "log", "atan2"]
+        self.translatedParts = []
+        self.formulaParts = []
+        self.aStarAlgObjects = [None] * len(self.rLayers)
     
-    def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygons = None, edgesCrossingPolygons = None):        
+    def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygons = None, edgesCrossingPolygons = None):          
+        # check if part string was already translated
+        for i in range(len(self.translatedParts)):
+            if self.formulaParts[i] == part:
+                return self.translatedParts[i]
+                                  
         edge = self.graph.edge(edgeID)       
         # operator or bracket do not need to be translated
         if part in self.operators or part.isnumeric() or part == "True" or part == "False":                                   
@@ -99,8 +107,7 @@ class AdvancedCostCalculator():
             v2 = self.__translate(part.split(";")[2][:-1], edgeID, sampledPointsLayer)            
             expression = expression.replace("and", " and ")
             expression = expression.replace("or", " or ")
-            expression = expression.replace("not", " not ")
-                                    
+            expression = expression.replace("not", " not ")                       
             # expression and variables to set are translated
             return "if" + "{" + expression + ";" + str(v1) + ";" + str(v2) + "}"
                 
@@ -116,9 +123,7 @@ class AdvancedCostCalculator():
                 # recursive call             
                 var = self.__translate(part.split("$")[0].split("%")[1], edgeID, sampledPointsLayer)
                 return "math." + mathOperation + "(" + var + ")"    
-        
-        
-        
+                
         # get specified field information from feature
         elif "field:" in part:                       
             name = part.split(":")[1]            
@@ -142,12 +147,9 @@ class AdvancedCostCalculator():
             
             # use information from points to set the edge weights
             # only incoming edges are considered         
-            elif self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:                             
-                for feature in self.vLayer.getFeatures():
-                    geom = feature.geometry()
-                    if self.graph.vertex(edge.toVertex()).point() == geom.asPoint():                        
-                        return str(feature[name])                      
-        
+            elif self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:                                            
+                return (self.graph.pointsToFeatureHash[self.graph.vertex(edge.toVertex()).point().toString()])[name]
+                                  
         # analysis of raster data
         elif "raster[" in part:           
             rasterDataID = int(part.split("[")[1].split("]")[0])                
@@ -206,7 +208,7 @@ class AdvancedCostCalculator():
                 for i in range(len(self.pointValuesForEdge)-1):
                     totalClimb = totalClimb + abs(self.pointValuesForEdge[i] - self.pointValuesForEdge[i+1])
                 return str(totalClimb) 
-            # last to types can only occur in if construct
+            # last two types can only occur in if construct
             elif ":pixelValue" in part:                 
                 listOfPixelValuesAsString = "pixelValue("
                 for i in range(0, len(self.pointValuesForEdge)-1):                                                                          
@@ -214,7 +216,7 @@ class AdvancedCostCalculator():
                  
                 listOfPixelValuesAsString = listOfPixelValuesAsString + str(self.pointValuesForEdge[len(self.pointValuesForEdge)-1]);   
                  
-                listOfPixelValuesAsString = listOfPixelValuesAsString + ")";           
+                listOfPixelValuesAsString = listOfPixelValuesAsString + ")";                 
                 return listOfPixelValuesAsString                              
             elif ":percentOfValues" in part:
                 findPercentage = re.search("percentOfValues[0-9]+",part)
@@ -227,11 +229,14 @@ class AdvancedCostCalculator():
                     
                 listOfPixelValuesAsString = listOfPixelValuesAsString + ")";                   
                 return listOfPixelValuesAsString
+            
+            elif ":shortestPath" in part:
+                return self.aStarAlgObjects[rasterDataID].getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
                                                 
         elif "rnd?" in part:
             lb = part.split("?")[1].split(",")[0]
             ub = part.split("&")[0].split(",")[1]
-                       
+                                             
             try:
                 convertedLB = float(lb)
                 convertedUB = float(ub)
@@ -240,8 +245,7 @@ class AdvancedCostCalculator():
             except ValueError:
                 pass
           
-            translated = False
-                        
+            translated = False                        
             if not lb.isnumeric():
                 lb = self.__translate(lb, edgeID, sampledPointsLayer)
                 translated = True
@@ -251,10 +255,10 @@ class AdvancedCostCalculator():
             if translated == True:
                 convertedLB = float(lb)
                 convertedUB = float(ub)
-                return random.uniform(convertedLB,convertedUB)
+                return random.uniform(convertedLB,convertedUB)           
             
             return random.randint(int(lb),int(ub))
-        
+            
         return str("0")
         
     def __evaluateIfs(self, part):
@@ -270,17 +274,30 @@ class AdvancedCostCalculator():
             for expPart in expressionParts: 
                 if "pixelValue" in expPart:                    
                     listString = expPart.split("(")[1].split(")")[0]
-                    list = listString.split(",")
-                    equalTrue = False
-                    for l in list:
-                        toEval = re.sub(r"pixelValue\(([0-9]+,)+[0-9]+\)", "", expPart)                        
-                        toEval = l + toEval                       
+                    if "," in listString:                        
+                        list = listString.split(",")
+                        equalTrue = False
+                        for l in list:
+                            toEval = re.sub(r"pixelValue\(([0-9]+,)+[0-9]+\)", "", expPart)                        
+                            toEval = l + toEval                       
+                            if eval(toEval) == True:
+                                expression = expression.replace(expPart, " True ")    
+                                equalTrue = True
+                                break                
+                        if equalTrue == False:
+                            expression = expression.replace(expPart, " False ")                         
+                        
+                    # only one value in list
+                    else:
+                        
+                        toEval = re.sub(r"pixelValue\([0-9]\)", "", expPart)
+                        toEval = listString + toEval
                         if eval(toEval) == True:
                             expression = expression.replace(expPart, " True ")    
                             break                
-                    if equalTrue == False:
-                        expression = expression.replace(expPart, " False ")     
-                
+                        else:
+                            expression = expression.replace(expPart, " False ")   
+                               
                 if "percentOfValues" in expPart:                   
                     # percentage is first value in the list                   
                     listString = expPart.split("(")[1].split(")")[0]
@@ -301,7 +318,7 @@ class AdvancedCostCalculator():
                         expression = expression.replace(expPart, " True ")
                     else:
                         expression = expression.replace(expPart, " False ")       
-                        
+                      
             if eval(expression) == True:              
                 return part.split(";")[1]
             else:
@@ -339,7 +356,7 @@ class AdvancedCostCalculator():
         
         :type costFunction: String
         :return graph with set edge costs
-        """             
+        """                
         weights = []          
         # call QGIS-Tools to get the pixel values for the edges
         # sampledPointsLayers holds the sampled raster values of all edges
@@ -350,6 +367,13 @@ class AdvancedCostCalculator():
                 result = processing.run("qgis:generatepointspixelcentroidsalongline", {"INPUT_RASTER": self.rLayers[i], "INPUT_VECTOR": edgeLayer, "OUTPUT": "memory:"})
                 result2 = processing.run("qgis:rastersampling",{"INPUT": result["OUTPUT"], "RASTERCOPY": self.rLayers[i], "COLUMN_PREFIX": "SAMPLE_", "OUTPUT": "memory:"})
                 sampledPointsLayers.append(result2["OUTPUT"])  
+        
+        # initialize all necessary AStarOnRasterData objects
+        regex = re.compile(r'raster\[[0-9]\]:shortestPath')
+        res = regex.findall(costFunction)
+        for matchString in res:
+            rasterIndex = int(matchString.split("[")[1].split("]")[0])
+            self.aStarAlgObjects[rasterIndex] = AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs())
         
         edgesInPolygons = QgsVectorLayer()
         edgesCrossingPolygons = QgsVectorLayer()
@@ -366,63 +390,51 @@ class AdvancedCostCalculator():
                 edgesCrossingPolygons = polygonResult["OUTPUT"]
                           
         costFunction = costFunction.replace(" ", "").replace('"', '')           
-        formulaParts = re.split("\+|-|\*|/", costFunction)
+        self.formulaParts = re.split("\+|-|\*|/", costFunction)
         variables = []
                        
-        for i in range(len(formulaParts)):
-            formulaParts[i] = formulaParts[i].replace("(","").replace(")","")
-            variables.append(formulaParts[i])
+        for i in range(len(self.formulaParts)):
+            self.formulaParts[i] = self.formulaParts[i].replace("(","").replace(")","")
+            variables.append(self.formulaParts[i])
                                                    
         # since the function value depends on the edge the function needs to be evaluated for every edge separately                                                                  
-        if edgeID == None:            
-            for i in range(self.graph.edgeCount()):   
-                translatedParts = []                                                       
-                # call function to translate the  parts            
-                for j in range(len(formulaParts)):
-                    # check if the current variables was already analyzed
-                    alreadyDone = False
-                    foundIndex = 0
-                    for o in range(j):
-                        if formulaParts[o] == formulaParts[j]:
-                            alreadyDone = True
-                            foundIndex = o
-                            break               
-                    # only translate if not already done    
-                    if alreadyDone == False:    
-                        translatedParts.append(self.__translate(formulaParts[j], i, sampledPointsLayers, edgesInPolygons, edgesCrossingPolygons))  
-                    else:
-                        translatedParts.append(translatedParts[foundIndex])    
-                 
-                                                                                           
-                # after all variables are translated to numbers if conditions can be evaluated
-                for j in range(len(formulaParts)):
-                    translatedParts[j] = self.__evaluateIfs(str(translatedParts[j]))                    
-                                
-                counter = 0                       
-                translatedFormula = costFunction
-                for var in variables:        
-                    
-                    while re.search("percentOfValues[0-9]+", var):
-                        find = re.search("percentOfValues[0-9]+",var)
-                        findStartEnd = find.span()
-                        findStart = findStartEnd[0]
-                        findEnd = findStartEnd[1]
-                        startOfNumbers = re.search("[0-9]+", find.group()).span()[0]
-                        endOfNumbers = re.search("[0-9]+", find.group()).span()[1]
-                        var = var[:findStart+startOfNumbers] + "(" + var[startOfNumbers+findStart:endOfNumbers+findStart] + ")" + var[endOfNumbers+findStart:]
-                        
-                        #translatedFormula = translatedFormula.replace("(","").replace(")","")
-                  
-                    
-                    translatedFormula = translatedFormula.replace(var,str(translatedParts[counter]))
+        #if edgeID == None:            
+        for i in range(self.graph.edgeCount()):  
+            self.translatedParts = []                                                                 
+            # call function to translate the  parts            
+            for j in range(len(self.formulaParts)):
                    
-                    counter+=1    
-                                                                         
-                weights.append(eval(translatedFormula))                                             
+                self.translatedParts.append(self.__translate(self.formulaParts[j], i, sampledPointsLayers, edgesInPolygons, edgesCrossingPolygons))  
+                                                                                                                    
+            # after all variables are translated to numbers if conditions can be evaluated
+            for j in range(len(self.formulaParts)):
+                self.translatedParts[j] = self.__evaluateIfs(str(self.translatedParts[j]))                    
+                       
+                            
+            counter = 0                       
+            translatedFormula = costFunction
+            for var in variables:        
                 
-            # append the list        
-            self.graph.edgeWeights.append(weights)
-        
+                while re.search("percentOfValues[0-9]+", var):
+                    find = re.search("percentOfValues[0-9]+",var)
+                    findStartEnd = find.span()
+                    findStart = findStartEnd[0]
+                    findEnd = findStartEnd[1]
+                    startOfNumbers = re.search("[0-9]+", find.group()).span()[0]
+                    endOfNumbers = re.search("[0-9]+", find.group()).span()[1]
+                    var = var[:findStart+startOfNumbers] + "(" + var[startOfNumbers+findStart:endOfNumbers+findStart] + ")" + var[endOfNumbers+findStart:]
+                    
+                    #translatedFormula = translatedFormula.replace("(","").replace(")","")               
+                translatedFormula = translatedFormula.replace(var,str(self.translatedParts[counter]),1)
+               
+                counter+=1    
+                                                                     
+            weights.append(eval(translatedFormula))                                             
+            
+        # append the list        
+        self.graph.edgeWeights.append(weights)
+        """
+        FOR EDETING WITH ADVANCED COSTS:
         else:           
             translatedParts = []                                                       
             # call function to translate the  parts            
@@ -452,6 +464,6 @@ class AdvancedCostCalculator():
                 counter+=1                           
                       
             self.graph.edgeWeights[costFunctionCount].append(eval(translatedFormula))
-                        
+        """                
         return self.graph    
     
