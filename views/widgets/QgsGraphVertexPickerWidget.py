@@ -63,6 +63,7 @@ class QgsGraphVertexPickerWidget(QWidget):
     vertexChanged = pyqtSignal()
     graphLayerChanged = pyqtSignal()
     graphChanged = pyqtSignal()
+    toggleDialogVisibility = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         super(QgsGraphVertexPickerWidget, self).__init__(parent)
@@ -126,6 +127,8 @@ class QgsGraphVertexPickerWidget(QWidget):
         self.mapTool.vertexSelected.connect(self._vertexSelected)
         self.mapTool.canceled.connect(self._deactivateMapTool)
 
+        self.toggleDialogVisibility.emit(False)
+
     def _vertexSelected(self, vertexIdx):
         """
         Set selected vertex in combobox
@@ -143,6 +146,8 @@ class QgsGraphVertexPickerWidget(QWidget):
         iface.mapCanvas().setMapTool(self.oldMapTool)
         self.oldMapTool = None
         self.mapTool = None
+
+        self.toggleDialogVisibility.emit(True)
 
     def clear(self):
         """

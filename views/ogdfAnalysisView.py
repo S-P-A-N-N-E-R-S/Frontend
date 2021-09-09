@@ -33,9 +33,12 @@ class OGDFAnalysisView(BaseContentView):
         layout = self.dialog.ogdf_analysis_parameters_groupbox.layout()
         self.startNodeLabel = QLabel(self.tr("Start node"))
         self.startNodePicker = QgsGraphVertexPickerWidget()
+        self.startNodePicker.toggleDialogVisibility.connect(lambda visible: self.setMinimized(visible))
 
         self.endNodeLabel = QLabel(self.tr("End node"))
         self.endNodePicker = QgsGraphVertexPickerWidget()
+        self.endNodePicker.toggleDialogVisibility.connect(lambda visible: self.setMinimized(visible))
+
         layout.addWidget(self.startNodeLabel)
         layout.addWidget(self.startNodePicker)
         layout.addWidget(self.endNodeLabel)

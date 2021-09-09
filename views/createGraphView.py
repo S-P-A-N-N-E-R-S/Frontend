@@ -97,6 +97,7 @@ class CreateGraphView(BaseContentView):
         # set up random extent
         self.addRandomArea(self.tr("Custom"), "custom area")
         self.dialog.create_graph_randomarea_extent.setMapCanvas(iface.mapCanvas())
+        self.dialog.create_graph_randomarea_extent.toggleDialogVisibility.connect(lambda visible: self.setMinimized(visible))
         self.dialog.create_graph_randomarea_input.currentIndexChanged.connect(self._randomAreaChanged)
 
         # set up controller
