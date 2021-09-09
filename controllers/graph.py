@@ -50,12 +50,12 @@ class CreateGraphController(BaseController):
         self.view.addDistanceStrategy(self.tr("None"), "None")
 
         # load possibly available active tasks into table and reconnect slots
-        self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
         for taskTuple in CreateGraphController.activeGraphTasks:
             task, taskId = taskTuple
             task.statusChanged.connect(
                 lambda: self.view.updateTaskInTable(task, taskId)
             )
+        self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
 
     def createGraph(self):
         """
@@ -88,12 +88,14 @@ class CreateGraphController(BaseController):
                 builder.setRasterLayer(rasterLayer, rasterBand)
 
         # polygon cost layer
-        polygonCostLayer = self.view.getPolygonCostLayer()
-        if polygonCostLayer:
+        polygonCostLayers = self.view.getPolygonCostLayers()
+        for idx, polygonCostLayer in enumerate(polygonCostLayers):
             if not polygonCostLayer.isValid():
-                self.view.showWarning(self.tr("Polygon cost layer is invalid!"))
+                self.view.showWarning(self.tr("Polygon cost layer[{}] is invalid!").format(idx))
                 return
+            # todo: pass multiple polygon layer for cost function
             builder.setPolygonsForCostFunction(polygonCostLayer)
+            break  # todo: to be removed
 
         # polygon forbidden area
         forbiddenAreaLayer = self.view.getForbiddenAreaLayer()
@@ -190,10 +192,10 @@ class CreateGraphController(BaseController):
         CreateGraphController.activeGraphTasks.append((graphTask, taskId))
 
         # add task to table
-        self.view.addTaskToTable(graphTask, taskId)
         graphTask.statusChanged.connect(
             lambda: self.view.updateTaskInTable(graphTask, taskId)  # update task if status changed
         )
+        self.view.addTaskToTable(graphTask, taskId)
 
     def completed(self, exception, result=None):
         """
