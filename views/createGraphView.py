@@ -8,9 +8,9 @@ from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes, QgsVectorLay
 from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget
 from qgis.utils import iface
 
-from PyQt5.QtCore import QTimer, Qt, QSize
+from PyQt5.QtCore import QTimer, Qt, QSize, QRegExp
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QPushButton, QHBoxLayout, QSizePolicy, QLineEdit, QToolButton
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QRegExpValidator
 
 import time, os
 
@@ -96,6 +96,9 @@ class CreateGraphView(BaseContentView):
         # set up crs selection
         self.dialog.create_graph_crs_input.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
 
+        # only allow integer for seed
+        self.dialog.create_graph_randomSeed_input.setValidator(QRegExpValidator(QRegExp("^[-+]?\\d+$")))
+
         # set up random extent
         self.addRandomArea(self.tr("Custom"), "custom area")
         self.dialog.create_graph_randomarea_extent.setMapCanvas(iface.mapCanvas())
@@ -125,7 +128,7 @@ class CreateGraphView(BaseContentView):
 
         # disable input field and enable random params if random is checked
         self.dialog.create_graph_input_widget.setDisabled(self.isRandom())
-        self.dialog.create_graph_randomNumber_input.setEnabled(self.isRandom())
+        self.dialog.create_graph_random_widget.setEnabled(self.isRandom())
         self.dialog.create_graph_randomarea_widget.setEnabled(self.isRandom())
 
         # update distance units
@@ -410,6 +413,10 @@ class CreateGraphView(BaseContentView):
 
     def getRandomVerticesNumber(self):
         return self.dialog.create_graph_randomNumber_input.value()
+
+    def getRandomSeed(self):
+        seed = self.dialog.create_graph_randomSeed_input.text()
+        return int(self.dialog.create_graph_randomSeed_input.text()) if seed else None
 
     def addRandomArea(self, area, userData=None):
         self.dialog.create_graph_randomarea_input.addItem(area, userData)
