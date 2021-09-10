@@ -82,14 +82,16 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_costfunction_add_btn.clicked.connect(self._addCostFunctionInput)
 
         # set up tasks table
-        self.dialog.graph_tasks_table.setColumnCount(4)
-        self.dialog.graph_tasks_table.setColumnWidth(0, 100)
-        self.dialog.graph_tasks_table.setColumnWidth(2, 100)
+        self.dialog.graph_tasks_table.setColumnCount(5)
+        self.dialog.graph_tasks_table.setColumnWidth(0, 80)
+        self.dialog.graph_tasks_table.setColumnWidth(2, 80)
         self.dialog.graph_tasks_table.setColumnWidth(3, 80)
+        self.dialog.graph_tasks_table.setColumnWidth(4, 80)
         # stretch remaining column
         self.dialog.graph_tasks_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.dialog.graph_tasks_table.setHorizontalHeaderLabels([self.tr("Task Id"), self.tr("Description"),
-                                                                 self.tr("State"), self.tr("Discard")])
+                                                                 self.tr("Progress"), self.tr("State"),
+                                                                 self.tr("Discard")])
 
         # set up crs selection
         self.dialog.create_graph_crs_input.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
@@ -551,16 +553,18 @@ class CreateGraphView(BaseContentView):
         taskIdItem = QTableWidgetItem(str(taskId))
         descriptionItem = QTableWidgetItem(task.description())
         statusItem = QTableWidgetItem(self.__getTaskStatus(task.status()))
+        progressItem = QTableWidgetItem(str(task.progress()) + "%")
         self.dialog.graph_tasks_table.setItem(row, 0, taskIdItem)
         self.dialog.graph_tasks_table.setItem(row, 1, descriptionItem)
-        self.dialog.graph_tasks_table.setItem(row, 2, statusItem)
+        self.dialog.graph_tasks_table.setItem(row, 2, progressItem)
+        self.dialog.graph_tasks_table.setItem(row, 3, statusItem)
 
         # Add cancel button
         cancelButton = QPushButton(QIcon(getImagePath("close.svg")), "")
         cancelButton.setFlat(True)
         cancelButton.setIconSize(QSize(25, 25))
         cancelButton.clicked.connect(lambda: self.controller.discardTask(taskId))
-        self.dialog.graph_tasks_table.setCellWidget(row, 3, cancelButton)
+        self.dialog.graph_tasks_table.setCellWidget(row, 4, cancelButton)
 
     def loadTasksTable(self, tasks):
         """
