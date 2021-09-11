@@ -568,7 +568,13 @@ class GraphBuilder:
             point = self.graph.vertex(i).point()
             
             if self.__options["connectionType"] == "Nearest neighbor":
-                listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1)
+                if self.__options["edgeDirection"] == "Directed":
+                    listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1)
+                else:
+                    if len(self.graph.mVertices[i].mIncomingEdges) < self.__options["neighborNumber"]:
+                        listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1-len(self.graph.mVertices[i].mIncomingEdges))
+                    else:
+                        listOfNeighbors = []
             elif self.__options["connectionType"] == "DistanceNN":
                 # make distance transformation                                                                                                                                                                                                                      
                     transDistValue = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                    
