@@ -9,12 +9,10 @@ import heapq
 
 class AStarOnRasterData:
 	
-	#TODO: RESIZE Raster data by checking point extend??
-	
 	def __init__(self, rLayer, band, sourceCrs):
 		ds = gdal.Open(rLayer.source())
 		readBand = ds.GetRasterBand(band)
-		
+		self.bandID = band
 		self.rLayer = rLayer
 		self.sourceCrs = sourceCrs
 		self.destCrs = self.rLayer.crs()
@@ -44,11 +42,10 @@ class AStarOnRasterData:
 	    startPointRow = int((self.yOrigin - startPointTransform.y()) / self.pixelWidth)
 	    endPointCol = int((endPointTransform.x() - self.xOrigin) / self.pixelWidth)
 	    endPointRow = int((self.yOrigin - endPointTransform.y()) / self.pixelWidth)
-	    print("CALL")
+	   
 	    dimensions = (self.matrixRowSize, self.matrixColSize)
 	    
 	    # check startPoint and endPoint are inside the raster, if not return max value
-	    
 	    pq = []
 	    heapq.heappush(pq, (0, (startPointRow,startPointCol)))
 	    self.pixelWeights = np.full(dimensions,np.inf)    	     
@@ -105,8 +102,8 @@ class AStarOnRasterData:
 	 
 	def heuristic(self, point1, point2): 
 		# calculate distance in pixels
-		
-		euclDist = math.sqrt(pow(point1[0]-point2[0],2) + pow(point1[1]-point2[1],2))
+		meanRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean
+		euclDist = (math.sqrt(pow(point1[0]-point2[0],2) + pow(point1[1]-point2[1],2))) * meanRasterValue
 		
 		# get average of samples
 		return euclDist

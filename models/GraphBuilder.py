@@ -11,6 +11,9 @@ from qgis import processing
 import math
 import re
 from ..lib.kdtree import kdtree
+import time
+from contextlib import closing
+from google.protobuf.type_pb2 import Syntax
 
 
 class GraphBuilder:
@@ -138,7 +141,7 @@ class GraphBuilder:
         """       
         self.__options["distanceStrategy"] = "Advanced"
                                                
-        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), len(self.polygonsForCostFunction))             
+        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), len(self.polygonsForCostFunction))           
         if syntaxCheckResult[0] == "No error found":
             function = syntaxCheckResult[1]
             self.costFunctions.append(function)
@@ -165,7 +168,8 @@ class GraphBuilder:
         Checks if the function is valid and exchanges the brackets with other
         symbols to enable future analysis
         """
-        costFunction = function.replace(" ", "").replace('"', '').replace("(","").replace(")","").replace("if", "if(")
+        costFunction = function.replace(" ", "").replace('"', '')
+ 
         function = function.replace(" ", "").replace('"', '')
         formulaParts = re.split("\+|-|\*|/", costFunction)
         possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
@@ -179,10 +183,10 @@ class GraphBuilder:
         
         partCounter = 1            
         for i in range(len(formulaParts)):
-            var = formulaParts[i]            
-            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if(" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):
+            var = formulaParts[i]           
+            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if(" in var or "field:" in var or "math." in var or "raster[" in var or "random(" in var):
                 toReturn = "Error at position " + str(partCounter) + ": Invalid operand "
-                return (toReturn, "")
+                return (toReturn, "")          
             partCounter+=1
                                         
         # check parentheses
@@ -200,8 +204,7 @@ class GraphBuilder:
                     return ("Unbalanced parentheses", "")    
         if len(stack) != 0:
             return ("Unbalanced parentheses", "")        
-         
-     
+            
         # check all random operands   
         partCounter = 1 
         found = True
@@ -212,19 +215,20 @@ class GraphBuilder:
                 found = True
                 # replace brackets
                 closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)
-                function = function[0:closingBracketIndex] + "&" + function[closingBracketIndex+1:]                                                         
-                function = function.replace("random(","rnd?",1)                
-                if not "," in function[index:closingBracketIndex]:
+                function = function[0:closingBracketIndex] + "&" + function[closingBracketIndex+1:]                                                        
+                function = function.replace("random(","rnd?",1)               
+                function = function[:index] + function[index:closingBracketIndex-2].replace(",","§") + function[closingBracketIndex-2:]                 
+                searchMath = re.finditer('math\.[a-z]+\(.+?§.+?\)', function[index:closingBracketIndex])
+                for matchObj in searchMath:                  
+                    function = function[:matchObj.start()] + function[matchObj.start():matchObj.end()].replace("§",",") + function[matchObj.end():]                          
+                if not "§" in function[index:closingBracketIndex]:
                     toReturn = "Error in random function " + str(partCounter) + ": Two values necessary"
                     return (toReturn, "")
-                randomRangeValues = function[index+4:closingBracketIndex-3].split(",")
+                randomRangeValues = function[index+4:closingBracketIndex-3].split("§")
                 for v in randomRangeValues:                                  
-                    if not v.isnumeric() and not "." in v and not v in possibleMetrics and not "raster[" in v:
+                    if not v.isnumeric() and not "." in v and not v in possibleMetrics and not "raster[" in v and not "math." in v and not "if(" in v:
                         toReturn = "Error in random function " + str(partCounter) + ": Invalid upper or lower bound"
                         return (toReturn, "")
-                    if  "math." in v:
-                        toReturn = "Error in random function " + str(partCounter) + ": Math function can not be used inside random function"
-                        return(toReturn, "")
                 partCounter+=1
         
         # check all if constructs
@@ -300,10 +304,10 @@ class GraphBuilder:
                         toReturn = "Error in if construct " + str(partCounter) + ": insidePolygon can only be compared to False or True"
                         return (toReturn, "")                        
                           
-                if not "math" in ifParts[1] and not "raster" in ifParts[1] and not "rnd" in ifParts[1] and not ifParts[1].isnumeric() and not "." in ifParts[1]:
+                if not ifParts[1] in possibleMetrics and not "math" in ifParts[1] and not "raster" in ifParts[1] and not "rnd" in ifParts[1] and not ifParts[1].isnumeric() and not "." in ifParts[1]:
                     toReturn = "Error in if construct " + str(partCounter) + ": Invalid true value"
                     return (toReturn, "")        
-                if not "math" in ifParts[2] and not "raster" in ifParts[2] and not "rnd" in ifParts[1] and not ifParts[2].isnumeric() and not "." in ifParts[1]:
+                if not ifParts[2] in possibleMetrics and not "math" in ifParts[2] and not "raster" in ifParts[2] and not "rnd" in ifParts[2] and not ifParts[2].isnumeric() and not "." in ifParts[2]:
                     toReturn = "Error in if construct " + str(partCounter) + ": Invalid false value"
                     return (toReturn, "")      
                 
@@ -320,6 +324,9 @@ class GraphBuilder:
             number = matchString.split("[")[1].split("]")[0]
             if not number.isnumeric:
                 toReturn = "Error in polygon construct " + str(partCounter) + ": No index given"
+                return (toReturn, "")
+            if number == "":
+                toReturn = "Error in polygon construct " + str(partCounter) + ": No valid index given"
                 return (toReturn, "")
             if int(number) >= numberOfPolygons or int(number) < 0:
                 toReturn = "Error in polygon construct " + str(partCounter) + ": No valid index given"
@@ -361,8 +368,12 @@ class GraphBuilder:
             checkTwoValuesRes = checkTwoValuesRegex.findall(function)
             for matchString2 in checkTwoValuesRes:
                 if "," in matchString2:                                                  
+                    if "(" in matchString:
+                        mathEvalTest2 = matchString + "10,10)"
+                    else:
+                        mathEvalTest1 = matchString + "(10,10)"  
                     try:                       
-                        eval(matchString2)
+                        eval(mathEvalTest2)
                     except:    
                         toReturn = "Error in math construct " + str(partCounter) + ": Unable to execute"                                         
                         return(toReturn, "")       
@@ -373,7 +384,7 @@ class GraphBuilder:
                         toReturn = "Error in math construct " + str(partCounter) + ": Unable to execute"                                        
                         return(toReturn, "")   
             partCounter+=1 
-         
+        
         partCounter = 1                         
         found = True
         while(found):
@@ -386,7 +397,7 @@ class GraphBuilder:
                 closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)                
                 function = function[0:closingBracketIndex] + "$" + function[closingBracketIndex+1:]                                                                                                                                               
                 function = function[0:index] + function[index:].replace("(","%",1) 
-                if "rnd" in function[index+4:closingBracketIndex] or "if" in function[index+4:closingBracketIndex] or "math" in function[index+4:closingBracketIndex]:
+                if "math" in function[index+4:closingBracketIndex]:
                     toReturn = "Error in math construct " + str(partCounter) + ": Nested construct" 
                     return (toReturn, "")
                 
@@ -394,7 +405,7 @@ class GraphBuilder:
                 
                 # only one operand
                 if not "," in number:              
-                    if not number.isnumeric() and not "field:" in number and not "raster" in number and not "." in number:
+                    if not number.isnumeric() and not "field:" in number and not "raster" in number and not "." in number and not "rnd" in number and not "if" in number:
                         if not number in possibleMetrics:
                             toReturn = "Error in math construct " + str(partCounter) + ": At least one operand necessary" 
                             return (toReturn, "")
@@ -405,16 +416,16 @@ class GraphBuilder:
                     if len(multNumbers) > 2:
                         toReturn = "Error in math construct " + str(partCounter) + ": Only operations with two variables supported"
                         return (toReturn, "")
-                    for n in multNumbers:                       
-                        if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n:
-                            if not number in possibleMetrics:
+                    for n in multNumbers:                    
+                        if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n and not "if" in n:
+                            if not n in possibleMetrics:
                                 toReturn = "Error in math construct " + str(partCounter) + ": Invalid value" 
                                 return(toReturn,"")                       
                 partCounter+=1
-                
+                       
         # raster check    
         partCounter = 1       
-        regex = re.compile(r'raster\[?[a-z]*\]?:?[A-z]*')
+        regex = re.compile(r'raster\[?[0-9]*\]?:?[A-z]*')
         res = regex.findall(function)
         for matchString in res:                      
             if not "[" in matchString:
@@ -1095,7 +1106,7 @@ class GraphBuilder:
         # call AdvancedCostCalculations methods
         if self.__options["distanceStrategy"] == "Advanced":
             # create AdvancedCostCalculator object with the necessary parameters
-            costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
+            costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands, self.task)
 
             # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
             # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
@@ -1105,7 +1116,7 @@ class GraphBuilder:
         # create the layers for QGIS
         if self.__options["createGraphAsLayers"] == True:
             self.createVertexLayer(True)
-            self.createEdgeLayer(True)                  
+            self.createEdgeLayer(True)
           
         return self.graph
 
@@ -1133,8 +1144,7 @@ class GraphBuilder:
 
         if not self.task.isCanceled():
             # set graph to graph layer
-            graphLayer.setGraph(self.graph)
-                       
+            graphLayer.setGraph(self.graph)                     
 
         if self.task.isCanceled():
             # if task is canceled by User or QGIS
