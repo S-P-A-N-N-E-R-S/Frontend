@@ -190,7 +190,7 @@ class GraphBuilder:
             random.seed()  # reset initial seed
             seed = random.randrange(sys.maxsize)  # create seed because not possible to get seed from random
         random.seed(seed)
-        # todo: pass seed to graph
+        self.graph.setRandomSeed(seed)
 
         for i in range(self.__randomOptions["numberOfVertices"]):
             if self.task is not None and self.task.isCanceled():

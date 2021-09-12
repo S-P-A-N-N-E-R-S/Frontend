@@ -110,6 +110,7 @@ class ExtGraph(QObject):
         self.clusterNumber = 5
         self.nnAllowDoubleEdges = True
         self.distance = 0
+        self.randomSeed = None
 
         self.kdTree = None
 
@@ -135,6 +136,9 @@ class ExtGraph(QObject):
 
     def setJobID(self, jobId):
         self.mJobId = jobId
+
+    def setRandomSeed(self, seed):
+        self.randomSeed = seed
 
     def setDistanceStrategy(self, strategy):
         """
