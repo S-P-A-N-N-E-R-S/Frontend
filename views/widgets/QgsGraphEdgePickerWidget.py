@@ -101,6 +101,7 @@ class QgsGraphEdgePickerWidget(QWidget):
     edgeChanged = pyqtSignal()
     graphLayerChanged = pyqtSignal()
     graphChanged = pyqtSignal()
+    toggleDialogVisibility = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -166,6 +167,8 @@ class QgsGraphEdgePickerWidget(QWidget):
         self.mapTool.edgeSelected.connect(self._edgeSelected)
         self.mapTool.canceled.connect(self._deactivateMapTool)
 
+        self.toggleDialogVisibility.emit(False)
+
     def _edgeSelected(self, edgeIdx):
         """
         Set selected edge in combobox
@@ -183,6 +186,8 @@ class QgsGraphEdgePickerWidget(QWidget):
         iface.mapCanvas().setMapTool(self.oldMapTool)
         self.oldMapTool = None
         self.mapTool = None
+
+        self.toggleDialogVisibility.emit(True)
 
     def clear(self):
         """
