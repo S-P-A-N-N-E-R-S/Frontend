@@ -850,7 +850,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
         # QLabel with information about the GraphLayer
-        informationLabel = QLabel(layer.mName + ((" Seed: " + str(layer.mGraph.randomSeed)) if layer.mGraph.randomSeed else "") +
+        informationLabel = QLabel(layer.mName + ((tr(" Seed: ") + str(layer.mGraph.randomSeed)) if layer.mGraph.randomSeed else "") +
                         "\n " + tr("Vertices") + ": " + str(layer.getGraph().vertexCount()) +
                         "\n " + tr("Edges") + ": " + str(layer.getGraph().edgeCount()) +
                         "\n " + tr("CRS") + ": " + layer.crs().authid())
