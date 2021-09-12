@@ -193,6 +193,9 @@ class CreateGraphController(BaseController):
         graphTask.statusChanged.connect(
             lambda: self.view.updateTaskInTable(graphTask, taskId)  # update task if status changed
         )
+        graphTask.progressChanged.connect(
+            lambda: self.view.updateTaskInTable(graphTask, taskId)  # update task if progress changed
+        )
         self.view.addTaskToTable(graphTask, taskId)
 
     def completed(self, exception, result=None):
