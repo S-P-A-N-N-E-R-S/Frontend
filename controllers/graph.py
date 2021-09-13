@@ -24,7 +24,7 @@ class CreateGraphController(BaseController):
         :type view: CreateGraphView
         """
         super().__init__(view)
-
+                
         self.view.addRandomArea(self.tr("Germany"), "Germany")
         self.view.addRandomArea(self.tr("France"), "France")
         self.view.addRandomArea(self.tr("Osnabrueck"), "Osnabrueck")

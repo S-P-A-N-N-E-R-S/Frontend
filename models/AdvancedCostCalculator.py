@@ -12,6 +12,7 @@ import operator
 import re
 import statistics
 import time
+from osgeo import gdal
 import numpy as np
 
 
@@ -45,7 +46,17 @@ class AdvancedCostCalculator():
         self.aStarAlgObjects = [None] * len(self.rLayers)
         self.task = task
     
-    def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygonsList = None, edgesCrossingPolygonsList = None):          
+    def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygonsList = None, edgesCrossingPolygonsList = None):      
+        """
+        Method translates the given part into a number that can replace the variable in the formula.
+        
+        :type part: String
+        :type edgeID: Int defining the edge that gets the translated weight
+        :type sampledPointsLayer: List of features
+        :type edgesInPolygonList: List of features
+        :type edgesCrossingPolygonsList: List of features
+        :return translated part as string
+        """    
         # check if part string was already translated
         if part in self.translatedParts.keys():
             return self.translatedParts[part]                       
@@ -93,8 +104,7 @@ class AdvancedCostCalculator():
                 if edgeID == feature["ID"]:
                     return "True"                       
             return "False" 
-        
-        
+               
         # python math method       
         if "math." in part:  
             try:                                         
@@ -221,75 +231,12 @@ class AdvancedCostCalculator():
                         pointValue = 0                       
                     self.pointValuesForEdge.append(pointValue)
             
-            # check which analysis should be used        
-            if ":sum" in part:                
-                return str(sum(self.pointValuesForEdge))
-            elif ":mean" in part:
-                return str(statistics.mean(self.pointValuesForEdge))
-            elif ":median" in part:
-                return str(statistics.median(self.pointValuesForEdge))
-            elif ":min" in part:
-                return str(min(self.pointValuesForEdge))
-            elif ":max" in part:
-                return str(max(self.pointValuesForEdge))
-            elif ":variance" in part:
-                return str(statistics.variance(self.pointValuesForEdge))
-            elif ":standDev" in part:
-                return str(statistics.stdev(self.pointValuesForEdge))
-            elif ":gradientSum" in part:
-                f = np.array(self.pointValuesForEdge, dtype=float)
-                gradient = np.gradient(f)
-                return str(np.sum(gradient))
-            elif ":gradientMin" in part:
-                f = np.array(self.pointValuesForEdge, dtype=float)
-                gradient = np.gradient(f)
-                return str(np.min(gradient))
-            elif ":gradientMax" in part:
-                f = np.array(self.pointValuesForEdge, dtype=float)
-                gradient = np.gradient(f)
-                return str(np.max(gradient))
-            elif ":ascent" in part:
-                ascent = 0
-                for i in range(len(self.pointValuesForEdge)-1):
-                    if self.pointValuesForEdge[i] < self.pointValuesForEdge[i+1]:
-                        ascent = ascent + (self.pointValuesForEdge[i+1] - self.pointValuesForEdge[i])
-                return str(ascent)                             
-            elif ":descent" in part:
-                descent = 0
-                for i in range(len(self.pointValuesForEdge)-1):
-                    if self.pointValuesForEdge[i] > self.pointValuesForEdge[i+1]:
-                        descent = descent + (self.pointValuesForEdge[i] - self.pointValuesForEdge[i+1])
-                return str(descent)        
-            elif ":totalClimb" in part:
-                totalClimb = 0
-                for i in range(len(self.pointValuesForEdge)-1):
-                    totalClimb = totalClimb + abs(self.pointValuesForEdge[i] - self.pointValuesForEdge[i+1])
-                return str(totalClimb) 
-            # last two types can only occur in if construct
-            elif ":pixelValue" in part:                 
-                listOfPixelValuesAsString = "pixelValue("
-                for i in range(0, len(self.pointValuesForEdge)-1):                                                                          
-                    listOfPixelValuesAsString = listOfPixelValuesAsString + str(self.pointValuesForEdge[i]) + ","                 
-                 
-                listOfPixelValuesAsString = listOfPixelValuesAsString + str(self.pointValuesForEdge[len(self.pointValuesForEdge)-1]);   
-                 
-                listOfPixelValuesAsString = listOfPixelValuesAsString + ")";                 
-                return listOfPixelValuesAsString                              
-            elif ":percentOfValues" in part:
-                findPercentage = re.search("percentOfValues\([0-9]+\)",part)
-                findPercentage = findPercentage
-                help = findPercentage.group().replace("(","").replace(")","")
-                percentage = help.split("percentOfValues")[1]
-                    
-                listOfPixelValuesAsString = "percentOfValues(" + percentage
-                for pValue in self.pointValuesForEdge:                                                                
-                    listOfPixelValuesAsString = listOfPixelValuesAsString + "," + str(pValue)                
-                    
-                listOfPixelValuesAsString = listOfPixelValuesAsString + ")";                   
-                return listOfPixelValuesAsString
-            
-            elif ":shortestPath" in part:
-                return self.aStarAlgObjects[rasterDataID].getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
+            if ":sp" in part:
+                pixelValues = self.aStarAlgObjects[rasterDataID].getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
+               
+                return self.__calculateRasterAnalysis(pixelValues, part.split(":sp")[1])
+            else:
+                return self.__calculateRasterAnalysis(self.pointValuesForEdge, part.split(":")[1])
                    
         for operator in self.operators:
             if operator in part:
@@ -297,6 +244,75 @@ class AdvancedCostCalculator():
         
         return str("0")
           
+    def __calculateRasterAnalysis(self, values, analysis):
+        """
+        Method is responsible to translate all the raster analysis constructs.
+        
+        :type values: List of pixel values
+        :type analysis: String defining the type of analysis
+        :return translated raster analysis as string usually containing a number
+        """       
+        if "sum" == analysis.lower():           
+            return str(sum(values))
+        elif "mean" == analysis.lower():
+            return str(statistics.mean(values))
+        elif "median" == analysis.lower():
+            return str(statistics.median(values))
+        elif "min" == analysis.lower():
+            return str(min(values))
+        elif "max" == analysis.lower():
+            return str(max(values))
+        elif "variance" == analysis.lower():
+            return str(statistics.variance(values))
+        elif "standdev" == analysis:
+            return str(statistics.stdev(values))
+        elif "gradientsum" == analysis.lower():
+            f = np.array(values, dtype=float)
+            gradient = np.gradient(f)
+            return str(np.sum(gradient))
+        elif "gradientmin" == analysis.lower():
+            f = np.array(values, dtype=float)
+            gradient = np.gradient(f)
+            return str(np.min(gradient))
+        elif "gradientmax" == analysis.lower():
+            f = np.array(values, dtype=float)
+            gradient = np.gradient(f)
+            return str(np.max(gradient))
+        elif "ascent" == analysis.lower():
+            ascent = 0
+            for i in range(len(values)-1):
+                if values[i] < values[i+1]:
+                    ascent = ascent + (values[i+1] - values[i])
+            return str(ascent)                             
+        elif "descent" == analysis.lower():
+            descent = 0
+            for i in range(len(values)-1):
+                if values[i] > values[i+1]:
+                    descent = descent + (values[i] - values[i+1])
+            return str(descent)        
+        elif "totalclimb" == analysis.lower():
+            totalClimb = 0
+            for i in range(len(values)-1):
+                totalClimb = totalClimb + abs(values[i] - values[i+1])
+            return str(totalClimb) 
+        # last two types can only occur in if construct
+        elif "pixelvalue" == analysis.lower():                
+            listOfPixelValuesAsString = "pixelValue(" + str(values[0])
+            for pValue in values:                                                                        
+                listOfPixelValuesAsString = listOfPixelValuesAsString + "," + str(pValue)                            
+            listOfPixelValuesAsString = listOfPixelValuesAsString + ")";                 
+            return listOfPixelValuesAsString                              
+        elif "percentofvalues" in analysis.lower():
+            findPercentage = re.search("percentofvalues\([0-9]+\)",analysis.lower())
+            help = findPercentage.group().replace("(","").replace(")","")
+            percentage = help.split("percentofvalues")[1]
+                
+            listOfPixelValuesAsString = "percentOfValues(" + percentage
+            for pValue in values:                                                                
+                listOfPixelValuesAsString = listOfPixelValuesAsString + "," + str(pValue)                
+                
+            listOfPixelValuesAsString = listOfPixelValuesAsString + ")"             
+            return listOfPixelValuesAsString
             
     def __createEdgeLayer(self): 
         """
@@ -323,22 +339,42 @@ class AdvancedCostCalculator():
         return graphLayerEdges
     
     def __translateRegexSearch(self, costFunction, regex, edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList, constructCall):
+        """
+        The method iteratively calls the translate method with different parts of the formula. The parts are found by checking
+        the formula for the given regular expression that matches one specific formula construct.
+        
+        :type costFunction: Formula for the edge weight calculation
+        :type regex: String defining a regular expression
+        :type edgeID: Int defining the edge that gets the translated weight
+        :type sampledPointsLayers: List of features
+        :type edgesInPolygonList: List of features
+        :type edgesCrossingPolygonsList: List of features
+        :type constructCall: Boolean
+        :return translated formula
+        """
         found = True
         while found:
             found = False
             regex = re.compile(regex)
+            
             res = regex.search(costFunction)
             if res != None:
-                found = True             
+                found = True          
                 translated = self.__translate(costFunction[res.start():res.end()], edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)
                 if not constructCall:
-                    self.translatedParts[costFunction[res.start():res.end()]] = translated
-                
+                    self.translatedParts[costFunction[res.start():res.end()]] = translated               
                 costFunction = costFunction[:res.start()] + translated + costFunction[res.end():]                
                 
         return costFunction
      
     def __fullyTranslatedCheck(self, costFunction):
+        """
+        Checks if the formula is fully translated, which means it consists only of
+        +,-,*,/,(,) and numbers.
+        
+        :type costFunction: String
+        :return Boolean
+        """
         try:
             eval(costFunction)
         except:
@@ -365,12 +401,18 @@ class AdvancedCostCalculator():
                 sampledPointsLayers.append(result2["OUTPUT"])  
         
         # initialize all necessary AStarOnRasterData objects
-        regex = re.compile(r'raster\[[0-9]\]:shortestPath')
+        regex = re.compile(r'raster\[[0-9]\]:sp[A-z]+\([0-9]+,?[0-9]*\)')
         res = regex.findall(costFunction)
         for matchString in res:
             rasterIndex = int(matchString.split("[")[1].split("]")[0])
-            self.aStarAlgObjects[rasterIndex] = AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs())
-        
+            heuristicIndexString = matchString.split("(")[1].split(")")[0]
+            if "," in heuristicIndexString:
+                heuristicIndex = int(heuristicIndexString.split(",")[0])
+                costFunction = costFunction.replace(matchString, matchString.split("(")[0] + "(" + matchString.split(",")[1])
+            else:
+                heuristicIndex = int(heuristicIndexString)
+            self.aStarAlgObjects[rasterIndex] = AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs(), heuristicIndex)           
+            
         edgesInPolygonsList = []
         edgesCrossingPolygonsList = []
         edgesInPolygons = QgsVectorLayer()
@@ -404,7 +446,7 @@ class AdvancedCostCalculator():
             # Call translate method with each extracted construct and replace in formula
                        
             regexList = ['euclidean', 'manhattan', 'ellipsoidal', 'geodesic', 'field:[A-z]+', 
-                         'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|shortestPath|[a-z]+)',
+                         'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+\)|[A-z]+)',
                          'polygon\[[0-9]?\]:(crossesPolygon|insidePolygon)']
             
             for regex in regexList:
@@ -420,7 +462,14 @@ class AdvancedCostCalculator():
             weights.append(eval(costFunction))
             
         # append the list        
-        self.graph.edgeWeights.append(weights)
+        self.graph.edgeWeights.append(weights)      
+        
+        """
+        path = "/home/tim/Documents/QGIS_DATA/shortestPath.tif"        
+        driver = gdal.GetDriverByName('GTiff')
+        ds = driver.Create(path, ysize=self.aStarAlgObjects[0].matrixRowSize,xsize=self.aStarAlgObjects[0].matrixColSize, bands=1,eType=gdal.GDT_Float32)      
+        ds.GetRasterBand(1).WriteArray(self.aStarAlgObjects[0].shortestPathMatrix)
+        """    
         
         """   
         FOR EDETING WITH ADVANCED COSTS:

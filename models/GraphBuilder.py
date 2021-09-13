@@ -4,6 +4,7 @@ from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 from .ExtGraph import ExtGraph
+from .FormulaCheck import *
 from .AdvancedCostCalculator import AdvancedCostCalculator
 from .QgsGraphLayer import QgsGraphLayer
 import random
@@ -78,6 +79,12 @@ class GraphBuilder:
         }
 
     def setPolygonsForCostFunction(self, vectorLayer):
+        """
+        Set polygons for use in the cost function. Call method multiple times
+        to set multiple polygon layers.
+        
+        :type vectorLayer: QgsVectorLayer containing polygons
+        """
         if vectorLayer.geometryType() != QgsWkbTypes.PolygonGeometry:
             raise TypeError("Not a polygon geometry")
         
@@ -86,7 +93,7 @@ class GraphBuilder:
     
     def setForbiddenAreas(self, vectorLayer):
         """
-        All edges crossing the polygon will be deleted from the graph
+        All edges crossing the polygon will be deleted from the graph.
         
         :type vectorLayer: QgsVectorLayer containing polygons
         """
@@ -99,7 +106,7 @@ class GraphBuilder:
     def setAdditionalPointLayer(self, vectorLayer):
         """
         Additional points to a given line layer. The points will be added in addition to the
-        network generated for the line layer and connected to the nearest point
+        network generated for the line layer and connected to the nearest point.
 
         :type vectorLayer: QgsVectorLayer containing points
         """
@@ -147,347 +154,11 @@ class GraphBuilder:
             self.costFunctions.append(function)
                 
         return syntaxCheckResult[0]
-    
-    @staticmethod 
-    def findClosingBracketIndex(functionPart, startIndex):
-        stack = []
-        closingBracketIndex = startIndex
-        for i in functionPart:
-            if i == "(":
-                stack.append(i)
-            elif i == ")":                                          
-                stack.pop()    
-                if len(stack) == 0:
-                    return closingBracketIndex                        
-                      
-            closingBracketIndex+=1
         
     @staticmethod                   
     def syntaxCheck(function, fields, numberOfRasterData, numberOfPolygons):
-        """
-        Checks if the function is valid and exchanges the brackets with other
-        symbols to enable future analysis
-        """
-        costFunction = function.replace(" ", "").replace('"', '')
- 
-        function = function.replace(" ", "").replace('"', '')
-        formulaParts = re.split("\+|-|\*|/", costFunction)
-        possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
-        possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance",
-                                  "standDev", "gradientSum", "gradientMin", "gradientMax", "pixelValue", "ascent", "descent", "totalClimb", "shortestPath"]
-        comparisonOperators = ["<",">","==",]
-               
-        possibleFields = []
-        for field in fields:
-            possibleFields.append(field.name())
-        
-        partCounter = 1            
-        for i in range(len(formulaParts)):
-            var = formulaParts[i]           
-            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if(" in var or "field:" in var or "math." in var or "raster[" in var or "random(" in var):
-                toReturn = "Error at position " + str(partCounter) + ": Invalid operand "
-                return (toReturn, "")          
-            partCounter+=1
-                                        
-        # check parentheses
-        openList = ["[","("]
-        closeList = ["]",")"]
-        stack = []
-        for i in function:
-            if i in openList:
-                stack.append(i)
-            elif i in closeList:
-                pos = closeList.index(i)
-                if((len(stack)>0) and openList[pos] == stack[len(stack)-1]):
-                    stack.pop()
-                else:
-                    return ("Unbalanced parentheses", "")    
-        if len(stack) != 0:
-            return ("Unbalanced parentheses", "")        
-            
-        # check all random operands   
-        partCounter = 1 
-        found = True
-        while(found):
-            found = False    
-            index = function.find("random(")
-            if index != -1:
-                found = True
-                # replace brackets
-                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)
-                function = function[0:closingBracketIndex] + "&" + function[closingBracketIndex+1:]                                                        
-                function = function.replace("random(","rnd?",1)               
-                function = function[:index] + function[index:closingBracketIndex-2].replace(",","§") + function[closingBracketIndex-2:]                 
-                searchMath = re.finditer('math\.[a-z]+\(.+?§.+?\)', function[index:closingBracketIndex])
-                for matchObj in searchMath:                  
-                    function = function[:matchObj.start()] + function[matchObj.start():matchObj.end()].replace("§",",") + function[matchObj.end():]                          
-                if not "§" in function[index:closingBracketIndex]:
-                    toReturn = "Error in random function " + str(partCounter) + ": Two values necessary"
-                    return (toReturn, "")
-                randomRangeValues = function[index+4:closingBracketIndex-3].split("§")
-                for v in randomRangeValues:                                  
-                    if not v.isnumeric() and not "." in v and not v in possibleMetrics and not "raster[" in v and not "math." in v and not "if(" in v:
-                        toReturn = "Error in random function " + str(partCounter) + ": Invalid upper or lower bound"
-                        return (toReturn, "")
-                partCounter+=1
-        
-        # check all if constructs
-        partCounter = 1 
-        found = True
-        while(found):
-            found = False    
-            index =  function.find("if(")
-            if index != -1:
-                found = True
-                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)             
-                function = function[0:closingBracketIndex] + "}" + function[closingBracketIndex+1:]                                                                                                                                               
-                function = function[0:index] + function[index:].replace("(","{",1)                                              
-                ifParts = function[index:closingBracketIndex].split(";")
-                
-                if "if(" in function[index:closingBracketIndex]:
-                    toReturn = 'Error in if construct ' + str(partCounter) + ': Nested if construct not allowed. Use "and/or" instead'
-                    return (toReturn, "")
-                
-                if not len(ifParts) == 3:
-                    toReturn = "Error in if construct " + str(partCounter) + ": Two values in if function necessary"
-                    return (toReturn, "")                             
-                                         
-                for part in ifParts:
-                    if len(part) == 0:
-                        toReturn = "Error in if construct " + str(partCounter) + ": Values in if function necessary"
-                        return (toReturn, "") 
-                             
-                compOpSearch = re.compile(r'<|>|==')
-                res = compOpSearch.search(ifParts[0])
-                if res == None:
-                    toReturn = "Error in if construct " + str(partCounter) + ": Missing comparison operator"               
-                    return (toReturn,"")
-
-                # check percentOfValues operator
-                findPercentOfValuesRegex = re.compile(r'percentOfValues\(?[0-9]*\)?')
-                percentParts = findPercentOfValuesRegex.findall(ifParts[0])
-                for percentPart in percentParts:
-                    if not "(" in percentPart or not ")" in percentPart:
-                        toReturn = "Error in if construct " + str(partCounter) + ": Percentage value missing"   
-                        return (toReturn, "")
-                    if not (percentPart.split("(")[1].split(")")[0]).isnumeric():
-                        toReturn = "Error in if construct " + str(partCounter) + ": No integer number as percentage" 
-                        return (toReturn, "")
-              
-                andOrSeperatedParts = re.split("or|and", ifParts[0])
-                for andOrPart in andOrSeperatedParts:              
-                    comparedOperands = re.split(r'<|>|==', andOrPart)
-                    if len(comparedOperands) != 2:
-                        toReturn = "Error in if construct " + str(partCounter) + ": Missing comparison value" 
-                        return (toReturn, "")
-                    if "if{" in comparedOperands[0]:
-                        firstOperand = comparedOperands[0].split("if{")[1]
-                    else:
-                        firstOperand = comparedOperands[0]    
-                    secondOperand = comparedOperands[1]
-                    secondOperand = secondOperand.replace("=","")
-                    possOperandsRegex = re.compile(r'field|polygon|math|raster|rnd|True|False|euclidean|manhattan|geodesic|ellipsoidal')
-                    res = possOperandsRegex.search(firstOperand)
-                    if res == None and not firstOperand.isnumeric():
-                        toReturn = "Error in first operand of if construct " + str(partCounter) + ": Invalid first operand of comparison"
-                        return (toReturn, "")                 
-                    res = possOperandsRegex.search(secondOperand)                              
-                    if res == None and not secondOperand.isnumeric():
-                        toReturn = "Error in second operand of if construct " + str(partCounter) + ": Invalid second operand of comparison"
-                        return (toReturn, "")
-                     
-                    #check polygons set if polygon function used
-                    if "crossesPolygon" in firstOperand and secondOperand != "True" and secondOperand != "False":
-                        toReturn = "Error in if construct " + str(partCounter) + ": crossesPolygon can only be compared to False or True"
-                        return (toReturn, "")
-                    if "insidePolygon" in firstOperand and secondOperand != "True" and secondOperand != "False": 
-                        toReturn = "Error in if construct " + str(partCounter) + ": insidePolygon can only be compared to False or True"
-                        return (toReturn, "")                        
-                          
-                if not ifParts[1] in possibleMetrics and not "math" in ifParts[1] and not "raster" in ifParts[1] and not "rnd" in ifParts[1] and not ifParts[1].isnumeric() and not "." in ifParts[1]:
-                    toReturn = "Error in if construct " + str(partCounter) + ": Invalid true value"
-                    return (toReturn, "")        
-                if not ifParts[2] in possibleMetrics and not "math" in ifParts[2] and not "raster" in ifParts[2] and not "rnd" in ifParts[2] and not ifParts[2].isnumeric() and not "." in ifParts[2]:
-                    toReturn = "Error in if construct " + str(partCounter) + ": Invalid false value"
-                    return (toReturn, "")      
-                
-                partCounter+=1                     
-        
-        # check all polygon constructs
-        partCounter = 1
-        regex = re.compile(r'polygon\[?[0-9]?\]?:?[A-z]*')
-        res = regex.findall(function)
-        for matchString in res:
-            if not "[" in matchString or not "]" in matchString or not ":" in matchString:
-                toReturn = "Error in polygon construct " + str(partCounter) + ": No index given"
-                return (toReturn, "")
-            number = matchString.split("[")[1].split("]")[0]
-            if not number.isnumeric:
-                toReturn = "Error in polygon construct " + str(partCounter) + ": No index given"
-                return (toReturn, "")
-            if number == "":
-                toReturn = "Error in polygon construct " + str(partCounter) + ": No valid index given"
-                return (toReturn, "")
-            if int(number) >= numberOfPolygons or int(number) < 0:
-                toReturn = "Error in polygon construct " + str(partCounter) + ": No valid index given"
-                return (toReturn, "")
-            if not ":crossesPolygon" in matchString and not ":insidePolygon" in matchString:
-                toReturn = "Error in polygon construct " + str(partCounter) + ": Define valid analysis for polygons"
-                return (toReturn, "")
-            partCounter+=1
-        
-        # check math constructs    
-        partCounter = 1                      
-        regex = re.compile(r'math\..+\(?')
-        res = regex.findall(function)
-        for matchString in res: 
-            if not "(" in matchString:
-                toReturn = "Error in math construct " + str(partCounter) + ": No opening bracket"
-                return (toReturn, "")
-            partCounter+=1
-        
-        partCounter = 1 
-        regex = re.compile(r'math\.[A-z]*')
-        res = regex.findall(function)
-        for matchString in res:                          
-            pointSplit = matchString.split(".")[1]
-            if pointSplit == "":
-                toReturn = "Error in math construct " + str(partCounter) + ": No function specified"
-                return (toReturn, "")
-            partCounter+=1 
-        
-        partCounter = 1        
-        regex = re.compile(r'math\.[a-z]*\(?')   
-        res = regex.findall(function)
-        for matchString in res: 
-            if "(" in matchString:
-                mathEvalTest1 = matchString + "10)"
-            else:
-                mathEvalTest1 = matchString + "(10)"                       
-            checkTwoValuesRegex = re.compile(r'math\.[a-z]*\(?.*?\)')  
-            checkTwoValuesRes = checkTwoValuesRegex.findall(function)
-            for matchString2 in checkTwoValuesRes:
-                if "," in matchString2:                                                  
-                    if "(" in matchString:
-                        mathEvalTest2 = matchString + "10,10)"
-                    else:
-                        mathEvalTest1 = matchString + "(10,10)"  
-                    try:                       
-                        eval(mathEvalTest2)
-                    except:    
-                        toReturn = "Error in math construct " + str(partCounter) + ": Unable to execute"                                         
-                        return(toReturn, "")       
-                else:
-                    try:
-                        eval(mathEvalTest1)
-                    except:  
-                        toReturn = "Error in math construct " + str(partCounter) + ": Unable to execute"                                        
-                        return(toReturn, "")   
-            partCounter+=1 
-        
-        partCounter = 1                         
-        found = True
-        while(found):
-            found = False    
-            regex = re.compile(r'math\.[a-z]+\(')            
-            res = regex.search(function)            
-            if res != None:                               
-                index = res.start()                                      
-                found = True                                                                                        
-                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)                
-                function = function[0:closingBracketIndex] + "$" + function[closingBracketIndex+1:]                                                                                                                                               
-                function = function[0:index] + function[index:].replace("(","%",1) 
-                if "math" in function[index+4:closingBracketIndex]:
-                    toReturn = "Error in math construct " + str(partCounter) + ": Nested construct" 
-                    return (toReturn, "")
-                
-                number = function[index:].split("$")[0].split("%")[1]
-                
-                # only one operand
-                if not "," in number:              
-                    if not number.isnumeric() and not "field:" in number and not "raster" in number and not "." in number and not "rnd" in number and not "if" in number:
-                        if not number in possibleMetrics:
-                            toReturn = "Error in math construct " + str(partCounter) + ": At least one operand necessary" 
-                            return (toReturn, "")
-                 
-                # two operands
-                if "," in number:
-                    multNumbers = number.split(",")
-                    if len(multNumbers) > 2:
-                        toReturn = "Error in math construct " + str(partCounter) + ": Only operations with two variables supported"
-                        return (toReturn, "")
-                    for n in multNumbers:                    
-                        if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n and not "if" in n:
-                            if not n in possibleMetrics:
-                                toReturn = "Error in math construct " + str(partCounter) + ": Invalid value" 
-                                return(toReturn,"")                       
-                partCounter+=1
-                       
-        # raster check    
-        partCounter = 1       
-        regex = re.compile(r'raster\[?[0-9]*\]?:?[A-z]*')
-        res = regex.findall(function)
-        for matchString in res:                      
-            if not "[" in matchString:
-                toReturn = "Error in raster analysis " + str(partCounter) + ": Index necessary to reference raster data"
-                return (toReturn, "")
-            partCounter+=1
-         
-        partCounter = 1           
-        regex = re.compile(r'raster\[[0-9]*\]:?')
-        res = regex.findall(function)
-        for matchString in res:        
-            rasterIndexNumber = matchString.split("[")[1].split("]")[0]
-            if not rasterIndexNumber.isnumeric():
-                toReturn = "Error in raster analysis " + str(partCounter) + ": Index necessary to reference raster data"
-                return (toReturn, "")
-            if not ":" in matchString:
-                toReturn = "Error in raster analysis " + str(partCounter) + ": No analysis type defined"
-                return(toReturn, "")
-            
-            if int(rasterIndexNumber) > numberOfRasterData-1 or int(rasterIndexNumber) < 0:
-                toReturn = "Error in raster analysis " + str(partCounter) + ": Invalid index"
-                return (toReturn,"")               
-            partCounter+=1
-        
-        partCounter = 1
-        regex = re.compile(r'raster\[[0-9]+\]:[A-z]*')
-        res = regex.findall(function)
-        for matchString in res:               
-            analysisType = re.split("<|>|,|\)|=", matchString.split("]:")[1])[0]  
-            if not analysisType in possibleRasterAnalysis and not("percentOfValues" in analysisType):
-                toReturn = "Error in raster analysis " + str(partCounter) + ": Invalid raster analysis"
-                return (toReturn, "")    
-            partCounter+=1
-       
-        # fields check
-        partCounter = 1
-        foundFieldConstruct = False 
-        regex = re.compile(r'field:?')  
-        res = regex.findall(function)
-        for matchString in res:        
-            foundFieldConstruct = True      
-            if not ":" in matchString:
-                toReturn = 'Error in field query ' + str(partCounter) + ': No ":" after field'
-                return (toReturn, "")
-            partCounter+=1
-        
-        partCounter = 1
-        fieldSet = False  
-        regex = re.compile(r'field:[A-z]+')   
-        res = regex.findall(function)  
-        for matchString in res: 
-            fieldSet = True
-            fieldName = matchString.split("field:")[1]
-            if not fieldName in possibleFields:
-                toReturn = 'Error in field query ' + str(partCounter) + ': Invalid field name'
-                return (toReturn, "")    
-            partCounter+=1
-        
-        if foundFieldConstruct == True and fieldSet == False:
-            return ("No field name defined","")
-                            
-        return ("No error found", function) 
+        # formulaCheck method in FormulaCheck.py file
+        return formulaCheck(function, fields, numberOfRasterData, numberOfPolygons)
     
     def getCostFunction(self, index):
         return self.costFunctions[index]
@@ -508,6 +179,10 @@ class GraphBuilder:
         self.__randomOptions[optionType] = value        
     
     def __createRandomVertices(self):
+        """
+        Create random vertices in specified area of the globe.
+        CRS is set to EPSG:4326 and the number of vertices can be defined as an option   . 
+        """
         for i in range(self.__randomOptions["numberOfVertices"]):
             if self.task is not None and self.task.isCanceled():
                 break
@@ -529,6 +204,10 @@ class GraphBuilder:
                                                 random.uniform(rectangleExtent.yMinimum(), rectangleExtent.yMaximum())))
                 
     def __createVerticesForPoints(self):
+        """
+        Method creates a new vertex in the graph for every point inside
+        the given vectorLayer.
+        """
         for feat in self.vLayer.getFeatures():
             if self.task is not None and self.task.isCanceled():
                 break
@@ -539,6 +218,9 @@ class GraphBuilder:
             self.graph.addVertex(geom.asPoint())
             
     def __createComplete(self):
+        """
+        Create an edge for every pair of vertices       
+        """
         for i in range(self.graph.vertexCount()-1):
             for j in range(i+1, self.graph.vertexCount()):
                 if self.task is not None and self.task.isCanceled():
@@ -547,7 +229,11 @@ class GraphBuilder:
                     self.graph.featureMatchings.append(self.graph.mVertices[j].mCoordinates)
                 self.graph.addEdge(i, j)
 
-    def __createNearestNeighbor(self):      
+    def __createNearestNeighbor(self):
+        """
+        The edges for the options DistanceNN and Nearest neighbor are created inside
+        this method. A KD-Tree is used to find the nearest points.     
+        """  
         points = []
         for i in range(self.graph.vertexCount()):
             point = self.graph.vertex(i).point()
@@ -576,7 +262,7 @@ class GraphBuilder:
                     else:
                         listOfNeighbors = []
             elif self.__options["connectionType"] == "DistanceNN":
-                # make distance transformation                                                                                                                                                                                                                      
+                    # make distance transformation                                                                                                                                                                                                                      
                     transDistValue = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                    
                     listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2))                                              
             for j in range(1,len(listOfNeighbors)):
@@ -589,12 +275,15 @@ class GraphBuilder:
                 
                 if self.__options["distanceStrategy"] == "Advanced":
                     self.graph.featureMatchings.append(self.graph.mVertices[neighborPoint[2]].mCoordinates)
-            
-            
+                       
             if self.__options["connectionType"] == "Nearest neighbor" and self.__options["nnAllowDoubleEdges"] == False:
                 self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
 
     def __createCluster(self):
+        """
+        The edges for the options ClusterNN and ClusterComplete are created inside
+        this method. A KD-Tree is used to find the nearest points.
+        """
         # if a random graph was created the vLayer has to be set manually
         if self.__options["createRandomGraph"] == True:
 
@@ -654,29 +343,6 @@ class GraphBuilder:
                          if self.__options["distanceStrategy"] == "Advanced":
                             self.graph.featureMatchings.append(self.graph.mVertices[allPointsInCluster[j]].mCoordinates)
 
-    def __createDistanceNN(self):
-        points = []
-        for i in range(self.graph.vertexCount()):
-            point = self.graph.vertex(i).point()
-            points.append([point.x(),point.y(),i])
-
-        self.kdTree = kdtree.create(points)
-
-        for i in range(self.graph.vertexCount()):
-            if self.task is not None and self.task.isCanceled():
-                return
-            point = self.graph.vertex(i).point()
-            listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"][0],2))
-            
-            for j in range(1,len(listOfNeighbors)):
-                neighborPoint = listOfNeighbors[j]
-                self.graph.addEdge(i,neighborPoint[2])
-                
-                if self.__options["distanceStrategy"] == "Advanced":
-                    self.graph.featureMatchings.append(self.graph.mVertices[neighborPoint[2]].mCoordinates)
-            
-            if self.__options["nnAllowDoubleEdges"] == False:
-                self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
 
     def __createGraphForLineGeometry(self):
         """
@@ -761,6 +427,10 @@ class GraphBuilder:
                 self.graph.addEdge(pointID, nearestPointID)
 
     def __removeIntersectingEdges(self):
+        """
+        Method is called if polygons as forbidden areas are given. All the intersecting edges
+        get deleted from the graph.       
+        """
         # create the current edge layer
         currentEdges = self.createEdgeLayer(False,True)
         # call QGIS tool to extract all the edges which cross the polygon
@@ -895,8 +565,8 @@ class GraphBuilder:
     def createGraphLayer(self, addToCanvas):
         """
         Create graph layer from created graph
-        :param addToCanvas:
-        :return:
+        :type addToCanvas: Boolean 
+        :return QgsGraphLayer
         """
         graphLayer = QgsGraphLayer()
 
@@ -937,7 +607,7 @@ class GraphBuilder:
         graph attribute of the Graphbuilder. Get the modified 
         ExtGraph object by using the getGraph() method.
         
-        :type vertexCoordinates: list with x,y-Coordinates
+        :type vertexCoordinates: List with x,y-Coordinates
         :return list of edges
         """ 
         listOfEdges = []
@@ -1129,8 +799,8 @@ class GraphBuilder:
     def makeGraphTask(self, task, graphLayer, graphName=""):
         """
         Task function of makeGraph() to build a graph in the background
-        :param task: own QgsTask instance
-        :return:
+        :param task: Own QgsTask instance
+        :return dictionary
         """
         QgsMessageLog.logMessage('Started task {}'.format(task.description()), level=Qgis.Info)
         # save task in instance for usage in other methods

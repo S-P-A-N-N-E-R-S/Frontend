@@ -9,7 +9,9 @@ import heapq
 
 class AStarOnRasterData:
 	
-	def __init__(self, rLayer, band, sourceCrs):
+	def __init__(self, rLayer, band, sourceCrs, heuristicIndex, createResultAsMatrix = False):
+		self.createResultAsMatrix = createResultAsMatrix
+		self.heuristicIndex = heuristicIndex
 		ds = gdal.Open(rLayer.source())
 		readBand = ds.GetRasterBand(band)
 		self.bandID = band
@@ -27,24 +29,30 @@ class AStarOnRasterData:
 		pixelHeight = -self.transform[5]
 	
 		self.matrix = np.array(readBand.ReadAsArray())
+		
 		self.matrixRowSize = self.matrix.shape[0]
 		self.matrixColSize = self.matrix.shape[1]
+		if createResultAsMatrix == True:
+			self.shortestPathMatrix = np.zeros((self.matrixRowSize, self.matrixColSize))
+			self.predMatrix = None
+		
 		self.pixelWeights = None
 		self.dictionary = {}
 	
-	def getShortestPathWeight(self, startPoint, endPoint, allowNotOptimal = True):	
+	def getShortestPathWeight(self, startPoint, endPoint):	
 	    # transform coordinates
 	    startPointTransform = self.tr.transform(startPoint)
 	    endPointTransform = self.tr.transform(endPoint)
+	    
+	    self.predMatrix = np.empty((self.matrixRowSize, self.matrixColSize), dtype=object)
 	    
 	    # get position of points in matrix   
 	    startPointCol = int((startPointTransform.x() - self.xOrigin) / self.pixelWidth)
 	    startPointRow = int((self.yOrigin - startPointTransform.y()) / self.pixelWidth)
 	    endPointCol = int((endPointTransform.x() - self.xOrigin) / self.pixelWidth)
 	    endPointRow = int((self.yOrigin - endPointTransform.y()) / self.pixelWidth)
-	   
+	    	      	   
 	    dimensions = (self.matrixRowSize, self.matrixColSize)
-	    
 	    # check startPoint and endPoint are inside the raster, if not return max value
 	    pq = []
 	    heapq.heappush(pq, (0, (startPointRow,startPointCol)))
@@ -52,43 +60,46 @@ class AStarOnRasterData:
 	    
 	    self.pixelWeights[startPointRow][startPointCol] = 0
 	    while len(pq) > 0:
-	    	# search runs in O(n)
 	    	popResult = heapq.heappop(pq)	    		    	
 	    	currentWeight = popResult[0]
-	    	current = popResult[1]
-	    	
-	    	if current == (endPointRow,endPointCol):
+	    	current = popResult[1]	    		    	
+	    	if current == (endPointRow,endPointCol):	  		  		
+    			shortestPathWeights = []
+	    		u = (endPointRow,endPointCol)
+	    		while u != None:
+	    			if self.createResultAsMatrix == True:
+	    				self.shortestPathMatrix[u[0]][u[1]] = 100	    			
+	    			shortestPathWeights.append(self.matrix[u[0]][u[1]])
+	    			u = self.predMatrix[u[0]][u[1]]	    			
+	    		    			    		
 	    		if not np.isinf(self.pixelWeights[current[0]][current[1]]):
-	    			return str(self.pixelWeights[current[0]][current[1]])
+	    			return shortestPathWeights
+	    			#return str(self.pixelWeights[current[0]][current[1]])
 	    		else:
 	    			return str(sys.maxsize)
-	    	if allowNotOptimal:
-		    	if currentWeight - self.heuristic(current, (endPointRow,endPointCol))> self.pixelWeights[current[0]][current[1]]:
+	    		if currentWeight - self.heuristic(current, (endPointRow,endPointCol)) > self.pixelWeights[current[0]][current[1]]:
 		    		continue
-	    	else:
-	    		if currentWeight > self.pixelWeights[current[0]][current[1]]:
-		    		continue
+	    	
 	    	# check the neighbor pixels of current
 	    	for neighbor in self.getNeighborIndices(current[0], current[1]):  		
 	    		newDistance = self.pixelWeights[current[0]][current[1]] + self.matrix[current[0]][current[1]]		
 	    		# check that the neighbor is not out of raster bounds
 	    		if neighbor[0] > 0 and neighbor[1] > 0 and neighbor[0] < self.matrixRowSize and neighbor[1] < self.matrixColSize:
 		    		if newDistance < self.pixelWeights[neighbor[0]][neighbor[1]]:	
-		    			    			   			
-		    			self.pixelWeights[neighbor[0]][neighbor[1]] = newDistance
-		    			if allowNotOptimal:
-		    				heapq.heappush(pq,(self.pixelWeights[neighbor[0]][neighbor[1]] + self.heuristic(neighbor, (endPointRow,endPointCol)), neighbor))
-		    			else:
-		    				heapq.heappush(pq,(self.pixelWeights[neighbor[0]][neighbor[1]], neighbor)) 				    		
-	    		
-
-	    print("Not found")		
+	    			
+		    			self.predMatrix[neighbor[0]][neighbor[1]] = (current[0], current[1])
+		    			if self.createResultAsMatrix == True:
+			    			if not self.shortestPathMatrix[current[0]][current[1]] == 100:
+			    				self.shortestPathMatrix[current[0]][current[1]] = 50   			   			
+		    			
+		    			self.pixelWeights[neighbor[0]][neighbor[1]] = newDistance	    			
+		    			heapq.heappush(pq,(self.pixelWeights[neighbor[0]][neighbor[1]] + self.heuristic(neighbor, (endPointRow,endPointCol)), neighbor))
+    			    	
 	    return str(sys.maxsize)
 	   
 		
 	def getNeighborIndices(self, i, j):
-		# return list of neighbor indices
-		
+		# return list of neighbor indices		
 		bl = (i-1,j-1)
 		bm = (i-1,j)
 		br = (i-1,j+1)
@@ -100,13 +111,27 @@ class AStarOnRasterData:
 		
 		return [bl,bm,br,ml,mr,tl,tm,tr]
 	 
-	def heuristic(self, point1, point2): 
-		# calculate distance in pixels
-		meanRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean
-		euclDist = (math.sqrt(pow(point1[0]-point2[0],2) + pow(point1[1]-point2[1],2))) * meanRasterValue
+	def heuristic(self, point1, point2): 				
+		# calculate heuristic value depended on the defined heuristic index
+		if self.heuristicIndex == 0:
+			minRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).minimumValue
+			heurValue = max(abs(point2[0]-point1[0]), abs(point2[1]-point1[1])) * minRasterValue
+		else:
+			meanRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean
+			if self.heuristicIndex == 1:
+				factor = (meanRasterValue/4)
+			elif self.heuristicIndex == 2:
+				factor = (meanRasterValue/2)
+			elif self.heuristicIndex == 3:
+				factor = (meanRasterValue/1.5)
+			elif self.heuristicIndex == 4:
+				factor = (meanRasterValue/1.25)
+			elif self.heuristicIndex == 5:
+				factor = meanRasterValue				
+						
+			heurValue = max(abs(point2[0]-point1[0]), abs(point2[1]-point1[1])) * factor
 		
-		# get average of samples
-		return euclDist
+		return heurValue
 	
 	
 	
