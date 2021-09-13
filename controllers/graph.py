@@ -128,6 +128,7 @@ class CreateGraphController(BaseController):
             graphName = "Random"
             builder.setOption("createRandomGraph", True)
             builder.setRandomOption("numberOfVertices", self.view.getRandomVerticesNumber())
+            builder.setRandomOption("seed", self.view.getRandomSeed())
             # set predefined or user defined random area
             area, areaData = self.view.getRandomArea()
             if areaData == "custom area":

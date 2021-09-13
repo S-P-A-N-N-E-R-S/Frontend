@@ -11,6 +11,7 @@ import random
 from qgis import processing
 import math
 import re
+import sys
 from ..lib.kdtree import kdtree
 import time
 from contextlib import closing
@@ -75,6 +76,7 @@ class GraphBuilder:
 
         self.__randomOptions = {
             "numberOfVertices": 100,
+            "seed": None,
             "area": "Germany"
         }
 
@@ -82,7 +84,7 @@ class GraphBuilder:
         """
         Set polygons for use in the cost function. Call method multiple times
         to set multiple polygon layers.
-        
+
         :type vectorLayer: QgsVectorLayer containing polygons
         """
         if vectorLayer.geometryType() != QgsWkbTypes.PolygonGeometry:
@@ -148,7 +150,7 @@ class GraphBuilder:
         """       
         self.__options["distanceStrategy"] = "Advanced"
                                                
-        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), len(self.polygonsForCostFunction))           
+        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), len(self.polygonsForCostFunction))
         if syntaxCheckResult[0] == "No error found":
             function = syntaxCheckResult[1]
             self.costFunctions.append(function)
@@ -181,8 +183,15 @@ class GraphBuilder:
     def __createRandomVertices(self):
         """
         Create random vertices in specified area of the globe.
-        CRS is set to EPSG:4326 and the number of vertices can be defined as an option   . 
+        CRS is set to EPSG:4326 and the number of vertices can be defined as an option   .
         """
+        seed = self.__randomOptions["seed"]
+        if seed is None:
+            random.seed()  # reset initial seed
+            seed = random.randrange(sys.maxsize)  # create seed because not possible to get seed from random
+        random.seed(seed)
+        self.graph.setRandomSeed(seed)
+
         for i in range(self.__randomOptions["numberOfVertices"]):
             if self.task is not None and self.task.isCanceled():
                 break
@@ -219,7 +228,7 @@ class GraphBuilder:
             
     def __createComplete(self):
         """
-        Create an edge for every pair of vertices       
+        Create an edge for every pair of vertices
         """
         for i in range(self.graph.vertexCount()-1):
             for j in range(i+1, self.graph.vertexCount()):
@@ -232,8 +241,8 @@ class GraphBuilder:
     def __createNearestNeighbor(self):
         """
         The edges for the options DistanceNN and Nearest neighbor are created inside
-        this method. A KD-Tree is used to find the nearest points.     
-        """  
+        this method. A KD-Tree is used to find the nearest points.
+        """
         points = []
         for i in range(self.graph.vertexCount()):
             point = self.graph.vertex(i).point()
@@ -262,7 +271,7 @@ class GraphBuilder:
                     else:
                         listOfNeighbors = []
             elif self.__options["connectionType"] == "DistanceNN":
-                    # make distance transformation                                                                                                                                                                                                                      
+                    # make distance transformation
                     transDistValue = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                    
                     listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2))                                              
             for j in range(1,len(listOfNeighbors)):
@@ -275,7 +284,7 @@ class GraphBuilder:
                 
                 if self.__options["distanceStrategy"] == "Advanced":
                     self.graph.featureMatchings.append(self.graph.mVertices[neighborPoint[2]].mCoordinates)
-                       
+
             if self.__options["connectionType"] == "Nearest neighbor" and self.__options["nnAllowDoubleEdges"] == False:
                 self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
 
@@ -429,7 +438,7 @@ class GraphBuilder:
     def __removeIntersectingEdges(self):
         """
         Method is called if polygons as forbidden areas are given. All the intersecting edges
-        get deleted from the graph.       
+        get deleted from the graph.
         """
         # create the current edge layer
         currentEdges = self.createEdgeLayer(False,True)
@@ -565,7 +574,7 @@ class GraphBuilder:
     def createGraphLayer(self, addToCanvas):
         """
         Create graph layer from created graph
-        :type addToCanvas: Boolean 
+        :type addToCanvas: Boolean
         :return QgsGraphLayer
         """
         graphLayer = QgsGraphLayer()
@@ -820,7 +829,7 @@ class GraphBuilder:
 
         if not self.task.isCanceled():
             # set graph to graph layer
-            graphLayer.setGraph(self.graph)                     
+            graphLayer.setGraph(self.graph)
 
         if self.task.isCanceled():
             # if task is canceled by User or QGIS
