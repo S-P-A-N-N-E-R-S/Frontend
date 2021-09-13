@@ -211,7 +211,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
     def __del__(self):
         del self.redoString
         del self.undoString
-        if self.mOldCosts:
+        if hasattr(self, "mOldCosts"):
             del self.mOldCosts
         if hasattr(self, "mNewCosts"):
             del self.mNewCosts
