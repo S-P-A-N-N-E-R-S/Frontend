@@ -239,6 +239,14 @@ class ExtGraph(QObject):
         self.nnAllowDoubleEdges = nnAllowDoubleEdges
         self.distance = distance
 
+    def setNextClusterID(self, nextClusterID):
+        self.mNextClusterID = nextClusterID
+
+    def nextClusterID(self):
+        if hasattr(self, "mNextClusterID"):
+            return self.mNextClusterID
+        return -1
+
     def amountOfEdgeCostFunctions(self):
         return len(self.edgeWeights)
 
@@ -533,6 +541,10 @@ class ExtGraph(QObject):
 
         self.mVertices.insert(addIndex, self.ExtVertex(point, addedVertexID))
 
+        if hasattr(self, "mNextClusterID"):
+            self.mVertices[addIndex].setClusterID(self.mNextClusterID)
+            self.mNextClusterID += 1
+
         # TODO: add entry in vertexWeights if used later
 
         self.mVertexCount += 1
@@ -674,6 +686,8 @@ class ExtGraph(QObject):
             neighborVertex = self.vertex(neighborPointIdx)
             neighborClusterID = neighborVertex.clusterID()
 
+            self.vertex(index).setClusterID(neighborClusterID)
+
             #create kdtree with all the nodes from the same cluster
             points = []
             for vertexIdx in range(self.vertexCount()):
@@ -683,7 +697,7 @@ class ExtGraph(QObject):
 
             clusterKDTree = kdtree.create(points)
 
-            listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(), index], self.numberNeighbours)
+            listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(), index], self.numberNeighbours + 1)
             for j in range(len(listOfNeighbors)):
                 neighborPointIdx = self.findVertex(QgsPointXY(listOfNeighbors[j][0].data[0], listOfNeighbors[j][0].data[1]))
                 neighborVertexID = self.vertex(neighborPointIdx).id()

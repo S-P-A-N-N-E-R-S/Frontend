@@ -231,6 +231,11 @@ class QgsGraphLayer(QgsPluginLayer):
 
         del self.mGraph
 
+        try:
+            del self.mUndoStack
+        except Exception as e:
+            print(e)
+
     def __del__(self):
         pass
         
@@ -317,7 +322,9 @@ class QgsGraphLayer(QgsPluginLayer):
 
                 if vertex.clusterID() >= 0:
                     self.mGraph.vertex(addedVertexIdx).setClusterID(vertex.clusterID())
-                    
+                    if self.mGraph.nextClusterID() <= vertex.clusterID():
+                        self.mGraph.setNextClusterID(vertex.clusterID() + 1)
+
             # add edges to new ExtGraph and create corresponding features
             amountEdgeCostFunctions = graph.amountOfEdgeCostFunctions()
             for edgeIdx in range(graph.edgeCount()):
@@ -579,6 +586,8 @@ class QgsGraphLayer(QgsPluginLayer):
 
                 if elem.hasAttribute("clusterID"):
                     self.mGraph.vertex(addedVertexIdx).setClusterID(int(elem.attribute("clusterID")))
+                    if self.mGraph.nextClusterID() <= int(elem.attribute("clusterID")):
+                        self.mGraph.setNextClusterID(int(elem.attribute("clusterID")) + 1)
 
         # get edge information and add them to graph
         for edgeIdx in range(edgeNodes.length()):
