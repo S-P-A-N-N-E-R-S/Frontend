@@ -700,18 +700,6 @@ class ExtGraph(QObject):
                     else:
                         edgeIdx = self.edgeCount() + len(listOfEdges)
                     listOfEdges.append([edgeIdx, neighborVertexID, addedVertexID])
-        
-        # # create AdvancedCostCalculator object with the necessary parameters
-        # costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
-
-        # # call for every new edge
-        # for i in range(len(addedEdgeIndices)):
-        #     # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
-        #     # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
-        #     functionCounter = 0
-        #     for func in self.costFunctions:
-        #         self = costCalculator.setEdgeCosts(func,addedEdgeIndices[i],functionCounter)
-        #         functionCounter+=1
 
         return listOfEdges
 
