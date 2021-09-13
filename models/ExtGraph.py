@@ -809,6 +809,9 @@ class ExtGraph(QObject):
                 deletedEdgeIDs.append(edgeID)
             vertex.mOutgoingEdges = []
 
+            if self.kdTree:
+                self.kdTree.remove([vertex.point().x(), vertex.point().y()])
+
             del self.mVertices[idx]
             self.mVertexCount -= 1
 
