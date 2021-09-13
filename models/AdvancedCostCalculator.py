@@ -231,9 +231,8 @@ class AdvancedCostCalculator():
                         pointValue = 0                       
                     self.pointValuesForEdge.append(pointValue)
             
-            if ":sp" in part:
+            if ":sp" in part:                
                 pixelValues = self.aStarAlgObjects[rasterDataID].getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
-               
                 return self.__calculateRasterAnalysis(pixelValues, part.split(":sp")[1])
             else:
                 return self.__calculateRasterAnalysis(self.pointValuesForEdge, part.split(":")[1])
@@ -252,51 +251,51 @@ class AdvancedCostCalculator():
         :type analysis: String defining the type of analysis
         :return translated raster analysis as string usually containing a number
         """       
-        if "sum" == analysis.lower():           
+        if "sum" in analysis.lower():           
             return str(sum(values))
-        elif "mean" == analysis.lower():
+        elif "mean" in analysis.lower():
             return str(statistics.mean(values))
         elif "median" == analysis.lower():
             return str(statistics.median(values))
-        elif "min" == analysis.lower():
+        elif "min" in analysis.lower():
             return str(min(values))
-        elif "max" == analysis.lower():
+        elif "max" in analysis.lower():
             return str(max(values))
-        elif "variance" == analysis.lower():
+        elif "variance" in analysis.lower():
             return str(statistics.variance(values))
         elif "standdev" == analysis:
             return str(statistics.stdev(values))
-        elif "gradientsum" == analysis.lower():
+        elif "gradientsum" in analysis.lower():
             f = np.array(values, dtype=float)
             gradient = np.gradient(f)
             return str(np.sum(gradient))
-        elif "gradientmin" == analysis.lower():
+        elif "gradientmin" in analysis.lower():
             f = np.array(values, dtype=float)
             gradient = np.gradient(f)
             return str(np.min(gradient))
-        elif "gradientmax" == analysis.lower():
+        elif "gradientmax" in analysis.lower():
             f = np.array(values, dtype=float)
             gradient = np.gradient(f)
             return str(np.max(gradient))
-        elif "ascent" == analysis.lower():
+        elif "ascent" in analysis.lower():
             ascent = 0
             for i in range(len(values)-1):
                 if values[i] < values[i+1]:
                     ascent = ascent + (values[i+1] - values[i])
             return str(ascent)                             
-        elif "descent" == analysis.lower():
+        elif "descent" in analysis.lower():
             descent = 0
             for i in range(len(values)-1):
                 if values[i] > values[i+1]:
                     descent = descent + (values[i] - values[i+1])
             return str(descent)        
-        elif "totalclimb" == analysis.lower():
+        elif "totalclimb" in analysis.lower():
             totalClimb = 0
             for i in range(len(values)-1):
                 totalClimb = totalClimb + abs(values[i] - values[i+1])
             return str(totalClimb) 
         # last two types can only occur in if construct
-        elif "pixelvalue" == analysis.lower():                
+        elif "pixelvalue" in analysis.lower():                
             listOfPixelValuesAsString = "pixelValue(" + str(values[0])
             for pValue in values:                                                                        
                 listOfPixelValuesAsString = listOfPixelValuesAsString + "," + str(pValue)                            
@@ -358,6 +357,7 @@ class AdvancedCostCalculator():
             regex = re.compile(regex)
             
             res = regex.search(costFunction)
+            
             if res != None:
                 found = True          
                 translated = self.__translate(costFunction[res.start():res.end()], edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)

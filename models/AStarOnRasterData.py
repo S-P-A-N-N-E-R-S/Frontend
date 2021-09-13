@@ -6,6 +6,7 @@ from osgeo import gdal
 import numpy as np
 import math
 import heapq
+import sys
 
 class AStarOnRasterData:
 	
@@ -54,6 +55,11 @@ class AStarOnRasterData:
 	    	      	   
 	    dimensions = (self.matrixRowSize, self.matrixColSize)
 	    # check startPoint and endPoint are inside the raster, if not return max value
+	    if startPointCol > self.matrixColSize or startPointCol < 0 or startPointRow < 0 or startPointRow > self.matrixRowSize:
+	    	return [sys.maxsize]
+	    if endPointCol > self.matrixColSize or endPointCol < 0 or endPointRow < 0 or endPointRow > self.matrixRowSize:
+	    	return [sys.maxsize]
+	    
 	    pq = []
 	    heapq.heappush(pq, (0, (startPointRow,startPointCol)))
 	    self.pixelWeights = np.full(dimensions,np.inf)    	     
@@ -95,7 +101,7 @@ class AStarOnRasterData:
 		    			self.pixelWeights[neighbor[0]][neighbor[1]] = newDistance	    			
 		    			heapq.heappush(pq,(self.pixelWeights[neighbor[0]][neighbor[1]] + self.heuristic(neighbor, (endPointRow,endPointCol)), neighbor))
     			    	
-	    return str(sys.maxsize)
+	    return [sys.maxsize]
 	   
 		
 	def getNeighborIndices(self, i, j):

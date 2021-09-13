@@ -340,12 +340,13 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
         if "," in heuristicIndex:
             heuristicIndex = heuristicIndex.split(",")[0]
             percentage = spPart.split(",")[1].split(")")[0]
+            if not percentage.isnumeric() or int(percentage) < 0 or int(percentage) > 100:
+                toReturn = "Error in if construct " + str(partCounter) + ": No valid integer number as percentage" 
+                return (toReturn, "") 
         if not heuristicIndex.isnumeric() or int(heuristicIndex) < 0 or int(heuristicIndex) > 5:
             toReturn = "Error in if construct " + str(partCounter) + ": No valid integer number as heuristic index" 
             return (toReturn, "") 
-        if not percentage.isnumeric() or int(percentage) < 0 or int(percentage) > 100:
-            toReturn = "Error in if construct " + str(partCounter) + ": No valid integer number as percentage" 
-            return (toReturn, "") 
+        
         partCounter+=1
     
     percentPixelRegexList = ['(if\{)?raster\[[0-9]+\]:pixelValue', '(if\{)?raster\[[0-9]+\]:spPixelValue', '(if\{)?raster\[[0-9]+\]:percentOfValues', '(if\{)?raster\[[0-9]+\]:spPercentOfValues']        
