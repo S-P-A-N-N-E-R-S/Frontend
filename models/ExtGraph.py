@@ -545,6 +545,9 @@ class ExtGraph(QObject):
             self.mVertices[addIndex].setClusterID(self.mNextClusterID)
             self.mNextClusterID += 1
 
+        if self.kdTree:
+            self.kdTree.add([point.x(), point.y()])
+
         # TODO: add entry in vertexWeights if used later
 
         self.mVertexCount += 1
@@ -574,7 +577,7 @@ class ExtGraph(QObject):
         addedVertexID = self.vertex(index).id()
         point = self.vertex(index).point()
         if self.mConnectionType == "Complete":
-            for vertexIdx in range(self.mVertexCount):
+            for vertexIdx in range(self.mVertexCount - 1):
                 vertexID = self.vertex(vertexIdx).id()
                 if not fromUndo:
                     edgeIdx = self.addEdge(vertexID, addedVertexID)
@@ -587,7 +590,7 @@ class ExtGraph(QObject):
             # if this is True the nodes got deleted
             if not self.nnAllowDoubleEdges:
                 points = []
-                for idx in range(self.mVertexCount):
+                for idx in range(self.mVertexCount - 1):
                     p = self.vertex(idx).point()
                     points.append([p.x(),p.y()])
                 self.kdTree = kdtree.create(points)
@@ -627,9 +630,12 @@ class ExtGraph(QObject):
         elif self.mConnectionType == "ClusterComplete":
 
             # search nearest point
-            neighborPoint = self.kdTree.search_knn([point.x(),point.y()], 1)
-            neighborPointIdx = self.findVertex(QgsPointXY(neighborPoint[0][0].data[0], neighborPoint[0][0].data[1]))
+            neighborPoint = self.kdTree.search_knn([point.x(),point.y()], 2)
+            neighborPointIdx = self.findVertex(QgsPointXY(neighborPoint[1][0].data[0], neighborPoint[1][0].data[1]))
             neighborVertex = self.vertex(neighborPointIdx)
+            neighborClusterID = neighborVertex.clusterID()
+
+            self.vertex(index).setClusterID(neighborClusterID)
 
             # add an edge to all the neighbors of the found nearest point
             for edgeID in neighborVertex.incomingEdges():
@@ -681,12 +687,10 @@ class ExtGraph(QObject):
         elif self.mConnectionType == "ClusterNN":
 
             # search nearest point
-            neighborPoint = self.kdTree.search_knn([point.x(),point.y()], 1)
-            neighborPointIdx = self.findVertex(QgsPointXY(neighborPoint[0][0].data[0], neighborPoint[0][0].data[1]))
+            neighborPoint = self.kdTree.search_knn([point.x(),point.y()], 2)
+            neighborPointIdx = self.findVertex(QgsPointXY(neighborPoint[1][0].data[0], neighborPoint[1][0].data[1]))
             neighborVertex = self.vertex(neighborPointIdx)
             neighborClusterID = neighborVertex.clusterID()
-
-            self.vertex(index).setClusterID(neighborClusterID)
 
             #create kdtree with all the nodes from the same cluster
             points = []
@@ -696,8 +700,10 @@ class ExtGraph(QObject):
                     points.append([vertex.point().x(), vertex.point().y(), vertexIdx])
 
             clusterKDTree = kdtree.create(points)
+        
+            self.vertex(index).setClusterID(neighborClusterID)
 
-            listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(), index], self.numberNeighbours + 1)
+            listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(), index], self.numberNeighbours)
             for j in range(len(listOfNeighbors)):
                 neighborPointIdx = self.findVertex(QgsPointXY(listOfNeighbors[j][0].data[0], listOfNeighbors[j][0].data[1]))
                 neighborVertexID = self.vertex(neighborPointIdx).id()

@@ -500,6 +500,7 @@ class GraphBuilder:
 
             elif self.__options["connectionType"] == "ClusterComplete":
                 for i in range(len(allPointsInCluster)-1):
+                    self.graph.vertex(allPointsInCluster[i]).setClusterID(cluster)
                     if self.task is not None and self.task.isCanceled():
                         return
                     for j in range(i+1,len(allPointsInCluster)):
