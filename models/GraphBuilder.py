@@ -478,7 +478,9 @@ class GraphBuilder:
             if self.__options["connectionType"] == "ClusterNN":
                 points = []
                 for i in range(len(allPointsInCluster)):
-                    point = self.graph.vertex(allPointsInCluster[i]).point()
+                    vertex = self.graph.vertex(allPointsInCluster[i])
+                    vertex.setClusterID(cluster)
+                    point = vertex.point()
                     points.append([point.x(),point.y(),allPointsInCluster[i]])
 
                 # build kd tree

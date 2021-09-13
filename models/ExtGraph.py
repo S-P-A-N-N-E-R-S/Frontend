@@ -48,6 +48,14 @@ class ExtGraph(QObject):
         def id(self):
             return self.mID
 
+        def setClusterID(self, clusterID):
+            self.mClusterID = clusterID
+
+        def clusterID(self):
+            if hasattr(self, "mClusterID"):
+                return self.mClusterID
+            return -1
+
         def incomingEdges(self):
             return self.mIncomingEdges
 
@@ -609,7 +617,6 @@ class ExtGraph(QObject):
             # search nearest point
             neighborPoint = self.kdTree.search_knn([point.x(),point.y()], 1)
             neighborPointIdx = self.findVertex(QgsPointXY(neighborPoint[0][0].data[0], neighborPoint[0][0].data[1]))
-            
             neighborVertex = self.vertex(neighborPointIdx)
 
             # add an edge to all the neighbors of the found nearest point
@@ -660,37 +667,40 @@ class ExtGraph(QObject):
 
         #== CLUSTERNN =============================================================================
         elif self.mConnectionType == "ClusterNN":
-            print("addVertexWithEdges not yet supported for ClusterNN")
-            return
 
-            # # search nearest point
-            # neighborPoint = self.getNearestVertex(index)
-            # self.layerWithClusterIDS.selectByIds([neighborPoint])
-            # for feature in self.layerWithClusterIDS.selectedFeatures():
-            #     idOfNearestCluster = feature["CLUSTER_ID"]
+            # search nearest point
+            neighborPoint = self.kdTree.search_knn([point.x(),point.y()], 1)
+            neighborPointIdx = self.findVertex(QgsPointXY(neighborPoint[0][0].data[0], neighborPoint[0][0].data[1]))
+            neighborVertex = self.vertex(neighborPointIdx)
+            neighborClusterID = neighborVertex.clusterID()
 
-            # self.layerWithClusterIDS.selectAll()
-            # #create kdtree with all the nodes from the same cluster
-            # points = []
-            # counter = 0
-            # for feature in self.layerWithClusterIDS.getFeatures():
-            #     geom = feature.geometry()
-            #     if feature["CLUSTER_ID"] == idOfNearestCluster:
-            #         points.append([geom.asPoint().x(),geom.asPoint().y(),counter])
-            #     counter+=1
-            # clusterKDTree = kdtree.create(points)
+            #create kdtree with all the nodes from the same cluster
+            points = []
+            for vertexIdx in range(self.vertexCount()):
+                vertex = self.vertex(vertexIdx)
+                if vertex.clusterID() == neighborClusterID:
+                    points.append([vertex.point().x(), vertex.point().y(), vertexIdx])
 
-            # listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(),index],self.numberNeighbours)
-            # for j in range(len(listOfNeighbors)):
-            #     neighborPoint = listOfNeighbors[j][0].data
-            #     edgeId = self.addEdge(index, neighborPoint[2])
-            #     addedEdgeIndices.append(edgeId)
-            #     listOfEdges.append([edgeId, index, neighborPoint[2]])
-            #     if self.edgeDirection == "Undirected" or self.nnAllowDoubleEdges == True:
-            #         edgeId = self.addEdge(neighborPoint[2], index)
-            #         addedEdgeIndices.append(edgeId)
-            #         listOfEdges.append([edgeId, neighborPoint[2], index])
+            clusterKDTree = kdtree.create(points)
 
+            listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(), index], self.numberNeighbours)
+            for j in range(len(listOfNeighbors)):
+                neighborPointIdx = self.findVertex(QgsPointXY(listOfNeighbors[j][0].data[0], listOfNeighbors[j][0].data[1]))
+                neighborVertexID = self.vertex(neighborPointIdx).id()
+
+                if not fromUndo:
+                    edgeIdx = self.addEdge(addedVertexID, neighborVertexID)
+                else:
+                    edgeIdx = self.edgeCount() + len(listOfEdges)
+                listOfEdges.append([edgeIdx, addedVertexID, neighborVertexID])
+                
+                if self.nnAllowDoubleEdges:
+                    if not fromUndo:
+                        edgeIdx = self.addEdge(addedVertexID, neighborVertexID)
+                    else:
+                        edgeIdx = self.edgeCount() + len(listOfEdges)
+                    listOfEdges.append([edgeIdx, neighborVertexID, addedVertexID])
+        
         # # create AdvancedCostCalculator object with the necessary parameters
         # costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
 

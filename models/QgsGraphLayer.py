@@ -313,8 +313,11 @@ class QgsGraphLayer(QgsPluginLayer):
             for vertexIdx in range(graph.vertexCount()):
                 vertex = graph.vertex(vertexIdx)
                 
-                self.mGraph.addVertex(vertex.point(), -1, vertex.id())
+                addedVertexIdx = self.mGraph.addVertex(vertex.point(), -1, vertex.id())
 
+                if vertex.clusterID() >= 0:
+                    self.mGraph.vertex(addedVertexIdx).setClusterID(vertex.clusterID())
+                    
             # add edges to new ExtGraph and create corresponding features
             amountEdgeCostFunctions = graph.amountOfEdgeCostFunctions()
             for edgeIdx in range(graph.edgeCount()):
@@ -572,7 +575,10 @@ class QgsGraphLayer(QgsPluginLayer):
                 elem = vertexNodes.at(vertexIdx).toElement()
                 vertex = QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y")))
                 vID = int(elem.attribute("id"))
-                self.mGraph.addVertex(vertex, -1, vID)
+                addedVertexIdx = self.mGraph.addVertex(vertex, -1, vID)
+
+                if elem.hasAttribute("clusterID"):
+                    self.mGraph.vertex(addedVertexIdx).setClusterID(int(elem.attribute("clusterID")))
 
         # get edge information and add them to graph
         for edgeIdx in range(edgeNodes.length()):
@@ -645,7 +651,7 @@ class QgsGraphLayer(QgsPluginLayer):
             point = vertex.point()
 
             # store vertex information (coordinates have to be string to avoid implicit conversion to int)
-            self.__writeVertexXML(doc, verticesNode, vertex.id(), point.x(), point.y())
+            self.__writeVertexXML(doc, verticesNode, vertex.id(), point.x(), point.y(), vertex.clusterID() if vertex.clusterID() >= 0 else -1)
 
         if self.mGraph.edgeCount() != 0:
             # store only edges if available
@@ -677,7 +683,7 @@ class QgsGraphLayer(QgsPluginLayer):
                     
         return True
 
-    def __writeVertexXML(self, doc, node, vertexID, x, y):
+    def __writeVertexXML(self, doc, node, vertexID, x, y, clusterID=-1):
         """Writes given vertex information to XML.
 
         :type doc: QDomDocument
@@ -691,6 +697,8 @@ class QgsGraphLayer(QgsPluginLayer):
         # store coordinates as strings to avoid implicite conversion from float to int
         vertexNode.setAttribute("x", str(x))
         vertexNode.setAttribute("y", str(y))
+        if clusterID >= 0:
+            vertexNode.setAttribute("clusterID", str(clusterID))
         node.appendChild(vertexNode)
 
     def setLayerType(self, layerType):
