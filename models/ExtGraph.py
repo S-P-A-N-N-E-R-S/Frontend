@@ -540,7 +540,6 @@ class ExtGraph(QObject):
         :type vertexCoordinates: list with x,y-Coordinates
         :return list of edges
         """
-        # TODO: adapt whole function to arraystructure, make function work
         if not self.kdTree:
             points = []
             for idx in range(self.mVertexCount):
@@ -550,7 +549,6 @@ class ExtGraph(QObject):
             self.kdTree = kdtree.create(points)
 
         listOfEdges = []
-        addedEdgeIndices = []
         numberOfEdgesOriginal = self.edgeCount()
         index = self.addVertex(QgsPointXY(vertexCoordinates[0], vertexCoordinates[1]))
         addedVertexID = self.vertex(index).id()
@@ -562,12 +560,12 @@ class ExtGraph(QObject):
                     edgeIdx = self.addEdge(vertexID, addedVertexID)
                 else:
                     edgeIdx = self.edgeCount() + len(listOfEdges)
-                addedEdgeIndices.append(edgeIdx)
                 listOfEdges.append([edgeIdx, vertexID, addedVertexID])
 
+        #== NEAREST NEIGHBOR & DISTANCENN =========================================================
         elif self.mConnectionType == "Nearest neighbor" or self.mConnectionType == "DistanceNN":
             # if this is True the nodes got deleted
-            if self.nnAllowDoubleEdges == False:
+            if not self.nnAllowDoubleEdges:
                 points = []
                 for idx in range(self.mVertexCount):
                     p = self.vertex(idx).point()
@@ -597,39 +595,70 @@ class ExtGraph(QObject):
                     edgeIdx = self.addEdge(addedVertexID, neighborID)
                 else:
                     edgeIdx = self.edgeCount() + len(listOfEdges)
-                addedEdgeIndices.append(edgeIdx)
                 listOfEdges.append([edgeIdx, addedVertexID, neighborID])
-                if self.nnAllowDoubleEdges == True:
+                if self.nnAllowDoubleEdges:
                     if not fromUndo:
                         edgeIdx = self.addEdge(addedVertexID, neighborID)
                     else:
                         edgeIdx = self.edgeCount() + len(listOfEdges)
-                    addedEdgeIndices.append(edgeIdx)
                     listOfEdges.append([edgeIdx, neighborID, addedVertexID])
 
+        #== CLUSTER COMPLETE ======================================================================
         elif self.mConnectionType == "ClusterComplete":
-            print("addVertexWithEdges not yet supported for ClusterComplete")
-            return
 
-            # # search nearest point
-            # neighborPoint = self.getNearestVertex(index)
+            # search nearest point
+            neighborPoint = self.kdTree.search_knn([point.x(),point.y()], 1)
+            neighborPointIdx = self.findVertex(QgsPointXY(neighborPoint[0][0].data[0], neighborPoint[0][0].data[1]))
+            
+            neighborVertex = self.vertex(neighborPointIdx)
 
-            # # add an edge to all the neighbors of the found nearest point
-            # for i in self.edges():
-            #     edge = self.edge(i)
-            #     if edge.toVertex() == neighborPoint:
-            #         edgeId = self.addEdge(edge.fromVertex(), index)
-            #         addedEdgeIndices.append(edgeId)
-            #         listOfEdges.append([edgeId, edge.fromVertex(),index])
-            #     elif edge.fromVertex() == neighborPoint:
-            #         edgeId = self.addEdge(edge.toVertex(), index)
-            #         addedEdgeIndices.append(edgeId)
-            #         listOfEdges.append([edgeId, edge.toVertex(), index])
+            # add an edge to all the neighbors of the found nearest point
+            for edgeID in neighborVertex.incomingEdges():
+                edge = self.edge(self.findEdgeByID(edgeID))
+                
+                if not fromUndo:
+                    addedEdgeIdx = self.addEdge(edge.fromVertex(), addedVertexID)
+                else:
+                    addedEdgeIdx = self.edgeCount() + len(listOfEdges)
+                listOfEdges.append([addedEdgeIdx, edge.fromVertex(), addedVertexID])
 
-            # edgeId = self.addEdge(neighborPoint, index)
-            # addedEdgeIndices.append(edgeId)
-            # listOfEdges.append([edgeId, neighborPoint, index])
+                if self.nnAllowDoubleEdges:
+                    if not fromUndo:
+                        addedEdgeIdx = self.addEdge(addedVertexID, edge.fromVertex())
+                    else:
+                        addedEdgeIdx = self.edgeCount() + len(listOfEdges)
+                    listOfEdges.append([addedEdgeIdx, addedVertexID, edge.fromVertex()])
+            
+            for edgeID in neighborVertex.outgoingEdges():
+                edge = self.edge(self.findEdgeByID(edgeID))
 
+                if not fromUndo:
+                    addedEdgeIdx = self.addEdge(addedVertexID, edge.toVertex())
+                else:
+                    addedEdgeIdx = self.edgeCount() + len(listOfEdges)
+                listOfEdges.append([addedEdgeIdx, addedVertexID, edge.toVertex()])
+
+                if self.nnAllowDoubleEdges:
+                    if not fromUndo:
+                        addedEdgeIdx = self.addEdge(edge.toVertex(), addedVertexID)
+                    else:
+                        addedEdgeIdx = self.edgeCount() + len(listOfEdges)
+                    listOfEdges.append([addedEdgeIdx, edge.toVertex(), addedVertexID])
+
+            if not fromUndo:
+                addedEdgeIdx = self.addEdge(neighborVertex.id(), addedVertexID)
+            else:
+                addedEdgeIdx = self.edgeCount() + len(listOfEdges)
+            listOfEdges.append([addedEdgeIdx, neighborVertex.id(), addedVertexID])
+
+            if self.nnAllowDoubleEdges:
+                    if not fromUndo:
+                        addedEdgeIdx = self.addEdge(addedVertexID, neighborVertex.id())
+                    else:
+                        addedEdgeIdx = self.edgeCount() + len(listOfEdges)
+                    listOfEdges.append([addedEdgeIdx, addedVertexID, neighborVertex.id()])
+
+        #== CLUSTERNN =============================================================================
         elif self.mConnectionType == "ClusterNN":
             print("addVertexWithEdges not yet supported for ClusterNN")
             return

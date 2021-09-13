@@ -86,7 +86,7 @@ class ExtVertexUndoCommand(QUndoCommand):
                 edgeUndoCommand.redo()
         
         elif self.childCount() != 0:
-            for i in range(self.childCount()):
+            for i in range(self.childCount() - 1, -1, -1):
                 childCommand = self.child(i)
                 if fromWithEdges:
                     childCommand.undo()
@@ -99,14 +99,15 @@ class ExtVertexUndoCommand(QUndoCommand):
             self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
             
             # call child commands redo in order
-            for edge in addedEdges:
-                edgeIdx = edge[0]
-                fromID = edge[1]
-                toID = edge[2]
+            if addedEdges:
+                for edge in addedEdges:
+                    edgeIdx = edge[0]
+                    fromID = edge[1]
+                    toID = edge[2]
 
-                # create child command and call its redo
-                edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, fromID, toID, False, self)
-                edgeUndoCommand.redo()
+                    # create child command and call its redo
+                    edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, fromID, toID, False, self)
+                    edgeUndoCommand.redo()
 
         else:
             self._addVertex(True)
