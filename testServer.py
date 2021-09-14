@@ -6,7 +6,7 @@ import struct
 import socket
 import logging
 
-from protocol.protos import GraphData_pb2
+from protocol.build import container_pb2, generic_container_pb2, available_handlers_pb2
 
 
 def main():
@@ -59,33 +59,88 @@ def recvall(sock, msgLength):
 
 
 def createResponse(requestProtoBufString):
-    requestProtoBuf = GraphData_pb2.RequestContainer()
+    requestProtoBuf = container_pb2.RequestContainer()
     requestProtoBuf.ParseFromString(requestProtoBufString)
 
-    request = GraphData_pb2.ShortPathRequest()
-    requestProtoBuf.request.Unpack(request)
+    responseProtoBuf = container_pb2.ResponseContainer()
+    responseProtoBuf.status = container_pb2.ResponseContainer.StatusCode.OK
 
-    responseProtoBuf = GraphData_pb2.ResponseContainer()
-    responseProtoBuf.status = GraphData_pb2.ResponseContainer.StatusCode.OK
+    if requestProtoBuf.type == meta_pb2.RequestType.GENERIC:
+        request = generic_container_pb2.GenericRequest()
+        requestProtoBuf.request.Unpack(request)
 
-    response = GraphData_pb2.ShortPathResponse()
+        response = generic_container_pb2.GenericResponse()
 
-    response.graph.uid = request.graph.uid
+        response.graph.uid = request.graph.uid
 
-    for vertex in request.graph.vertexList:
-        protoVertex = response.graph.vertexList.add()
-        protoVertex.uid = vertex.uid
-        protoVertex.x = vertex.x
-        protoVertex.y = vertex.y
+        for vertex in request.graph.vertexList:
+            protoVertex = response.graph.vertexList.add()
+            protoVertex.uid = vertex.uid
+            protoVertex.x = vertex.x
+            protoVertex.y = vertex.y
 
-    for edge in request.graph.edgeList:
-        protoEdge = response.graph.edgeList.add()
-        protoEdge.uid = edge.uid
-        protoEdge.inVertexUid = edge.inVertexUid
-        protoEdge.outVertexUid = edge.outVertexUid
+        for edge in request.graph.edgeList:
+            protoEdge = response.graph.edgeList.add()
+            protoEdge.uid = edge.uid
+            protoEdge.inVertexUid = edge.inVertexUid
+            protoEdge.outVertexUid = edge.outVertexUid
 
-    responseProtoBuf.response.Pack(response)
-    return responseProtoBuf.SerializeToString()
+        responseProtoBuf.response.Pack(response)
+    elif requestProtoBuf.type == meta_pb2.RequestType.AVAILABLE_HANDLERS:
+        response = available_handlers_pb2.AvailableHandlersResponse()
+        responseProtoBuf.type = meta_pb2.RequestType.AVAILABLE_HANDLERS
+
+        handler = response.handlers.add()
+        handler.request_type = meta_pb2.RequestType.GENERIC
+        handler.name = "Shortest Path"
+
+        graphField = handler.fields.add()
+        graphField.type = available_handlers_pb2.FieldInformation.FieldType.GRAPH
+        graphField.label = "Graph"
+        graphField.key = "graph"
+        #graphField.default.Pack(0)
+        graphField.required = True
+
+        costField = handler.fields.add()
+        costField.type = available_handlers_pb2.FieldInformation.FieldType.EDGE_COSTS
+        costField.label = "Edge Costs"
+        costField.key = "edgeCosts"
+        #costField.default.Pack(0)
+        costField.required = True
+
+        coordsField = handler.fields.add()
+        coordsField.type = available_handlers_pb2.FieldInformation.FieldType.VERTEX_COORDINATES
+        coordsField.label = "Vertex Coordinates"
+        coordsField.key = "vertexCoordinates"
+        #coordsField.default.Pack(0)
+        coordsField.required = True
+
+        startUid = handler.fields.add()
+        startUid.type = available_handlers_pb2.FieldInformation.FieldType.VERTEX_COORDINATES
+        startUid.label = "Start Vertex"
+        startUid.key = "intAttributes.startUid"
+        #startUid.default.Pack(0)
+        startUid.required = True
+
+        graphResult = handler.results.add()
+        graphResult.type = available_handlers_pb2.ResultInformation.HandlerReturnType.GRAPH
+        graphResult.label = "Graph"
+        graphResult.key = "graph"
+
+        costResult = handler.results.add()
+        costResult.type = available_handlers_pb2.ResultInformation.HandlerReturnType.EDGE_COSTS
+        costResult.label = "Edge Costs"
+        costResult.key = "edgeCosts"
+
+        coordsResult = handler.results.add()
+        coordsResult.type = available_handlers_pb2.ResultInformation.HandlerReturnType.VERTEX_COORDINATES
+        coordsResult.label = "Vertex Coordinates"
+        coordsResult.key = "vertexCoordinates"
+
+        responseProtoBuf.response.Pack(response)
+
+    responseString = responseProtoBuf.SerializeToString()
+    return responseString
 
 
 if __name__ == "__main__":
