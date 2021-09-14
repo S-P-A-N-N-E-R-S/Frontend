@@ -1,5 +1,5 @@
 from qgis.core import *
-from qgis.gui import QgsMapTool, QgsVertexMarker
+from qgis.gui import QgsMapTool, QgsVertexMarker, QgsRubberBand
 from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QPoint, Qt
@@ -20,6 +20,9 @@ class QgsGraphMapTool(QgsMapTool):
 
         self.firstFound = False
         self.ctrlPressed = False
+        self.shiftPressed = False
+
+        self.rubberBand = None
 
     def activate(self):
         self.advancedCosts = self.mLayer.mGraph.distanceStrategy == "Advanced"
@@ -186,6 +189,13 @@ class QgsGraphMapTool(QgsMapTool):
         
         self.mLayer.mDataProvider.deleteFeature(idx, True)
 
+    def _showRect(self):
+        if hasattr(self, "rubberBand") and self.rubberBand:
+
+            self.rubberBand.setToGeometry(QgsGeometry.fromRect(QgsRectangle(self.topLeft, self.bottomRight)), None)
+
+            self.rubberBand.show()
+
     def canvasPressEvent(self, event):
         """
         Contains graph editing functions on MouseClick:
@@ -204,8 +214,13 @@ class QgsGraphMapTool(QgsMapTool):
         clickPosition = self.mLayer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
         if event.button() == Qt.LeftButton: # LeftClick
+            
+            if self.shiftPressed: # select vertices by rectangle
+                self.topLeft = clickPosition
+                self.bottomRight = clickPosition
+                self.drawRect = True
 
-            if not self.ctrlPressed:
+            elif not self.ctrlPressed:
                 if not self.firstFound: # addVertex
                     self._addVertex(clickPosition)
                 
@@ -262,17 +277,38 @@ class QgsGraphMapTool(QgsMapTool):
         self.mLayer.triggerRepaint()
         # self.mCanvas.refresh()
 
+    def canvasMoveEvent(self, event):
+        if hasattr(self, "drawRect") and self.drawRect:
+            clickPosition = QPoint(event.pos().x(), event.pos().y())
+
+            # used to convert canvas coordinates to map coordinates
+            self.converter = iface.mapCanvas().getCoordinateTransform()
+            clickPosition = self.converter.toMapCoordinates(clickPosition)
+            clickPosition = self.mLayer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform) 
+
+            self.bottomRight = clickPosition
+
+            self._showRect()
+
+    def canvasReleaseEvent(self, event):
+        if self.shiftPressed:
+
+            foundVertexIndices = self.mLayer.mGraph.findVertices(self.topLeft, self.bottomRight)
+            print(foundVertexIndices)
+
     def keyPressEvent(self, event):
         """
         Additional edit options by pressing and holding keys:
         HOLD CTRL: enable new options on MouseClick, see canvasPressEvent
         ESC: quit edit mode
+        HOLD SHIFT: enable multiple vertex selection
 
         :type event: QKeyEvent
         """
         # TODO: seems like keyPressEvent needs canvasPressEvent beforehand?
         if event.key() == Qt.Key_Control:
             self.ctrlPressed = True
+        
         elif event.key() == Qt.Key_Escape:
             # stop edit mode on Key_Escape
             if self.firstFound:
@@ -280,9 +316,19 @@ class QgsGraphMapTool(QgsMapTool):
 
             self.mLayer.toggleEdit()
 
+        elif event.key() == Qt.Key_Shift:
+            self.shiftPressed = True
+            self.rubberBand = QgsRubberBand(iface.mapCanvas(), True)
+
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Control:
             self.ctrlPressed = False
+
+        elif event.key() == Qt.Key_Shift:
+            self.shiftPressed = False
+            if hasattr(self, "rubberBand") and self.rubberBand:
+                self.rubberBand.reset()
+                del self.rubberBand
 
     def __removeFirstFound(self):
         if self.firstFound:

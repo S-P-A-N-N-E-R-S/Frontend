@@ -471,6 +471,26 @@ class ExtGraph(QObject):
 
         return -1
     
+    def findVertices(self, topLeftPoint, bottomRightPoint):
+        """
+        Select multiple vertices in a rectangle defined by topLeftPoint and bottomRightPoint
+
+        :type topLeftPoint: QgsPointXY
+        :type bottomRightPoint: QgsPointXY
+        :return foundVertexIndices: []
+        """
+        foundVertexIndices = []
+        # TODO: here kdtree useable instead of linear search?
+        for vertexIdx in range(self.mVertexCount):
+            vertex = self.mVertices[vertexIdx]
+            vertexPoint = vertex.point()
+
+            if (vertexPoint.x() >= topLeftPoint.x() and vertexPoint.x() <= bottomRightPoint.x() and 
+                vertexPoint.y() <= topLeftPoint.y() and vertexPoint.y() >= bottomRightPoint.y()):
+                foundVertexIndices.append(vertexIdx)
+
+        return foundVertexIndices
+
     def nextEdgeID(self):
         return self.mMaxEdgeID
 
