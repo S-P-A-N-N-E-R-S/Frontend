@@ -21,6 +21,7 @@ class QgsGraphMapTool(QgsMapTool):
         self.firstFound = False
         self.ctrlPressed = False
         self.shiftPressed = False
+        self.leftPressed = False
 
         self.rubberBand = None
 
@@ -190,7 +191,7 @@ class QgsGraphMapTool(QgsMapTool):
         self.mLayer.mDataProvider.deleteFeature(idx, True)
 
     def _showRect(self):
-        if hasattr(self, "rubberBand") and self.rubberBand:
+        if hasattr(self, "rubberBand") and self.rubberBand and self.leftPressed and self.shiftPressed:
 
             self.rubberBand.setToGeometry(QgsGeometry.fromRect(QgsRectangle(self.topLeft, self.bottomRight)), None)
 
@@ -214,7 +215,8 @@ class QgsGraphMapTool(QgsMapTool):
         clickPosition = self.mLayer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
         if event.button() == Qt.LeftButton: # LeftClick
-            
+            self.leftPressed = True
+
             if self.shiftPressed: # select vertices by rectangle
                 self.topLeft = clickPosition
                 self.bottomRight = clickPosition
@@ -291,10 +293,17 @@ class QgsGraphMapTool(QgsMapTool):
             self._showRect()
 
     def canvasReleaseEvent(self, event):
-        if self.shiftPressed:
-
+        if self.shiftPressed and event.button() == Qt.LeftButton:
             foundVertexIndices = self.mLayer.mGraph.findVertices(self.topLeft, self.bottomRight)
             print(foundVertexIndices)
+
+            # TODO: window with information about picked vertices
+            # TODO: mark picked vertices
+            
+            self.drawRect = False
+            self.topLeft = None
+            self.bottomRight = None
+            self.leftPressed = False
 
     def keyPressEvent(self, event):
         """
