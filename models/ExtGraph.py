@@ -480,13 +480,14 @@ class ExtGraph(QObject):
         :return foundVertexIndices: []
         """
         foundVertexIndices = []
+        rect = QgsRectangle(topLeftPoint, bottomRightPoint)
+        
         # TODO: here kdtree useable instead of linear search?
         for vertexIdx in range(self.mVertexCount):
             vertex = self.mVertices[vertexIdx]
             vertexPoint = vertex.point()
 
-            if (vertexPoint.x() >= topLeftPoint.x() and vertexPoint.x() <= bottomRightPoint.x() and 
-                vertexPoint.y() <= topLeftPoint.y() and vertexPoint.y() >= bottomRightPoint.y()):
+            if rect.contains(vertexPoint):
                 foundVertexIndices.append(vertexIdx)
 
         return foundVertexIndices
