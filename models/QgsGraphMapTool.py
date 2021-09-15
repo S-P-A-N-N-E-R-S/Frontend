@@ -247,6 +247,8 @@ class QgsGraphMapTool(QgsMapTool):
                         self._addVertexWithEdges(clickPosition)
 
                         self.__removeFirstFound()
+                else:
+                    iface.messageBar().pushMessage("Error", self.tr("Add Vertex with Edges is disabled for advanced costs"), level=Qgis.Critical)
 
         elif event.button() == Qt.RightButton: # RightClick
 
