@@ -831,8 +831,9 @@ class QgsGraphLayerType(QgsPluginLayerType):
         :return Boolean
         """
         if hasattr(self, "win") and self.win:
+            self.win.setVisible(True)
             return True
-            
+
         self.win = QDialog(iface.mainWindow())
         self.win.setVisible(True)
 
