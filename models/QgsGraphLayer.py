@@ -830,6 +830,9 @@ class QgsGraphLayerType(QgsPluginLayerType):
         :type layer: QgsGraphLayer
         :return Boolean
         """
+        if hasattr(self, "win") and self.win:
+            return True
+            
         self.win = QDialog(iface.mainWindow())
         self.win.setVisible(True)
 
@@ -989,5 +992,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
         self.win.setLayout(layout)
         self.win.adjustSize()
+
+        layer.willBeDeleted.connect(self.win.reject)
 
         return True
