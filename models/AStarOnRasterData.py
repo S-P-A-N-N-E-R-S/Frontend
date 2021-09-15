@@ -27,7 +27,7 @@ class AStarOnRasterData:
 		self.xOrigin = self.transform[0]
 		self.yOrigin = self.transform[3]
 		self.pixelWidth = self.transform[1]
-		pixelHeight = -self.transform[5]
+		self.pixelHeight = -self.transform[5]
 	
 		self.matrix = np.array(readBand.ReadAsArray())
 		
@@ -35,7 +35,7 @@ class AStarOnRasterData:
 		self.matrixColSize = self.matrix.shape[1]
 		if createResultAsMatrix == True:
 			self.shortestPathMatrix = np.zeros((self.matrixRowSize, self.matrixColSize))
-			self.predMatrix = None
+		self.predMatrix = None
 		
 		self.pixelWeights = None
 		self.dictionary = {}
@@ -49,9 +49,9 @@ class AStarOnRasterData:
 	    
 	    # get position of points in matrix   
 	    startPointCol = int((startPointTransform.x() - self.xOrigin) / self.pixelWidth)
-	    startPointRow = int((self.yOrigin - startPointTransform.y()) / self.pixelWidth)
+	    startPointRow = int((self.yOrigin - startPointTransform.y()) / self.pixelHeight)
 	    endPointCol = int((endPointTransform.x() - self.xOrigin) / self.pixelWidth)
-	    endPointRow = int((self.yOrigin - endPointTransform.y()) / self.pixelWidth)
+	    endPointRow = int((self.yOrigin - endPointTransform.y()) / self.pixelHeight)
 	    	      	   
 	    dimensions = (self.matrixRowSize, self.matrixColSize)
 	    # check startPoint and endPoint are inside the raster, if not return max value
