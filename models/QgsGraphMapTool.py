@@ -114,7 +114,7 @@ class QgsGraphMapTool(QgsMapTool):
 
         # QLabel with information about the GraphLayer
         edge = self.mLayer.mGraph.edge(edgeIdx)
-        informationLabel = QLabel("Edge " +  str(edge.id()))
+        informationLabel = QLabel(self.tr("Edge ") +  str(edge.id()))
         informationLabel.setWordWrap(True)
         informationLabel.setVisible(True)
         informationLabel.setStyleSheet("border: 1px solid black;")
@@ -122,7 +122,7 @@ class QgsGraphMapTool(QgsMapTool):
 
         if self.mLayer.mGraph.distanceStrategy == "Advanced":
             costs = []
-            costGroupBox = QGroupBox("Edge Cost per Advanced Cost Function")
+            costGroupBox = QGroupBox(self.tr("Edge Cost per Advanced Cost Function"))
             costLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
             def _updateCosts():
@@ -135,7 +135,7 @@ class QgsGraphMapTool(QgsMapTool):
                 edgeUndoCommand.setNewCosts(costs)
                 self.mLayer.mUndoStack.push(edgeUndoCommand)
 
-            applyButton = QPushButton("Apply")
+            applyButton = QPushButton(self.tr("Apply"))
             applyButton.setVisible(True)
             applyButton.setEnabled(False)
             applyButton.clicked.connect(_updateCosts)
@@ -156,19 +156,19 @@ class QgsGraphMapTool(QgsMapTool):
             layout.addWidget(applyButton)
             
         else:
-            distanceLabel = QLabel("Distance Strategy: " + self.mLayer.mGraph.distanceStrategy + ": " + str(self.mLayer.mGraph.costOfEdge(edgeIdx)))
+            distanceLabel = QLabel(self.tr("Distance Strategy: ") + self.mLayer.mGraph.distanceStrategy + ": " + str(self.mLayer.mGraph.costOfEdge(edgeIdx)))
             distanceLabel.setWordWrap(False)
             distanceLabel.setVisible(True)
             distanceLabel.setStyleSheet("border: 1px solid black;")
             layout.addWidget(distanceLabel)
 
-        highlightEdgeButton = QPushButton("Toggle Highlight")
+        highlightEdgeButton = QPushButton(self.tr("Toggle Highlight"))
         highlightEdgeButton.clicked.connect(self.mLayer.mGraph.edge(edgeIdx).toggleHighlight)
         highlightEdgeButton.clicked.connect(self.mLayer.triggerRepaint)
         highlightEdgeButton.setVisible(True)
         layout.addWidget(highlightEdgeButton)
 
-        deleteEdgeButton = QPushButton("Delete")
+        deleteEdgeButton = QPushButton(self.tr("Delete"))
         deleteEdgeButton.clicked.connect(lambda: self._deleteEdge(edgeIdx))
         deleteEdgeButton.clicked.connect(win.done)
         deleteEdgeButton.setVisible(True)
@@ -311,7 +311,7 @@ class QgsGraphMapTool(QgsMapTool):
                 layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
                 markers = []
-                foundVerticesString = str(len(foundVertexIndices)) + " vertices found: "
+                foundVerticesString = str(len(foundVertexIndices)) + self.tr(" vertices found: ")
                 for i in range(len(foundVertexIndices)):
                     vertex = self.mLayer.mGraph.vertex(foundVertexIndices[i])
                     markers.append(QgsVertexMarker(iface.mapCanvas()))
@@ -321,6 +321,8 @@ class QgsGraphMapTool(QgsMapTool):
                     foundVerticesString += str(vertex.id())
                     if i + 1 < len(foundVertexIndices):
                         foundVerticesString += ", "
+                    if i % 5 == 0:
+                        foundVerticesString += "\n"
 
                 # QLabel with information about the found vertices
                 informationLabel = QLabel(foundVerticesString)
@@ -333,11 +335,11 @@ class QgsGraphMapTool(QgsMapTool):
                     for i in range(len(foundVertexIndices) - 1, -1, -1):
                         self._deleteVertex(foundVertexIndices[i])    
 
-                deleteEdgeButton = QPushButton("Delete")
-                deleteEdgeButton.clicked.connect(_deleteFoundVertices)
-                deleteEdgeButton.clicked.connect(win.done)
-                deleteEdgeButton.setVisible(True)
-                layout.addWidget(deleteEdgeButton)
+                deleteVerticesButton = QPushButton(self.tr("Delete"))
+                deleteVerticesButton.clicked.connect(_deleteFoundVertices)
+                deleteVerticesButton.clicked.connect(win.done)
+                deleteVerticesButton.setVisible(True)
+                layout.addWidget(deleteVerticesButton)
 
                 win.setLayout(layout)
                 win.adjustSize()            
