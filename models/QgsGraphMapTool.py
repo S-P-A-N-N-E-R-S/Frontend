@@ -4,6 +4,7 @@ from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QPoint, Qt
 from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QDoubleSpinBox, QGroupBox
+from qgis.PyQt.QtGui import QColor
 
 from .QgsGraphUndoCommands import ExtVertexUndoCommand, ExtEdgeUndoCommand
 
@@ -257,7 +258,7 @@ class QgsGraphMapTool(QgsMapTool):
                 self.firstFoundVertexIdx = vertexIdx
                 self.firstFoundVertexID = self.mLayer.mGraph.vertex(vertexIdx).id()
                 self.firstMarker = QgsVertexMarker(iface.mapCanvas())
-                self.firstMarker.setIconType(QgsVertexMarker.ICON_DOUBLE_TRIANGLE)
+                self.firstMarker.setIconType(QgsVertexMarker.ICON_CROSS)
                 self.firstMarker.setCenter(clickPosition)
             
             elif vertexIdx < 0 and self.firstFound: # second RightClick (no vertex found)
@@ -295,11 +296,60 @@ class QgsGraphMapTool(QgsMapTool):
     def canvasReleaseEvent(self, event):
         if self.shiftPressed and event.button() == Qt.LeftButton:
             foundVertexIndices = self.mLayer.mGraph.findVertices(self.topLeft, self.bottomRight)
-            print(foundVertexIndices)
 
-            # TODO: window with information about picked vertices
-            # TODO: mark picked vertices
-            
+            self.rubberBand.reset()
+            del self.rubberBand
+
+            # if vertices are found
+            if len(foundVertexIndices) > 0:
+
+                # open window for found vertices (possibility to delete vertices)
+                win = QDialog(iface.mainWindow())
+                win.setVisible(True)
+
+                # QBoxLayout to add widgets to
+                layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+
+                markers = []
+                foundVerticesString = str(len(foundVertexIndices)) + " vertices found: "
+                for i in range(len(foundVertexIndices)):
+                    vertex = self.mLayer.mGraph.vertex(foundVertexIndices[i])
+                    markers.append(QgsVertexMarker(iface.mapCanvas()))
+                    markers[i].setIconType(QgsVertexMarker.ICON_CROSS)
+                    markers[i].setCenter(vertex.point())
+
+                    foundVerticesString += str(vertex.id())
+                    if i + 1 < len(foundVertexIndices):
+                        foundVerticesString += ", "
+
+                # QLabel with information about the found vertices
+                informationLabel = QLabel(foundVerticesString)
+                # informationLabel.setWordWrap(True)
+                informationLabel.setVisible(True)
+                informationLabel.setStyleSheet("border: 1px solid black;")
+                layout.addWidget(informationLabel)
+
+                def _deleteFoundVertices():
+                    for i in range(len(foundVertexIndices) - 1, -1, -1):
+                        self._deleteVertex(foundVertexIndices[i])    
+
+                deleteEdgeButton = QPushButton("Delete")
+                deleteEdgeButton.clicked.connect(_deleteFoundVertices)
+                deleteEdgeButton.clicked.connect(win.done)
+                deleteEdgeButton.setVisible(True)
+                layout.addWidget(deleteEdgeButton)
+
+                win.setLayout(layout)
+                win.adjustSize()            
+                
+                def _closeVerticesWindow():
+                    numberFound = len(foundVertexIndices)
+                    for i in range(numberFound - 1, -1, -1):
+                        iface.mapCanvas().scene().removeItem(markers[i])
+                        del markers[i]
+
+                win.rejected.connect(_closeVerticesWindow)
+
             self.drawRect = False
             self.topLeft = None
             self.bottomRight = None
@@ -328,6 +378,7 @@ class QgsGraphMapTool(QgsMapTool):
         elif event.key() == Qt.Key_Shift:
             self.shiftPressed = True
             self.rubberBand = QgsRubberBand(iface.mapCanvas(), True)
+            self.rubberBand.setColor(QColor(232, 137, 137, 50))
 
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Control:
