@@ -4,7 +4,7 @@ from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath, getRasterFileFilter, getVectorFileFilter
 from ..models.ExtGraph import ExtGraph
 
-from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes, QgsVectorLayer, QgsWkbTypes, QgsApplication
 from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget
 from qgis.utils import iface
 
@@ -76,7 +76,13 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_polycost_plus_btn.clicked.connect(self._addPolygonCostInput)
 
         # set up advance cost widget button
+        self.dialog.create_graph_costfunction_define_btn.setIcon(QgsApplication.getThemeIcon("symbologyEdit.svg"))
         self.dialog.create_graph_costfunction_define_btn.clicked.connect(lambda: self._showCostFunctionDialog(0))
+
+        # set up add button icons
+        self.dialog.create_graph_raster_plus_btn.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
+        self.dialog.create_graph_polycost_plus_btn.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
+        self.dialog.create_graph_costfunction_add_btn.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
 
         # set up add cost function button
         self.dialog.create_graph_costfunction_add_btn.clicked.connect(self._addCostFunctionInput)
@@ -198,6 +204,21 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_polycost_widget.setEnabled(distanceStrategy == "Advanced")
         self.dialog.create_graph_rasterdata_widget.setEnabled(distanceStrategy == "Advanced")
 
+    def _toRemoveButton(self, button, tooltip):
+        button.setText("➖")
+        button.setToolTip(tooltip)
+        button.setIcon(QgsApplication.getThemeIcon("symbologyRemove.svg"))
+        button.clicked.disconnect()
+
+    def _createAddButton(self, tooltip):
+        addButton = QToolButton()
+        addButton.setText("➕")
+        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        addButton.setMaximumSize(25, 25)
+        addButton.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
+        addButton.setToolTip(tooltip)
+        return addButton
+
     def _addRasterDataInput(self):
         """
         Appends a new raster band input line
@@ -206,9 +227,7 @@ class CreateGraphView(BaseContentView):
         #  change add button to remove button
         lastLayout = self.dialog.create_graph_rasterdata_widget.layout().itemAt(self.dialog.create_graph_rasterdata_widget.layout().count()-1)
         button = lastLayout.itemAt(lastLayout.count()-1).widget()
-        button.setText("➖")
-        button.setToolTip(self.tr("Remove raster input"))
-        button.clicked.disconnect()
+        self._toRemoveButton(button, self.tr("Remove raster input"))
         button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_rasterdata_widget, lastLayout))
 
         layerComboBox = QgsMapLayerComboBox()
@@ -224,10 +243,7 @@ class CreateGraphView(BaseContentView):
         bandComboBox.setToolTip(self.tr("Select raster band"))
         layerComboBox.layerChanged.connect(bandComboBox.setLayer)
 
-        addButton = QPushButton("➕")
-        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        addButton.setMaximumSize(25, 25)
-        addButton.setToolTip(self.tr("Add raster input"))
+        addButton = self._createAddButton(self.tr("Add raster input"))
         addButton.clicked.connect(self._addRasterDataInput)
 
         layout = QHBoxLayout()
@@ -245,9 +261,7 @@ class CreateGraphView(BaseContentView):
         #  change add button to remove button
         lastLayout = self.dialog.create_graph_polycost_widget.layout().itemAt(self.dialog.create_graph_polycost_widget.layout().count() - 1)
         button = lastLayout.itemAt(lastLayout.count() - 1).widget()
-        button.setText("➖")
-        button.setToolTip(self.tr("Remove polygon input"))
-        button.clicked.disconnect()
+        self._toRemoveButton(button, self.tr("Remove polygon input"))
         button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_polycost_widget, lastLayout))
 
         layerComboBox = QgsMapLayerComboBox()
@@ -257,10 +271,7 @@ class CreateGraphView(BaseContentView):
         layerComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
         layerComboBox.setToolTip(self.tr("Select input layer"))
 
-        addButton = QPushButton("➕")
-        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        addButton.setMaximumSize(25, 25)
-        addButton.setToolTip(self.tr("Add polygon input"))
+        addButton = self._createAddButton(self.tr("Add polygon input"))
         addButton.clicked.connect(self._addPolygonCostInput)
 
         layout = QHBoxLayout()
@@ -278,9 +289,7 @@ class CreateGraphView(BaseContentView):
         #  change add button to remove button
         lastLayout = costFunctionWidget.layout().itemAt(costFunctionWidget.layout().count() - 1)
         button = lastLayout.itemAt(lastLayout.count() - 1).widget()
-        button.setText("➖")
-        button.setToolTip(self.tr("Remove cost function"))
-        button.clicked.disconnect()
+        self._toRemoveButton(button, self.tr("Remove cost function"))
         button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_costfunction_widget, lastLayout))
 
         costLineEdit = QLineEdit()
@@ -289,13 +298,12 @@ class CreateGraphView(BaseContentView):
 
         costWidgetDialogButton = QToolButton()
         costWidgetDialogButton.setText("...")
+        costWidgetDialogButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred))
+        costWidgetDialogButton.setIcon(QgsApplication.getThemeIcon("symbologyEdit.svg"))
         costWidgetDialogButton.setToolTip(self.tr("Show cost editor"))
 
-        addButton = QPushButton("➕")
-        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        addButton.setMaximumSize(25, 25)
+        addButton = self._createAddButton(self.tr("Add cost function"))
         addButton.clicked.connect(self._addCostFunctionInput)
-        addButton.setToolTip(self.tr("Add cost function"))
 
         layout = QHBoxLayout()
         layout.addWidget(costLineEdit)
@@ -568,7 +576,7 @@ class CreateGraphView(BaseContentView):
         self.dialog.graph_tasks_table.setItem(row, 3, statusItem)
 
         # Add cancel button
-        cancelButton = QPushButton(QIcon(getImagePath("close.svg")), "")
+        cancelButton = QPushButton(QgsApplication.getThemeIcon("mIconDelete.svg"), "")
         cancelButton.setFlat(True)
         cancelButton.setIconSize(QSize(25, 25))
         cancelButton.clicked.connect(lambda: self.controller.discardTask(taskId))
