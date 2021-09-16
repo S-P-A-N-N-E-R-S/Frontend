@@ -158,6 +158,8 @@ transcompile:
 	@echo "----------------------------------------"
 	@chmod +x scripts/compile-strings.sh
 	@scripts/compile-strings.sh $(LRELEASE) $(LOCALES)
+	@chmod +x scripts/AStarBuildScript.sh
+	@scripts/AStarBuildScript.sh
 
 transclean:
 	@echo

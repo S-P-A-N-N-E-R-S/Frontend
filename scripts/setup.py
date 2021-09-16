@@ -5,7 +5,7 @@ from pybind11 import *
 setup(
 	ext_modules = [
 		Extension(
-			'AStarC', ['AStarC.cpp'],
+			'AStarC', ['models/AStarC.cpp'],
 			include_dirs=[get_include()],
 			language = 'c++'
 		)

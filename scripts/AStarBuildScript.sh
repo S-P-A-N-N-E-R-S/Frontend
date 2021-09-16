@@ -5,7 +5,7 @@ echo "----- Try to delete existing .so file -----"
 sudo rm /usr/lib/python3/dist-packages/AStarC.cpython-39-x86_64-linux-gnu.so
 
 echo "----- Execute setup.py -----"
-python3 setup.py build_ext --inplace
+python3 scripts/setup.py build_ext --inplace
 
 echo "----- Copy .so file into dist-packages -----"
 sudo cp AStarC.cpython-39-x86_64-linux-gnu.so /usr/lib/python3/dist-packages
