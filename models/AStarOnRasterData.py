@@ -83,8 +83,8 @@ class AStarOnRasterData:
 	    			#return str(self.pixelWeights[current[0]][current[1]])
 	    		else:
 	    			return str(sys.maxsize)
-	    		if currentWeight - self.heuristic(current, (endPointRow,endPointCol)) > self.pixelWeights[current[0]][current[1]]:
-		    		continue
+	    	if currentWeight - self.heuristic(current, (endPointRow,endPointCol)) > self.pixelWeights[current[0]][current[1]]:
+		    	continue
 	    	
 	    	# check the neighbor pixels of current
 	    	for neighbor in self.getNeighborIndices(current[0], current[1]):  		
