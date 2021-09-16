@@ -1,4 +1,5 @@
 from qgis.core import *
+from AStarC import *
 from qgis.gui import *
 from qgis.PyQt.QtGui import *
 from qgis.analysis import *
@@ -38,7 +39,15 @@ class AStarOnRasterData:
 		self.predMatrix = None
 		
 		self.pixelWeights = None
-		self.dictionary = {}
+		minRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).minimumValue
+		meanRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean
+			
+		#----------------------------------	
+		
+		self.aStarCObject = AStarC(readBand.ReadAsArray(), heuristicIndex, minRasterValue, meanRasterValue)	
+	
+		#----------------------------------
+		
 	
 	def getShortestPathWeight(self, startPoint, endPoint):	
 	    # transform coordinates
@@ -60,62 +69,11 @@ class AStarOnRasterData:
 	    if endPointCol > self.matrixColSize or endPointCol < 0 or endPointRow < 0 or endPointRow > self.matrixRowSize:
 	    	return [sys.maxsize]
 	    
-	    pq = []
-	    heapq.heappush(pq, (0, (startPointRow,startPointCol)))
-	    self.pixelWeights = np.full(dimensions,np.inf)    	     
+	    #----------------------------------
 	    
-	    self.pixelWeights[startPointRow][startPointCol] = 0
-	    while len(pq) > 0:
-	    	popResult = heapq.heappop(pq)	    		    	
-	    	currentWeight = popResult[0]
-	    	current = popResult[1]	    		    	
-	    	if current == (endPointRow,endPointCol):	  		  		
-    			shortestPathWeights = []
-	    		u = (endPointRow,endPointCol)
-	    		while u != None:
-	    			if self.createResultAsMatrix == True:
-	    				self.shortestPathMatrix[u[0]][u[1]] = 100	    			
-	    			shortestPathWeights.append(self.matrix[u[0]][u[1]])
-	    			u = self.predMatrix[u[0]][u[1]]	    			
-	    		    			    		
-	    		if not np.isinf(self.pixelWeights[current[0]][current[1]]):
-	    			return shortestPathWeights
-	    			#return str(self.pixelWeights[current[0]][current[1]])
-	    		else:
-	    			return str(sys.maxsize)
-	    	if currentWeight - self.heuristic(current, (endPointRow,endPointCol)) > self.pixelWeights[current[0]][current[1]]:
-		    	continue
-	    	
-	    	# check the neighbor pixels of current
-	    	for neighbor in self.getNeighborIndices(current[0], current[1]):  		
-	    		newDistance = self.pixelWeights[current[0]][current[1]] + self.matrix[current[0]][current[1]]		
-	    		# check that the neighbor is not out of raster bounds
-	    		if neighbor[0] > 0 and neighbor[1] > 0 and neighbor[0] < self.matrixRowSize and neighbor[1] < self.matrixColSize:
-		    		if newDistance < self.pixelWeights[neighbor[0]][neighbor[1]]:	
-	    			
-		    			self.predMatrix[neighbor[0]][neighbor[1]] = (current[0], current[1])
-		    			if self.createResultAsMatrix == True:
-			    			if not self.shortestPathMatrix[current[0]][current[1]] == 100:
-			    				self.shortestPathMatrix[current[0]][current[1]] = 50   			   			
-		    			
-		    			self.pixelWeights[neighbor[0]][neighbor[1]] = newDistance	    			
-		    			heapq.heappush(pq,(self.pixelWeights[neighbor[0]][neighbor[1]] + self.heuristic(neighbor, (endPointRow,endPointCol)), neighbor))
-    			    	
-	    return [sys.maxsize]
-	   
-		
-	def getNeighborIndices(self, i, j):
-		# return list of neighbor indices		
-		bl = (i-1,j-1)
-		bm = (i-1,j)
-		br = (i-1,j+1)
-		ml = (i,j-1)
-		mr = (i,j+1)
-		tl = (i+1,j-1)
-		tm = (i+1,j)
-		tr = (i+1,j+1)
-		
-		return [bl,bm,br,ml,mr,tl,tm,tr]
+	    return self.aStarCObject.shortestPath(startPointRow,startPointCol, endPointRow, endPointCol)
+	    
+	    #----------------------------------
 	 
 	def heuristic(self, point1, point2): 				
 		# calculate heuristic value depended on the defined heuristic index
