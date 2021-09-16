@@ -3,12 +3,12 @@ from enum import Enum
 import html
 
 from qgis.PyQt import uic, QtWidgets
-from qgis.core import QgsVectorLayer
+from qgis.PyQt.QtCore import pyqtSignal, Qt, QVariant, QObject
+from qgis.PyQt.QtWidgets import QPushButton, QAbstractItemView
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel, QColor
+from qgis.PyQt.Qsci import QsciScintilla, QsciLexerPython
 
-from PyQt5.QtCore import pyqtSignal, Qt, QVariant, QObject
-from PyQt5.QtWidgets import QPushButton, QAbstractItemView
-from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.Qsci import QsciScintilla, QsciLexerPython
+from qgis.core import QgsVectorLayer
 
 from ...models.GraphBuilder import GraphBuilder
 
@@ -738,9 +738,13 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
 
         self.codeEditor.setWrapMode(QsciScintilla.WrapWord)
 
+        # set error indicator
+        self.Error_INDICATOR_ID = 8
+        self.codeEditor.indicatorDefine(QsciScintilla.SquiggleIndicator, self.Error_INDICATOR_ID)
+        self.codeEditor.setIndicatorForegroundColor(QColor("red"), self.Error_INDICATOR_ID)
+
         # syntax highlighting
         # self.codeEditor.setLexer(QsciLexerPython())
-
         self.codeEditor.textChanged.connect(self.costFunctionChanged)
         # set up syntax check showing in status
         self.codeEditor.textChanged.connect(self._updateStatusText)
@@ -783,10 +787,11 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
 
     def _updateStatusText(self):
         """
-        Performs syntax check and shows status
+        Performs syntax check and shows status and error indicator
         :return:
         """
         costFunction = self.costFunction()
+        self.clearErrorIndicator()
         if not costFunction:
             statusText = "No function is set"
         else:
@@ -794,6 +799,12 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
            
             numberOfRasterData = len(self.rasterData)   
             statusText = GraphBuilder.syntaxCheck(costFunction, fields, numberOfRasterData, len(self.polygonLayers))[0]
+
+            # todo: set indicator range with fillIndicatorRange (int lineFrom, int indexFrom, int lineTo, int indexTo, int indicatorNumber)
+            # more details: https://www.riverbankcomputing.com/static/Docs/QScintilla/classQsciScintilla.html#a44d1c322098eb0cf44cf78e866ed80cb
+
+            # self.codeEditor.fillIndicatorRange(0, 0, 0, 10, self.Error_INDICATOR_ID)
+
         self.setStatus(statusText)
 
     def _treeItemDoubleClicked(self, modelIndex):
@@ -955,15 +966,19 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
     def setCostFunction(self, costFunction):
         self.codeEditor.setText(costFunction)
         self.codeEditor.setFocus()
-        #self._updateStatusText
 
     def insertEditorText(self, text):
         self.codeEditor.insertText(text)
         self.codeEditor.setFocus()
-        #self._updateStatusText
 
     def setHelpText(self, text):
         self.helpText.setText(text)
+
+    def clearErrorIndicator(self):
+        """ Removes all error indicators in editor"""
+        numLines = self.codeEditor.lines()
+        lengthLastLine= len(self.codeEditor.text(numLines-1))
+        self.codeEditor.clearIndicatorRange(0, 0, numLines-1, lengthLastLine-1, self.Error_INDICATOR_ID)
 
     def setStatus(self, text):
         """
