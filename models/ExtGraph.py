@@ -730,7 +730,7 @@ class ExtGraph(QObject):
             vertexIDCount = 0
             for line in lines:
                 if '<node' in line:
-                    nodeIDs.append(line.split('id="')[1].split('"')[0])
+                    nodeIDs.append(int(line.split('id="')[1].split('"')[0]))
 
                 elif 'x="' in line:
                     xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
@@ -741,8 +741,8 @@ class ExtGraph(QObject):
                     vertexIDCount += 1
 
                 elif '<edge' in line:
-                    fromVertex = line.split('source="')[1].split('"')[0]
-                    toVertex = line.split('target="')[1].split('"')[0]
+                    fromVertex = int(line.split('source="')[1].split('"')[0])
+                    toVertex = int(line.split('target="')[1].split('"')[0])
                     # fromVertexID = 0
                     # toVertexID = 0
 
