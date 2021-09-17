@@ -14,7 +14,7 @@ import statistics
 import time
 from osgeo import gdal, osr
 import numpy as np
-
+from qgis.utils import iface
 
 class AdvancedCostCalculator():
     """
@@ -467,10 +467,8 @@ class AdvancedCostCalculator():
         
         if self.createShortestPathView:
             rasterIndexCounter = 0
-            for aStarObj in self.aStarAlgObjects:
-                
-                if aStarObj != None:
-                    #path = "/home/tim/Documents/QGIS_DATA/shortestPath.tif"        
+            for aStarObj in self.aStarAlgObjects:             
+                if aStarObj != None:      
                     path = self.rLayers[rasterIndexCounter].source().split(".tif")[0]
                     path = path + "ShortestPathView" + str(self.rasterBands[rasterIndexCounter]) + ".tif"
                     
@@ -486,10 +484,11 @@ class AdvancedCostCalculator():
                         srs.ImportFromEPSG(int(importID))
                     elif "ESRI" in self.rLayers[rasterIndexCounter].crs().authid():
                         importID = self.rLayers[rasterIndexCounter].crs().authid().split(":")[1]
-                        srs.ImportFromESRI(int(importID))     
-                        
+                        srs.ImportFromESRI(int(importID))                            
                     ds.SetGeoTransform(geot)
                     ds.SetProjection(srs.ExportToWkt())
+                    ds = None
+                    iface.addRasterLayer(path)
                     
                 rasterIndexCounter+=1    
         
