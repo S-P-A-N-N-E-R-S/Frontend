@@ -71,7 +71,8 @@ class GraphBuilder:
             "createRandomGraph": True,          
             "usePolygonsAsForbidden": False,
             "usePolygonsInCostFunction": False,
-            "useAdditionalPoints": False
+            "useAdditionalPoints": False,
+            "createShortestPathView": False
         }
 
         self.__randomOptions = {
@@ -791,7 +792,7 @@ class GraphBuilder:
         # call AdvancedCostCalculations methods
         if self.__options["distanceStrategy"] == "Advanced":
             # create AdvancedCostCalculator object with the necessary parameters
-            costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands, self.task)
+            costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands, self.task, self.__options["createShortestPathView"])
 
             # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
             # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined

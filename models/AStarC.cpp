@@ -7,10 +7,7 @@
 #include <pybind11/stl.h>
 #include <limits.h>
 
-
 namespace py = pybind11;
-
-int varTest = 10;
 
 struct Point{
 	int x;
@@ -43,12 +40,17 @@ struct Point{
 
 class AStarC {
 	public:
-		AStarC(const std::vector<std::vector<int>> matrix, int heuristicIndex, double minValue, double meanValue) : matrix(matrix), heuristicIndex(heuristicIndex), minValue(minValue), meanValue(meanValue) {}
+		AStarC(const std::vector<std::vector<int>> matrix, int heuristicIndex, double minValue, double meanValue, bool createShortestPathMatrix) : matrix(matrix), heuristicIndex(heuristicIndex), minValue(minValue), meanValue(meanValue),createShortestPathMatrix(createShortestPathMatrix) {
+			if(createShortestPathMatrix){
+				shortestPathMatrix.resize(matrix.size());
+				for(int i=0; i<matrix.size(); i++){
+					shortestPathMatrix[i].resize(matrix[0].size());
+				}
+			}			
+		}
 		
-		std::vector<int> shortestPath(int x1, int y1, int x2, int y2){
-			
-			std::vector<std::vector<int>> pixelWeights(matrix.size(), std::vector<int>(matrix[0].size()));
-			
+		std::vector<int> shortestPath(int x1, int y1, int x2, int y2){		
+			std::vector<std::vector<int>> pixelWeights(matrix.size(), std::vector<int>(matrix[0].size()));	
 			std::vector<std::vector<std::tuple<int,int>>> predMatrix (matrix.size(), std::vector<std::tuple<int,int>>(matrix[0].size()));
 			
 			for(int i=0; i<matrix.size();i++){
@@ -64,8 +66,7 @@ class AStarC {
 			std::priority_queue<Point> pq;
 			pq.push(startPoint);
 			
-			while(not pq.empty()){
-				
+			while(not pq.empty()){				
 				Point current = pq.top();
 				pq.pop();
 				
@@ -74,11 +75,18 @@ class AStarC {
 					std::tuple<int,int> u = std::make_tuple(endPoint.x,endPoint.y);
 					Point currPathPoint = Point(std::get<0>(u),std::get<1>(u),0);
 					while(currPathPoint != startPoint){
+						if(createShortestPathMatrix){
+							shortestPathMatrix[currPathPoint.x][currPathPoint.y] = 100;
+						}
 						shortestPathWeights.push_back(matrix[std::get<0>(u)][std::get<1>(u)]);
 						u = predMatrix[std::get<0>(u)][std::get<1>(u)];
 						currPathPoint = Point(std::get<0>(u),std::get<1>(u),0);
 					}
-					shortestPathWeights.push_back(matrix[startPoint.x][startPoint.y]);				
+					shortestPathWeights.push_back(matrix[startPoint.x][startPoint.y]);	
+					if(createShortestPathMatrix){
+						shortestPathMatrix[startPoint.x][startPoint.y] = 100;
+					}	
+								
 					return shortestPathWeights;
 				}
 				
@@ -98,9 +106,13 @@ class AStarC {
 						if(newDistance < pixelWeights[neighborX][neighborY]){
 							predMatrix[neighborX][neighborY] = std::make_tuple(current.x, current.y);
 							pixelWeights[neighborX][neighborY] = newDistance;
-						
-							double heuristicWeight = pixelWeights[neighborX][neighborY] + heuristic(neighborX, neighborY, endPoint.x, endPoint.y);
-						
+							
+							if(createShortestPathMatrix){
+								if(not (shortestPathMatrix[current.x][current.y] == 100)){
+									shortestPathMatrix[current.x][current.y] = 50;
+								}							
+							}							
+							double heuristicWeight = pixelWeights[neighborX][neighborY] + heuristic(neighborX, neighborY, endPoint.x, endPoint.y);						
 							pq.push(Point(neighborX, neighborY, heuristicWeight));
 						}				
 					}
@@ -111,11 +123,19 @@ class AStarC {
 			return {INT_MAX};
 		} 
 		
+		
+		std::vector<std::vector<int>> getShortestPathMatrix(){
+			return shortestPathMatrix;
+		}
+		
+		
 	private:
 		std::vector<std::vector<int>> matrix;
 		int heuristicIndex;
 		double minValue;
 		double meanValue;
+		bool createShortestPathMatrix;
+		std::vector<std::vector<int>> shortestPathMatrix;
 		
 		std::vector<std::tuple<int,int>> getNeighborIndices(int i, int j){
 			std::tuple<int,int> bl = std::make_tuple(i-1,j-1);
@@ -156,15 +176,13 @@ class AStarC {
 				}
 			}									
 			double heurValue = std::max(std::abs(point2X-point1X), std::abs(point2Y-point1Y)) * factor;
-			return heurValue;
-		
+			return heurValue;		
 		}
-		
-
 };
 
 PYBIND11_MODULE(AStarC,m) {
 	py::class_<AStarC>(m, "AStarC")
-	.def(py::init<const std::vector<std::vector<int>>, int, double, double>())
-	.def("shortestPath", &AStarC::shortestPath);
+	.def(py::init<const std::vector<std::vector<int>>, int, double, double, bool>())
+	.def("shortestPath", &AStarC::shortestPath)
+	.def("getShortestPathMatrix", &AStarC::getShortestPathMatrix);
 }

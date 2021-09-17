@@ -12,7 +12,7 @@ import operator
 import re
 import statistics
 import time
-from osgeo import gdal
+from osgeo import gdal, osr
 import numpy as np
 
 
@@ -21,7 +21,7 @@ class AdvancedCostCalculator():
     Class to calculate the edge costs of a graph by analysis of a cost function. The cost function
     can use different variables and operators.    
     """
-    def __init__(self, rLayers, vLayer, graph, polygons, usePolygons, rasterBands, task):
+    def __init__(self, rLayers, vLayer, graph, polygons, usePolygons, rasterBands, task, createShortestPathView = False):
         """
         Constructor
         
@@ -45,6 +45,7 @@ class AdvancedCostCalculator():
         self.formulaParts = []
         self.aStarAlgObjects = [None] * len(self.rLayers)
         self.task = task
+        self.createShortestPathView = createShortestPathView
     
     def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygonsList = None, edgesCrossingPolygonsList = None):      
         """
@@ -411,7 +412,7 @@ class AdvancedCostCalculator():
                 costFunction = costFunction.replace(matchString, matchString.split("(")[0] + "(" + matchString.split(",")[1])
             else:
                 heuristicIndex = int(heuristicIndexString)
-            self.aStarAlgObjects[rasterIndex] = AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs(), heuristicIndex)           
+            self.aStarAlgObjects[rasterIndex] = AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs(), heuristicIndex, self.createShortestPathView)           
             
         edgesInPolygonsList = []
         edgesCrossingPolygonsList = []
@@ -464,12 +465,33 @@ class AdvancedCostCalculator():
         # append the list        
         self.graph.edgeWeights.append(weights)      
         
-        """
-        path = "/home/tim/Documents/QGIS_DATA/shortestPath.tif"        
-        driver = gdal.GetDriverByName('GTiff')
-        ds = driver.Create(path, ysize=self.aStarAlgObjects[0].matrixRowSize,xsize=self.aStarAlgObjects[0].matrixColSize, bands=1,eType=gdal.GDT_Float32)      
-        ds.GetRasterBand(1).WriteArray(self.aStarAlgObjects[0].shortestPathMatrix)
-        """    
+        if self.createShortestPathView:
+            rasterIndexCounter = 0
+            for aStarObj in self.aStarAlgObjects:
+                
+                if aStarObj != None:
+                    #path = "/home/tim/Documents/QGIS_DATA/shortestPath.tif"        
+                    path = self.rLayers[rasterIndexCounter].source().split(".tif")[0]
+                    path = path + "ShortestPathView" + str(self.rasterBands[rasterIndexCounter]) + ".tif"
+                    
+                    driver = gdal.GetDriverByName('GTiff')
+                    ds = driver.Create(path, ysize=aStarObj.matrixRowSize,xsize=aStarObj.matrixColSize, bands=1,eType=gdal.GDT_Float32)      
+                    ds.GetRasterBand(1).WriteArray(aStarObj.getShortestPathMatrix())
+                    
+                    dsRasterLayer = gdal.Open(self.rLayers[rasterIndexCounter].source())
+                    geot = dsRasterLayer.GetGeoTransform()
+                    srs = osr.SpatialReference()
+                    if "EPSG" in self.rLayers[rasterIndexCounter].crs().authid():
+                        importID = self.rLayers[rasterIndexCounter].crs().authid().split(":")[1]
+                        srs.ImportFromEPSG(int(importID))
+                    elif "ESRI" in self.rLayers[rasterIndexCounter].crs().authid():
+                        importID = self.rLayers[rasterIndexCounter].crs().authid().split(":")[1]
+                        srs.ImportFromESRI(int(importID))     
+                        
+                    ds.SetGeoTransform(geot)
+                    ds.SetProjection(srs.ExportToWkt())
+                    
+                rasterIndexCounter+=1    
         
         """   
         FOR EDETING WITH ADVANCED COSTS:

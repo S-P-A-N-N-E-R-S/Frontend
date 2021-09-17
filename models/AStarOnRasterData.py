@@ -1,5 +1,5 @@
 from qgis.core import *
-from AStarC import *
+from .AStarC import *
 from qgis.gui import *
 from qgis.PyQt.QtGui import *
 from qgis.analysis import *
@@ -11,8 +11,7 @@ import sys
 
 class AStarOnRasterData:
 	
-	def __init__(self, rLayer, band, sourceCrs, heuristicIndex, createResultAsMatrix = False):
-		self.createResultAsMatrix = createResultAsMatrix
+	def __init__(self, rLayer, band, sourceCrs, heuristicIndex, createShortestPathMatrix):
 		self.heuristicIndex = heuristicIndex
 		ds = gdal.Open(rLayer.source())
 		readBand = ds.GetRasterBand(band)
@@ -34,8 +33,6 @@ class AStarOnRasterData:
 		
 		self.matrixRowSize = self.matrix.shape[0]
 		self.matrixColSize = self.matrix.shape[1]
-		if createResultAsMatrix == True:
-			self.shortestPathMatrix = np.zeros((self.matrixRowSize, self.matrixColSize))
 		self.predMatrix = None
 		
 		self.pixelWeights = None
@@ -44,7 +41,7 @@ class AStarOnRasterData:
 			
 		#----------------------------------	
 		
-		self.aStarCObject = AStarC(readBand.ReadAsArray(), heuristicIndex, minRasterValue, meanRasterValue)	
+		self.aStarCObject = AStarC(readBand.ReadAsArray(), heuristicIndex, minRasterValue, meanRasterValue, createShortestPathMatrix)	
 	
 		#----------------------------------
 		
@@ -69,38 +66,16 @@ class AStarOnRasterData:
 	    if endPointCol > self.matrixColSize or endPointCol < 0 or endPointRow < 0 or endPointRow > self.matrixRowSize:
 	    	return [sys.maxsize]
 	    
+   
 	    #----------------------------------
 	    
 	    return self.aStarCObject.shortestPath(startPointRow,startPointCol, endPointRow, endPointCol)
 	    
 	    #----------------------------------
 	 
-	def heuristic(self, point1, point2): 				
-		# calculate heuristic value depended on the defined heuristic index
-		if self.heuristicIndex == 0:
-			minRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).minimumValue
-			heurValue = max(abs(point2[0]-point1[0]), abs(point2[1]-point1[1])) * minRasterValue
-		else:
-			meanRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean
-			if self.heuristicIndex == 1:
-				factor = (meanRasterValue/4)
-			elif self.heuristicIndex == 2:
-				factor = (meanRasterValue/2)
-			elif self.heuristicIndex == 3:
-				factor = (meanRasterValue/1.5)
-			elif self.heuristicIndex == 4:
-				factor = (meanRasterValue/1.25)
-			elif self.heuristicIndex == 5:
-				factor = meanRasterValue				
-						
-			heurValue = max(abs(point2[0]-point1[0]), abs(point2[1]-point1[1])) * factor
-		
-		return heurValue
-	
-	
-	
-	
-	
+	def getShortestPathMatrix(self):
+		numpyTransform = np.matrix(self.aStarCObject.getShortestPathMatrix())
+		return numpyTransform
 	
 	
 	

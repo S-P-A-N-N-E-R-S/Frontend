@@ -24,6 +24,29 @@ class CreateGraphController(BaseController):
         :type view: CreateGraphView
         """
         super().__init__(view)  
+              
+              
+        print("DEBUG START")
+        gb = GraphBuilder()
+        path = "/home/tim/Documents/QGIS_DATA/ZP/Villages.shp"
+        vLayer = QgsVectorLayer(path,"test","ogr")
+        
+        pathPolygon = "/home/tim/Documents/QGIS_DATA/examples/berlin_umweltzone.shp"
+        polygonLayer = QgsVectorLayer(pathPolygon, "poly", "ogr")
+        
+        pathRaster = "/home/tim/Documents/QGIS_DATA/ZP/landcover_alaska.tif"
+        rLayer = QgsRasterLayer(pathRaster,"raster", "gdal")
+        
+        gb.setVectorLayer(vLayer)
+        gb.setRasterLayer(rLayer,1)
+        gb.setOption("createShortestPathView", False)
+
+        #gb.setPolygonsForCostFunction(polygonLayer)
+        print(gb.addCostFunction("raster[0]:spSum(5)"))
+              
+        graph = gb.makeGraph()
+                         
+        print("DEBUG END")        
                 
         self.view.addRandomArea(self.tr("Germany"), "Germany")
         self.view.addRandomArea(self.tr("France"), "France")

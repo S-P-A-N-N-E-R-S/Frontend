@@ -82,7 +82,7 @@ default:
 %.qm : %.ts
 	$(LRELEASE) $<
 
-deploy: transcompile proto
+deploy: transcompile proto pybind_build
 	@echo
 	@echo "------------------------------------------"
 	@echo "Deploying plugin to your .qgis2 directory."
@@ -114,6 +114,10 @@ proto:
 
 clean_proto:
 	rm -Rf network/protocol/build
+
+pybind_build:
+	@chmod +x scripts/AStarBuildScript.sh
+	@scripts/AStarBuildScript.sh
 
 zip:
 	@echo
@@ -158,8 +162,7 @@ transcompile:
 	@echo "----------------------------------------"
 	@chmod +x scripts/compile-strings.sh
 	@scripts/compile-strings.sh $(LRELEASE) $(LOCALES)
-	@chmod +x scripts/AStarBuildScript.sh
-	@scripts/AStarBuildScript.sh
+
 
 transclean:
 	@echo
