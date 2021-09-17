@@ -122,6 +122,7 @@ class CreateGraphController(BaseController):
         builder.setOption("clusterNumber", self.view.getClusterNumber())
         builder.setOption("edgeDirection", self.view.getEdgeDirection()[1])
         builder.setOption("distanceStrategy", self.view.getDistanceStrategy()[1])
+        builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
 
         # set builder options for random graph
         if self.view.isRandom():

@@ -297,9 +297,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>-339</y>
+                         <y>-452</y>
                          <width>756</width>
-                         <height>1053</height>
+                         <height>1082</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1093,6 +1093,19 @@ QListWidget::item::selected {
                                  </layout>
                                 </item>
                                </layout>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QCheckBox" name="create_graph_shortPathView_checkbox">
+                               <property name="enabled">
+                                <bool>true</bool>
+                               </property>
+                               <property name="toolTip">
+                                <string>Create a shortest path view as raster layer and show on canvas.</string>
+                               </property>
+                               <property name="text">
+                                <string>Show Shortest Path View</string>
+                               </property>
                               </widget>
                              </item>
                             </layout>

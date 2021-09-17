@@ -12,7 +12,7 @@ from PyQt5.QtCore import QTimer, Qt, QSize, QRegExp
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QPushButton, QHBoxLayout, QSizePolicy, QLineEdit, QToolButton
 from PyQt5.QtGui import QIcon, QRegExpValidator
 
-import time, os
+import time, os, re
 
 
 class CreateGraphView(BaseContentView):
@@ -37,6 +37,7 @@ class CreateGraphView(BaseContentView):
         # enable and disable inputs when input is changed
         self.dialog.create_graph_input.currentIndexChanged.connect(self._inputChanged)
         self.dialog.random_graph_checkbox.stateChanged.connect(self._inputChanged)
+        self.dialog.create_graph_costfunction_input.textChanged.connect(self._showShortPathViewCheckbox)
 
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
@@ -119,6 +120,7 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
 
         self._inputChanged()
+        self._showShortPathViewCheckbox()
 
     def _inputChanged(self):
         """
@@ -202,6 +204,19 @@ class CreateGraphView(BaseContentView):
         _, distanceStrategy = self.getDistanceStrategy()
         self.dialog.create_graph_costfunction_parameters.setVisible(distanceStrategy == "Advanced")
         self.dialog.create_graph_costfunction_parameters.setEnabled(distanceStrategy == "Advanced")
+
+    def _showShortPathViewCheckbox(self):
+        """
+        Enables and disables the short path view checkbox when regex matches
+        :return:
+        """
+        shortPathFound = False
+        regex = re.compile("raster\[[0-9]+\]:sp")
+        for costFunction in self.getCostFunctions():
+            if regex.search(costFunction):
+                shortPathFound = True
+                break
+        self.dialog.create_graph_shortPathView_checkbox.setVisible(shortPathFound)
 
     def _toRemoveButton(self, button, tooltip):
         button.setText("➖")
@@ -294,6 +309,7 @@ class CreateGraphView(BaseContentView):
         costLineEdit = QLineEdit()
         costLineEdit.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
         costLineEdit.setToolTip(self.tr("Define advanced cost function"))
+        costLineEdit.textChanged.connect(self._showShortPathViewCheckbox)
 
         costWidgetDialogButton = QToolButton()
         costWidgetDialogButton.setText("...")
@@ -540,6 +556,9 @@ class CreateGraphView(BaseContentView):
         """
         costLineEdit = self.dialog.create_graph_costfunction_widget.layout().itemAt(index).itemAt(0).widget()
         costLineEdit.setText(costFunction)
+
+    def isShortPathViewChecked(self):
+        return self.dialog.create_graph_shortPathView_checkbox.isChecked()
 
     def getCRS(self):
         return self.dialog.create_graph_crs_input.crs()
