@@ -55,6 +55,7 @@ class GraphBuilder:
         self.polygonsForCostFunction = []
         self.kdTree = None
         self.layerWithClusterIDS = None
+        self.shortestPathViewLayers = []
         # is set if graph builder is running as task
         self.task = None       
 
@@ -798,6 +799,7 @@ class GraphBuilder:
             # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
             for func in self.costFunctions:
                 self.graph = costCalculator.setEdgeCosts(func)
+                self.shortestPathViewLayers = costCalculator.shortestPathViewLayers
 
         # create the layers for QGIS
         if self.__options["createGraphAsLayers"] == True:
@@ -840,4 +842,4 @@ class GraphBuilder:
         else:
             QgsMessageLog.logMessage("Make graph finished", level=Qgis.Info)
             self.task = None
-            return {"graph": graph, "graphLayer": graphLayer, "graphName": graphName}
+            return {"graph": graph, "graphLayer": graphLayer, "graphName": graphName, "shortestPathViewLayers": self.shortestPathViewLayers}

@@ -223,9 +223,14 @@ class CreateGraphController(BaseController):
                 graph = result["graph"]
                 graphLayer = result["graphLayer"]
                 graphName = result["graphName"]
+                shortestPathViewLayers = result["shortestPathViewLayers"]
                 if not graph:
                     self.view.showError(self.tr("Error during graph creation!"))
                     return
+
+                # show shortest path view layers
+                for shortestPathViewLayer in shortestPathViewLayers:
+                    QgsProject.instance().addMapLayer(shortestPathViewLayer)
 
                 # save graph to destination
                 if self.saveGraph(graph, graphLayer, graphName):

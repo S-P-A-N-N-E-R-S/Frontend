@@ -46,6 +46,7 @@ class AdvancedCostCalculator():
         self.aStarAlgObjects = [None] * len(self.rLayers)
         self.task = task
         self.createShortestPathView = createShortestPathView
+        self.shortestPathViewLayers = []
     
     def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygonsList = None, edgesCrossingPolygonsList = None):      
         """
@@ -466,14 +467,15 @@ class AdvancedCostCalculator():
         self.graph.edgeWeights.append(weights)      
         
         if self.createShortestPathView:
+            self.shortestPathViewLayers = []
             rasterIndexCounter = 0
             for aStarObj in self.aStarAlgObjects:             
-                if aStarObj != None:      
-                    path = self.rLayers[rasterIndexCounter].source().split(".tif")[0]
-                    path = path + "ShortestPathView" + str(self.rasterBands[rasterIndexCounter]) + ".tif"
+                if aStarObj != None:
+                    fileName = "ShortestPathView" + str(self.rasterBands[rasterIndexCounter])
+                    tmpPath = QgsProcessingUtils.generateTempFilename(fileName + ".tif")
                     
                     driver = gdal.GetDriverByName('GTiff')
-                    ds = driver.Create(path, ysize=aStarObj.matrixRowSize,xsize=aStarObj.matrixColSize, bands=1,eType=gdal.GDT_Float32)      
+                    ds = driver.Create(tmpPath, ysize=aStarObj.matrixRowSize,xsize=aStarObj.matrixColSize, bands=1,eType=gdal.GDT_Float32)
                     ds.GetRasterBand(1).WriteArray(aStarObj.getShortestPathMatrix())
                     
                     dsRasterLayer = gdal.Open(self.rLayers[rasterIndexCounter].source())
@@ -488,8 +490,9 @@ class AdvancedCostCalculator():
                     ds.SetGeoTransform(geot)
                     ds.SetProjection(srs.ExportToWkt())
                     ds = None
-                    iface.addRasterLayer(path)
-                    
+
+                    self.shortestPathViewLayers.append(QgsRasterLayer(tmpPath, fileName))
+
                 rasterIndexCounter+=1    
         
         """   
