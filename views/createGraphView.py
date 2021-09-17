@@ -200,9 +200,8 @@ class CreateGraphView(BaseContentView):
         :return:
         """
         _, distanceStrategy = self.getDistanceStrategy()
-        self.dialog.create_graph_costfunction_widget.setEnabled(distanceStrategy == "Advanced")
-        self.dialog.create_graph_polycost_widget.setEnabled(distanceStrategy == "Advanced")
-        self.dialog.create_graph_rasterdata_widget.setEnabled(distanceStrategy == "Advanced")
+        self.dialog.create_graph_costfunction_parameters.setVisible(distanceStrategy == "Advanced")
+        self.dialog.create_graph_costfunction_parameters.setEnabled(distanceStrategy == "Advanced")
 
     def _toRemoveButton(self, button, tooltip):
         button.setText("➖")
