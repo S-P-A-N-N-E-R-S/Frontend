@@ -8,4 +8,4 @@ echo "Remove .so file"
 rm AStarC.*.so
 echo "Remove build folder"
 rm -r build
-echo "End cybind build"
+echo "End pybind build"
