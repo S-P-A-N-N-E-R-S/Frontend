@@ -3,6 +3,8 @@
 #include <tuple>
 #include <vector>
 #include <utility>
+#include <stdlib.h>
+#include <time.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include <limits.h>
@@ -42,19 +44,29 @@ class AStarC {
 	public:
 		AStarC(const std::vector<std::vector<int>> matrix, int heuristicIndex, double minValue, double meanValue, bool createShortestPathMatrix) : matrix(matrix), heuristicIndex(heuristicIndex), minValue(minValue), meanValue(meanValue),createShortestPathMatrix(createShortestPathMatrix) {
 			if(createShortestPathMatrix){
-				shortestPathMatrix.resize(matrix.size());
-				for(int i=0; i<matrix.size(); i++){
-					shortestPathMatrix[i].resize(matrix[0].size());
+				shortestPathMatrix1.resize(matrix.size());
+				shortestPathMatrix2.resize(matrix.size());
+				shortestPathMatrix3.resize(matrix.size());
+				for(int i=0; i<int(matrix.size()); i++){
+					shortestPathMatrix1[i].resize(matrix[0].size());
+					shortestPathMatrix2[i].resize(matrix[0].size());
+					shortestPathMatrix3[i].resize(matrix[0].size());
 				}
-			}			
+			}	
+			
+			srand(time(NULL));		
 		}
 		
 		std::vector<int> shortestPath(int x1, int y1, int x2, int y2){		
 			std::vector<std::vector<int>> pixelWeights(matrix.size(), std::vector<int>(matrix[0].size()));	
 			std::vector<std::vector<std::tuple<int,int>>> predMatrix (matrix.size(), std::vector<std::tuple<int,int>>(matrix[0].size()));
 			
-			for(int i=0; i<matrix.size();i++){
-				for(int j=0; j<matrix[0].size();j++){
+			int randomRed = rand() % 255 + 1;
+			int randomGreen = rand() % 255 + 1;
+			int randomBlue = rand() % 255 + 1;
+			
+			for(int i=0; i<int(matrix.size());i++){
+				for(int j=0; j<int(matrix[0].size());j++){
 					pixelWeights[i][j] = INT_MAX;
 				}			
 			}
@@ -76,7 +88,9 @@ class AStarC {
 					Point currPathPoint = Point(std::get<0>(u),std::get<1>(u),0);
 					while(currPathPoint != startPoint){
 						if(createShortestPathMatrix){
-							shortestPathMatrix[currPathPoint.x][currPathPoint.y] = 100;
+							shortestPathMatrix1[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomRed) / 2;
+							shortestPathMatrix2[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomGreen) / 2;
+							shortestPathMatrix3[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomBlue) / 2;
 						}
 						shortestPathWeights.push_back(matrix[std::get<0>(u)][std::get<1>(u)]);
 						u = predMatrix[std::get<0>(u)][std::get<1>(u)];
@@ -84,7 +98,9 @@ class AStarC {
 					}
 					shortestPathWeights.push_back(matrix[startPoint.x][startPoint.y]);	
 					if(createShortestPathMatrix){
-						shortestPathMatrix[startPoint.x][startPoint.y] = 100;
+						shortestPathMatrix1[startPoint.x][startPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomRed) / 2;
+						shortestPathMatrix2[startPoint.x][startPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomGreen) / 2;
+						shortestPathMatrix3[startPoint.x][startPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomBlue) / 2;
 					}	
 								
 					return shortestPathWeights;
@@ -102,15 +118,18 @@ class AStarC {
 				
 					int newDistance = pixelWeights[current.x][current.y] + matrix[current.x][current.y];
 					
-					if(neighborX > 0 and neighborY > 0 and neighborX < matrix.size() and neighborY < matrix[0].size()){
+					if(neighborX > 0 and neighborY > 0 and neighborX < int(matrix.size()) and neighborY < int(matrix[0].size())){
 						if(newDistance < pixelWeights[neighborX][neighborY]){
 							predMatrix[neighborX][neighborY] = std::make_tuple(current.x, current.y);
 							pixelWeights[neighborX][neighborY] = newDistance;
 							
 							if(createShortestPathMatrix){
-								if(not (shortestPathMatrix[current.x][current.y] == 100)){
-									shortestPathMatrix[current.x][current.y] = 50;
-								}							
+								if(shortestPathMatrix1[current.x][current.y] == 0 and shortestPathMatrix2[current.x][current.y] == 0 and shortestPathMatrix3[current.x][current.y] == 0){
+									shortestPathMatrix1[current.x][current.y] = 255;
+									shortestPathMatrix2[current.x][current.y] = 255;
+									shortestPathMatrix3[current.x][current.y] = 255;
+								}						
+												
 							}							
 							double heuristicWeight = pixelWeights[neighborX][neighborY] + heuristic(neighborX, neighborY, endPoint.x, endPoint.y);						
 							pq.push(Point(neighborX, neighborY, heuristicWeight));
@@ -124,9 +143,16 @@ class AStarC {
 		} 
 		
 		
-		std::vector<std::vector<int>> getShortestPathMatrix(){
-			return shortestPathMatrix;
+		std::vector<std::vector<short>> &getShortestPathMatrix1(){
+			return shortestPathMatrix1;
 		}
+		std::vector<std::vector<short>> &getShortestPathMatrix2(){
+			return shortestPathMatrix2;
+		}
+		std::vector<std::vector<short>> &getShortestPathMatrix3(){
+			return shortestPathMatrix3;	
+		}
+		
 		
 		
 	private:
@@ -135,7 +161,9 @@ class AStarC {
 		double minValue;
 		double meanValue;
 		bool createShortestPathMatrix;
-		std::vector<std::vector<int>> shortestPathMatrix;
+		std::vector<std::vector<short>> shortestPathMatrix1;
+		std::vector<std::vector<short>> shortestPathMatrix2;
+		std::vector<std::vector<short>> shortestPathMatrix3;
 		
 		std::vector<std::tuple<int,int>> getNeighborIndices(int i, int j){
 			std::tuple<int,int> bl = std::make_tuple(i-1,j-1);
@@ -184,5 +212,7 @@ PYBIND11_MODULE(AStarC,m) {
 	py::class_<AStarC>(m, "AStarC")
 	.def(py::init<const std::vector<std::vector<int>>, int, double, double, bool>())
 	.def("shortestPath", &AStarC::shortestPath)
-	.def("getShortestPathMatrix", &AStarC::getShortestPathMatrix);
+	.def("getShortestPathMatrix1", &AStarC::getShortestPathMatrix1)
+	.def("getShortestPathMatrix2", &AStarC::getShortestPathMatrix2)
+	.def("getShortestPathMatrix3", &AStarC::getShortestPathMatrix3);
 }

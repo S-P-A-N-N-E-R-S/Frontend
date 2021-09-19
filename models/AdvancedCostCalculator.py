@@ -472,12 +472,15 @@ class AdvancedCostCalculator():
             for aStarObj in self.aStarAlgObjects:             
                 if aStarObj != None:
                     fileName = "ShortestPathView" + str(self.rasterBands[rasterIndexCounter])
-                    tmpPath = QgsProcessingUtils.generateTempFilename(fileName + ".tif")
-                    
-                    driver = gdal.GetDriverByName('GTiff')
-                    ds = driver.Create(tmpPath, ysize=aStarObj.matrixRowSize,xsize=aStarObj.matrixColSize, bands=1,eType=gdal.GDT_Float32)
-                    ds.GetRasterBand(1).WriteArray(aStarObj.getShortestPathMatrix())
-                    
+                    tmpPath = QgsProcessingUtils.generateTempFilename(fileName + ".tif")                   
+                    driver = gdal.GetDriverByName('GTiff')                   
+                    ds = driver.Create(tmpPath, ysize=aStarObj.matrixRowSize,xsize=aStarObj.matrixColSize, bands = 3, eType=gdal.GDT_Byte)
+                    ds.GetRasterBand(1).WriteArray(aStarObj.getShortestPathMatrix1())
+                    ds.GetRasterBand(2).WriteArray(aStarObj.getShortestPathMatrix2())
+                    ds.GetRasterBand(3).WriteArray(aStarObj.getShortestPathMatrix3())
+                    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+                    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+                    ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)                                 
                     dsRasterLayer = gdal.Open(self.rLayers[rasterIndexCounter].source())
                     geot = dsRasterLayer.GetGeoTransform()
                     srs = osr.SpatialReference()
@@ -489,9 +492,10 @@ class AdvancedCostCalculator():
                         srs.ImportFromESRI(int(importID))                            
                     ds.SetGeoTransform(geot)
                     ds.SetProjection(srs.ExportToWkt())
+                    ds.FlushCache()
                     ds = None
-
-                    self.shortestPathViewLayers.append(QgsRasterLayer(tmpPath, fileName))
+                    viewRasterLayer = QgsRasterLayer(tmpPath, fileName)
+                    self.shortestPathViewLayers.append(viewRasterLayer)
 
                 rasterIndexCounter+=1    
         

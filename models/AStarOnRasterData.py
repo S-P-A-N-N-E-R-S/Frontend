@@ -73,10 +73,17 @@ class AStarOnRasterData:
 	    
 	    #----------------------------------
 	 
-	def getShortestPathMatrix(self):
-		numpyTransform = np.matrix(self.aStarCObject.getShortestPathMatrix())
+	def getShortestPathMatrix1(self):
+		numpyTransform = np.matrix(self.aStarCObject.getShortestPathMatrix1())
 		return numpyTransform
 	
+	def getShortestPathMatrix2(self):
+		numpyTransform = np.matrix(self.aStarCObject.getShortestPathMatrix2())
+		return numpyTransform
+	
+	def getShortestPathMatrix3(self):
+		numpyTransform = np.matrix(self.aStarCObject.getShortestPathMatrix3())
+		return numpyTransform
 	
 	
 	
