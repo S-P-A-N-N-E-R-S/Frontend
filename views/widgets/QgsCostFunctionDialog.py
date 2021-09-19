@@ -797,9 +797,15 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         else:
             fields = self.getVectorLayer().fields() if self.getVectorLayer() else []            
            
-            numberOfRasterData = len(self.rasterData)   
-            statusText = GraphBuilder.syntaxCheck(costFunction, fields, numberOfRasterData, len(self.polygonLayers))[0]
-
+            numberOfRasterData = len(self.rasterData)
+            syntaxCheckRes = GraphBuilder.syntaxCheck(costFunction, fields, numberOfRasterData, len(self.polygonLayers))
+            statusText = syntaxCheckRes[0]
+            
+            errorRangeStart = syntaxCheckRes[2]
+            errorRangeEnd = syntaxCheckRes[3]           
+            
+            self.codeEditor.fillIndicatorRange(0, errorRangeStart, 0, errorRangeEnd, self.Error_INDICATOR_ID)
+            
             # todo: set indicator range with fillIndicatorRange (int lineFrom, int indexFrom, int lineTo, int indexTo, int indicatorNumber)
             # more details: https://www.riverbankcomputing.com/static/Docs/QScintilla/classQsciScintilla.html#a44d1c322098eb0cf44cf78e866ed80cb
 
