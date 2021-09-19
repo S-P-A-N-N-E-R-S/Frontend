@@ -805,11 +805,6 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
             errorRangeEnd = syntaxCheckRes[3]           
             
             self.codeEditor.fillIndicatorRange(0, errorRangeStart, 0, errorRangeEnd, self.Error_INDICATOR_ID)
-            
-            # todo: set indicator range with fillIndicatorRange (int lineFrom, int indexFrom, int lineTo, int indexTo, int indicatorNumber)
-            # more details: https://www.riverbankcomputing.com/static/Docs/QScintilla/classQsciScintilla.html#a44d1c322098eb0cf44cf78e866ed80cb
-
-            # self.codeEditor.fillIndicatorRange(0, 0, 0, 10, self.Error_INDICATOR_ID)
 
         self.setStatus(statusText)
 
