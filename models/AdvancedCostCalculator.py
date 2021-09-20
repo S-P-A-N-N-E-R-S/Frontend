@@ -36,7 +36,10 @@ class AdvancedCostCalculator():
         self.vLayerFields = []        
         self.vLayer = vLayer
         self.graph = graph
-        self.pointValuesForEdge = []  
+        
+        self.pointValuesForEdge = [None] * len(self.rLayers)
+        self.pixelValuesForEdge = [None] * len(self.rLayers) * 5
+        
         self.polygons = polygons
         self.usePolygons = usePolygons        
         self.rasterBands = rasterBands
@@ -44,7 +47,7 @@ class AdvancedCostCalculator():
         self.mathOperatorsWithTwoVar = ["pow","dist","comb", "copysign", "fmod", "ldexp", "remainder", "log", "atan2"]
         self.translatedParts = {}
         self.formulaParts = []
-        self.aStarAlgObjects = [None] * len(self.rLayers)
+        self.aStarAlgObjects = []
         self.task = task
         self.createShortestPathView = createShortestPathView
         self.shortestPathViewLayers = []
@@ -225,27 +228,38 @@ class AdvancedCostCalculator():
                 return str((self.graph.pointsToFeatureHash[self.graph.vertex(edge.toVertex()).point().toString()])[name])
                                   
         # analysis of raster data
-        if "raster[" in part:           
+        if "raster[" in part:   
+                   
             rasterDataID = int(part.split("[")[1].split("]")[0])                
             bandForRaster = self.rasterBands[rasterDataID]    
             stringForLookup = "SAMPLE_" + str(bandForRaster)
-            self.pointValuesForEdge = []
-            #search for the right edgeID
-            for feature in sampledPointsLayer[rasterDataID].getFeatures():
-                if feature["line_id"] == edgeID:
-                    pointValue = feature[stringForLookup]                                      
-                    if pointValue is None:
-                        pointValue = 0                       
-                    self.pointValuesForEdge.append(pointValue)
+            # check if the pointValues are already created for this edge
+            if self.pointValuesForEdge[rasterDataID] == None:
+                self.pointValuesForEdge[rasterDataID] = []
+                #search for the right edgeID
+                for feature in sampledPointsLayer[rasterDataID].getFeatures():
+                    if feature["line_id"] == edgeID:
+                        pointValue = feature[stringForLookup]                                      
+                        if pointValue is None:
+                            pointValue = 0                       
+                        self.pointValuesForEdge[rasterDataID].append(pointValue)                               
             
-            if ":sp" in part:                
-                pixelValues = self.aStarAlgObjects[rasterDataID].getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
+            if ":sp" in part:   
+                # search for correct aStarAlgObject
+                heurID = int(part.split("(")[1].split(")")[0])
+                for aStarObj in self.aStarAlgObjects:
+                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:                      
+                        if self.pixelValuesForEdge[(rasterDataID+1)*heurID] == None:            
+                            pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
+                            self.pixelValuesForEdge[(rasterDataID+1)*heurID] = pixelValues
+                             
+                          
                 if "spEuclidean" in part or "spManhattan" in part or "spEllipsoidal" in part or "spGeodesic" in part:
-                    return self.__calculateRasterAnalysis(pixelValues, part.split(":sp")[1], rasterDataID)
+                    return self.__calculateRasterAnalysis(self.pixelValuesForEdge[(rasterDataID+1)*heurID], part.split(":sp")[1], rasterDataID)
         
-                return self.__calculateRasterAnalysis(pixelValues, part.split(":sp")[1])
+                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[(rasterDataID+1)*heurID], part.split(":sp")[1])
             else:
-                return self.__calculateRasterAnalysis(self.pointValuesForEdge, part.split(":")[1])
+                return self.__calculateRasterAnalysis(self.pointValuesForEdge[rasterDataID], part.split(":")[1])
                    
         for operator in self.operators:
             if operator in part:
@@ -260,8 +274,8 @@ class AdvancedCostCalculator():
         :type values: List of pixel values
         :type analysis: String defining the type of analysis
         :return translated raster analysis as string usually containing a number
-        """       
-        if "sum" in analysis.lower():           
+        """     
+        if "sum" in analysis.lower():       
             return str(sum(values))
         elif "mean" in analysis.lower():
             return str(statistics.mean(values))
@@ -433,7 +447,8 @@ class AdvancedCostCalculator():
                 costFunction = costFunction.replace(matchString, matchString.split("(")[0] + "(" + matchString.split(",")[1])
             else:
                 heuristicIndex = int(heuristicIndexString)
-            self.aStarAlgObjects[rasterIndex] = AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs(), heuristicIndex, self.createShortestPathView)           
+            
+            self.aStarAlgObjects.append(AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs(), heuristicIndex, self.createShortestPathView, rasterIndex, heuristicIndex))           
         
         # precalculate the distance between neighboring pixels 
         if "spEuclidean" in costFunction or "spManhattan" in costFunction or "spGeodesic" in costFunction or "spEllipsoidal" in costFunction:
@@ -516,6 +531,9 @@ class AdvancedCostCalculator():
             if self.task is not None and self.task.isCanceled():
                 break
 
+            self.pointValuesForEdge = [None] * len(self.rLayers)
+            self.pixelValuesForEdge = [None] * len(self.rLayers) * 5
+            
             costFunction = costFunctionSave
             self.translatedParts = {} 
             # translate different formula parts by searching constructs with regular expressions: 
@@ -534,7 +552,6 @@ class AdvancedCostCalculator():
                     break
                 for regex in constructRegexList:
                     costFunction = self.__translateRegexSearch(costFunction, regex, i, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList, True)      
-
             weights.append(eval(costFunction))
             
         # append the list        

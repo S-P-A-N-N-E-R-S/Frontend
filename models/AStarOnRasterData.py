@@ -11,7 +11,7 @@ import sys
 
 class AStarOnRasterData:
 	
-	def __init__(self, rLayer, band, sourceCrs, heuristicIndex, createShortestPathMatrix):
+	def __init__(self, rLayer, band, sourceCrs, heuristicIndex, createShortestPathMatrix, rasterID, heursticID):
 		self.heuristicIndex = heuristicIndex
 		ds = gdal.Open(rLayer.source())
 		readBand = ds.GetRasterBand(band)
@@ -20,6 +20,8 @@ class AStarOnRasterData:
 		self.sourceCrs = sourceCrs
 		self.destCrs = self.rLayer.crs()
 		self.tr = QgsCoordinateTransform(self.sourceCrs, self.destCrs, QgsProject.instance())
+		self.rasterID = rasterID
+		self.heuristicID = heursticID
 		
 		self.cols = ds.RasterXSize
 		self.rows = ds.RasterYSize
