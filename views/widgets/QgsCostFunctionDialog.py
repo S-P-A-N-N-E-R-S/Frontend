@@ -88,9 +88,18 @@ class QgsExpressionContext(QObject):
                     {
                         "label": self.tr("percentOfValues"),
                         "expressionText": "raster[]:percentOfValues()",
-                        "description": self.tr("Check if a specified percentage of pixel values satisfy the condition. Only usable with raster data")
-                        
+                        "description": self.tr("Check if a specified percentage of the shortest path pixels values satisfy the condition. Only usable with raster data")                      
                     },
+                    {
+                        "label": self.tr("spPixelValue"),
+                        "expressionText": "raster[]:pixelValue()",
+                        "description": self.tr("Check if one pixel value of the shortest path satisfies the condition. Only usable with raster data")
+                    },
+                    {
+                        "label": self.tr("spPercentOfValues"),
+                        "expressionText": "raster[]:percentOfValues(heuristic, percentage)",
+                        "description": self.tr("Check if a specified percentage of shortest path pixel values satisfy the condition. Only usable with raster data")                       
+                    },                                       
                 ],
             },
             "Distances": {
@@ -600,6 +609,71 @@ class QgsExpressionContext(QObject):
                         "expressionText": "totalClimb",
                         "description": self.tr("Returns the raster total climb of an edge.")
                     },
+                    {
+                        "label": "spSum",
+                        "expressionText": "spSum()",
+                        "description": self.tr("Returns the sum of the shortest path.")
+                    },
+                    {
+                        "label": "spMean",
+                        "expressionText": "spMean()",
+                        "description": self.tr("Returns the mean of the shortest path.")
+                    },
+                    {
+                        "label": "spMedian",
+                        "expressionText": "spMedian()",
+                        "description": self.tr("Returns the median of the shortest path.")
+                    },
+                    {
+                        "label": "spMin",
+                        "expressionText": "spMin()",
+                        "description": self.tr("Returns the minimum of the shortest path.")
+                    },
+                    {
+                        "label": "spMax",
+                        "expressionText": "spMax()",
+                        "description": self.tr("Returns the maximum of the shortest path.")
+                    },
+                    {
+                        "label": "spVariance",
+                        "expressionText": "spVariance()",
+                        "description": self.tr("Returns the variance of the shortest path.")
+                    },
+                    {
+                        "label": "spStandDev",
+                        "expressionText": "spStandDev()",
+                        "description": self.tr("Returns the standard deviation of the shortest path.")
+                    },
+                    {
+                        "label": "spGradientSum",
+                        "expressionText": "spGradientSum()",
+                        "description": self.tr("Returns the sum of all gradients of the shortest path.")
+                    },
+                    {
+                        "label": "spGradientMin",
+                        "expressionText": "spGradientMin()",
+                        "description": self.tr("Returns the minimum of all gradients of the shortest path..")
+                    },
+                    {
+                        "label": "spGradientMax",
+                        "expressionText": "spGradientMax()",
+                        "description": self.tr("Returns the maximum of all gradients of the shortest path.")
+                    },
+                    {
+                        "label": "spAscent",
+                        "expressionText": "spAscent()",
+                        "description": self.tr("Returns the ascent of the shortest path.")
+                    },
+                    {
+                        "label": "spDescent",
+                        "expressionText": "spDescent()",
+                        "description": self.tr("Returns the descent of the shortest path.")
+                    },
+                    {
+                        "label": "spTotalClimb",
+                        "expressionText": "spTotalClimb()",
+                        "description": self.tr("Returns the total climb of the shortest path.")
+                    },                         
                 ],
             },
         }
