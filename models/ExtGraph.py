@@ -226,7 +226,11 @@ class ExtGraph(QObject):
         toPoint = self.vertex(self.findVertexByID(edgeFromIdx.toVertex())).point()
         distArea = QgsDistanceArea()
         distArea.setEllipsoid(self.crs.ellipsoidAcronym())
-        return distArea.measureLine(fromPoint, toPoint)
+        ellDist = distArea.measureLine(fromPoint, toPoint)
+        if str(ellDist) == "nan":
+            return -1
+        else:
+            return ellDist
 
     def euclideanDist(self, edgeIdx):
         edgeFromIdx = self.edge(edgeIdx)

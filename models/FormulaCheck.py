@@ -50,10 +50,9 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     formulaParts = re.split("\+|-|\*|/", costFunction)
     possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
     possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance", "standDev", "gradientSum", "gradientMin", "gradientMax", 
-                               "ascent", "descent", "totalClimb", "spSum", "spMean", "spMedian",
-                              "spMin", "spMax", "spVariance", "spStandDev",
-                              "spGradientSum", "spGradientMin", "spGradientMax",
-                              "spAscent", "spDescent", "spTotalClimb"]
+                               "ascent", "descent", "totalClimb", "spSum", "spMean", "spMedian", "spMin", "spMax", 
+                              "spVariance", "spStandDev", "spGradientSum", "spGradientMin", "spGradientMax","spAscent",
+                              "spDescent", "spTotalClimb", "spEuclidean", "spManhattan", "spGeodesic", "spEllipsoidal"]
     comparisonOperators = ["<",">","==",]
            
     possibleFields = []
@@ -433,6 +432,6 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
         return ("No field name defined","", 0, len(originalFunction))
     
     # if no error was returned the function is valid                    
-    return ("No error found", function, 0, len(originalFunction)) 
+    return ("No error found", function, 0, 0) 
 
 

@@ -124,9 +124,30 @@ class QgsExpressionContext(QObject):
                     {
                         "label": "ellipsoidal",
                         "expressionText": "ellipsoidal",
-                        "description": self.tr("Calculates the ellipsoidal distance")
+                        "description": self.tr("Calculates the ellipsoidal distance. Not usable with all CRS!")
                         
                     },
+                    {
+                        "label": "spEuclidean",
+                        "expressionText": "raster[]:spEuclidean()",
+                        "description": self.tr("Calculates the euclidean metric of the shortest path.")
+                    },
+                    {
+                        "label": "spManhattan",
+                        "expressionText": "raster[]:spManhattan()",
+                        "description": self.tr("Calculates the manhattan metric of the shortest path.")
+                    },
+                    {
+                        "label": "spGeodesic",
+                        "expressionText": "raster[]:spGeodesic()",
+                        "description": self.tr("Calculates the geodesic metric of the shortest path.")
+                    },
+                    {
+                        "label": "spEllipsoidal",
+                        "expressionText": "raster[]:spEllipsoidal()",
+                        "description": self.tr("Calculates the ellipsoidal distance of the shortest path. Not usable with all CRS!")
+                        
+                    },                                       
                 ],
             },
             "Fields": {

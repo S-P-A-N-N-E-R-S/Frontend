@@ -15,6 +15,7 @@ import time
 from osgeo import gdal, osr
 import numpy as np
 from qgis.utils import iface
+from numpy import short
 
 class AdvancedCostCalculator():
     """
@@ -47,6 +48,10 @@ class AdvancedCostCalculator():
         self.task = task
         self.createShortestPathView = createShortestPathView
         self.shortestPathViewLayers = []
+        self.euclDistPixelNeighbors = []
+        self.manDistPixelNeighbors = []
+        self.geoDistPixelNeighbors = []
+        self.ellDistPixelNeighbors = []
     
     def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygonsList = None, edgesCrossingPolygonsList = None):      
         """
@@ -235,6 +240,9 @@ class AdvancedCostCalculator():
             
             if ":sp" in part:                
                 pixelValues = self.aStarAlgObjects[rasterDataID].getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
+                if "spEuclidean" in part or "spManhattan" in part or "spEllipsoidal" in part or "spGeodesic" in part:
+                    return self.__calculateRasterAnalysis(pixelValues, part.split(":sp")[1], rasterDataID)
+        
                 return self.__calculateRasterAnalysis(pixelValues, part.split(":sp")[1])
             else:
                 return self.__calculateRasterAnalysis(self.pointValuesForEdge, part.split(":")[1])
@@ -245,7 +253,7 @@ class AdvancedCostCalculator():
         
         return str("0")
           
-    def __calculateRasterAnalysis(self, values, analysis):
+    def __calculateRasterAnalysis(self, values, analysis, rLayerIndex = 0):
         """
         Method is responsible to translate all the raster analysis constructs.
         
@@ -314,7 +322,19 @@ class AdvancedCostCalculator():
                 
             listOfPixelValuesAsString = listOfPixelValuesAsString + ")"             
             return listOfPixelValuesAsString
-            
+        elif "euclidean" in analysis.lower():
+            shortestPathEucl = self.euclDistPixelNeighbors[rLayerIndex] * len(values)-1
+            return str(shortestPathEucl)
+        elif "manhattan" in analysis.lower():
+            shortestPathMan = self.manDistPixelNeighbors[rLayerIndex] * len(values)-1
+            return str(shortestPathMan)
+        elif "geodesic" in analysis.lower():
+            shortestPathGeo = self.geoDistPixelNeighbors[rLayerIndex] * len(values)-1
+            return str(shortestPathGeo)
+        elif "ellipsoidal" in analysis.lower():
+            shortestPathEll = self.ellDistPixelNeighbors[rLayerIndex] * len(values)-1    
+            return str(shortestPathEll)
+    
     def __createEdgeLayer(self): 
         """
         Creates an edge layer for the graph. This is used to call QGIS-Tools which
@@ -414,7 +434,61 @@ class AdvancedCostCalculator():
             else:
                 heuristicIndex = int(heuristicIndexString)
             self.aStarAlgObjects[rasterIndex] = AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs(), heuristicIndex, self.createShortestPathView)           
+        
+        # precalculate the distance between neighboring pixels 
+        if "spEuclidean" in costFunction or "spManhattan" in costFunction or "spGeodesic" in costFunction or "spEllipsoidal" in costFunction:
+            for rLayer in self.rLayers:
+                ds = gdal.Open(rLayer.source())
+                cols = ds.RasterXSize
+                rows = ds.RasterYSize
+                transform = ds.GetGeoTransform()
+                xOrigin = transform[0]
+                yOrigin = transform[3]
+                pixelWidth = transform[1]
+                pixelHeight = -transform[5]
+                
+                #get coordinates of top left pixel
+                xCoord = xOrigin + (pixelWidth/2)
+                yCoord = yOrigin + (pixelHeight/2)
+                originalPoint = QgsPointXY(xCoord, yCoord)
+                
+                #get coordinates of a neighbor
+                xCoordN = (pixelWidth*1) + xOrigin + (pixelWidth/2)
+                yCoordN = (pixelHeight*1) + yOrigin + (pixelHeight/2) 
+                originalPointN = QgsPointXY(xCoordN, yCoordN)
+                
+                # make coordinate transformation from raster crs to the vLayer crs
+                tr = QgsCoordinateTransform(rLayer.crs(), self.vLayer.crs(), QgsProject.instance())
+                transformedPoint = tr.transform(originalPoint)
+                transformedPointN = tr.transform(originalPointN)
+                if "spEuclidean" in costFunction:   
+                    euclDist = math.sqrt(pow(transformedPoint.x()-transformedPointN.x(),2) + pow(transformedPoint.y()-transformedPointN.y(),2))
+                    self.euclDistPixelNeighbors.append(euclDist)
+                
+                if "spManhattan" in costFunction:
+                    manhattenDist = abs(transformedPoint.x()-transformedPointN.x()) + abs(transformedPoint.y()-transformedPointN.y())
+                    self.manDistPixelNeighbors.append(manhattenDist)
             
+                if "spGeodesic" in costFunction:
+                    radius = 6371000
+                    phi1 = math.radians(transformedPoint.y())
+                    phi2 = math.radians(transformedPointN.y())
+                    deltaPhi = math.radians(transformedPointN.y()-transformedPoint.y())
+                    deltaLambda = math.radians(transformedPointN.x()-transformedPoint.x())
+                    a = math.sin(deltaPhi/2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(deltaLambda / 2.0) ** 2
+                    c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
+                    geoDist = radius*c
+                    self.geoDistPixelNeighbors.append(geoDist)
+            
+                if "spEllipsoidal" in costFunction:
+                    distArea = QgsDistanceArea()
+                    distArea.setEllipsoid(self.vLayer.crs().ellipsoidAcronym())
+                    ellDist = distArea.measureLine(transformedPoint, transformedPointN)
+                    if str(ellDist) == "nan":
+                        self.ellDistPixelNeighbors.append(0)
+                    else:
+                        self.ellDistPixelNeighbors.append(ellDist)
+                        
         edgesInPolygonsList = []
         edgesCrossingPolygonsList = []
         edgesInPolygons = QgsVectorLayer()
