@@ -4,6 +4,7 @@ from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 import re
+from apt.package import Origin
 
 
 def __findClosingBracketIndex(functionPart, startIndex):
@@ -86,6 +87,14 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                 return ("Unbalanced parentheses", "",0, len(originalFunction))    
     if len(stack) != 0:
         return ("Unbalanced parentheses", "",0, len(originalFunction))        
+    
+    # check no ü,ä,ö,§,$,%,&,?,~,# are used
+    specialCharList = ["ü","ä","ö","§","$","%","&","{","}","&","?", "~","#"] 
+    for char in function.lower():
+        if char in specialCharList:
+            toReturn = ("Forbidden special character used", "", 0, len(originalFunction))
+            return toReturn
+    
         
     # check all random operands   
     partCounter = 1 
