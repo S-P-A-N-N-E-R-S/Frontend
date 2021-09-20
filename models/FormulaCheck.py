@@ -433,6 +433,6 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
         return ("No field name defined","", 0, len(originalFunction))
     
     # if no error was returned the function is valid                    
-    return ("No error found", function, 0, len(originalFunction)) 
+    return ("No error found", function, 0, 0) 
 
 
