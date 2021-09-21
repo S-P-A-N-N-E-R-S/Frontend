@@ -228,8 +228,7 @@ class AdvancedCostCalculator():
                 return str((self.graph.pointsToFeatureHash[self.graph.vertex(edge.toVertex()).point().toString()])[name])
                                   
         # analysis of raster data
-        if "raster[" in part:   
-                   
+        if "raster[" in part:                   
             rasterDataID = int(part.split("[")[1].split("]")[0])                
             bandForRaster = self.rasterBands[rasterDataID]    
             stringForLookup = "SAMPLE_" + str(bandForRaster)
@@ -248,16 +247,12 @@ class AdvancedCostCalculator():
                 # search for correct aStarAlgObject
                 heurID = int(part.split("(")[1].split(")")[0])
                 for aStarObj in self.aStarAlgObjects:
-                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:                      
-                        if self.pixelValuesForEdge[(rasterDataID+1)*heurID] == None:            
+                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:                
+                        if self.pixelValuesForEdge[((rasterDataID+1)*heurID)-1] == None:            
                             pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
-                            self.pixelValuesForEdge[(rasterDataID+1)*heurID] = pixelValues
-                             
-                          
-                if "spEuclidean" in part or "spManhattan" in part or "spEllipsoidal" in part or "spGeodesic" in part:
-                    return self.__calculateRasterAnalysis(self.pixelValuesForEdge[(rasterDataID+1)*heurID], part.split(":sp")[1], rasterDataID)
-        
-                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[(rasterDataID+1)*heurID], part.split(":sp")[1])
+                            self.pixelValuesForEdge[((rasterDataID+1)*heurID)-1] = pixelValues
+                        
+                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[((rasterDataID+1)*heurID)-1], part.split(":sp")[1], rasterDataID)
             else:
                 return self.__calculateRasterAnalysis(self.pointValuesForEdge[rasterDataID], part.split(":")[1])
                    
@@ -441,14 +436,20 @@ class AdvancedCostCalculator():
         res = regex.findall(costFunction)
         for matchString in res:
             rasterIndex = int(matchString.split("[")[1].split("]")[0])
-            heuristicIndexString = matchString.split("(")[1].split(")")[0]
+            heuristicIndexString = matchString.split("(")[1].split(")")[0]         
+            
             if "," in heuristicIndexString:
                 heuristicIndex = int(heuristicIndexString.split(",")[0])
                 costFunction = costFunction.replace(matchString, matchString.split("(")[0] + "(" + matchString.split(",")[1])
             else:
                 heuristicIndex = int(heuristicIndexString)
-            
-            self.aStarAlgObjects.append(AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs(), heuristicIndex, self.createShortestPathView, rasterIndex, heuristicIndex))           
+            found = False
+            for aStarObj in self.aStarAlgObjects:
+                if aStarObj.rasterID == rasterIndex and aStarObj.heuristicID == heuristicIndex:
+                    found = True
+                    break
+            if not found:    
+                self.aStarAlgObjects.append(AStarOnRasterData(self.rLayers[rasterIndex], self.rasterBands[rasterIndex], self.vLayer.crs(), heuristicIndex, self.createShortestPathView, rasterIndex, heuristicIndex))           
         
         # precalculate the distance between neighboring pixels 
         if "spEuclidean" in costFunction or "spManhattan" in costFunction or "spGeodesic" in costFunction or "spEllipsoidal" in costFunction:
@@ -559,10 +560,9 @@ class AdvancedCostCalculator():
         
         if self.createShortestPathView:
             self.shortestPathViewLayers = []
-            rasterIndexCounter = 0
             for aStarObj in self.aStarAlgObjects:             
                 if aStarObj != None:
-                    fileName = "ShortestPathView" + str(self.rasterBands[rasterIndexCounter])
+                    fileName = "SPView" + "_" + str(aStarObj.rasterID) + "_" + str(aStarObj.heuristicID)
                     tmpPath = QgsProcessingUtils.generateTempFilename(fileName + ".tif")                   
                     driver = gdal.GetDriverByName('GTiff')                   
                     ds = driver.Create(tmpPath, ysize=aStarObj.matrixRowSize,xsize=aStarObj.matrixColSize, bands = 3, eType=gdal.GDT_Byte)
@@ -572,23 +572,21 @@ class AdvancedCostCalculator():
                     ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
                     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
                     ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)                                 
-                    dsRasterLayer = gdal.Open(self.rLayers[rasterIndexCounter].source())
+                    dsRasterLayer = gdal.Open(self.rLayers[aStarObj.rasterID].source())
                     geot = dsRasterLayer.GetGeoTransform()
                     srs = osr.SpatialReference()
-                    if "EPSG" in self.rLayers[rasterIndexCounter].crs().authid():
-                        importID = self.rLayers[rasterIndexCounter].crs().authid().split(":")[1]
+                    if "EPSG" in self.rLayers[aStarObj.rasterID].crs().authid():
+                        importID = self.rLayers[aStarObj.rasterID].crs().authid().split(":")[1]
                         srs.ImportFromEPSG(int(importID))
-                    elif "ESRI" in self.rLayers[rasterIndexCounter].crs().authid():
-                        importID = self.rLayers[rasterIndexCounter].crs().authid().split(":")[1]
+                    elif "ESRI" in self.rLayers[aStarObj.rasterID].crs().authid():
+                        importID = self.rLayers[aStarObj.rasterID].crs().authid().split(":")[1]
                         srs.ImportFromESRI(int(importID))                            
                     ds.SetGeoTransform(geot)
                     ds.SetProjection(srs.ExportToWkt())
                     ds.FlushCache()
                     ds = None
                     viewRasterLayer = QgsRasterLayer(tmpPath, fileName)
-                    self.shortestPathViewLayers.append(viewRasterLayer)
-
-                rasterIndexCounter+=1    
+                    self.shortestPathViewLayers.append(viewRasterLayer)   
         
         """   
         FOR EDETING WITH ADVANCED COSTS:
