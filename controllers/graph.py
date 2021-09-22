@@ -77,6 +77,7 @@ class CreateGraphController(BaseController):
         builder = GraphBuilder()
         builder.setOption("createGraphAsLayers",False)
         graphName = "New"   # default name
+        savePath = self.view.getSavePath()
 
         # raster data
         for rasterInput in self.view.getRasterData():
@@ -164,7 +165,10 @@ class CreateGraphController(BaseController):
             if graphCrs and graphCrs.isValid():
                 graphLayer.setCrs(graphCrs)
 
-            if self.saveGraph(graph, graphLayer, graphName):
+            success, errorMsg = helper.saveGraph(graph, graphLayer, graphName, savePath, self.view.isRenderGraphChecked())
+            if not success:
+                self.view.showError(errorMsg)
+            else:
                 self.view.showSuccess(self.tr("Graph created!"))
             return
 
@@ -178,7 +182,6 @@ class CreateGraphController(BaseController):
                     return
 
         # set name to save path basename
-        savePath = self.view.getSavePath()
         if savePath:
             fileName, extension = os.path.splitext(savePath)
             graphName = os.path.basename(fileName)
@@ -227,8 +230,12 @@ class CreateGraphController(BaseController):
                     return
 
                 # save graph to destination
-                if self.saveGraph(graph, graphLayer, graphName):
-                    # show success message if
+                savePath = self.view.getSavePath()
+                success, errorMsg = helper.saveGraph(graph, graphLayer, graphName, savePath, self.view.isRenderGraphChecked())
+                if not success:
+                    self.view.showError(errorMsg)
+                else:
+                    # show success message
                     self.view.showSuccess(self.tr("Graph created!"))
                     iface.messageBar().pushMessage("Success", self.tr("Graph created!"), level=Qgis.Success)
                     self.view.insertLogText("Graph created!\n")
@@ -238,64 +245,6 @@ class CreateGraphController(BaseController):
         else:
             QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
             raise exception
-
-    def saveGraph(self, graph, graphLayer, graphName=""):
-        """
-        Saves graph or created graph layers to destination and adds the created layers to project
-        :param graph: ExtGraph
-        :param graphLayer:
-        :param graphName:
-        :return: successful or not
-        """
-        success = True
-        savePath = self.view.getSavePath()
-        if savePath:
-            fileName, extension = os.path.splitext(savePath)
-            if extension == ".graphml":
-                graph.writeGraphML(savePath)
-            else:
-                # if layer path as .shp
-                # create vector layer from graph layer
-                [vectorPointLayer, vectorLineLayer] = graphLayer.createVectorLayer()
-
-                # adjust path to point or lines
-                savePath = savePath[:-len(extension)]
-                savePathPoints = savePath
-                savePathLines = savePath
-                
-                savePathPoints += "Points" + extension
-                savePathLines += "Lines" + extension
-
-                # save vector layers to path
-                vectorPointLayer = helper.saveLayer(vectorPointLayer, vectorPointLayer.name(), "vector", savePathPoints, extension)
-                vectorLineLayer = helper.saveLayer(vectorLineLayer, vectorLineLayer.name(), "vector", savePathLines, extension)
-
-                # add vector layers to project
-                if vectorPointLayer:
-                    QgsProject.instance().addMapLayer(vectorPointLayer)
-                else:
-                    self.view.showError(self.tr("Created point layer can not be loaded due to invalidity!"))
-                    success = False
-
-                if vectorLineLayer:
-                    QgsProject.instance().addMapLayer(vectorLineLayer)
-                else:
-                    self.view.showError(self.tr("Created line layer can not be loaded due to invalidity!"))
-                    success = False
-
-        # add graph layer to project
-        graphLayer.setName(graphName + "GraphLayer")
-
-        if graphLayer.isValid():
-            QgsProject.instance().addMapLayer(graphLayer)
-
-            # disable graph rendering if checkbox is not checked
-            if not self.view.isRenderGraphChecked():
-                QgsProject.instance().layerTreeRoot().findLayer(graphLayer).setItemVisibilityChecked(False)
-        else:
-            self.view.showError(self.tr("Created graph layer can not be loaded due to invalidity!"))
-            success = False
-        return success
 
     def discardTask(self, taskId):
         """

@@ -1,4 +1,6 @@
 from .base import BaseController
+from .. import mainPlugin
+from .. import helperFunctions as helper
 
 from qgis.core import QgsSettings, QgsApplication, QgsAuthMethodConfig
 
@@ -14,13 +16,11 @@ class OptionsController(BaseController):
         self.authManager = QgsApplication.authManager()
 
         # show saved settings
-        host = self.settings.value("ogdfplugin/host", "")
-        port = self.settings.value("ogdfplugin/port", 4711)
         username = self.settings.value("ogdfplugin/username", "")
         savedAuthId = self.settings.value("ogdfplugin/authId")
 
-        self.view.setHost(host)
-        self.view.setPort(int(port))
+        self.view.setHost(helper.getHost())
+        self.view.setPort(helper.getPort())
         # check if id is set and not manually removed by user
         if savedAuthId and savedAuthId in self.authManager.configIds():
             self.view.setUsername(username)
@@ -39,6 +39,8 @@ class OptionsController(BaseController):
         # save settings
         self.settings.setValue("ogdfplugin/host", host)
         self.settings.setValue("ogdfplugin/port", port)
+        # fetch available handlers
+        mainPlugin.OGDFPlugin.fetchHandlers()
         # only save username if not empty
         if username:
             self.settings.setValue("ogdfplugin/username", username)

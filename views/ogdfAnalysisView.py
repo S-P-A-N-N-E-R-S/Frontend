@@ -2,8 +2,8 @@ from .baseContentView import BaseContentView
 from ..controllers.ogdfAnalysis import OGDFAnalysisController
 from ..models.ExtGraph import ExtGraph
 from ..models.QgsGraphLayer import QgsGraphLayer
-from .widgets.QgsGraphEdgePickerWidget import QgsGraphEdgePickerWidget
-from .widgets.QgsGraphVertexPickerWidget import QgsGraphVertexPickerWidget
+from .widgets.QgsOgdfParametersWidget import QgsOGDFParametersWidget
+from .. import mainPlugin
 
 from qgis.core import QgsMapLayerProxyModel
 from qgis.PyQt.QtWidgets import QLabel
@@ -16,141 +16,145 @@ class OGDFAnalysisView(BaseContentView):
     def __init__(self, dialog):
         super().__init__(dialog)
         self.name = "ogdf analysis"
+
+        # # setup graph input
+        # self.dialog.ogdf_analysis_graph_input.setFilters(QgsMapLayerProxyModel.PluginLayer)
+        #
+        # # set null layer as default
+        # self.dialog.ogdf_analysis_graph_input.setCurrentIndex(0)
+
+        # # set up graph file upload
+        # self.dialog.ogdf_analysis_graph_input_tools.clicked.connect(
+        #     lambda: self._browseFile("ogdf_analysis_graph_input", "GraphML (*.graphml)")
+        # )
+
+        # set up analysis parameter widget
+        layout = self.dialog.ogdf_analysis_parameters_box.layout()
+        self.ogdfParametersWidget = QgsOGDFParametersWidget()
+        layout.addWidget(self.ogdfParametersWidget)
+
+        # change analysis parameters
+        self.dialog.ogdf_analysis_analysis_input.currentIndexChanged.connect(self._analysisChanged)
+
         self.controller = OGDFAnalysisController(self)
-
-        # setup graph input
-        self.dialog.ogdf_analysis_graph_input.setFilters(QgsMapLayerProxyModel.PluginLayer)
-
-        # set null layer as default
-        self.dialog.ogdf_analysis_graph_input.setCurrentIndex(0)
-
-        # set up graph file upload
-        self.dialog.ogdf_analysis_graph_input_tools.clicked.connect(
-            lambda: self._browseFile("ogdf_analysis_graph_input", "GraphML (*.graphml)")
-        )
-
-        # set up analysis parameters
-        layout = self.dialog.ogdf_analysis_parameters_groupbox.layout()
-        self.startNodeLabel = QLabel(self.tr("Start node"))
-        self.startNodePicker = QgsGraphVertexPickerWidget()
-        self.startNodePicker.toggleDialogVisibility.connect(lambda visible: self.setMinimized(visible))
-
-        self.endNodeLabel = QLabel(self.tr("End node"))
-        self.endNodePicker = QgsGraphVertexPickerWidget()
-        self.endNodePicker.toggleDialogVisibility.connect(lambda visible: self.setMinimized(visible))
-
-        layout.addWidget(self.startNodeLabel)
-        layout.addWidget(self.startNodePicker)
-        layout.addWidget(self.endNodeLabel)
-        layout.addWidget(self.endNodePicker)
-
-        # add graph to picker widgets
-        self.dialog.ogdf_analysis_graph_input.currentIndexChanged.connect(self._inputChanged)
-        self._inputChanged()
-
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
 
-    def _inputChanged(self):
-        """
-        Sets the graph into the parameter widgets
-        :return:
-        """
-        self.startNodePicker.clear()
-        self.endNodePicker.clear()
+    def _analysisChanged(self):
+        requestName, requestKey = self.getAnalysis()
+        request = mainPlugin.OGDFPlugin.requests.get(requestKey)
+        if request:
+            self.setParameterFields(request.getFieldInfo())
+            # show description
+            self.setDescriptionHtml(request.description)
+            self.setDescriptionVisible(request.description != "")
 
-        if self.hasInput():
-            graphLayer = self.getInputLayer()
-            if graphLayer is not None:
-                self.startNodePicker.setGraphLayer(graphLayer)
-                self.endNodePicker.setGraphLayer(graphLayer)
-            else:
-                graph = self.getGraph()
-                self.startNodePicker.setGraph(graph)
-                self.endNodePicker.setGraph(graph)
+    # def hasInput(self):
+    #     """
+    #     Returns true if input is not empty
+    #     :return:
+    #     """
+    #     if self.dialog.ogdf_analysis_graph_input.currentLayer() is not None:
+    #         return True
+    #
+    #     if len(self.dialog.ogdf_analysis_graph_input.additionalItems()) > 0:
+    #         return self.dialog.ogdf_analysis_graph_input.currentText() == self.dialog.ogdf_analysis_graph_input.additionalItems()[0]
+    #
+    #     return False
+
+    # def isInputLayer(self):
+    #     """
+    #     True: if input is layer
+    #     False: if input is path or empty
+    #     :return:
+    #     """
+    #     return self.dialog.ogdf_analysis_graph_input.currentLayer() is not None
+
+    # def getInputLayer(self):
+    #     """
+    #     Returns the current selected layer or none if path or empty is selected
+    #     :return: Layer or None if path or empty is selected
+    #     """
+    #     return self.dialog.ogdf_analysis_graph_input.currentLayer()
+
+    # def getInputPath(self):
+    #     """
+    #     Returns input path of selected file path in layer combobox
+    #     :return: Path to file or None if layer is selected
+    #     """
+    #     # assumed that only one additional item is inserted
+    #     if self.hasInput() and not self.isInputLayer():
+    #         return self.dialog.ogdf_analysis_graph_input.additionalItems()[0]
+    #     return None
+
+    # def getGraph(self):
+    #     """
+    #     Gets the graph containing in input. Return none if input has no graph
+    #     :return:
+    #     """
+    #     if self.hasInput():
+    #         if self.isInputLayer():
+    #             # return graph from graph layer
+    #             graphLayer = self.getInputLayer()
+    #             if isinstance(graphLayer, QgsGraphLayer) and graphLayer.isValid():
+    #                 return graphLayer.getGraph()
+    #         else:
+    #             # if file path as input
+    #             path = self.getInputPath()
+    #             fileName, extension = os.path.splitext(path)
+    #             if extension == ".graphml":
+    #                 graph = ExtGraph()
+    #                 graph.readGraphML(path)
+    #                 return graph
+    #     return None
 
     def getJobName(self):
         return self.dialog.ogdf_analysis_job_input.text()
 
-    def hasInput(self):
-        """
-        Returns true if input is not empty
-        :return:
-        """
-        if self.dialog.ogdf_analysis_graph_input.currentLayer() is not None:
-            return True
-
-        if len(self.dialog.ogdf_analysis_graph_input.additionalItems()) > 0:
-            return self.dialog.ogdf_analysis_graph_input.currentText() == self.dialog.ogdf_analysis_graph_input.additionalItems()[0]
-
-        return False
-
-    def isInputLayer(self):
-        """
-        True: if input is layer
-        False: if input is path or empty
-        :return:
-        """
-        return self.dialog.ogdf_analysis_graph_input.currentLayer() is not None
-
-    def getInputLayer(self):
-        """
-        Returns the current selected layer or none if path or empty is selected
-        :return: Layer or None if path or empty is selected
-        """
-        return self.dialog.ogdf_analysis_graph_input.currentLayer()
-
-    def getInputPath(self):
-        """
-        Returns input path of selected file path in layer combobox
-        :return: Path to file or None if layer is selected
-        """
-        # assumed that only one additional item is inserted
-        if self.hasInput() and not self.isInputLayer():
-            return self.dialog.ogdf_analysis_graph_input.additionalItems()[0]
-        return None
-
-    def getGraph(self):
-        """
-        Gets the graph containing in input. Return none if input has no graph
-        :return:
-        """
-        if self.hasInput():
-            if self.isInputLayer():
-                # return graph from graph layer
-                graphLayer = self.getInputLayer()
-                if isinstance(graphLayer, QgsGraphLayer) and graphLayer.isValid():
-                    return graphLayer.getGraph()
-            else:
-                # if file path as input
-                path = self.getInputPath()
-                fileName, extension = os.path.splitext(path)
-                if extension == ".graphml":
-                    graph = ExtGraph()
-                    graph.readGraphML(path)
-                    return graph
-        return None
-
     def getAnalysis(self):
-        return self.dialog.ogdf_analysis_analysis_input.currentText(), self.dialog.create_graph_distance_input.currentData()
+        return self.dialog.ogdf_analysis_analysis_input.currentText(), self.dialog.ogdf_analysis_analysis_input.currentData()
 
     def addAnalysis(self, analysis, userData=None):
         self.dialog.ogdf_analysis_analysis_input.addItem(analysis, userData)
 
     # analysis parameters
 
-    def getStartNode(self):
+    def setParameterFields(self, fields):
         """
-        Returns vertex id
-        :return:
+        Sets parameter fields which should be shown as input widgets
+        :param fields: fields dictionary
         """
-        return self.startNodePicker.getVertex()
+        self.ogdfParametersWidget.setParameterFields(fields)
 
-    def getEndNode(self):
+    def getParameterFieldsData(self):
         """
-        Returns vertex id
-        :return:
+        Returns ogdf parameter inputs data
+        :exception FieldRequiredError if required field is not set
+        :return: dictionary with field key and corresponding value
         """
-        return self.endNodePicker.getVertex()
+        return self.ogdfParametersWidget.getParameterFieldsData()
+
+    # description text
+
+    def setDescriptionVisible(self, visible):
+        self.dialog.ogdf_analysis_description_textbrowser.setVisible(visible)
+
+    def isDescriptionVisible(self):
+        self.dialog.ogdf_analysis_description_textbrowser.isVisible()
+
+    def setDescriptionText(self, text):
+        self.dialog.ogdf_analysis_description_textbrowser.setPlainText(text)
+
+    def setDescriptionHtml(self, text):
+        self.dialog.ogdf_analysis_description_textbrowser.setHtml(text)
+
+    def clearDescription(self):
+        self.dialog.ogdf_analysis_description_textbrowser.clear()
+
+    def getDescriptionText(self):
+        return self.dialog.ogdf_analysis_description_textbrowser.toPlainText()
+
+    def getDescriptionHtml(self):
+        return self.dialog.ogdf_analysis_description_textbrowser.toHtml()
 
     # log
 

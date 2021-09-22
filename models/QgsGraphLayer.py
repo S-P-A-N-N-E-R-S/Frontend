@@ -85,8 +85,12 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                     # draw outgoing edges
                     if self.mGraph.edgeCount() != 0 and self.mShowLines:
                         outgoing = vertex.outgoingEdges()
-                        for outgoingEdgeIdx in range(len(outgoing)):
-                            edge = self.mGraph.edge(self.mGraph.findEdgeByID(outgoing[outgoingEdgeIdx]))
+                        for outgoingEdgeId in outgoing:
+                            edgeIdx = self.mGraph.findEdgeByID(outgoingEdgeId)
+                            if edgeIdx == -1:
+                                continue
+
+                            edge = self.mGraph.edge(edgeIdx)
 
                             toPoint = self.mGraph.vertex(self.mGraph.findVertexByID(edge.toVertex())).point()
                             fromPoint = vertex.point()
@@ -115,7 +119,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             # add text with edgeCost at line mid point
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                                edgeCost = self.mGraph.costOfEdge(outgoing[outgoingEdgeIdx], self.mRenderedCostFunction)
+                                edgeCost = self.mGraph.costOfEdge(edgeIdx, self.mRenderedCostFunction)
                                 if edgeCost % 1 == 0:
                                     painter.drawText(midPoint, str(edgeCost))
                                 else:

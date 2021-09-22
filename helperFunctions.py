@@ -4,7 +4,17 @@ from qgis.PyQt.QtCore import QCoreApplication
 
 from os.path import abspath, join, dirname, splitext, basename
 
-from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsProcessingParameterVectorDestination
+from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
+
+
+def getHost():
+    """ Get the server host address"""
+    return QgsSettings().value("ogdfplugin/host", "localhost")
+
+
+def getPort():
+    """ Get the server port address"""
+    return int(QgsSettings().value("ogdfplugin/port", 4711))
 
 
 def getPluginPath():
@@ -98,6 +108,64 @@ def saveLayer(layer, layerName, type, path=None, format=None):
                 if createdLayer.isValid():
                     return createdLayer
     return None
+
+
+def saveGraph(graph, graphLayer, graphName="", savePath=None, renderGraph=True):
+        """
+        Saves graph or created graph layers to destination and adds the created layers to project
+        :param graph: ExtGraph
+        :param graphLayer:
+        :param graphName:
+        :return: successful or not
+        """
+        success = True
+        errorMsg = ""
+        if savePath:
+            fileName, extension = splitext(savePath)
+            if extension == ".graphml":
+                graph.writeGraphML(savePath)
+            else:
+                # if layer path as .shp
+                # create vector layer from graph layer
+                [vectorPointLayer, vectorLineLayer] = graphLayer.createVectorLayer()
+
+                # adjust path to point or lines
+                savePath = savePath[:-len(extension)]
+                savePathPoints = savePath
+                savePathLines = savePath
+
+                savePathPoints += "Points" + extension
+                savePathLines += "Lines" + extension
+
+                # save vector layers to path
+                vectorPointLayer = saveLayer(vectorPointLayer, vectorPointLayer.name(), "vector", savePathPoints, extension)
+                vectorLineLayer = saveLayer(vectorLineLayer, vectorLineLayer.name(), "vector", savePathLines, extension)
+
+                # add vector layers to project
+                if vectorPointLayer:
+                    QgsProject.instance().addMapLayer(vectorPointLayer)
+                else:
+                    errorMsg = tr("Created point layer can not be loaded due to invalidity!")
+                    success = False
+
+                if vectorLineLayer:
+                    QgsProject.instance().addMapLayer(vectorLineLayer)
+                else:
+                    errorMsg = tr("Created line layer can not be loaded due to invalidity!")
+                    success = False
+
+        # add graph layer to project
+        graphLayer.setName(graphName + "GraphLayer")
+        if graphLayer.isValid():
+            QgsProject.instance().addMapLayer(graphLayer)
+
+            # disable graph rendering if checkbox is not checked
+            if not renderGraph:
+                QgsProject.instance().layerTreeRoot().findLayer(graphLayer).setItemVisibilityChecked(False)
+        else:
+            errorMsg = tr("Created graph layer can not be loaded due to invalidity!")
+            success = False
+        return success, errorMsg
 
 
 def getVectorFileFilter():
