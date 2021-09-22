@@ -464,7 +464,7 @@ class ExtGraph(QObject):
 
         :type vertex: QgsPointXY
         :type tolerance: int
-        :return vertexId: Integer
+        :return vertexIdx: Integer
         """
         if tolerance > 0:
             toleranceRect = QgsRectangle.fromCenterAndSize(vertex, tolerance, tolerance)
@@ -870,37 +870,36 @@ class ExtGraph(QObject):
 
         :type path: String
         """
-        file = open(path, "w")
-        header = ['<?xml version="1.0" encoding="UTF-8"?>\n',
-            '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n',
-            '\txmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n',
-            '\txmlns:y="http://www.yworks.com/xml/graphml"\n',
-            '\txsi:schemaLocation="http://graphml.graphdrawing.org/xmlns\n',
-            '\t http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">\n',
-            '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
+        with open(path, "w") as file:
+            header = ['<?xml version="1.0" encoding="UTF-8"?>\n',
+                '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n',
+                '\txmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n',
+                '\txmlns:y="http://www.yworks.com/xml/graphml"\n',
+                '\txsi:schemaLocation="http://graphml.graphdrawing.org/xmlns\n',
+                '\t http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">\n',
+                '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
 
-        file.writelines(header)
-        file.write('\t<graph id="G" edgedefault="directed">\n')
+            file.writelines(header)
+            file.write('\t<graph id="G" edgedefault="directed">\n')
 
-        for idx in range(self.mVertexCount):
-            vertex = self.vertex(idx)
-            nodeLine = '\t\t<node id="' + str(vertex.id()) + '"/>\n'
-            file.write(nodeLine)
-            file.write('\t\t\t<data key="d1">\n')
-            file.write('\t\t\t\t<y:ShapeNode>\n')
-            coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(vertex.point().x()) + '" y="' + str(vertex.point().y()) + '"/>\n'
-            file.write(coordinates)
-            file.write('\t\t\t\t</y:ShapeNode>\n')
-            file.write('\t\t\t</data>\n')
+            for idx in range(self.mVertexCount):
+                vertex = self.vertex(idx)
+                nodeLine = '\t\t<node id="' + str(vertex.id()) + '"/>\n'
+                file.write(nodeLine)
+                file.write('\t\t\t<data key="d1">\n')
+                file.write('\t\t\t\t<y:ShapeNode>\n')
+                coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(vertex.point().x()) + '" y="' + str(vertex.point().y()) + '"/>\n'
+                file.write(coordinates)
+                file.write('\t\t\t\t</y:ShapeNode>\n')
+                file.write('\t\t\t</data>\n')
 
-        for idx in range(self.mEdgeCount):
-            edge = self.edge(idx)
-            edgeLine = '\t\t<edge source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
-            file.write(edgeLine)
+            for idx in range(self.mEdgeCount):
+                edge = self.edge(idx)
+                edgeLine = '\t\t<edge source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
+                file.write(edgeLine)
 
-        file.write("\t</graph>\n")
-        file.write("</graphml>")
-        file.close()
+            file.write("\t</graph>\n")
+            file.write("</graphml>")
 
     def readGraphML(self, path):
         """
@@ -908,8 +907,8 @@ class ExtGraph(QObject):
 
         :type path: String
         """
-        file = open(path, "r")
-        lines = file.readlines()
+        with open(path, "r") as file:
+            lines = file.readlines()
         nodeCoordinatesGiven = False
         edgeTypeDirection = "Directed"
         nodeIDs = []
