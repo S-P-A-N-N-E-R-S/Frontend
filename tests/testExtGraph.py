@@ -104,7 +104,7 @@ class TestExtGraph(TestCase):
 
         self.graph.deleteVertex(secondIndex)
         self.assertEqual(self.graph.vertexCount(), 1)
-        self.assertEqual(self.graph.vertex(secondIndex), -1)
+        self.assertRaises(IndexError, self.graph.vertex, secondIndex)
 
         thirdIndex = self.graph.addVertex(QgsPointXY(0.5, 0.5))
         thirdVertex = self.graph.vertex(thirdIndex)
