@@ -1,5 +1,5 @@
 from qgis.testing import unittest, start_app, TestCase
-from qgis.core import QgsProject, QgsVectorLayer, QgsPointXY, QgsGeometry, QgsFeature, QgsPointXY, QgsCoordinateReferenceSystem
+from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem
 
 from ..models.ExtGraph import ExtGraph
 from ..helperFunctions import getPluginPath

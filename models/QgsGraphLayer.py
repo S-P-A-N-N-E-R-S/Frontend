@@ -62,7 +62,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         if isinstance(self.mGraph, ExtGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
-                converter = iface.mapCanvas().getCoordinateTransform()
+                converter = self.renderContext().mapToPixel()
                 
                 for idx in range(self.mGraph.vertexCount()):
                     vertex = self.mGraph.vertex(idx)
