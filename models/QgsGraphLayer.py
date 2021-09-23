@@ -196,6 +196,9 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mShowDirection = False
         self.mShowLines = True
 
+        self.exportPoints = True
+        self.exportLines = True
+
         self.mRandomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         self.mRenderedCostFunction = 0

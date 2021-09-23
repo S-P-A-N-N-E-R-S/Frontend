@@ -60,6 +60,37 @@ class TestQgsGraphLayer(TestCase):
 
         self.assertTrue(renderChecker.runTest("test_simple_graph_graphlayer"))
 
+    def test_get_graph(self):
+        graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")
+        self.graph.readGraphML(graphmlFile)
+        self.graphLayer.setGraph(self.graph)
+
+        graph = self.graphLayer.getGraph()
+        self.assertEqual(graph.vertexCount(), 10)
+        self.assertEqual(graph.edgeCount(), 15)
+
+        self.assertEqual(self.graph.vertex(self.graph.findEdgeByID(3)).point(), QgsPointXY(0, -1.0))
+        self.assertEqual(self.graph.vertex(self.graph.findEdgeByID(0)).point(), QgsPointXY(0.0, 0.0))
+        self.assertEqual(self.graph.vertex(self.graph.findEdgeByID(5)).point(), QgsPointXY(2.0, 0))
+
+    def test_createVectorLayer(self):
+        graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")
+        self.graph.readGraphML(graphmlFile)
+        self.graphLayer.setGraph(self.graph)
+
+        pointLayer, lineLayer = self.graphLayer.createVectorLayer()
+        expectedPointLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.gpkg"))
+        expectedLineLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg"))
+        self.assertLayersEqual(pointLayer, expectedPointLayer)
+        self.assertLayersEqual(lineLayer, expectedLineLayer)
+
+    def test_extent(self):
+        graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")
+        self.graph.readGraphML(graphmlFile)
+        self.graphLayer.setGraph(self.graph)
+
+        self.assertEqual(self.graphLayer.extent(), QgsRectangle(-1, -1, 2.0, 2.0))
+
 
 if __name__ == '__main__':
     unittest.main()
