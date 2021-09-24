@@ -1,0 +1,2 @@
+class FieldRequiredError(Exception):
+    pass

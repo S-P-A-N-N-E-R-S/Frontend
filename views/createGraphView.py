@@ -45,7 +45,7 @@ class CreateGraphView(BaseContentView):
         )
 
         # show output placeholder
-        self.dialog.create_graph_dest_output.lineEdit().setPlaceholderText("[Save to temporary file]")
+        self.dialog.create_graph_dest_output.lineEdit().setPlaceholderText("[Save to temporary layer]")
         # set save path formats
         self.dialog.create_graph_dest_output.setFilter("GraphML (*.graphml );;"+getVectorFileFilter())
 

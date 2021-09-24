@@ -93,6 +93,11 @@ class ExtGraph(QObject):
         self.mVertices = []
         self.mEdges = []
 
+        # Set to true while building the graph to indicate that the arrays are
+        # sorted by uid, so binary search is possible
+        self.verticesSorted = False
+        self.edgesSorted = False
+
         self.mEdgeCount = 0
         self.mVertexCount = 0
 
@@ -293,7 +298,7 @@ class ExtGraph(QObject):
 
     def findVertexByID(self, id, output=False):
         """
-        Start binary search for vertex with id
+        Start search for vertex with id
 
         :type id: Integer
         :return Integer idx for found vertex with id
@@ -302,7 +307,16 @@ class ExtGraph(QObject):
             # without much editing, this should be the case
             return id
         
-        return self.__binaryVertexByID(id, 0, self.mVertexCount - 1) 
+        if self.verticesSorted:
+            return self.__binaryVertexByID(id, 0, self.mVertexCount - 1)
+        else:
+            return self.__linearVertexByID(id)
+    
+    def __linearVertexByID(self, id):
+        for idx, vertex in enumerate(self.mVertices):
+            if vertex.id() == id:
+                return idx
+        return -1
 
     def __binaryVertexByID(self, id, left, right):
         if left > right:
@@ -320,7 +334,7 @@ class ExtGraph(QObject):
 
     def findEdgeByID(self, id):
         """
-        Start binary search for edge with id
+        Start search for edge with id
 
         :type id: Integer
         :return Integer idx for found edge with id
@@ -329,7 +343,16 @@ class ExtGraph(QObject):
             # without much editing, this should be the case
             return id
 
-        return self.__binaryEdgeByID(id, 0, self.mEdgeCount - 1)
+        if self.edgesSorted:
+            return self.__binaryEdgeByID(id, 0, self.mEdgeCount - 1)
+        else:
+            return self.__linearEdgeByID(id)
+    
+    def __linearEdgeByID(self, id):
+        for idx, edge in enumerate(self.mEdges):
+            if edge.id() == id:
+                return idx
+        return -1
 
     def __binaryEdgeByID(self, id, left, right):
         if left > right:
@@ -576,17 +599,17 @@ class ExtGraph(QObject):
         return listOfEdges
 
     def edge(self, idx):
-        if idx < self.mEdgeCount:
-            return self.mEdges[idx]
-        return -1
+        if idx < 0 or idx >= self.mEdgeCount:
+            raise IndexError(f"Edge index {idx} is out of bounds")
+        return self.mEdges[idx]
 
     def edgeCount(self):
         return self.mEdgeCount
 
     def vertex(self, idx):
-        if idx < self.mVertexCount:
-            return self.mVertices[idx]
-        return -1
+        if idx < 0 or idx >= self.mVertexCount:
+            raise IndexError(f"Vertex index {idx} is out of bounds")
+        return self.mVertices[idx]
 
     def vertexCount(self):
         return self.mVertexCount
@@ -609,16 +632,18 @@ class ExtGraph(QObject):
             edgeID = edge.id()
 
             # remove edge from toVertex incomingEdges
-            toVertex = self.vertex(self.findVertexByID(edge.toVertex()))
-            if toVertex:
+            toVertexIdx = self.findVertexByID(edge.toVertex())
+            if not toVertexIdx == -1:
+                toVertex = self.vertex(toVertexIdx)
                 for edgeIdx in range(len(toVertex.mIncomingEdges)):
                     if toVertex.mIncomingEdges[edgeIdx] == edgeID:
                         toVertex.mIncomingEdges.pop(edgeIdx)
                         break
             
             # remove edge from fromVertex outgoingEdges
-            fromVertex = self.vertex(self.findVertexByID(edge.fromVertex()))
-            if fromVertex:
+            fromVertexIdx = self.findVertexByID(edge.fromVertex())
+            if not fromVertexIdx == -1:
+                fromVertex = self.vertex(fromVertexIdx)
                 for edgeIdx in range(len(fromVertex.mOutgoingEdges)):
                     if fromVertex.mOutgoingEdges[edgeIdx] == edgeID:
                         fromVertex.mOutgoingEdges.pop(edgeIdx)
