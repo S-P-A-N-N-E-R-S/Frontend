@@ -355,7 +355,14 @@ class GraphBuilder:
                         return
                     if len(allPointsInCluster)>1:
                         vertex = self.graph.vertex(allPointsInCluster[i]).point()
-                        nearestPoints = self.kdTree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],self.__options["neighborNumber"]+1)
+                        
+                        if self.__options["edgeDirection"] == "Directed":
+                            nearestPoints = self.kdTree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],self.__options["neighborNumber"]+1)
+                        else:
+                            nearestPoints = []
+                            if len(self.graph.vertex(allPointsInCluster[i]).mIncomingEdges) < self.__options["neighborNumber"]:
+                                nearestPoints = self.kdTree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],self.__options["neighborNumber"]+1-(len(self.graph.vertex(allPointsInCluster[i]).mIncomingEdges)))               
+                        
                         for t in range(1,len(nearestPoints)):
                             neighborPoint = nearestPoints[t][0].data
                             
