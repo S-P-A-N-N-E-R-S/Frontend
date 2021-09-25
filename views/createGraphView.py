@@ -587,7 +587,7 @@ class CreateGraphView(BaseContentView):
         taskIdItem = QTableWidgetItem(str(taskId))
         descriptionItem = QTableWidgetItem(task.description())
         statusItem = QTableWidgetItem(self.__getTaskStatus(task.status()))
-        progressItem = QTableWidgetItem(str(task.progress()) + "%")
+        progressItem = QTableWidgetItem(str(round(task.progress(),2)) + "%")
         self.dialog.graph_tasks_table.setItem(row, 0, taskIdItem)
         self.dialog.graph_tasks_table.setItem(row, 1, descriptionItem)
         self.dialog.graph_tasks_table.setItem(row, 2, progressItem)

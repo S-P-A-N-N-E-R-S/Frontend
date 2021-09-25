@@ -194,9 +194,11 @@ class GraphBuilder:
         random.seed(seed)
         self.graph.setRandomSeed(seed)
 
-        for i in range(self.__randomOptions["numberOfVertices"]):
+        for i in range(self.__randomOptions["numberOfVertices"]):           
             if self.task is not None and self.task.isCanceled():
                 break
+            if self.task is not None:
+                self.task.setProgress(self.task.progress() + 10/self.__randomOptions["numberOfVertices"])
             if self.__randomOptions["area"] == "Germany":
                 self.graph.addVertex(QgsPointXY(random.uniform(6.803,13.480), random.uniform(47.420,55.000)))
             elif self.__randomOptions["area"] == "France":
@@ -219,9 +221,11 @@ class GraphBuilder:
         Method creates a new vertex in the graph for every point inside
         the given vectorLayer.
         """
-        for feat in self.vLayer.getFeatures():
+        for feat in self.vLayer.getFeatures():            
             if self.task is not None and self.task.isCanceled():
                 break
+            if self.task is not None:
+                self.task.setProgress(self.task.progress() + 10/self.vLayer.featureCount())
             geom = feat.geometry()
             
             if self.__options["distanceStrategy"] == "Advanced":               
@@ -233,6 +237,14 @@ class GraphBuilder:
         Create an edge for every pair of vertices
         """
         for i in range(self.graph.vertexCount()-1):
+            if self.task is not None:
+                if self.__options["distanceStrategy"] == "Advanced":
+                    newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                else:
+                    newProgress = self.task.progress() + 90/self.graph.vertexCount()    
+                if newProgress <= 100:               
+                    self.task.setProgress(newProgress)
+            
             for j in range(i+1, self.graph.vertexCount()):
                 if self.task is not None and self.task.isCanceled():
                     return
@@ -258,10 +270,15 @@ class GraphBuilder:
             else:
                 crsUnitRead = self.vLayer.crs()            
 
-        for i in range(self.graph.vertexCount()):
+        for i in range(self.graph.vertexCount()):   
             if self.task is not None and self.task.isCanceled():
                 return
-            
+            if self.task is not None:
+                if self.__options["distanceStrategy"] == "Advanced":
+                    newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                else:
+                    newProgress = self.task.progress() + 90/self.graph.vertexCount()  
+                       
             point = self.graph.vertex(i).point()
             
             if self.__options["connectionType"] == "Nearest neighbor":
@@ -328,6 +345,12 @@ class GraphBuilder:
                 self.kdTree = kdtree.create(points)
                 count = 0
                 for i in range(len(allPointsInCluster)):
+                    if self.task is not None:
+                        if self.__options["distanceStrategy"] == "Advanced":
+                            newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                        else:
+                            newProgress = self.task.progress() + 90/self.graph.vertexCount() 
+                    
                     if self.task is not None and self.task.isCanceled():
                         return
                     if len(allPointsInCluster)>1:
@@ -348,6 +371,11 @@ class GraphBuilder:
                 for i in range(len(allPointsInCluster)-1):
                     if self.task is not None and self.task.isCanceled():
                         return
+                    if self.task is not None:
+                        if self.__options["distanceStrategy"] == "Advanced":
+                            newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                        else:
+                            newProgress = self.task.progress() + 90/self.graph.vertexCount() 
                     for j in range(i+1,len(allPointsInCluster)):
                          self.graph.addEdge(allPointsInCluster[i],allPointsInCluster[j])
                          
@@ -364,6 +392,14 @@ class GraphBuilder:
         vertexHash = {}
         lastVertexID = None
         for feature in self.vLayer.getFeatures():
+            if self.task is not None:
+                if self.__options["distanceStrategy"] == "Advanced":
+                    newProgress = self.task.progress() + 30/self.vLayer.featureCount()
+                else:
+                    newProgress = self.task.progress() + 100/self.vLayer.featureCount()
+                if newProgress <= 100:
+                    self.task.setProgress(newProgress)
+            
             if self.task is not None and self.task.isCanceled():
                 return
             geom = feature.geometry()
@@ -426,8 +462,7 @@ class GraphBuilder:
             # build kd tree
             self.kdTree = kdtree.create(points)
             counter = 0
-            for feature in self.additionalPointLayer.getFeatures():
-               
+            for feature in self.additionalPointLayer.getFeatures():              
                 if self.task is not None and self.task.isCanceled():
                     return
                 counter+=1

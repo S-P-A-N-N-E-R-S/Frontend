@@ -528,10 +528,14 @@ class AdvancedCostCalculator():
         costFunction = costFunction.replace(" ", "").replace('"', '')           
         costFunctionSave = costFunction
         
-        for i in range(self.graph.edgeCount()):            
+        for i in range(self.graph.edgeCount()):                           
             if self.task is not None and self.task.isCanceled():
                 break
 
+            if self.task is not None:
+                newProgress = self.task.progress() + 70/self.graph.edgeCount()
+                if newProgress <= 100:
+                    self.task.setProgress(round(newProgress,2))
             self.pointValuesForEdge = [None] * len(self.rLayers)
             self.pixelValuesForEdge = [None] * len(self.rLayers) * 5
             
