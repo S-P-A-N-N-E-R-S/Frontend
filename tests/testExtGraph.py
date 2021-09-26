@@ -158,9 +158,9 @@ class TestExtGraph(TestCase):
         # check some edges
         vertex = self.graph.vertex(self.graph.findEdgeByID(0))
         outgoingEdges = vertex.outgoingEdges()
-        self.assertEqual(len(outgoingEdges), 2)
+        self.assertEqual(len(outgoingEdges), 3)
         incomingEdges = vertex.incomingEdges()
-        self.assertEqual(len(incomingEdges), 6)
+        self.assertEqual(len(incomingEdges), 5)
 
         self.assertNotEqual(self.graph.hasEdge(self.graph.findEdgeByID(0), self.graph.findEdgeByID(1)), -1)
         self.assertNotEqual(self.graph.hasEdge(self.graph.findEdgeByID(3), self.graph.findEdgeByID(1)), -1)

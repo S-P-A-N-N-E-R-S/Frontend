@@ -37,7 +37,8 @@ class GraphBuilder:
 
     Random options:
         - numberOfVertices: int
-        - area: Area of the globe you want the random Graph to be in. Can be one of the specified countries or user defined        
+        - area: Area of the globe you want the random Graph to be in. Can be one of the specified countries or user defined
+        - seed: int
     """    
     def __init__(self):
         """

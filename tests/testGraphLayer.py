@@ -1,7 +1,6 @@
 from qgis.testing import unittest, start_app, TestCase
-from qgis.core import QgsApplication, QgsProviderRegistry, QgsMapRendererParallelJob, QgsProviderMetadata, QgsProject, QgsPointXY, QgsCoordinateReferenceSystem, QgsRenderChecker, QgsMapSettings, QgsRectangle, QgsVectorLayer
+from qgis.core import QgsApplication, QgsProviderRegistry, QgsProviderMetadata, QgsProject, QgsPointXY, QgsRenderChecker, QgsMapSettings, QgsRectangle, QgsVectorLayer
 
-from qgis.PyQt.QtCore import QSize
 from qgis.PyQt.QtGui import QColor
 
 from ..models.ExtGraph import ExtGraph
@@ -9,8 +8,6 @@ from ..models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDat
 from ..helperFunctions import getPluginPath
 
 import os
-import tempfile
-import math
 
 start_app()
 
