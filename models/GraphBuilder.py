@@ -386,7 +386,8 @@ class GraphBuilder:
                             newProgress = self.task.progress() + 90/self.graph.vertexCount() 
                     for j in range(i+1,len(allPointsInCluster)):
                          self.graph.addEdge(allPointsInCluster[i],allPointsInCluster[j])
-                         
+                         if self.__options["edgeDirection"] == "Directed":
+                             self.graph.addEdge(allPointsInCluster[j], allPointsInCluster[i],)
                          if self.__options["distanceStrategy"] == "Advanced":
                             self.graph.featureMatchings.append(self.graph.mVertices[allPointsInCluster[j]].mCoordinates)
 
