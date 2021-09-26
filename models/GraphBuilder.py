@@ -237,6 +237,8 @@ class GraphBuilder:
         Create an edge for every pair of vertices
         """
         for i in range(self.graph.vertexCount()-1):
+            if self.task is not None and self.task.isCanceled():
+                    return
             if self.task is not None:
                 if self.__options["distanceStrategy"] == "Advanced":
                     newProgress = self.task.progress() + 20/self.graph.vertexCount()
@@ -244,14 +246,13 @@ class GraphBuilder:
                     newProgress = self.task.progress() + 90/self.graph.vertexCount()    
                 if newProgress <= 100:               
                     self.task.setProgress(newProgress)
-            
-            for j in range(i+1, self.graph.vertexCount()):
-                if self.task is not None and self.task.isCanceled():
-                    return
+            for j in range(i+1, self.graph.vertexCount()):             
                 if self.__options["distanceStrategy"] == "Advanced":
                     self.graph.featureMatchings.append(self.graph.mVertices[j].mCoordinates)
                 self.graph.addEdge(i, j)
-
+                if self.__options["edgeDirection"] == "Directed":
+                    self.graph.addEdge(j, i)
+    
     def __createNearestNeighbor(self):
         """
         The edges for the options DistanceNN and Nearest neighbor are created inside
