@@ -4,7 +4,6 @@ from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 import re
-from apt.package import Origin
 
 
 def __findClosingBracketIndex(functionPart, startIndex):
