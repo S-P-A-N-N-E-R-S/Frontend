@@ -1,4 +1,4 @@
-from qgis.core import QgsProject, QgsFeature, QgsGeometry, QgsPoint, Qgis
+from qgis.core import QgsProject, Qgis
 from qgis.utils import iface
 
 from qgis.PyQt.QtWidgets import QUndoCommand
@@ -17,7 +17,6 @@ class ExtVertexUndoCommand(QUndoCommand):
         :type operation: String "Delete", "Add", "Move"
         :type newPoint: QgsPointXY
         """
-        # TODO: include all edge operations which also can happen during delete or add operations
         super().__init__()
 
         self.layerId = layerId
@@ -59,11 +58,12 @@ class ExtVertexUndoCommand(QUndoCommand):
     def id(self):
         return self.mCommandID
 
-    def setId(self, id):
-        if id >= self.mLayer.mUndoStack.index():
-            self.mCommandID = id
-        else:
-            print("setID Vertex ERROR")
+    def setID(self, id):
+        self.mCommandID = id
+        # if id >= self.mLayer.mUndoStack.index():
+        #     self.mCommandID = id
+        # else:
+        #     print("setID Vertex ERROR")
 
     def _addVertex(self, fromWithEdges=False):
         self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexIdx, self.mVertexID)
@@ -164,7 +164,8 @@ class ExtVertexUndoCommand(QUndoCommand):
         iface.mapCanvas().refresh()
 
     def mergeWith(self, command):
-        print("MergeVertex")
+        if self.id() == command.id():
+            pass
         return False
 
 class ExtEdgeUndoCommand(QUndoCommand):
@@ -237,11 +238,12 @@ class ExtEdgeUndoCommand(QUndoCommand):
     def id(self):
         return self.mCommandID
 
-    def setId(self, id):
-        if id >= self.mLayer.mUndoStack.index():
-            self.mCommandID = id
-        else:
-            print("set ID Edge ERROR")
+    def setID(self, id):
+        self.mCommandID = id
+        # if id >= self.mLayer.mUndoStack.index():
+        #     self.mCommandID = id
+        # else:
+        #     print("set ID Edge ERROR", id, self.mLayer.mUndoStack.index())
 
     def __deleteEdge(self):
         self.mLayer.mGraph.deleteEdge(self.mEdgeIdx)
@@ -324,5 +326,6 @@ class ExtEdgeUndoCommand(QUndoCommand):
         iface.mapCanvas().refresh()
 
     def mergeWith(self, command):
-        print("MergeEdge")
+        if self.id() == command.id():
+            pass
         return False

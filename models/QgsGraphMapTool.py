@@ -38,7 +38,6 @@ class QgsGraphMapTool(QgsMapTool):
     def _addVertex(self, point, movePoint=False):
         """
         Adds a vertex to the Graphlayers graph.
-        Also adds the vertex as feature to the layers DataProvider if necessary.
 
         :type point: QgsPointXY
         :type movePoint: Bool instead of adding new vertex, move fristFoundVertex
@@ -68,12 +67,21 @@ class QgsGraphMapTool(QgsMapTool):
         vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), vertexIdx, point, "AddWithEdges")
         self.mLayer.mUndoStack.push(vertexUndoCommand)
 
-    def _deleteEdge(self, edgeIdx):
+    def _deleteEdge(self, edgeIdx, commandID=-1):
+        """
+        Deletes an edge from the Graphlayers graph.
+
+        :type idx: Integer
+        :type commandID: Integer, to possibly force merge of commands
+        """
         if edgeIdx >= 0:
             edge = self.mLayer.mGraph.edge(edgeIdx)
 
             # delete possibly existing edge
             edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, edge.fromVertex(), edge.toVertex(), True)
+            if commandID >= 0:
+                edgeUndoCommand.setID(commandID)
+            
             self.mLayer.mUndoStack.push(edgeUndoCommand)
 
             if self.mLayer.mGraph.edgeCount() == 0:
@@ -83,7 +91,6 @@ class QgsGraphMapTool(QgsMapTool):
     def _addEdge(self, p1Idx, p2Idx):
         """
         Adds an edge to the Graphlayers graph.
-        Also adds the edge as feature to the layers DataProvider if necessary.
 
         For existing edges, a new Dialog for this edge will be opened.
 
@@ -177,19 +184,20 @@ class QgsGraphMapTool(QgsMapTool):
         win.setLayout(layout)
         win.adjustSize()
 
-    def _deleteVertex(self, idx):
+    def _deleteVertex(self, idx, commandID=-1):
         """
         Deletes a vertex and its outgoing and incoming edges from the Graphlayers graph.
-        Also deletes the corresponding features from the layers DataProvider.
 
         :type idx: Integer
+        :type commandID: Integer, to possibly force merge of commands
         """
         oldPos = self.mLayer.mGraph.vertex(idx).point()
 
         vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), idx, oldPos, "Delete")
-        self.mLayer.mUndoStack.push(vertexUndoCommand)
+        if commandID >= 0:
+            vertexUndoCommand.setID(commandID)
         
-        self.mLayer.mDataProvider.deleteFeature(idx, True)
+        self.mLayer.mUndoStack.push(vertexUndoCommand)
 
     def _showRect(self):
         if hasattr(self, "rubberBand") and self.rubberBand and self.leftPressed and self.shiftPressed:
@@ -346,8 +354,13 @@ class QgsGraphMapTool(QgsMapTool):
                 layout.addWidget(showVertexIDButton)
 
                 def _deleteFoundVertices():
+                    commandID = self.mLayer.mUndoStack.index()
+                    self.mLayer.mUndoStack.beginMacro("Delete Selected Vertices")
+                    
                     for i in range(len(foundVertexIndices) - 1, -1, -1):
-                        self._deleteVertex(foundVertexIndices[i])    
+                        self._deleteVertex(foundVertexIndices[i], commandID)
+                    
+                    self.mLayer.mUndoStack.endMacro() 
 
                 deleteVerticesButton = QPushButton(self.tr("Delete Vertices"))
                 deleteVerticesButton.clicked.connect(_deleteFoundVertices)
@@ -356,22 +369,28 @@ class QgsGraphMapTool(QgsMapTool):
                 layout.addWidget(deleteVerticesButton)
 
                 def _deleteAttachedEdges():
+                    commandID = self.mLayer.mUndoStack.index()
+
+                    self.mLayer.mUndoStack.beginMacro("Delete Attached Edges")
+                    
                     for idx in foundVertexIndices:
                         vertex = self.mLayer.mGraph.vertex(idx)
 
                         # delete outgoing edges
                         for outgoingIdx in range(len(vertex.outgoingEdges()) - 1, -1, -1):
                             edgeID = vertex.outgoingEdges()[outgoingIdx]
-                            self._deleteEdge(self.mLayer.mGraph.findEdgeByID(edgeID))
+                            self._deleteEdge(self.mLayer.mGraph.findEdgeByID(edgeID), commandID)
 
                         # delete incoming edges
                         for incomingIdx in range(len(vertex.incomingEdges()) - 1, -1, -1):
                             edgeID = vertex.incomingEdges()[incomingIdx]
-                            self._deleteEdge(self.mLayer.mGraph.findEdgeByID(edgeID))
+                            self._deleteEdge(self.mLayer.mGraph.findEdgeByID(edgeID), commandID)
+                    
+                    self.mLayer.mUndoStack.endMacro()
 
                 deleteEdgesButton = QPushButton(self.tr("Delete Attached Edges"))
                 deleteEdgesButton.clicked.connect(_deleteAttachedEdges)
-                # deleteEdgesButton.clicked.connect(win.done)
+                deleteEdgesButton.clicked.connect(win.done)
                 deleteEdgesButton.setVisible(True)
                 layout.addWidget(deleteEdgesButton)
 
