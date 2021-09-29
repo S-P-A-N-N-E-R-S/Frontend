@@ -1,3 +1,5 @@
+image: qgis/qgis:latest
+
 build-job:
   stage: build
   script:
