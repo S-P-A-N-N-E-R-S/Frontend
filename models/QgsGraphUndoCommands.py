@@ -26,6 +26,8 @@ class ExtVertexUndoCommand(QUndoCommand):
             if layer.id() == self.layerId:
                 self.mLayer = layer
 
+        self.mCommandID = self.mLayer.mUndoStack.index()
+
         self.mVertexIdx = vertexIdx
         self.mVertexID = -1
         if operation != "Add" and operation != "AddWithEdges":
@@ -55,7 +57,13 @@ class ExtVertexUndoCommand(QUndoCommand):
         del self.undoString
 
     def id(self):
-        return self.mVertexID
+        return self.mCommandID
+
+    def setId(self, id):
+        if id >= self.mLayer.mUndoStack.index():
+            self.mCommandID = id
+        else:
+            print("setID Vertex ERROR")
 
     def _addVertex(self, fromWithEdges=False):
         self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexIdx, self.mVertexID)
@@ -69,7 +77,7 @@ class ExtVertexUndoCommand(QUndoCommand):
             else:
                 childCommand.undo()
 
-        iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " + str(len(self.childCount())) + " edges!", level=Qgis.Success)
+        iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " + str(self.childCount()) + " edges!", level=Qgis.Success)
 
     def _deleteVertex(self, fromWithEdges=False):
         delVertID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
@@ -113,7 +121,7 @@ class ExtVertexUndoCommand(QUndoCommand):
                     edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, fromID, toID, False, self)
                     edgeUndoCommand.redo()
 
-            iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " + str(len(self.childCount())) + " edges!", level=Qgis.Success)
+            iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " + str(self.childCount()) + " edges!", level=Qgis.Success)
         else:
             self._addVertex(True)
 
@@ -156,6 +164,7 @@ class ExtVertexUndoCommand(QUndoCommand):
         iface.mapCanvas().refresh()
 
     def mergeWith(self, command):
+        print("MergeVertex")
         return False
 
 class ExtEdgeUndoCommand(QUndoCommand):
@@ -177,6 +186,8 @@ class ExtEdgeUndoCommand(QUndoCommand):
         for layer in mapLayers.values():
             if layer.id() == self.layerId:
                 self.mLayer = layer
+
+        self.mCommandID = self.mLayer.mUndoStack.index()
 
         self.mEdgeIdx = edgeIdx
         if deleted:
@@ -224,7 +235,13 @@ class ExtEdgeUndoCommand(QUndoCommand):
             del self.mNewCosts
 
     def id(self):
-        return self.mEdgeID
+        return self.mCommandID
+
+    def setId(self, id):
+        if id >= self.mLayer.mUndoStack.index():
+            self.mCommandID = id
+        else:
+            print("set ID Edge ERROR")
 
     def __deleteEdge(self):
         self.mLayer.mGraph.deleteEdge(self.mEdgeIdx)
@@ -307,4 +324,5 @@ class ExtEdgeUndoCommand(QUndoCommand):
         iface.mapCanvas().refresh()
 
     def mergeWith(self, command):
+        print("MergeEdge")
         return False
