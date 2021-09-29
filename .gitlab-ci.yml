@@ -2,4 +2,4 @@ image: centos:7
 
 test: 
     script:
-        - echo "Hello from our lovely GitLab meetup!" && exit 1
+        - echo "Hello from our lovely GitLab meetup!" && exit 0
