@@ -313,35 +313,67 @@ class QgsGraphMapTool(QgsMapTool):
                 layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
                 markers = []
-                foundVerticesString = str(len(foundVertexIndices)) + self.tr(" vertices found: ")
+                foundVerticesString = str(len(foundVertexIndices)) + self.tr(" vertices found.")
+                foundVerticesIDString = ""
                 for i in range(len(foundVertexIndices)):
                     vertex = self.mLayer.mGraph.vertex(foundVertexIndices[i])
                     markers.append(QgsVertexMarker(iface.mapCanvas()))
                     markers[i].setIconType(QgsVertexMarker.ICON_CROSS)
                     markers[i].setCenter(vertex.point())
 
-                    foundVerticesString += str(vertex.id())
+                    foundVerticesIDString += str(vertex.id())
                     if i + 1 < len(foundVertexIndices):
-                        foundVerticesString += ", "
+                        foundVerticesIDString += ", "
                     if i % 5 == 0:
-                        foundVerticesString += "\n"
+                        foundVerticesIDString += "\n"
 
                 # QLabel with information about the found vertices
                 informationLabel = QLabel(foundVerticesString)
-                # informationLabel.setWordWrap(True)
                 informationLabel.setVisible(True)
                 informationLabel.setStyleSheet("border: 1px solid black;")
                 layout.addWidget(informationLabel)
+
+                foundIDLabel = QLabel(foundVerticesIDString)
+                foundIDLabel.setVisible(False)
+                foundIDLabel.setStyleSheet("border: 1px solid black;")
+                layout.addWidget(foundIDLabel)
+
+                # TODO: informationLabel stays big after Vertex ID are hidden again
+                showVertexIDButton = QPushButton(self.tr("Show Vertex IDs"))
+                showVertexIDButton.clicked.connect(lambda: showVertexIDButton.setText(self.tr("Show Vertex IDs") if foundIDLabel.isVisible() else self.tr("Hide Vertex IDs")))
+                showVertexIDButton.clicked.connect(lambda: foundIDLabel.setVisible(not foundIDLabel.isVisible()))
+                showVertexIDButton.setVisible(True)
+                layout.addWidget(showVertexIDButton)
 
                 def _deleteFoundVertices():
                     for i in range(len(foundVertexIndices) - 1, -1, -1):
                         self._deleteVertex(foundVertexIndices[i])    
 
-                deleteVerticesButton = QPushButton(self.tr("Delete"))
+                deleteVerticesButton = QPushButton(self.tr("Delete Vertices"))
                 deleteVerticesButton.clicked.connect(_deleteFoundVertices)
                 deleteVerticesButton.clicked.connect(win.done)
                 deleteVerticesButton.setVisible(True)
                 layout.addWidget(deleteVerticesButton)
+
+                def _deleteAttachedEdges():
+                    for idx in foundVertexIndices:
+                        vertex = self.mLayer.mGraph.vertex(idx)
+
+                        # delete outgoing edges
+                        for outgoingIdx in range(len(vertex.outgoingEdges()) - 1, -1, -1):
+                            edgeID = vertex.outgoingEdges()[outgoingIdx]
+                            self._deleteEdge(self.mLayer.mGraph.findEdgeByID(edgeID))
+
+                        # delete incoming edges
+                        for incomingIdx in range(len(vertex.incomingEdges()) - 1, -1, -1):
+                            edgeID = vertex.incomingEdges()[incomingIdx]
+                            self._deleteEdge(self.mLayer.mGraph.findEdgeByID(edgeID))
+
+                deleteEdgesButton = QPushButton(self.tr("Delete Attached Edges"))
+                deleteEdgesButton.clicked.connect(_deleteAttachedEdges)
+                # deleteEdgesButton.clicked.connect(win.done)
+                deleteEdgesButton.setVisible(True)
+                layout.addWidget(deleteEdgesButton)
 
                 win.setLayout(layout)
                 win.adjustSize()            
