@@ -2,7 +2,7 @@ import socket
 import struct
 import gzip
 
-from . import protoParser
+from . import parserManager, protoParser, statusManager
 from .exceptions import NetworkClientError, ParseError
 from .protocol.build import meta_pb2
 from .requests.statusRequest import StatusRequest
@@ -44,8 +44,8 @@ class Client():
         self._sendProtoBufString(meta_pb2.RequestType.AVAILABLE_HANDLERS, bytearray())
 
         # Wait for answer
-        response = self.recv()
-        return response.requestTypes, response.responseTypes
+        self.recv()
+        return parserManager.getParserPairs()
 
     def getJobStatus(self):
         # Send status request
@@ -53,8 +53,8 @@ class Client():
             protoParser.createProtoBuf(StatusRequest()))
 
         # Wait for answer
-        response = self.recv()
-        return response.jobStates
+        self.recv()
+        return statusManager.getJobStates()
 
     def getJobStatusById(self, jobId):
         # Not implemented in the backend yet
@@ -65,21 +65,28 @@ class Client():
             protoParser.createProtoBuf(ResultRequest(jobId)))
 
         # Wait for answer
-        jobResponse = self.recv()
+        handlerType = statusManager.getJobState(jobId).handlerType
+        jobResponse = self.recv(handlerType)
         return jobResponse
 
-    def send(self, request):
+    def sendJobRequest(self, request):
         # Create compressed wire format
         protoBufString = protoParser.createProtoBuf(request)
-        return self._sendProtoBufString(request.type, protoBufString)
+        self._sendProtoBufString(request.type, protoBufString, request.key)
 
-    def _sendProtoBufString(self, requestType, protoBufString):
+        # Wait for answer
+        newjobResponse = self.recv()
+        return newjobResponse.jobId
+
+    def _sendProtoBufString(self, requestType, protoBufString, handlerType=None):
         compressedProtoBufString = gzip.compress(protoBufString)
 
         # Create meta message
         metaData = meta_pb2.MetaData()
         metaData.containerSize = len(compressedProtoBufString)
         metaData.type = requestType
+        if handlerType:
+            metaData.handlerType = handlerType
         metaString = metaData.SerializeToString()
 
         # Pack message and send
@@ -92,7 +99,7 @@ class Client():
 
         return len(msg)
 
-    def recv(self):
+    def recv(self, handlerType=None):
         # Get meta message length
         rawMsgLength = self._recvAll(LENGTH_FIELD_SIZE)
         if not rawMsgLength:
@@ -106,11 +113,15 @@ class Client():
         if metaData.containerSize <= 0:
             raise NetworkClientError("Empty Message")
 
+        if handlerType or metaData.handlerType:
+            if not handlerType or not metaData.handlerType or handlerType != metaData.handlerType:
+                raise ParseError("Invalid handler type")
+
         # Get container
         compressedProtoBufString = self._recvAll(metaData.containerSize)
         if not compressedProtoBufString:
             raise NetworkClientError("No ProtoBuf received")
-        return protoParser.parseProtoBuf(gzip.decompress(compressedProtoBufString), metaData.type)
+        return protoParser.parseProtoBuf(gzip.decompress(compressedProtoBufString), metaData.type, handlerType)
 
     def _recvAll(self, msgLength):
         # Helper function to recv n bytes or return None if EOF is hit

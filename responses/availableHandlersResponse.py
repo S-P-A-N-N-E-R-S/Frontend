@@ -1,5 +1,6 @@
-from ..fields import boolField, choiceField, doubleField, edgeCostsField, edgeIDField, edgeIdArrayField, graphField, intField, literalField, stringField, vertexCoordinatesField, vertexCostsField, vertexIdArrayField, vertexIDField
+from .. import parserManager
 from ..exceptions import ParseError
+from ..fields import boolField, choiceField, doubleField, edgeCostsField, edgeIDField, edgeIdArrayField, graphField, intField, literalField, stringField, vertexCoordinatesField, vertexCostsField, vertexIdArrayField, vertexIDField
 from ..requests.genericRequest import GenericRequest
 from ..requests.shortestPathRequest import ShortestPathRequest
 from .genericResponse import GenericResponse
@@ -49,8 +50,6 @@ class AvailableHandlersResponse:
 
     def __init__(self):
         self.type = meta_pb2.RequestType.AVAILABLE_HANDLERS
-        self.requestTypes = {}
-        self.responseTypes = {}
 
     def parseProtoBuf(self, protoBuf):
         # if protoBuf.type != self.type:
@@ -87,8 +86,7 @@ class AvailableHandlersResponse:
 
             responseObj.key = requestObj.key
 
-            self.requestTypes[requestObj.key] = requestObj
-            self.responseTypes[responseObj.key] = responseObj
+            parserManager.insertParserPair(requestObj, responseObj)
 
     def parseField(self, field):
         try:

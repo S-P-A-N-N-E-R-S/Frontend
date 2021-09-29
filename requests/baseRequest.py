@@ -64,7 +64,6 @@ class BaseGraphRequest(BaseRequest):
 
     def toProtoBuf(self):
         request = self.protoRequest()
-        request.handlerType = self.name.strip()
 
         if self.graphKey:
             self.fields[self.graphKey].toProtoBuf(request, self.data)

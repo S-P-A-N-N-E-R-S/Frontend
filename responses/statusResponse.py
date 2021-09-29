@@ -1,3 +1,4 @@
+from .. import statusManager
 from ..protocol.build import meta_pb2, status_pb2
 
 
@@ -9,10 +10,7 @@ class StatusResponse():
         self.jobStates = {}
 
     def parseProtoBuf(self, protoBuf):
-        statusRes = status_pb2.StatusResponse()
-        protoBuf.response.Unpack(statusRes)
+        statusResponse = status_pb2.StatusResponse()
+        protoBuf.response.Unpack(statusResponse)
 
-        for state in statusRes.states:
-            self.jobStates[state.job_id] = {
-                'status': state.status
-            }
+        statusManager.insertJobStates(statusResponse.states)
