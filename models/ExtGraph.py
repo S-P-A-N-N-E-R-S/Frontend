@@ -588,7 +588,7 @@ class ExtGraph(QObject):
         :type vertexCoordinates: list with x,y-Coordinates
         :return list of edges
         """
-        if not self.kdTree:
+        if not self.kdTree and not self.mConnectionType == "Complete":
             points = []
             for idx in range(self.mVertexCount):
                 point = self.vertex(idx).point()
@@ -601,6 +601,8 @@ class ExtGraph(QObject):
         index = self.addVertex(QgsPointXY(vertexCoordinates[0], vertexCoordinates[1]))
         addedVertexID = self.vertex(index).id()
         point = self.vertex(index).point()
+        
+        #== COMPLETE ==============================================================================
         if self.mConnectionType == "Complete":
             for vertexIdx in range(self.mVertexCount - 1):
                 vertexID = self.vertex(vertexIdx).id()
@@ -613,15 +615,17 @@ class ExtGraph(QObject):
         #== NEAREST NEIGHBOR & DISTANCENN =========================================================
         elif self.mConnectionType == "Nearest neighbor" or self.mConnectionType == "DistanceNN":
             # if this is True the nodes got deleted
-            if not self.nnAllowDoubleEdges:
+            # TODO: why not self.nnAllowDoubleEdges?
+            if not self.nnAllowDoubleEdges and not self.kdTree:
                 points = []
                 for idx in range(self.mVertexCount - 1):
                     p = self.vertex(idx).point()
                     points.append([p.x(),p.y()])
                 self.kdTree = kdtree.create(points)
 
-            else:
-                self.kdTree.add([point.x(),point.y()])
+            # else:
+            #     # this should already happen in addVertex
+            #     self.kdTree.add([point.x(),point.y()])
 
             if self.mConnectionType == "Nearest neighbor":
                 listOfNeighbors = self.kdTree.search_knn([point.x(),point.y()], self.numberNeighbours+1)
@@ -717,7 +721,7 @@ class ExtGraph(QObject):
             neighborVertex = self.vertex(neighborPointIdx)
             neighborClusterID = neighborVertex.clusterID()
 
-            #create kdtree with all the nodes from the same cluster
+            # create kdtree with all the nodes from the same cluster
             points = []
             for vertexIdx in range(self.vertexCount()):
                 vertex = self.vertex(vertexIdx)
