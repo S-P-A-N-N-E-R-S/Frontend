@@ -1,12 +1,12 @@
+from . import parserManager
 from .exceptions import ParseError, ServerError
-from .protocol.build import container_pb2, generic_container_pb2, meta_pb2
+from .protocol.build import container_pb2, meta_pb2
 
 from .responses.statusResponse import StatusResponse
 from .responses.availableHandlersResponse import AvailableHandlersResponse
 from .responses.genericResponse import GenericResponse
+from .responses.newJobResponse import NewJobResponse
 from .responses.shortestPathResponse import ShortestPathResponse
-
-from .. import mainPlugin
 
 
 def createProtoBuf(request):
@@ -21,20 +21,20 @@ def createProtoBuf(request):
     return protoBuf.SerializeToString()
 
 
-def parseProtoBuf(protoBufString, responseType):
+def parseProtoBuf(protoBufString, responseType, handlerType=None):
     protoBuf = container_pb2.ResponseContainer()
     protoBuf.ParseFromString(protoBufString)
 
     if protoBuf.status == container_pb2.ResponseContainer.StatusCode.OK:
 
-        response = getResponseByType(responseType)
+        if responseType == meta_pb2.RequestType.GENERIC:
+            if not handlerType:
+                raise ParseError("Missing handler type")
 
-        if isinstance(response, GenericResponse):
             # Get specific generic response for request
-            tmp = generic_container_pb2.GenericResponse()
-            protoBuf.response.Unpack(tmp)
-            response = mainPlugin.OGDFPlugin.responses[tmp.handlerType]
-            response.resetData()
+            response = parserManager.getResponseParser(handlerType)
+        else:
+            response = getResponseByType(responseType)
 
         try:
             response.parseProtoBuf(protoBuf)
@@ -54,14 +54,15 @@ def parseProtoBuf(protoBufString, responseType):
         raise ParseError("Server responded with unknown status code")
 
 
-def getResponseByType(handlerType):
+def getResponseByType(requestType):
     # Return the correct default constructed response type by the type field provied by meta data
     try:
         return {
             meta_pb2.RequestType.AVAILABLE_HANDLERS: AvailableHandlersResponse(),
-            meta_pb2.RequestType.STATUS: StatusResponse(),
+            meta_pb2.RequestType.GENERIC: GenericResponse(),
+            meta_pb2.RequestType.NEW_JOB_RESPONSE: NewJobResponse(),
             meta_pb2.RequestType.SHORTEST_PATH: ShortestPathResponse(),
-            meta_pb2.RequestType.GENERIC: GenericResponse()
-        }.get(handlerType)
+            meta_pb2.RequestType.STATUS: StatusResponse(),
+        }.get(requestType)
     except KeyError as error:
         raise ParseError("Unknown response key") from error
