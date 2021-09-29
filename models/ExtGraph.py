@@ -124,8 +124,8 @@ class ExtGraph(QObject):
         # Set to true while building the graph to indicate that the arrays are
         # sorted by uid, so binary search is possible
         # TODO default value
-        self.verticesSorted = True
-        self.edgesSorted = True
+        self.verticesSorted = False
+        self.edgesSorted = False
 
         self.mEdgeCount = 0
         self.mVertexCount = 0
@@ -213,6 +213,10 @@ class ExtGraph(QObject):
         file.close()
 
         # print("VC: ", self.mVertexCount, ", EC: ", self.mEdgeCount, "\nComplete: ", size/1000000, ", Vertices: ", verticesSize/1000000, ", Edges: ", edgesSize/1000000)
+
+    def setSorted(self, sorted):
+        self.verticesSorted = sorted
+        self.edgesSorted = sorted
 
     def setJobID(self, jobId):
         self.mJobId = jobId

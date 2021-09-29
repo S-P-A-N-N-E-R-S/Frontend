@@ -952,6 +952,8 @@ class GraphBuilder:
             self.createVertexLayer(True)
             self.createEdgeLayer(True)
 
+        self.graph.setSorted(True)
+        
         return self.graph
 
     def makeGraphTask(self, task, graphLayer, graphName=""):
