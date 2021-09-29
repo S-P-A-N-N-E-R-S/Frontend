@@ -60,10 +60,6 @@ class ExtVertexUndoCommand(QUndoCommand):
 
     def setID(self, id):
         self.mCommandID = id
-        # if id >= self.mLayer.mUndoStack.index():
-        #     self.mCommandID = id
-        # else:
-        #     print("setID Vertex ERROR")
 
     def _addVertex(self, fromWithEdges=False):
         self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexIdx, self.mVertexID)
@@ -77,7 +73,7 @@ class ExtVertexUndoCommand(QUndoCommand):
             else:
                 childCommand.undo()
 
-        iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " + str(self.childCount()) + " edges!", level=Qgis.Success)
+        iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " + str(self.childCount()) + " edges!", level=Qgis.Success, duration=1)
 
     def _deleteVertex(self, fromWithEdges=False):
         delVertID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
@@ -103,7 +99,7 @@ class ExtVertexUndoCommand(QUndoCommand):
                 else:
                     childCommand.redo()
 
-        iface.messageBar().pushMessage("Success", "Deleted vertex " + str(delVertID) + " and " + str(len(deletedEdges)) + " edges!", level=Qgis.Success)
+        iface.messageBar().pushMessage("Success", "Deleted vertex " + str(delVertID) + " and " + str(len(deletedEdges)) + " edges!", level=Qgis.Success, duration=1)
     
     def _addVertexWithEdges(self):
         if self.childCount() == 0:
@@ -121,7 +117,7 @@ class ExtVertexUndoCommand(QUndoCommand):
                     edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, fromID, toID, False, self)
                     edgeUndoCommand.redo()
 
-            iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " + str(self.childCount()) + " edges!", level=Qgis.Success)
+            iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " + str(self.childCount()) + " edges!", level=Qgis.Success, duration=1)
         else:
             self._addVertex(True)
 
@@ -141,7 +137,7 @@ class ExtVertexUndoCommand(QUndoCommand):
         # move vertex again
         else:
             self.mLayer.mGraph.vertex(self.mVertexIdx).setNewPoint(self.mNewPoint)
-            iface.messageBar().pushMessage("Success", "Moved vertex " + str(self.mVertexID) + "!", level=Qgis.Success)
+            iface.messageBar().pushMessage("Success", "Moved vertex " + str(self.mVertexID) + "!", level=Qgis.Success, duration=1)
 
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
@@ -240,14 +236,10 @@ class ExtEdgeUndoCommand(QUndoCommand):
 
     def setID(self, id):
         self.mCommandID = id
-        # if id >= self.mLayer.mUndoStack.index():
-        #     self.mCommandID = id
-        # else:
-        #     print("set ID Edge ERROR", id, self.mLayer.mUndoStack.index())
 
     def __deleteEdge(self):
         self.mLayer.mGraph.deleteEdge(self.mEdgeIdx)
-        iface.messageBar().pushMessage("Success", "Deleted edge " + str(self.mEdgeID) + "!", level=Qgis.Success)
+        iface.messageBar().pushMessage("Success", "Deleted edge " + str(self.mEdgeID) + "!", level=Qgis.Success, duration=1)
 
     def __addEdge(self):
         self.mEdgeIdx = self.mLayer.mGraph.addEdge(self.mFromVertexID, self.mToVertexID, self.mEdgeIdx, self.mEdgeID, True)
@@ -258,7 +250,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
             for functionIdx in range(amountEdgeCostFunctions):
                 self.mLayer.mGraph.setCostOfEdge(self.mEdgeIdx, functionIdx, 0)
 
-        iface.messageBar().pushMessage("Success", "Added edge " + str(self.mEdgeID) + "!", level=Qgis.Success)
+        iface.messageBar().pushMessage("Success", "Added edge " + str(self.mEdgeID) + "!", level=Qgis.Success, duration=1)
 
     def setNewCosts(self, newCosts):
         """
@@ -289,7 +281,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
             for i in range(len(self.mNewCosts)):
                 self.mLayer.mGraph.setCostOfEdge(self.mEdgeIdx, i, self.mNewCosts[i])
             self.undoString = "Set Costs of Edge " + str(self.mEdgeID) + " again."
-            iface.messageBar().pushMessage("Success", "Applied new costs for edge " + str(self.mEdgeID) + "!", level=Qgis.Success)
+            iface.messageBar().pushMessage("Success", "Applied new costs for edge " + str(self.mEdgeID) + "!", level=Qgis.Success, duration=1)
 
         # delete edge again
         elif self.mDeleted:
@@ -310,7 +302,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
             for i in range(len(self.mOldCosts)):
                 self.mLayer.mGraph.setCostOfEdge(self.mEdgeIdx, i, self.mOldCosts[i])
             self.redoString = "Reset new Costs of Edge " + str(self.mEdgeID) + "."
-            iface.messageBar().pushMessage("Success", "Applied new costs for edge " + str(self.mEdgeID) + "!", level=Qgis.Success)
+            iface.messageBar().pushMessage("Success", "Applied new costs for edge " + str(self.mEdgeID) + "!", level=Qgis.Success, duration=1)
 
         # add edge again
         elif self.mDeleted:
