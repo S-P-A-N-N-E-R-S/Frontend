@@ -53,7 +53,7 @@ class TestQgsGraphLayer(TestCase):
 
         graph = self.graphBuilder.makeGraph()
         self.assertEqual(graph.vertexCount(), 10)
-        self.assertEqual(graph.edgeCount(), 45)
+        self.assertEqual(graph.edgeCount(), 90)
 
     def test_random_graph_nearestNeighbor(self):
         self.graphBuilder.setRandomOption("numberOfVertices", 10)
@@ -87,7 +87,7 @@ class TestQgsGraphLayer(TestCase):
 
         graph = self.graphBuilder.makeGraph()
         self.assertEqual(graph.vertexCount(), 10)
-        self.assertEqual(graph.edgeCount(), 1)
+        self.assertEqual(graph.edgeCount(), 2)
 
     def test_random_graph_clusterNN(self):
         self.graphBuilder.setRandomOption("numberOfVertices", 10)
@@ -154,7 +154,7 @@ class TestQgsGraphLayer(TestCase):
         graph = self.graphBuilder.makeGraph()
 
         self.assertEqual(graph.vertexCount(), 10)
-        self.assertEqual(graph.edgeCount(), 45)
+        self.assertEqual(graph.edgeCount(), 90)
 
     def test_distanceNN(self):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.gpkg")))
