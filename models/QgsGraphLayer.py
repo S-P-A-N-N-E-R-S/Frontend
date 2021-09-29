@@ -178,12 +178,9 @@ class QgsGraphLayer(QgsPluginLayer):
         
         self.setValid(True)
         
-        self.mName = name
         self.mGraph = ExtGraph()
 
         self.hasEdges = False
-
-        # self.mLayerType = QgsGraphLayerType()
 
         self.mDataProvider = QgsGraphDataProvider("Point")
         self.mPointFields = QgsFields()
@@ -204,7 +201,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.mRenderedCostFunction = 0
 
-        self.nameChanged.connect(self.updateName)
         self.crsChanged.connect(self.updateCrs)
 
         self.mTransform = QgsCoordinateTransform() # default is invalid
@@ -339,7 +335,7 @@ class QgsGraphLayer(QgsPluginLayer):
                     cost = graph.costOfEdge(edgeIdx, functionIdx)
                     self.mGraph.setCostOfEdge(edgeIdx, functionIdx, cost)
 
-            self.mGraph.calculateSize()
+            # self.mGraph.calculateSize()
         
     def getGraph(self):
         return self.mGraph
@@ -756,9 +752,6 @@ class QgsGraphLayer(QgsPluginLayer):
         self.triggerRepaint()
         iface.mapCanvas().refresh()
 
-    def updateName(self):
-        self.mName = self.name()
-
     def updateCrs(self):
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
@@ -829,6 +822,11 @@ class QgsGraphLayer(QgsPluginLayer):
     def changeRenderedCostFunction(self, idx):
         self.mRenderedCostFunction = idx
 
+    def activateUniqueName(self):
+        # sets the layers name to its id,  'unique but not nice'
+        if self.name() == "RandomGraphLayer":
+            self.setName(self.id())
+
 class QgsGraphLayerType(QgsPluginLayerType):
     """
     When loading a project containing a QgsGraphLayer, a factory class is needed.
@@ -849,6 +847,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         :type layer: QgsGraphLayer
         :return Boolean
         """
+        layer.activateUniqueName()
         if hasattr(self, "win") and self.win:
             self.win.setVisible(True)
             return True
@@ -860,7 +859,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
         # QLabel with information about the GraphLayer
-        informationLabel = QLabel(layer.mName +
+        informationLabel = QLabel(layer.name() +
                         "\n " + tr("Vertices") + ": " + str(layer.getGraph().vertexCount()) +
                         "\n " + tr("Edges") + ": " + str(layer.getGraph().edgeCount()) +
                         "\n " + tr("CRS") + ": " + layer.crs().authid())
