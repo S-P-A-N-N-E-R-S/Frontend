@@ -261,19 +261,18 @@ class QgsGraphLayer(QgsPluginLayer):
         """
         if isinstance(graph, ExtGraph):
             # create an actual new ExtGraph from graph
-            self.mGraph = ExtGraph()
-            self.mGraph.setConnectionType(graph.mConnectionType)
-            self.mGraph.setDistanceStrategy(graph.distanceStrategy)
+            # self.mGraph = ExtGraph()
+            # self.mGraph.setConnectionType(graph.mConnectionType)
+            # self.mGraph.setDistanceStrategy(graph.distanceStrategy)
 
-            self.mGraph.setGraphBuilderInformation(graph.numberNeighbours, graph.edgeDirection,
-                                                    graph.clusterNumber, graph.nnAllowDoubleEdges,
-                                                    graph.distance)
+            # self.mGraph.setGraphBuilderInformation(graph.numberNeighbours, graph.edgeDirection,
+            #                                         graph.clusterNumber, graph.nnAllowDoubleEdges,
+            #                                         graph.distance)
 
-            self.mGraph.setSorted(graph.verticesSorted)
+            # self.mGraph.setSorted(graph.verticesSorted)
 
-            advanced = False
-            if self.mGraph.distanceStrategy == "Advanced":
-                advanced = True
+            # TODO: does this shallow copy work after all?
+            self.mGraph = graph
 
             if graph.edgeCount() != 0:
                 self.hasEdges = True
@@ -313,27 +312,27 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mLineFields.append(costField)
                 
             # add vertices to new ExtGraph (have to be added to ExtGraph before edges do -> inefficient)
-            for vertexIdx in range(graph.vertexCount()):
-                vertex = graph.vertex(vertexIdx)
+            # for vertexIdx in range(graph.vertexCount()):
+            #     vertex = graph.vertex(vertexIdx)
                 
-                addedVertexIdx = self.mGraph.addVertex(vertex.point(), -1, vertex.id())
+            #     addedVertexIdx = self.mGraph.addVertex(vertex.point(), -1, vertex.id())
 
-                if vertex.clusterID() >= 0:
-                    self.mGraph.vertex(addedVertexIdx).setClusterID(vertex.clusterID())
-                    if self.mGraph.nextClusterID() <= vertex.clusterID():
-                        self.mGraph.setNextClusterID(vertex.clusterID() + 1)
+            #     if vertex.clusterID() >= 0:
+            #         self.mGraph.vertex(addedVertexIdx).setClusterID(vertex.clusterID())
+            #         if self.mGraph.nextClusterID() <= vertex.clusterID():
+            #             self.mGraph.setNextClusterID(vertex.clusterID() + 1)
 
-            # add edges to new ExtGraph and create corresponding features
-            amountEdgeCostFunctions = graph.amountOfEdgeCostFunctions()
-            for edgeIdx in range(graph.edgeCount()):
-                edge = graph.edge(edgeIdx)
+            # # add edges to new ExtGraph and create corresponding features
+            # amountEdgeCostFunctions = graph.amountOfEdgeCostFunctions()
+            # for edgeIdx in range(graph.edgeCount()):
+            #     edge = graph.edge(edgeIdx)
 
-                self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), -1, edge.id())
+            #     self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), -1, edge.id())
 
-                # set all cost functions
-                for functionIdx in range(amountEdgeCostFunctions):
-                    cost = graph.costOfEdge(edgeIdx, functionIdx)
-                    self.mGraph.setCostOfEdge(edgeIdx, functionIdx, cost)
+            #     # set all cost functions
+            #     for functionIdx in range(amountEdgeCostFunctions):
+            #         cost = graph.costOfEdge(edgeIdx, functionIdx)
+            #         self.mGraph.setCostOfEdge(edgeIdx, functionIdx, cost)
 
             # self.mGraph.calculateSize()
         
