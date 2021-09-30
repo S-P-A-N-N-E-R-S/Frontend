@@ -87,11 +87,11 @@ class TestQgsOGDFParametersWidget(TestCase):
         self.widget.fieldWidgets["key8"]["inputWidget"].setCurrentIndex(1)
 
         fieldsData = self.widget.getParameterFieldsData()
-        self.assertEqual(fieldsData["key4"], True)
-        self.assertEqual(fieldsData["key5"], 123)
-        self.assertEqual(fieldsData["key6"], 1.23)
-        self.assertEqual(fieldsData["key7"], "Test string")
-        self.assertEqual(fieldsData["key8"], "second choice data")
+        self.assertEqual(True, fieldsData["key4"])
+        self.assertEqual(123, fieldsData["key5"])
+        self.assertEqual(1.23, fieldsData["key6"])
+        self.assertEqual("Test string", fieldsData["key7"])
+        self.assertEqual("second choice data", fieldsData["key8"])
 
     def test_required_fields(self):
         self.widget.setParameterFields({
@@ -154,11 +154,11 @@ class TestQgsOGDFParametersWidget(TestCase):
         })
 
         fieldsData = self.widget.getParameterFieldsData()
-        self.assertEqual(fieldsData["key1"], True)
-        self.assertEqual(fieldsData["key2"], 123)
-        self.assertEqual(fieldsData["key3"], 1.23)
-        self.assertEqual(fieldsData["key4"], "Test string")
-        self.assertEqual(fieldsData["key5"], "second choice data")
+        self.assertEqual(True, fieldsData["key1"])
+        self.assertEqual(123, fieldsData["key2"])
+        self.assertEqual(1.23, fieldsData["key3"])
+        self.assertEqual("Test string", fieldsData["key4"])
+        self.assertEqual("second choice data", fieldsData["key5"])
 
 
 if __name__ == '__main__':

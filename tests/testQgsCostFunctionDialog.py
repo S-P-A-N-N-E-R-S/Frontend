@@ -28,9 +28,9 @@ class TestQgsOGDFParametersWidget(TestCase):
         self.dialog.setVectorLayer(vectorLayer)
         self.dialog.setCostFunction("field:vertexId")
 
-        self.assertEqual(self.dialog.costFunction(), "field:vertexId")
+        self.assertEqual("field:vertexId", self.dialog.costFunction())
         self.dialog.insertEditorText("10 * ")
-        self.assertEqual(self.dialog.costFunction(), "10 * field:vertexId")
+        self.assertEqual("10 * field:vertexId", self.dialog.costFunction())
 
         self.dialog.setRasterData([(QgsRasterLayer(os.path.join(getPluginPath(), "tests/testdata/simple_raster.tif")), 1)])
         self.dialog.setPolygonLayers([QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_polygons/simple_polygons.gpkg"))])

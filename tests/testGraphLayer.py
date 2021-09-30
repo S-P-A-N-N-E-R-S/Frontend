@@ -63,12 +63,12 @@ class TestQgsGraphLayer(TestCase):
         self.graphLayer.setGraph(self.graph)
 
         graph = self.graphLayer.getGraph()
-        self.assertEqual(graph.vertexCount(), 10)
-        self.assertEqual(graph.edgeCount(), 15)
+        self.assertEqual(10, graph.vertexCount())
+        self.assertEqual(15, graph.edgeCount())
 
-        self.assertEqual(self.graph.vertex(self.graph.findEdgeByID(3)).point(), QgsPointXY(0, -1.0))
-        self.assertEqual(self.graph.vertex(self.graph.findEdgeByID(0)).point(), QgsPointXY(0.0, 0.0))
-        self.assertEqual(self.graph.vertex(self.graph.findEdgeByID(5)).point(), QgsPointXY(2.0, 0))
+        self.assertEqual(QgsPointXY(0, -1.0), self.graph.vertex(self.graph.findEdgeByID(3)).point())
+        self.assertEqual(QgsPointXY(0.0, 0.0), self.graph.vertex(self.graph.findEdgeByID(0)).point())
+        self.assertEqual(QgsPointXY(2.0, 0), self.graph.vertex(self.graph.findEdgeByID(5)).point())
 
     def test_createVectorLayer(self):
         graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")
@@ -78,15 +78,15 @@ class TestQgsGraphLayer(TestCase):
         pointLayer, lineLayer = self.graphLayer.createVectorLayer()
         expectedPointLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.gpkg"))
         expectedLineLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg"))
-        self.assertLayersEqual(pointLayer, expectedPointLayer)
-        self.assertLayersEqual(lineLayer, expectedLineLayer)
+        self.assertLayersEqual(expectedPointLayer, pointLayer)
+        self.assertLayersEqual(expectedLineLayer, lineLayer)
 
     def test_extent(self):
         graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")
         self.graph.readGraphML(graphmlFile)
         self.graphLayer.setGraph(self.graph)
 
-        self.assertEqual(self.graphLayer.extent(), QgsRectangle(-1, -1, 2.0, 2.0))
+        self.assertEqual(QgsRectangle(-1, -1, 2.0, 2.0), self.graphLayer.extent())
 
 
 if __name__ == '__main__':
