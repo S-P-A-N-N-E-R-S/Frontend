@@ -134,6 +134,13 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_crs_label.setVisible(ext == ".graphml" and not self.isRandom())
         self.dialog.create_graph_crs_input.setVisible(ext == ".graphml" and not self.isRandom())
 
+        # hide advanced cost parameters if .graphML input
+        if ext == ".graphml" and not self.isRandom():
+            self.dialog.create_graph_costfunction_parameters.setVisible(False)
+        else:
+            # restore visibility of advanced cost parameters
+            self._distanceStrategyChanged()
+
         # disable input field and enable random params if random is checked
         self.dialog.create_graph_input_widget.setDisabled(self.isRandom())
         self.dialog.create_graph_random_widget.setEnabled(self.isRandom())
@@ -147,6 +154,7 @@ class CreateGraphView(BaseContentView):
         isPointLayer = layer is not None and layer.geometryType() == QgsWkbTypes.PointGeometry
         isLineLayer = layer is not None and layer.geometryType() == QgsWkbTypes.LineGeometry and not self.isRandom()
 
+        self.dialog.create_graph_connection_parameters.setVisible(layer is not None or self.isRandom())
         self.dialog.create_graph_connectiontype_input.setEnabled(isPointLayer or self.isRandom())
 
         if isLineLayer:
