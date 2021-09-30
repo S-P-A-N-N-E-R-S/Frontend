@@ -193,12 +193,12 @@ class QgsOGDFParametersWidget(QWidget):
     # functions to create field widgets
 
     def _createBoolWidget(self, field):
-        checkBoxWidget = QCheckBox(field.get("label", ""))
+        checkBoxWidget = QCheckBox(field.get("label", ""), self)
         checkBoxWidget.setChecked(field.get("default", False) is True)
         return checkBoxWidget
 
     def _createIntWidget(self, field):
-        spinBoxWidget = QSpinBox()
+        spinBoxWidget = QSpinBox(self)
         # highest minimum and maximum
         spinBoxWidget.setRange(-2147483648, 2147483647)
         if field.get("default") and isinstance(field.get("default"), int):
@@ -206,7 +206,7 @@ class QgsOGDFParametersWidget(QWidget):
         return spinBoxWidget
 
     def _createDoubleWidget(self, field):
-        spinBoxWidget = QDoubleSpinBox()
+        spinBoxWidget = QDoubleSpinBox(self)
         # highest minimum and maximum
         spinBoxWidget.setRange(-sys.float_info.min, sys.float_info.max)
         spinBoxWidget.setDecimals(6)
@@ -216,12 +216,12 @@ class QgsOGDFParametersWidget(QWidget):
         return spinBoxWidget
 
     def _createStringWidget(self, field):
-        lineEditWidget = QLineEdit(str(field.get("default", "")))
+        lineEditWidget = QLineEdit(str(field.get("default", "")), self)
         return lineEditWidget
 
     def _createChoiceWidget(self, field):
-        comboBoxWidget = QComboBox()
-        choices = field.get("choices")
+        comboBoxWidget = QComboBox(self)
+        choices = field.get("choices", [])
         for choice in choices:
             choiceData = choices[choice]
             comboBoxWidget.addItem(choice, choiceData)
@@ -230,7 +230,7 @@ class QgsOGDFParametersWidget(QWidget):
         return comboBoxWidget
 
     def _createGraphWidget(self, field):
-        graphWidget = QgsMapLayerComboBox()
+        graphWidget = QgsMapLayerComboBox(self)
         graphWidget.setFilters(QgsMapLayerProxyModel.PluginLayer)
         graphWidget.setAllowEmptyLayer(True)
         graphWidget.setCurrentIndex(0)
@@ -238,16 +238,16 @@ class QgsOGDFParametersWidget(QWidget):
         return graphWidget
 
     def _createEdgeCostsWidget(self, field):
-        return QComboBox()
+        return QComboBox(self)
 
     def _createVertexCostWidget(self, field):
-        return QComboBox()
+        return QComboBox(self)
 
     def _createEdgeWidget(self, field):
-        return QgsGraphEdgePickerWidget()
+        return QgsGraphEdgePickerWidget(self)
 
     def _createVertexWidget(self, field):
-        return QgsGraphVertexPickerWidget()
+        return QgsGraphVertexPickerWidget(self)
 
     # functions to get field data
 
@@ -261,7 +261,7 @@ class QgsOGDFParametersWidget(QWidget):
         return inputWidget.value()
 
     def _getStringData(self, inputWidget):
-        return inputWidget.text()
+        return inputWidget.text() if len(inputWidget.text()) > 0 else None
 
     def _getChoiceData(self, inputWidget):
         return inputWidget.currentData()
