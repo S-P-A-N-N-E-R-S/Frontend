@@ -355,8 +355,8 @@ class CreateGraphView(BaseContentView):
         :return:
         """
         costFunctionDialog = QgsCostFunctionDialog()
-        
-        costFunctionDialog.setVectorLayer(self.getInputLayer())
+        if not self.isRandom():
+            costFunctionDialog.setVectorLayer(self.getInputLayer())
         costFunctionDialog.setPolygonLayers(self.getPolygonCostLayers())
         costFunctionDialog.setRasterData(self.getRasterData())
         costFunctionDialog.setCostFunction(self.getCostFunction(index))
