@@ -24,7 +24,7 @@ class TestQgsOGDFParametersWidget(TestCase):
         del self.dialog
 
     def test_cost_function_dialog(self):
-        vectorLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.gpkg"))
+        vectorLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.shp"))
         self.dialog.setVectorLayer(vectorLayer)
         self.dialog.setCostFunction("field:vertexId")
 
@@ -33,7 +33,7 @@ class TestQgsOGDFParametersWidget(TestCase):
         self.assertEqual("10 * field:vertexId", self.dialog.costFunction())
 
         self.dialog.setRasterData([(QgsRasterLayer(os.path.join(getPluginPath(), "tests/testdata/simple_raster.tif")), 1)])
-        self.dialog.setPolygonLayers([QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_polygons/simple_polygons.gpkg"))])
+        self.dialog.setPolygonLayers([QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_polygons/simple_polygons.shp"))])
 
 
 if __name__ == '__main__':

@@ -7,6 +7,7 @@ from ..helperFunctions import getPluginPath
 import os
 import tempfile
 import math
+import shutil
 
 start_app()
 
@@ -21,15 +22,15 @@ class TestExtGraph(TestCase):
         """Runs after each test."""
         del self.graph
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     """Runs before each test class instantiation."""
-    #     pass
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     """Runs after each test class instantiation."""
-    #     pass
+    @classmethod
+    def setUpClass(cls):
+        """Runs before each test class instantiation."""
+        cls.tempDir = tempfile.mkdtemp()
+
+    @classmethod
+    def tearDownClass(cls):
+        """Runs after each test class instantiation."""
+        shutil.rmtree(cls.tempDir, True)
 
     def test_vertex_class(self):
         vertex = ExtGraph.ExtVertex(QgsPointXY(1.0, 0.5), 7)
@@ -177,7 +178,7 @@ class TestExtGraph(TestCase):
         firstEdge = self.graph.edge(firstEdgeIndex)
         secondEdge = self.graph.edge(secondEdgeIndex)
 
-        temp_file = os.path.join(tempfile.mkdtemp(), "graph.graphml")
+        temp_file = os.path.join(self.tempDir, "graph.graphml")
         self.graph.writeGraphML(temp_file)
 
         temp_graph = ExtGraph()

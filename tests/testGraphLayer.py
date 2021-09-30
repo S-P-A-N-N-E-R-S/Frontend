@@ -1,13 +1,15 @@
 from qgis.testing import unittest, start_app, TestCase
-from qgis.core import QgsApplication, QgsProviderRegistry, QgsProviderMetadata, QgsProject, QgsPointXY, QgsRenderChecker, QgsMapSettings, QgsRectangle, QgsVectorLayer
+from qgis.core import QgsApplication, QgsProviderRegistry, QgsProviderMetadata, QgsProject, QgsPointXY, QgsRenderChecker, QgsMapSettings, QgsRectangle, QgsVectorLayer, QgsCoordinateReferenceSystem
 
 from qgis.PyQt.QtGui import QColor
 
 from ..models.ExtGraph import ExtGraph
 from ..models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
-from ..helperFunctions import getPluginPath
+from ..helperFunctions import getPluginPath, saveLayer
 
 import os
+import tempfile
+import shutil
 
 start_app()
 
@@ -27,6 +29,7 @@ class TestQgsGraphLayer(TestCase):
     @classmethod
     def setUpClass(cls):
         """Runs before each test class instantiation."""
+        cls.tempDir = tempfile.mkdtemp()
         QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
         QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
                                                                             QgsGraphDataProvider.description(),
@@ -35,6 +38,7 @@ class TestQgsGraphLayer(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Runs after each test class instantiation."""
+        shutil.rmtree(cls.tempDir, True)
         QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
 
     def test_graph_rendering(self):
@@ -74,10 +78,16 @@ class TestQgsGraphLayer(TestCase):
         graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")
         self.graph.readGraphML(graphmlFile)
         self.graphLayer.setGraph(self.graph)
+        self.graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         pointLayer, lineLayer = self.graphLayer.createVectorLayer()
-        expectedPointLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.gpkg"))
-        expectedLineLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg"))
+
+        # save to temporary shapefile due to conflicts with geometry type
+        tmp_path = os.path.join(self.tempDir, "graph_vertices_layer.shp")
+        lineLayer = saveLayer(lineLayer, "tmp_line_layer", "vector", tmp_path, ".shp")
+
+        expectedPointLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.shp"))
+        expectedLineLayer = QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.shp"))
         self.assertLayersEqual(expectedPointLayer, pointLayer)
         self.assertLayersEqual(expectedLineLayer, lineLayer)
 
