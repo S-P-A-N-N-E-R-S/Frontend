@@ -1,5 +1,4 @@
 from qgis.core import *
-from qgis.gui import QgsVertexMarker
 from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QVariant, QPointF, Qt
@@ -217,6 +216,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def deleteLater(self, dummy):
         self.toggleEdit(True)
+        
         del self.mDataProvider
         
         del self.mTransform
@@ -255,21 +255,11 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def setGraph(self, graph):
         """
-        Set the graph of the QgsGraphLayer and add features accordingly.
+        Set the graph of the QgsGraphLayer and prepare the QgsGraphDataProvider.
         
         :type graph: ExtGraph
         """
         if isinstance(graph, ExtGraph):
-            # create an actual new ExtGraph from graph
-            # self.mGraph = ExtGraph()
-            # self.mGraph.setConnectionType(graph.mConnectionType)
-            # self.mGraph.setDistanceStrategy(graph.distanceStrategy)
-
-            # self.mGraph.setGraphBuilderInformation(graph.numberNeighbours, graph.edgeDirection,
-            #                                         graph.clusterNumber, graph.nnAllowDoubleEdges,
-            #                                         graph.distance)
-
-            # self.mGraph.setSorted(graph.verticesSorted)
 
             # TODO: does this shallow copy work after all?
             self.mGraph = graph
@@ -310,29 +300,6 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mLineFields.append(fromVertexField)
             self.mLineFields.append(toVertexField)
             self.mLineFields.append(costField)
-                
-            # add vertices to new ExtGraph (have to be added to ExtGraph before edges do -> inefficient)
-            # for vertexIdx in range(graph.vertexCount()):
-            #     vertex = graph.vertex(vertexIdx)
-                
-            #     addedVertexIdx = self.mGraph.addVertex(vertex.point(), -1, vertex.id())
-
-            #     if vertex.clusterID() >= 0:
-            #         self.mGraph.vertex(addedVertexIdx).setClusterID(vertex.clusterID())
-            #         if self.mGraph.nextClusterID() <= vertex.clusterID():
-            #             self.mGraph.setNextClusterID(vertex.clusterID() + 1)
-
-            # # add edges to new ExtGraph and create corresponding features
-            # amountEdgeCostFunctions = graph.amountOfEdgeCostFunctions()
-            # for edgeIdx in range(graph.edgeCount()):
-            #     edge = graph.edge(edgeIdx)
-
-            #     self.mGraph.addEdge(edge.fromVertex(), edge.toVertex(), -1, edge.id())
-
-            #     # set all cost functions
-            #     for functionIdx in range(amountEdgeCostFunctions):
-            #         cost = graph.costOfEdge(edgeIdx, functionIdx)
-            #         self.mGraph.setCostOfEdge(edgeIdx, functionIdx, cost)
 
             # self.mGraph.calculateSize()
         
@@ -536,7 +503,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.hasEdges = edgeNodes.length() != 0
         
-        # prepare fields and features
+        # prepare fields
         if self.hasEdges:
             self.mDataProvider.setGeometryToPoint(False)
         else:

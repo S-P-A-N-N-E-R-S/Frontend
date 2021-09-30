@@ -3,12 +3,10 @@ from qgis.utils import iface
 
 from qgis.PyQt.QtWidgets import QUndoCommand
 
-from .ExtGraph import ExtGraph
-
 class ExtVertexUndoCommand(QUndoCommand):
     def __init__(self, layerId, vertexIdx, oldPoint, operation, newPoint=None):
         """
-        A vertex command depends on the vertices properties
+        A vertex command depends on the vertex properties
         and on the operation (delete or add or move) itself.
 
         :type layerId: Integer id of layer which contains the vertices graph

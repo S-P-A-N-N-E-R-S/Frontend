@@ -10,7 +10,7 @@ from .QgsGraphUndoCommands import ExtVertexUndoCommand, ExtEdgeUndoCommand
 
 class QgsGraphMapTool(QgsMapTool):
     """
-    QgsGraphMapTool should enable the user to edit a QgsGraphLayer
+    QgsGraphMapTool enables the user to edit an ExtGraph in a QgsGraphLayer
     """
 
     def __init__(self, canvas, layer):

@@ -10,12 +10,14 @@ from random import *
 from ..lib.kdtree import kdtree
 
 """
-Class extends the QgsGraph by adding a function costOfEdge
-which returns the distance between the two endpoint of an edge.
-Different metrics for this distance can be defined by setting
-the distanceStrategy attribute of the class
+Extended graph class
 
-Strategies are divided in cost functions and already set weights
+Different metrics for distance can be defined by setting
+the distanceStrategy attribute of the class.
+
+Strategies are divided in cost functions and already set weights.
+
+Graphediting is supported by several functions.
 """
 class ExtGraph(QObject):
 
@@ -122,8 +124,7 @@ class ExtGraph(QObject):
         self.mEdges = []
 
         # Set to true while building the graph to indicate that the arrays are
-        # sorted by uid, so binary search is possible
-        # TODO default value
+        # sorted by id, so binary search is possible
         self.verticesSorted = False
         self.edgesSorted = False
 
@@ -133,9 +134,6 @@ class ExtGraph(QObject):
         # next useable IDs for vertices and edges
         self.mMaxEdgeID = 0
         self.mMaxVertexID = 0
-
-        # holds the feature IDs if lines where used to create graph
-        self.featureMatchings = []
 
         # default information from GraphBuilder
         self.numberNeighbours = 20
@@ -163,8 +161,6 @@ class ExtGraph(QObject):
 
         if self.kdTree:
             del self.kdTree
-
-        del self.featureMatchings
 
     def calculateSize(self):
         size = 0
@@ -194,8 +190,6 @@ class ExtGraph(QObject):
         size += sys.getsizeof(self.mMaxEdgeID)
         size += sys.getsizeof(self.mMaxVertexID)
 
-        size += sys.getsizeof(self.featureMatchings)
-
         size += sys.getsizeof(self.numberNeighbours)
         size += sys.getsizeof(self.edgeDirection)
         size += sys.getsizeof(self.clusterNumber)
@@ -212,8 +206,6 @@ class ExtGraph(QObject):
 
         file.close()
 
-        # print("VC: ", self.mVertexCount, ", EC: ", self.mEdgeCount, "\nComplete: ", size/1000000, ", Vertices: ", verticesSize/1000000, ", Edges: ", edgesSize/1000000)
-
     def setSorted(self, sorted):
         self.verticesSorted = sorted
         self.edgesSorted = sorted
@@ -223,7 +215,7 @@ class ExtGraph(QObject):
 
     def setDistanceStrategy(self, strategy):
         """
-        Function is called my the GraphBuilder every time the makeGraph
+        Function is called by the GraphBuilder every time the makeGraph
         method is called.
 
         :type strategy: String
@@ -258,8 +250,8 @@ class ExtGraph(QObject):
         """
         Set cost of a specific edge.
 
-        :type functionIndex: Integer
         :type edgeIdx: Integer
+        :type functionIndex: Integer
         :type cost: Integer
         """
         while len(self.edgeWeights) <= functionIndex:
@@ -277,7 +269,7 @@ class ExtGraph(QObject):
         The functionIndex defines the cost function to use if multiple ones
         are given.
 
-        :type edgeID: Integer
+        :type edgeIdx: Integer
         :type functionIndex: Integer
         :return cost of Edge
         """
@@ -573,21 +565,25 @@ class ExtGraph(QObject):
         if self.kdTree:
             self.kdTree.add([point.x(), point.y()])
 
-        # TODO: add entry in vertexWeights if used later
-
         self.mVertexCount += 1
 
         return addIndex
 
     def addVertexWithEdges(self, vertexCoordinates, fromUndo=False):
         """
-        Methods adds the point given by its coordinates to the
-        graph attribute of the Graphbuilder. Get the modified
-        ExtGraph object by using the getGraph() method.
+        Methods adds a vertex with edges according to the origin GraphBuilder settings.
+
+        Complete, NearestNeighbor (NN), DistanceNN, ClusterNN, ClusterComplete
+
+        Does not support graphs with advanced costs
 
         :type vertexCoordinates: list with x,y-Coordinates
+        :type fromUndo: Bool, if the call comes from an UndoCommand
         :return list of edges
         """
+        if self.distanceStrategy == "Advanced":
+            return
+
         if not self.kdTree and not self.mConnectionType == "Complete":
             points = []
             for idx in range(self.mVertexCount):
@@ -749,6 +745,8 @@ class ExtGraph(QObject):
                     else:
                         edgeIdx = self.edgeCount() + len(listOfEdges)
                     listOfEdges.append([edgeIdx, neighborVertexID, addedVertexID])
+
+            del clusterKDTree
 
         return listOfEdges
 
