@@ -446,7 +446,8 @@ class GraphBuilder:
                     neighborPoint = listOfNeighbors[j][0].data
                 elif self.__options["connectionType"] == "DistanceNN":    
                     neighborPoint = listOfNeighbors[j]
-                self.graph.addEdge(i,neighborPoint[2])
+                if i != neighborPoint[2]:
+                    self.graph.addEdge(i,neighborPoint[2])
             
             if self.__options["connectionType"] == "Nearest neighbor" and self.__options["nnAllowDoubleEdges"] == False:
                 self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
