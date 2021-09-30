@@ -24,7 +24,7 @@ import processing
 from processing.core.Processing import Processing
 Processing.initialize()
 
-class TestQgsGraphLayer(TestCase):
+class TestGraphBuilder(TestCase):
 
     def setUp(self):
         """Runs before each test."""
@@ -224,19 +224,61 @@ class TestQgsGraphLayer(TestCase):
         self.graphBuilder.setRasterLayer(QgsRasterLayer(os.path.join(getPluginPath(), "tests/testdata/simple_raster.tif")))
 
         self.graphBuilder.addCostFunction("raster[0]:sum")
+        self.graphBuilder.addCostFunction("raster[0]:min")
+        self.graphBuilder.addCostFunction("raster[0]:mean")
+        self.graphBuilder.addCostFunction("field:edgeId")
+
         graph = self.graphBuilder.makeGraph()
         fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
         edgeIdx = graph.hasEdge(fromVertex, toVertex)
+
         self.assertEqual(graph.costOfEdge(edgeIdx), 7.0)
-
-        self.graphBuilder.addCostFunction("raster[0]:min")
-        graph = self.graphBuilder.makeGraph()
         self.assertEqual(graph.costOfEdge(edgeIdx, 1), 2.0)
-
-        self.graphBuilder.addCostFunction("raster[0]:mean")
-        graph = self.graphBuilder.makeGraph()
         self.assertEqual(graph.costOfEdge(edgeIdx, 2), 3.5)
+        self.assertEqual(graph.costOfEdge(edgeIdx, 3), graph.edge(edgeIdx))
+
+    def test_fields_in_advance_distance_strategy(self):
+        self.graphBuilder.setOption("distanceStrategy", "Advanced")
+        self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg")))
+
+        self.graphBuilder.addCostFunction("field:edgeId")
+
+        graph = self.graphBuilder.makeGraph()
+        fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
+        toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
+        edgeIdx = graph.hasEdge(fromVertex, toVertex)
+
+        self.assertEqual(graph.costOfEdge(edgeIdx, 0), graph.edge(edgeIdx))
+
+    def test_polygons_in_advanced_distance_strategy(self):
+        self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg")))
+        self.graphBuilder.setPolygonsForCostFunction(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_polygons/simple_polygons.gpkg")))
+        self.graphBuilder.addCostFunction("if(polygon[0]:crossesPolygon == True; 1; 0)")
+        self.graphBuilder.addCostFunction("if(polygon[0]:insidePolygon == True; 1; 0)")
+
+        graph = self.graphBuilder.makeGraph()
+        fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
+        toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
+        edgeIdx = graph.hasEdge(fromVertex, toVertex)
+        self.assertEqual(graph.costOfEdge(edgeIdx, 0), 0)
+        self.assertEqual(graph.costOfEdge(edgeIdx, 1), 0)
+
+        fromVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
+        toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
+        edgeIdx = graph.hasEdge(fromVertex, toVertex)
+        self.assertEqual(graph.costOfEdge(edgeIdx, 0), 1)
+        self.assertEqual(graph.costOfEdge(edgeIdx, 1), 0)
+
+    def test_math_in_advanced_distance_strategy(self):
+        self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg")))
+        self.graphBuilder.addCostFunction("math.sqrt(9)")
+
+        graph = self.graphBuilder.makeGraph()
+        fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
+        toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
+        edgeIdx = graph.hasEdge(fromVertex, toVertex)
+        self.assertEqual(graph.costOfEdge(edgeIdx, 0), 3)
 
     def test_forbidden_areas(self):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg")))
@@ -245,22 +287,6 @@ class TestQgsGraphLayer(TestCase):
         graph = self.graphBuilder.makeGraph()
         self.assertEqual(graph.vertexCount(), 10)
         self.assertEqual(graph.edgeCount(), 5)
-
-    def test_polygons_in_advanced_distance_strategy(self):
-        self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg")))
-        self.graphBuilder.setPolygonsForCostFunction(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_polygons/simple_polygons.gpkg")))
-        self.graphBuilder.addCostFunction("if(polygon[0]:crossesPolygon == True; 1; 0)")
-
-        graph = self.graphBuilder.makeGraph()
-        fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
-        toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
-        self.assertEqual(graph.costOfEdge(edgeIdx), 0)
-
-        fromVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
-        toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
-        self.assertEqual(graph.costOfEdge(edgeIdx), 1)
 
     def test_additional_point_layer(self):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.gpkg")))
