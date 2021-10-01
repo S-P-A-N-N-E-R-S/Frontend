@@ -376,9 +376,9 @@ class QgsGraphLayer(QgsPluginLayer):
             driver = "CSV"
         
         elif saveFileName[1] == "graphML (*.graphML)":
-            pointFileName += "Points.graphML"
-            lineFileName += "Lines.graphML"
-            self.mGraph.writeGraphML(fileName)
+            # graphML can store both points and lines
+            pointFileName += ".graphML"
+            self.mGraph.writeGraphML(pointFileName)
             return True
 
         elif saveFileName[1] == "GeoJSON (*.geojson)":
