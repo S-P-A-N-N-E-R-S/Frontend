@@ -348,13 +348,13 @@ class QgsGraphLayer(QgsPluginLayer):
     def exportToFile(self):
         """
         Function to export GraphLayers features (either points or linestrings) to a file.
-        DataTypes to export to are: .shp, .gpkg, .csv, .graphML, .geojson
+        DataTypes to export to are: .shp, .gpkg, .csv, .graphml, .geojson
 
         :return Boolean if export was successful
         """
 
         # get saveFileName and datatype to export to
-        saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;Geopackage (*.gpkg);;CSV (*.csv);; graphML (*.graphML);;GeoJSON (*.geojson)")
+        saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;Geopackage (*.gpkg);;CSV (*.csv);; GraphML (*.graphml);;GeoJSON (*.geojson)")
         pointFileName = saveFileName[0]
         lineFileName = saveFileName[0]
         
@@ -375,9 +375,9 @@ class QgsGraphLayer(QgsPluginLayer):
             lineFileName += "Lines.csv"
             driver = "CSV"
         
-        elif saveFileName[1] == "graphML (*.graphML)":
-            # graphML can store both points and lines
-            pointFileName += ".graphML"
+        elif saveFileName[1] == "GraphML (*.graphml)":
+            # GraphML can store both points and lines
+            pointFileName += ".graphml"
             self.mGraph.writeGraphML(pointFileName)
             return True
 
