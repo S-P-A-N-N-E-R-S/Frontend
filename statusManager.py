@@ -19,7 +19,7 @@ class JobState():
             handler = parserManager.getRequestParser(self.handlerType)
             handlerName = handler.name
             return f"{handlerName} {self.jobId}"
-        return self.jobId
+        return str(self.jobId)
 
     def isSuccessful(self):
         return self.status == StatusType.SUCCESS
