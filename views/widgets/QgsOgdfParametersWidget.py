@@ -180,9 +180,9 @@ class QgsOGDFParametersWidget(QWidget):
                         # todo: assumption that graph has at least one edge cost function
                         if graph.distanceStrategy == "Advanced":
                             for index in range(len(graph.edgeWeights)):
-                                inputWidget.addItem(self.tr("Edge Cost Function {}").format(index + 1), index)
+                                inputWidget.addItem(self.tr("Edge Cost Function {}").format(index + 1), (graph.distanceStrategy, index))
                         else:
-                            inputWidget.addItem(self.tr("{} Costs").format(graph.distanceStrategy), 0)
+                            inputWidget.addItem(self.tr("{} Costs").format(graph.distanceStrategy), (graph.distanceStrategy, 0))
                 # select vertex cost function index
                 elif field.get("type") == FieldInformation.FieldType.VERTEX_COSTS:
                     inputWidget.clear()
