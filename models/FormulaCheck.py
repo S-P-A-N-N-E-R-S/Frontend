@@ -63,7 +63,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     # check for invalid operands
     partCounter = 1            
     for i in range(len(formulaParts)):
-        var = formulaParts[i]           
+        var = formulaParts[i].replace("(","").replace(")","")        
         if not (var in possibleMetrics or var.isnumeric() or "." in var or "if(" in var or "field:" in var or "math." in var or "raster[" in var or "random(" in var):      
 
             toReturn = ("Invalid operand", "", 0, len(originalFunction))      
