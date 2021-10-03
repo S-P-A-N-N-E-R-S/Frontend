@@ -1,14 +1,12 @@
-import os
-
-from qgis.core import QgsSettings, QgsApplication, QgsProject
+from qgis.core import QgsSettings, QgsApplication
 
 from .base import BaseController
-from .. import mainPlugin
 from ..exceptions import FieldRequiredError
 from .. import helperFunctions as helper
 
 # client imports
 from ..network.client import Client
+from ..network import parserManager
 from ..network.exceptions import NetworkClientError, ParseError
 
 
@@ -28,15 +26,14 @@ class OGDFAnalysisController(BaseController):
         self.view.setDescriptionVisible(False)
 
         # add available analysis
-        if mainPlugin.OGDFPlugin.requests:
-            for requestKey, request in mainPlugin.OGDFPlugin.requests.items():
-                self.view.addAnalysis(request.name, requestKey)
+        for requestKey, request in parserManager.getRequestParsers().items():
+            self.view.addAnalysis(request.name, requestKey)
 
     def runJob(self):
         # todo: pass authId to client
-        authId = self.settings.value("ogdfplugin/authId")
+        _authId = self.settings.value("ogdfplugin/authId")
 
-        analysisLabel, requestKey = self.view.getAnalysis()
+        _analysisLabel, requestKey = self.view.getAnalysis()
         if requestKey is None:
             self.view.showError(self.tr("No analysis selected!"))
             return
@@ -44,12 +41,12 @@ class OGDFAnalysisController(BaseController):
         # get user parameter fields data
         try:
             parameterFieldsData = self.view.getParameterFieldsData()
-        except FieldRequiredError as e:
-            self.view.showError(str(e))
+        except FieldRequiredError as error:
+            self.view.showError(str(error))
             return
 
         # set field data into request
-        request = mainPlugin.OGDFPlugin.requests[requestKey]
+        request = parserManager.getRequestParser(requestKey)
         request.resetData()
         for key in parameterFieldsData:
             fieldData = parameterFieldsData[key]
@@ -57,7 +54,7 @@ class OGDFAnalysisController(BaseController):
 
         try:
             with Client(helper.getHost(), helper.getPort()) as client:
-                client.send(request)
+                client.sendJobRequest(request)
                 self.view.showSuccess("Job started!")
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))  # show error

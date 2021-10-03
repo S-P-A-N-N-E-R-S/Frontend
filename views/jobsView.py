@@ -1,10 +1,11 @@
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QListWidgetItem
+
 from .baseContentView import BaseContentView
 from ..controllers.jobs import JobsController
+from ..network import statusManager
+from ..network.protocol.build.status_pb2 import StatusType
 from ..helperFunctions import getVectorFileFilter
-
-from qgis.PyQt.QtCore import Qt
-
-from qgis.PyQt.QtWidgets import QListWidgetItem
 
 
 class JobsView(BaseContentView):
@@ -13,6 +14,15 @@ class JobsView(BaseContentView):
         super().__init__(dialog)
         self.name = "jobs"
         self.controller = JobsController(self)
+
+        self.STATUS_TEXTS = {
+            StatusType.UNKNOWN_STATUS: self.tr("unknown"),
+            StatusType.WAITING: self.tr("waiting"),
+            StatusType.RUNNING: self.tr("running"),
+            StatusType.SUCCESS: self.tr("success"),
+            StatusType.FAILED: self.tr("failed"),
+            StatusType.ABORTED: self.tr("aborted"),
+        }
 
         # connect buttons to functions
         self.dialog.ogdf_jobs_fetch_result_btn.clicked.connect(self.controller.fetchResult)
@@ -35,12 +45,14 @@ class JobsView(BaseContentView):
 
     def _changeStatusText(self):
         if self.getCurrentJob() is not None:
-            job, status = self.getCurrentJob()
+            job = self.getCurrentJob()
+            status = self.STATUS_TEXTS.get(job.status, "status not supported")
             self.setStatusText('job status is "{}"'.format(status))
 
-    def addJob(self, jobName, jobData=None):
+    def addJob(self, job):
+        jobName = job.getJobName()
         jobItem = QListWidgetItem(jobName)
-        jobItem.setData(Qt.UserRole, jobData)
+        jobItem.setData(Qt.UserRole, job.jobId)
         self.dialog.ogdf_jobs_list.addItem(jobItem)
 
     def clearJobs(self):
@@ -64,7 +76,8 @@ class JobsView(BaseContentView):
         item = self.dialog.ogdf_jobs_list.currentItem()
         if item is None:
             return None
-        return item.text(), item.data(Qt.UserRole)
+        jobId = item.data(Qt.UserRole)
+        return statusManager.getJobState(jobId)
 
     # status text
 
@@ -124,9 +137,8 @@ class JobsView(BaseContentView):
     def isDestinationVisible(self):
         return self.dialog.ogdf_jobs_output.isVisible()
 
-    def setDestinationFilter(self, filter):
-        self.dialog.ogdf_jobs_output.setFilter(filter)
+    def setDestinationFilter(self, destinationFilter):
+        self.dialog.ogdf_jobs_output.setFilter(destinationFilter)
 
     def getDestinationFilePath(self):
         return self.dialog.ogdf_jobs_output.filePath()
-

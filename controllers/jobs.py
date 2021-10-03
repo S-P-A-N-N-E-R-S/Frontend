@@ -1,15 +1,13 @@
+from qgis.core import QgsSettings
+
 from .base import BaseController
 from ..models.QgsGraphLayer import QgsGraphLayer
 from .. import helperFunctions as helper
-from .. import mainPlugin
 
 # client imports
 from ..network.client import Client
 from ..network.exceptions import NetworkClientError, ParseError
 from ..network.protocol.build.available_handlers_pb2 import ResultInformation
-from ..network.protocol.build.status_pb2 import StatusType
-
-from qgis.core import QgsSettings
 
 
 class JobsController(BaseController):
@@ -25,40 +23,28 @@ class JobsController(BaseController):
 
         self.view.setResultVisible(False)
 
-        self.STATUS_TEXTS = {
-            StatusType.UNKNOWN_STATUS: self.tr("unknown"),
-            StatusType.WAITING: self.tr("waiting"),
-            StatusType.RUNNING: self.tr("running"),
-            StatusType.SUCCESS: self.tr("success"),
-            StatusType.FAILED: self.tr("failed"),
-            StatusType.ABORTED: self.tr("aborted"),
-        }
-
     def fetchResult(self):
         if self.view.getCurrentJob() is None:
             self.view.showWarning(self.tr("Please select a job."))
             return
 
-        job, status = self.view.getCurrentJob()
-        if status != self.STATUS_TEXTS[StatusType.SUCCESS]:
+        job = self.view.getCurrentJob()
+        if not job.isSuccessful():
             self.view.showWarning(self.tr("Selected job status is not successful."))
             return
 
         # Get result from finished job
         try:
             with Client(helper.getHost(), helper.getPort()) as client:
-                response = client.getJobResult(int(job))
+                response = client.getJobResult(job.jobId)
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
             return
 
-        # print(response.getGraph().mEdges)
-        # print(response.getGraph().mVertices)
-
         # show graph in qgis
         graphLayer = QgsGraphLayer()
         graphLayer.setGraph(response.getGraph())
-        success, errorMsg = helper.saveGraph(response.getGraph(), graphLayer, self.tr("Result"), self.view.getDestinationFilePath())
+        success, errorMsg = helper.saveGraph(response.getGraph(), graphLayer, f"{job.getJobName()} - {self.tr('Result')}", self.view.getDestinationFilePath())
         if not success:
             self.view.showError(errorMsg)
 
@@ -85,9 +71,8 @@ class JobsController(BaseController):
             with Client(helper.getHost(), helper.getPort()) as client:
                 states = client.getJobStatus()
                 # add jobs
-                for job in states:
-                    jobStatus = states[job].get("status", "")
-                    self.view.addJob(str(job), self.STATUS_TEXTS.get(jobStatus, "status not supported"))
+                for job in states.values():
+                    self.view.addJob(job)
         except (NetworkClientError, ParseError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
 
