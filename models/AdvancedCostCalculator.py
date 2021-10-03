@@ -245,7 +245,6 @@ class AdvancedCostCalculator():
             
             if ":sp" in part:   
                 # search for correct aStarAlgObject
-                print(part)
                 if "," in part:
                     heurID = int(part.split("(")[1].split(")")[0].split(",")[0])
                 else:
