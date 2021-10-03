@@ -702,11 +702,11 @@ class ExtGraph(QObject):
             listOfEdges.append([addedEdgeIdx, neighborVertex.id(), addedVertexID])
 
             if self.nnAllowDoubleEdges:
-                    if not fromUndo:
-                        addedEdgeIdx = self.addEdge(addedVertexID, neighborVertex.id())
-                    else:
-                        addedEdgeIdx = self.edgeCount() + len(listOfEdges)
-                    listOfEdges.append([addedEdgeIdx, addedVertexID, neighborVertex.id()])
+                if not fromUndo:
+                    addedEdgeIdx = self.addEdge(addedVertexID, neighborVertex.id())
+                else:
+                    addedEdgeIdx = self.edgeCount() + len(listOfEdges)
+                listOfEdges.append([addedEdgeIdx, addedVertexID, neighborVertex.id()])
 
         #== CLUSTERNN =============================================================================
         elif self.mConnectionType == "ClusterNN":
