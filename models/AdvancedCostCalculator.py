@@ -38,7 +38,7 @@ class AdvancedCostCalculator():
         self.graph = graph
         
         self.pointValuesForEdge = [None] * len(self.rLayers)
-        self.pixelValuesForEdge = [None] * len(self.rLayers) * 5
+        self.pixelValuesForEdge = [None] * len(self.rLayers) * 6
         
         self.polygons = polygons
         self.usePolygons = usePolygons        
@@ -179,7 +179,7 @@ class AdvancedCostCalculator():
                             expression = expression.replace(expPart, " False ")   
                               
                 if "percentOfValues" in expPart:                   
-                    # percentage is first value in the list                   
+                    # percentage is first value in the list               
                     listString = expPart.split("(")[1].split(")")[0]
                     list = listString.split(",")
                     percentage = list[0]                    
@@ -228,7 +228,7 @@ class AdvancedCostCalculator():
                 return str((self.graph.pointsToFeatureHash[self.graph.vertex(edge.toVertex()).point().toString()])[name])
                                   
         # analysis of raster data
-        if "raster[" in part:                   
+        if "raster[" in part:               
             rasterDataID = int(part.split("[")[1].split("]")[0])                
             bandForRaster = self.rasterBands[rasterDataID]    
             stringForLookup = "SAMPLE_" + str(bandForRaster)
@@ -245,14 +245,17 @@ class AdvancedCostCalculator():
             
             if ":sp" in part:   
                 # search for correct aStarAlgObject
-                heurID = int(part.split("(")[1].split(")")[0])
+                heurID = int(part.split("(")[1].split(")")[0].split(",")[0])
                 for aStarObj in self.aStarAlgObjects:
-                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:                
-                        if self.pixelValuesForEdge[((rasterDataID+1)*heurID)-1] == None:            
+                    
+                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:               
+                        if self.pixelValuesForEdge[rasterDataID*6 + heurID] == None:            
                             pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
-                            self.pixelValuesForEdge[((rasterDataID+1)*heurID)-1] = pixelValues
-                        
-                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[((rasterDataID+1)*heurID)-1], part.split(":sp")[1], rasterDataID)
+                            self.pixelValuesForEdge[rasterDataID*6 + heurID] = pixelValues
+                
+                part = part.split("(")[0] + "(" + part.split(",")[1]   
+
+                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[rasterDataID*6 + heurID], part.split(":sp")[1], rasterDataID)
             else:
                 return self.__calculateRasterAnalysis(self.pointValuesForEdge[rasterDataID], part.split(":")[1])
                    
@@ -329,7 +332,7 @@ class AdvancedCostCalculator():
             for pValue in values:                                                                
                 listOfPixelValuesAsString = listOfPixelValuesAsString + "," + str(pValue)                
                 
-            listOfPixelValuesAsString = listOfPixelValuesAsString + ")"             
+            listOfPixelValuesAsString = listOfPixelValuesAsString + ")"           
             return listOfPixelValuesAsString
         elif "euclidean" in analysis.lower():
             shortestPathEucl = self.euclDistPixelNeighbors[rLayerIndex] * len(values)-1
@@ -440,7 +443,7 @@ class AdvancedCostCalculator():
             
             if "," in heuristicIndexString:
                 heuristicIndex = int(heuristicIndexString.split(",")[0])
-                costFunction = costFunction.replace(matchString, matchString.split("(")[0] + "(" + matchString.split(",")[1])
+                #costFunction = costFunction.replace(matchString, matchString.split("(")[0] + "(" + matchString.split(",")[1])
             else:
                 heuristicIndex = int(heuristicIndexString)
             found = False
@@ -537,7 +540,7 @@ class AdvancedCostCalculator():
                 if newProgress <= 100:
                     self.task.setProgress(round(newProgress,2))
             self.pointValuesForEdge = [None] * len(self.rLayers)
-            self.pixelValuesForEdge = [None] * len(self.rLayers) * 5
+            self.pixelValuesForEdge = [None] * len(self.rLayers) * 6
             
             costFunction = costFunctionSave
             self.translatedParts = {} 
@@ -545,7 +548,7 @@ class AdvancedCostCalculator():
             # Call translate method with each extracted construct and replace in formula
                        
             regexList = ['euclidean', 'manhattan', 'ellipsoidal', 'geodesic', 'field:[A-z]+', 
-                         'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+\)|[A-z]+)',
+                         'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+,[0-9]+\)|[A-z]+)',
                          'polygon\[[0-9]?\]:(crossesPolygon|insidePolygon)']
             
             for regex in regexList:
