@@ -245,15 +245,20 @@ class AdvancedCostCalculator():
             
             if ":sp" in part:   
                 # search for correct aStarAlgObject
-                heurID = int(part.split("(")[1].split(")")[0].split(",")[0])
+                print(part)
+                if "," in part:
+                    heurID = int(part.split("(")[1].split(")")[0].split(",")[0])
+                else:
+                    heurID = int(part.split("(")[1].split(")")[0]) 
+                    
                 for aStarObj in self.aStarAlgObjects:
                     
                     if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:               
                         if self.pixelValuesForEdge[rasterDataID*6 + heurID] == None:            
                             pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
                             self.pixelValuesForEdge[rasterDataID*6 + heurID] = pixelValues
-                
-                part = part.split("(")[0] + "(" + part.split(",")[1]   
+                if "," in part:
+                    part = part.split("(")[0] + "(" + part.split(",")[1]   
 
                 return self.__calculateRasterAnalysis(self.pixelValuesForEdge[rasterDataID*6 + heurID], part.split(":sp")[1], rasterDataID)
             else:
@@ -548,7 +553,7 @@ class AdvancedCostCalculator():
             # Call translate method with each extracted construct and replace in formula
                        
             regexList = ['euclidean', 'manhattan', 'ellipsoidal', 'geodesic', 'field:[A-z]+', 
-                         'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+,[0-9]+\)|[A-z]+)',
+                         'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+(,[0-9]+)?\)|[A-z]+)',
                          'polygon\[[0-9]?\]:(crossesPolygon|insidePolygon)']
             
             for regex in regexList:
