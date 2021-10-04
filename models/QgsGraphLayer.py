@@ -385,29 +385,29 @@ class QgsGraphLayer(QgsPluginLayer):
         driver = ""
 
         if saveFileName[1] == "Shapefile (*.shp)": # Shapefile
-            pointFileName += "Points.shp"
-            lineFileName += "Lines.shp"
+            pointFileName += "Points.shp" if not "Points.shp" in pointFileName else ""
+            lineFileName += "Lines.shp" if not "Lines.shp" in lineFileName else ""
             driver = "ESRI Shapefile"
 
         elif saveFileName[1] == "Geopackage (*.gpkg)": # Geopackage
-            pointFileName += "Points.gpkg"
-            lineFileName += "Lines.gpkg"
+            pointFileName += "Points.gpkg" if not "Points.gpkg" in pointFileName else ""
+            lineFileName += "Lines.gpkg" if not "Lines.gpkg" in lineFileName else ""
             driver = "GPKG"
 
         elif saveFileName[1] == "CSV (*.csv)": # CSV
-            pointFileName += "Points.csv"
-            lineFileName += "Lines.csv"
+            pointFileName += "Points.csv" if not "Points.csv" in pointFileName else ""
+            lineFileName += "Lines.csv"if not "Lines.csv" in lineFileName else ""
             driver = "CSV"
         
         elif saveFileName[1] == "GraphML (*.graphml)":
             # GraphML can store both points and lines
-            pointFileName += ".graphml"
+            pointFileName += ".graphml" if not ".graphml" in pointFileName else ""
             self.mGraph.writeGraphML(pointFileName)
             return True
 
         elif saveFileName[1] == "GeoJSON (*.geojson)":
-            pointFileName += "Points.geojson"
-            lineFileName += "Lines.geojson"
+            pointFileName += "Points.geojson" if not "Points.geojson" in pointFileName else ""
+            lineFileName += "Lines.geojson" if not "Lines.geojson" in lineFileName else ""
             driver = "GeoJSON"
         else:
             return False
