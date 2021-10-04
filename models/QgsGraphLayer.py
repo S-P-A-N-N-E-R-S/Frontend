@@ -291,15 +291,13 @@ class QgsGraphLayer(QgsPluginLayer):
             edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
             fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
             toVertexField = QgsField("toVertex", QVariant.Double, "double")
-            costField = QgsField("edgeCost", QVariant.Double, "double")
             
-            self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField], False)
+            self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField], False)
                 
             # update line fields
             self.mLineFields.append(edgeIdField)
             self.mLineFields.append(fromVertexField)
             self.mLineFields.append(toVertexField)
-            self.mLineFields.append(costField)
 
             # self.mGraph.calculateSize()
         
@@ -321,6 +319,23 @@ class QgsGraphLayer(QgsPluginLayer):
                 self.mDataProvider.addFeature(feat, True, vertexIdx)
 
         if self.exportLines:
+            # add fields for advanced costs
+            if self.mGraph.distanceStrategy == "Advanced":
+                for costIdx in range(self.mGraph.amountOfEdgeCostFunctions()):
+                    fieldName = "cost_" + str(costIdx)
+                    costField = QgsField(fieldName, QVariant.Double, "double")
+
+                    self.mDataProvider.addAttributes([costField], False)
+                    
+                    self.mLineFields.append(costField)
+            
+            # only use one field for one cost function
+            else:
+                costField = QgsField("edgeCost", QVariant.Double, "double")
+                self.mDataProvider.addAttributes([costField], False)
+                self.mLineFields.append(costField)
+
+
             # build line features
             for edgeIdx in range(self.mGraph.edgeCount()):
                 edge = self.mGraph.edge(edgeIdx)
@@ -330,9 +345,17 @@ class QgsGraphLayer(QgsPluginLayer):
                 toVertex = self.mGraph.vertex(self.mGraph.findVertexByID(edge.toVertex())).point()
                 feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-                # features only save one value for edge cost even if multiple cost functions are given
-                feat.setAttributes([edge.id(), edge.fromVertex(), edge.toVertex(), self.mGraph.costOfEdge(edgeIdx)])
+                attr = [edge.id(), edge.fromVertex(), edge.toVertex()]
 
+                if self.mGraph.distanceStrategy == "Advanced":
+
+                    for costIdx in range(self.mGraph.amountOfEdgeCostFunctions()):
+                        attr.append(self.mGraph.costOfEdge(edgeIdx, costIdx))
+
+                else:
+                    attr.append(self.mGraph.costOfEdge(edgeIdx))
+
+                feat.setAttributes(attr)
                 self.mDataProvider.addFeature(feat, False, edgeIdx)
 
     def __destroyFeatures(self):
@@ -530,16 +553,14 @@ class QgsGraphLayer(QgsPluginLayer):
         edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
         fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
         toVertexField = QgsField("toVertex", QVariant.Double, "double")
-        costField = QgsField("edgeCost", QVariant.Double, "double")
         
         # self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
-        self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField], False)
+        self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField], False)
         
         # update line fields
         self.mLineFields.append(edgeIdField)
         self.mLineFields.append(fromVertexField)
         self.mLineFields.append(toVertexField)
-        self.mLineFields.append(costField)
 
 
         # get vertex information and add them to graph
