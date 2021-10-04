@@ -897,8 +897,17 @@ class ExtGraph(QObject):
 
         for idx in range(self.mEdgeCount):
             edge = self.edge(idx)
-            edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
+            edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'            
             file.write(edgeLine)
+
+            if self.distanceStrategy == "Advanced":
+                edgeCosts = '\t\t\t<key for="edge" id="' + str(edge.id()) + '" costs="' + str(self.amountOfEdgeCostFunctions())
+
+                for costIdx in range(self.amountOfEdgeCostFunctions()):
+                    edgeCosts += '" cost_' + str(costIdx) + '="' + str(self.costOfEdge(idx, costIdx))
+
+                edgeCosts += '"/>\n'
+                file.write(edgeCosts)
 
         file.write("\t</graph>\n")
         file.write("</graphml>")
@@ -958,7 +967,21 @@ class ExtGraph(QObject):
                     # if edgeTypeDirection == "Undirected":
                     #     self.addEdge(toVertexID, fromVertexID)
 
-                    self.addEdge(fromVertex, toVertex)                    
+                    self.addEdge(fromVertex, toVertex)
+
+                elif '<key' in line:
+                    edgeID = line.split('id="')[1].split('"')[0]
+                    if edgeID != "d1":
+                        edgeID = int(edgeID)
+                    else:
+                        # key line not associated with an edge
+                        continue
+
+                    edgeIdx = self.findEdgeByID(int(line.split('id="')[1].split('"')[0]))
+                    amountOfCosts = int(line.split('costs="')[1].split('"')[0])
+                    for costIdx in range(amountOfCosts):    
+                        cost = float(line.split('cost_' + str(costIdx) + '="')[1].split('"')[0])
+                        self.setCostOfEdge(edgeIdx, costIdx, cost)     
 
         # if no coordinates are given assign random
         else:
