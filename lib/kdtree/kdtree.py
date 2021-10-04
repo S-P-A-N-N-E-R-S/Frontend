@@ -615,9 +615,9 @@ def create(point_list=None, dimensions=None, axis=0, sel_axis=None):
 def check_dimensionality(point_list, dimensions=None):
     dimensions = dimensions or len(point_list[0])
     for p in point_list:
-        print(p)
-        print(len(p))
-        print(dimensions)
+        # print(p)
+        # print(len(p))
+        # print(dimensions)
         if len(p) != dimensions:
             raise ValueError('All Points in the point_list must have the same dimensionality')
 
