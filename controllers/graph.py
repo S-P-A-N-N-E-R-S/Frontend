@@ -23,8 +23,8 @@ class CreateGraphController(BaseController):
         Constructor
         :type view: CreateGraphView
         """
-        super().__init__(view)
-
+        super().__init__(view)                         
+                
         self.view.addRandomArea(self.tr("Germany"), "Germany")
         self.view.addRandomArea(self.tr("France"), "France")
         self.view.addRandomArea(self.tr("Osnabrueck"), "Osnabrueck")
@@ -46,16 +46,16 @@ class CreateGraphController(BaseController):
         self.view.addDistanceStrategy(self.tr("Manhattan"), "Manhattan")
         self.view.addDistanceStrategy(self.tr("Geodesic (Haversine formula)"), "Geodesic")
         self.view.addDistanceStrategy(self.tr("Advanced"), "Advanced")
-        self.view.addDistanceStrategy(self.tr("Ellipsoidal"), "Ellipsoidal")
+        self.view.addDistanceStrategy(self.tr("Ellipsoidal (Not usable with all CRS)"), "Ellipsoidal")
         self.view.addDistanceStrategy(self.tr("None"), "None")
 
         # load possibly available active tasks into table and reconnect slots
-        self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
         for taskTuple in CreateGraphController.activeGraphTasks:
             task, taskId = taskTuple
             task.statusChanged.connect(
                 lambda: self.view.updateTaskInTable(task, taskId)
             )
+        self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
 
     def createGraph(self):
         """
@@ -89,12 +89,12 @@ class CreateGraphController(BaseController):
                 builder.setRasterLayer(rasterLayer, rasterBand)
 
         # polygon cost layer
-        polygonCostLayer = self.view.getPolygonCostLayer()
-        if polygonCostLayer:
+        polygonCostLayers = self.view.getPolygonCostLayers()
+        for idx, polygonCostLayer in enumerate(polygonCostLayers):
             if not polygonCostLayer.isValid():
-                self.view.showWarning(self.tr("Polygon cost layer is invalid!"))
-                return
-            builder.setPolygonsForCostFunction(polygonCostLayer)
+                self.view.showWarning(self.tr("Polygon cost layer[{}] is invalid!").format(idx))
+                return            
+            builder.setPolygonsForCostFunction(polygonCostLayer)           
 
         # polygon forbidden area
         forbiddenAreaLayer = self.view.getForbiddenAreaLayer()
@@ -123,12 +123,14 @@ class CreateGraphController(BaseController):
         builder.setOption("clusterNumber", self.view.getClusterNumber())
         builder.setOption("edgeDirection", self.view.getEdgeDirection()[1])
         builder.setOption("distanceStrategy", self.view.getDistanceStrategy()[1])
+        builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
 
         # set builder options for random graph
         if self.view.isRandom():
             graphName = "Random"
             builder.setOption("createRandomGraph", True)
             builder.setRandomOption("numberOfVertices", self.view.getRandomVerticesNumber())
+            builder.setRandomOption("seed", self.view.getRandomSeed())
             # set predefined or user defined random area
             area, areaData = self.view.getRandomArea()
             if areaData == "custom area":
@@ -193,10 +195,13 @@ class CreateGraphController(BaseController):
         CreateGraphController.activeGraphTasks.append((graphTask, taskId))
 
         # add task to table
-        self.view.addTaskToTable(graphTask, taskId)
         graphTask.statusChanged.connect(
             lambda: self.view.updateTaskInTable(graphTask, taskId)  # update task if status changed
         )
+        graphTask.progressChanged.connect(
+            lambda: self.view.updateTaskInTable(graphTask, taskId)  # update task if progress changed
+        )
+        self.view.addTaskToTable(graphTask, taskId)
 
     def completed(self, exception, result=None):
         """
@@ -221,9 +226,14 @@ class CreateGraphController(BaseController):
                 graph = result["graph"]
                 graphLayer = result["graphLayer"]
                 graphName = result["graphName"]
+                shortestPathViewLayers = result["shortestPathViewLayers"]
                 if not graph:
                     self.view.showError(self.tr("Error during graph creation!"))
                     return
+
+                # show shortest path view layers
+                for shortestPathViewLayer in shortestPathViewLayers:
+                    QgsProject.instance().addMapLayer(shortestPathViewLayer)
 
                 # save graph to destination
                 savePath = self.view.getSavePath()

@@ -4,15 +4,15 @@ from ..controllers.graph import CreateGraphController
 from ..helperFunctions import getImagePath, getRasterFileFilter, getVectorFileFilter
 from ..models.ExtGraph import ExtGraph
 
-from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes, QgsVectorLayer, QgsWkbTypes, QgsApplication
 from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget
 from qgis.utils import iface
 
-from PyQt5.QtCore import QTimer, Qt, QSize
+from PyQt5.QtCore import QTimer, Qt, QSize, QRegExp
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QPushButton, QHBoxLayout, QSizePolicy, QLineEdit, QToolButton
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QRegExpValidator
 
-import time, os
+import time, os, re
 
 
 class CreateGraphView(BaseContentView):
@@ -37,6 +37,7 @@ class CreateGraphView(BaseContentView):
         # enable and disable inputs when input is changed
         self.dialog.create_graph_input.currentIndexChanged.connect(self._inputChanged)
         self.dialog.random_graph_checkbox.stateChanged.connect(self._inputChanged)
+        self.dialog.create_graph_costfunction_input.textChanged.connect(self._showShortPathViewCheckbox)
 
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
@@ -72,28 +73,43 @@ class CreateGraphView(BaseContentView):
         # set up add raster data button
         self.dialog.create_graph_raster_plus_btn.clicked.connect(self._addRasterDataInput)
 
+        # set up add polygon cost button
+        self.dialog.create_graph_polycost_plus_btn.clicked.connect(self._addPolygonCostInput)
+
         # set up advance cost widget button
+        self.dialog.create_graph_costfunction_define_btn.setIcon(QgsApplication.getThemeIcon("symbologyEdit.svg"))
         self.dialog.create_graph_costfunction_define_btn.clicked.connect(lambda: self._showCostFunctionDialog(0))
+
+        # set up add button icons
+        self.dialog.create_graph_raster_plus_btn.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
+        self.dialog.create_graph_polycost_plus_btn.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
+        self.dialog.create_graph_costfunction_add_btn.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
 
         # set up add cost function button
         self.dialog.create_graph_costfunction_add_btn.clicked.connect(self._addCostFunctionInput)
 
         # set up tasks table
-        self.dialog.graph_tasks_table.setColumnCount(4)
-        self.dialog.graph_tasks_table.setColumnWidth(0, 100)
-        self.dialog.graph_tasks_table.setColumnWidth(2, 100)
+        self.dialog.graph_tasks_table.setColumnCount(5)
+        self.dialog.graph_tasks_table.setColumnWidth(0, 80)
+        self.dialog.graph_tasks_table.setColumnWidth(2, 80)
         self.dialog.graph_tasks_table.setColumnWidth(3, 80)
+        self.dialog.graph_tasks_table.setColumnWidth(4, 80)
         # stretch remaining column
         self.dialog.graph_tasks_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.dialog.graph_tasks_table.setHorizontalHeaderLabels([self.tr("Task Id"), self.tr("Description"),
-                                                                 self.tr("State"), self.tr("Discard")])
+                                                                 self.tr("Progress"), self.tr("State"),
+                                                                 self.tr("Discard")])
 
         # set up crs selection
         self.dialog.create_graph_crs_input.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
 
+        # only allow integer for seed
+        self.dialog.create_graph_randomSeed_input.setValidator(QRegExpValidator(QRegExp("^[-+]?\\d+$")))
+
         # set up random extent
         self.addRandomArea(self.tr("Custom"), "custom area")
         self.dialog.create_graph_randomarea_extent.setMapCanvas(iface.mapCanvas())
+        self.dialog.create_graph_randomarea_extent.toggleDialogVisibility.connect(lambda visible: self.setMinimized(visible))
         self.dialog.create_graph_randomarea_input.currentIndexChanged.connect(self._randomAreaChanged)
 
         # set up controller
@@ -104,6 +120,7 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
 
         self._inputChanged()
+        self._showShortPathViewCheckbox()
 
     def _inputChanged(self):
         """
@@ -117,9 +134,16 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_crs_label.setVisible(ext == ".graphml" and not self.isRandom())
         self.dialog.create_graph_crs_input.setVisible(ext == ".graphml" and not self.isRandom())
 
+        # hide advanced cost parameters if .graphML input
+        if ext == ".graphml" and not self.isRandom():
+            self.dialog.create_graph_costfunction_parameters.setVisible(False)
+        else:
+            # restore visibility of advanced cost parameters
+            self._distanceStrategyChanged()
+
         # disable input field and enable random params if random is checked
         self.dialog.create_graph_input_widget.setDisabled(self.isRandom())
-        self.dialog.create_graph_randomNumber_input.setEnabled(self.isRandom())
+        self.dialog.create_graph_random_widget.setEnabled(self.isRandom())
         self.dialog.create_graph_randomarea_widget.setEnabled(self.isRandom())
 
         # update distance units
@@ -130,6 +154,7 @@ class CreateGraphView(BaseContentView):
         isPointLayer = layer is not None and layer.geometryType() == QgsWkbTypes.PointGeometry
         isLineLayer = layer is not None and layer.geometryType() == QgsWkbTypes.LineGeometry and not self.isRandom()
 
+        self.dialog.create_graph_connection_parameters.setVisible(layer is not None or self.isRandom())
         self.dialog.create_graph_connectiontype_input.setEnabled(isPointLayer or self.isRandom())
 
         if isLineLayer:
@@ -185,9 +210,36 @@ class CreateGraphView(BaseContentView):
         :return:
         """
         _, distanceStrategy = self.getDistanceStrategy()
-        self.dialog.create_graph_costfunction_widget.setEnabled(distanceStrategy == "Advanced")
-        self.dialog.create_graph_polycost_input.setEnabled(distanceStrategy == "Advanced")
-        self.dialog.create_graph_rasterdata_widget.setEnabled(distanceStrategy == "Advanced")
+        self.dialog.create_graph_costfunction_parameters.setVisible(distanceStrategy == "Advanced")
+        self.dialog.create_graph_costfunction_parameters.setEnabled(distanceStrategy == "Advanced")
+
+    def _showShortPathViewCheckbox(self):
+        """
+        Enables and disables the short path view checkbox when regex matches
+        :return:
+        """
+        shortPathFound = False
+        regex = re.compile("raster\[[0-9]+\]:sp")
+        for costFunction in self.getCostFunctions():
+            if regex.search(costFunction):
+                shortPathFound = True
+                break
+        self.dialog.create_graph_shortPathView_checkbox.setVisible(shortPathFound)
+
+    def _toRemoveButton(self, button, tooltip):
+        button.setText("➖")
+        button.setToolTip(tooltip)
+        button.setIcon(QgsApplication.getThemeIcon("symbologyRemove.svg"))
+        button.clicked.disconnect()
+
+    def _createAddButton(self, tooltip):
+        addButton = QToolButton()
+        addButton.setText("➕")
+        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        addButton.setMaximumSize(25, 25)
+        addButton.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
+        addButton.setToolTip(tooltip)
+        return addButton
 
     def _addRasterDataInput(self):
         """
@@ -197,10 +249,8 @@ class CreateGraphView(BaseContentView):
         #  change add button to remove button
         lastLayout = self.dialog.create_graph_rasterdata_widget.layout().itemAt(self.dialog.create_graph_rasterdata_widget.layout().count()-1)
         button = lastLayout.itemAt(lastLayout.count()-1).widget()
-        button.setText("➖")
-        button.setToolTip(self.tr("Remove raster input"))
-        button.clicked.disconnect()
-        button.clicked.connect(lambda: self._removeLayoutFromWidget("create_graph_rasterdata_widget", lastLayout))
+        self._toRemoveButton(button, self.tr("Remove raster input"))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_rasterdata_widget, lastLayout))
 
         layerComboBox = QgsMapLayerComboBox()
         layerComboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -215,10 +265,7 @@ class CreateGraphView(BaseContentView):
         bandComboBox.setToolTip(self.tr("Select raster band"))
         layerComboBox.layerChanged.connect(bandComboBox.setLayer)
 
-        addButton = QPushButton("➕")
-        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        addButton.setMaximumSize(25, 25)
-        addButton.setToolTip(self.tr("Add raster layer"))
+        addButton = self._createAddButton(self.tr("Add raster input"))
         addButton.clicked.connect(self._addRasterDataInput)
 
         layout = QHBoxLayout()
@@ -227,6 +274,33 @@ class CreateGraphView(BaseContentView):
         layout.addWidget(addButton)
 
         self.dialog.create_graph_rasterdata_widget.layout().addLayout(layout)
+
+    def _addPolygonCostInput(self):
+        """
+        Appends a new polygon cost input line
+        :return:
+        """
+        #  change add button to remove button
+        lastLayout = self.dialog.create_graph_polycost_widget.layout().itemAt(self.dialog.create_graph_polycost_widget.layout().count() - 1)
+        button = lastLayout.itemAt(lastLayout.count() - 1).widget()
+        self._toRemoveButton(button, self.tr("Remove polygon input"))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_polycost_widget, lastLayout))
+
+        layerComboBox = QgsMapLayerComboBox()
+        layerComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        layerComboBox.setAllowEmptyLayer(True)
+        layerComboBox.setCurrentIndex(0)
+        layerComboBox.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
+        layerComboBox.setToolTip(self.tr("Select input layer"))
+
+        addButton = self._createAddButton(self.tr("Add polygon input"))
+        addButton.clicked.connect(self._addPolygonCostInput)
+
+        layout = QHBoxLayout()
+        layout.addWidget(layerComboBox)
+        layout.addWidget(addButton)
+
+        self.dialog.create_graph_polycost_widget.layout().addLayout(layout)
 
     def _addCostFunctionInput(self):
         """
@@ -237,24 +311,22 @@ class CreateGraphView(BaseContentView):
         #  change add button to remove button
         lastLayout = costFunctionWidget.layout().itemAt(costFunctionWidget.layout().count() - 1)
         button = lastLayout.itemAt(lastLayout.count() - 1).widget()
-        button.setText("➖")
-        button.setToolTip(self.tr("Remove cost function"))
-        button.clicked.disconnect()
-        button.clicked.connect(lambda: self._removeLayoutFromWidget("create_graph_costfunction_widget", lastLayout))
+        self._toRemoveButton(button, self.tr("Remove cost function"))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_costfunction_widget, lastLayout))
 
         costLineEdit = QLineEdit()
         costLineEdit.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
         costLineEdit.setToolTip(self.tr("Define advanced cost function"))
+        costLineEdit.textChanged.connect(self._showShortPathViewCheckbox)
 
         costWidgetDialogButton = QToolButton()
         costWidgetDialogButton.setText("...")
+        costWidgetDialogButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred))
+        costWidgetDialogButton.setIcon(QgsApplication.getThemeIcon("symbologyEdit.svg"))
         costWidgetDialogButton.setToolTip(self.tr("Show cost editor"))
 
-        addButton = QPushButton("➕")
-        addButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        addButton.setMaximumSize(25, 25)
+        addButton = self._createAddButton(self.tr("Add cost function"))
         addButton.clicked.connect(self._addCostFunctionInput)
-        addButton.setToolTip(self.tr("Add cost function"))
 
         layout = QHBoxLayout()
         layout.addWidget(costLineEdit)
@@ -273,7 +345,6 @@ class CreateGraphView(BaseContentView):
         :param layout to be deleted
         :return:
         """
-        widget = getattr(self.dialog, widget)
         for i in reversed(range(layout.count())):
             layout.itemAt(i).widget().deleteLater()
         widget.layout().removeItem(layout)
@@ -284,10 +355,11 @@ class CreateGraphView(BaseContentView):
         :return:
         """
         costFunctionDialog = QgsCostFunctionDialog()
-        costFunctionDialog.setCostFunction(self.getCostFunction(index))
-        costFunctionDialog.setVectorLayer(self.getInputLayer())
-        costFunctionDialog.setPolygonLayer(self.getPolygonCostLayer())
+        if not self.isRandom():
+            costFunctionDialog.setVectorLayer(self.getInputLayer())
+        costFunctionDialog.setPolygonLayers(self.getPolygonCostLayers())
         costFunctionDialog.setRasterData(self.getRasterData())
+        costFunctionDialog.setCostFunction(self.getCostFunction(index))
         # load cost function when ok button is clicked
         costFunctionDialog.accepted.connect(lambda: self.setCostFunction(costFunctionDialog.costFunction(), index))
         costFunctionDialog.exec()
@@ -373,6 +445,10 @@ class CreateGraphView(BaseContentView):
     def getRandomVerticesNumber(self):
         return self.dialog.create_graph_randomNumber_input.value()
 
+    def getRandomSeed(self):
+        seed = self.dialog.create_graph_randomSeed_input.text()
+        return int(self.dialog.create_graph_randomSeed_input.text()) if seed else None
+
     def addRandomArea(self, area, userData=None):
         self.dialog.create_graph_randomarea_input.addItem(area, userData)
 
@@ -439,8 +515,18 @@ class CreateGraphView(BaseContentView):
                 rasterData.append((rasterLayer, rasterBand))
         return rasterData
 
-    def getPolygonCostLayer(self):
-        return self.dialog.create_graph_polycost_input.currentLayer()
+    def getPolygonCostLayers(self):
+        """
+        Collects all not empty user selected polygon cost layers
+        :return: Array of polygon layers
+        """
+        polygonLayers = []
+        for i in range(self.dialog.create_graph_polycost_widget.layout().count()):
+            inputLayout = self.dialog.create_graph_polycost_widget.layout().itemAt(i)
+            polygonLayer = inputLayout.itemAt(0).widget().currentLayer()
+            if polygonLayer is not None:
+                polygonLayers.append(polygonLayer)
+        return polygonLayers
 
     def getForbiddenAreaLayer(self):
         return self.dialog.create_graph_forbiddenarea_input.currentLayer()
@@ -479,6 +565,9 @@ class CreateGraphView(BaseContentView):
         costLineEdit = self.dialog.create_graph_costfunction_widget.layout().itemAt(index).itemAt(0).widget()
         costLineEdit.setText(costFunction)
 
+    def isShortPathViewChecked(self):
+        return self.dialog.create_graph_shortPathView_checkbox.isChecked()
+
     def getCRS(self):
         return self.dialog.create_graph_crs_input.crs()
 
@@ -506,16 +595,18 @@ class CreateGraphView(BaseContentView):
         taskIdItem = QTableWidgetItem(str(taskId))
         descriptionItem = QTableWidgetItem(task.description())
         statusItem = QTableWidgetItem(self.__getTaskStatus(task.status()))
+        progressItem = QTableWidgetItem(str(round(task.progress(),2)) + "%")
         self.dialog.graph_tasks_table.setItem(row, 0, taskIdItem)
         self.dialog.graph_tasks_table.setItem(row, 1, descriptionItem)
-        self.dialog.graph_tasks_table.setItem(row, 2, statusItem)
+        self.dialog.graph_tasks_table.setItem(row, 2, progressItem)
+        self.dialog.graph_tasks_table.setItem(row, 3, statusItem)
 
         # Add cancel button
-        cancelButton = QPushButton(QIcon(getImagePath("close.svg")), "")
+        cancelButton = QPushButton(QgsApplication.getThemeIcon("mIconDelete.svg"), "")
         cancelButton.setFlat(True)
         cancelButton.setIconSize(QSize(25, 25))
         cancelButton.clicked.connect(lambda: self.controller.discardTask(taskId))
-        self.dialog.graph_tasks_table.setCellWidget(row, 3, cancelButton)
+        self.dialog.graph_tasks_table.setCellWidget(row, 4, cancelButton)
 
     def loadTasksTable(self, tasks):
         """

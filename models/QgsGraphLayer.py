@@ -303,6 +303,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
             # self.mGraph.calculateSize()
         
+        
     def getGraph(self):
         return self.mGraph
 
@@ -494,6 +495,7 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph.nnAllowDoubleEdges = graphElem.attribute("nnAllowDoubleEdges") == "True"
             self.mGraph.distance = float(graphElem.attribute("distance")), int(graphElem.attribute("distanceUnit"))
             self.mGraph.setDistanceStrategy(graphElem.attribute("distanceStrategy"))
+            self.mGraph.setRandomSeed(int(graphElem.attribute("randomSeed")))
 
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
@@ -624,6 +626,7 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.setAttribute("distanceStrategy", self.mGraph.distanceStrategy)
         if self.mGraph.distanceStrategy == "Advanced":
             graphNode.setAttribute("edgeCostFunctions", self.mGraph.amountOfEdgeCostFunctions())
+        graphNode.setAttribute("randomSeed", str(self.mGraph.randomSeed))
         node.appendChild(graphNode)
 
         # vertexNode saves all vertices with tis coordinates
@@ -826,6 +829,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
         # QLabel with information about the GraphLayer
         informationLabel = QLabel(layer.name() +
+                        "\n " + ((tr("Seed: ") + str(layer.mGraph.randomSeed)) if layer.mGraph.randomSeed else "") +
                         "\n " + tr("Vertices") + ": " + str(layer.getGraph().vertexCount()) +
                         "\n " + tr("Edges") + ": " + str(layer.getGraph().edgeCount()) +
                         "\n " + tr("CRS") + ": " + layer.crs().authid())

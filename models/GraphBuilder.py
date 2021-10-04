@@ -4,13 +4,18 @@ from qgis.PyQt.QtGui import *
 from qgis.analysis import *
 from qgis.PyQt.QtCore import QVariant
 from .ExtGraph import ExtGraph
+from .FormulaCheck import *
 from .AdvancedCostCalculator import AdvancedCostCalculator
 from .QgsGraphLayer import QgsGraphLayer
 import random
 from qgis import processing
 import math
 import re
+import sys
 from ..lib.kdtree import kdtree
+import time
+from contextlib import closing
+from google.protobuf.type_pb2 import Syntax
 
 
 class GraphBuilder:
@@ -32,9 +37,7 @@ class GraphBuilder:
 
     Random options:
         - numberOfVertices: int
-        - area: Area of the globe you want the random Graph to be in. Can be one of the specified countries or user defined
-        
-
+        - area: Area of the globe you want the random Graph to be in. Can be one of the specified countries or user defined        
     """    
     def __init__(self):
         """
@@ -49,11 +52,12 @@ class GraphBuilder:
         self.additionalPointLayer = QgsVectorLayer()
         self.costFunctions = []
         self.rasterBands = []
-        self.polygonsForCostFunction = QgsVectorLayer()
+        self.polygonsForCostFunction = []
         self.kdTree = None
         self.layerWithClusterIDS = None
+        self.shortestPathViewLayers = []
         # is set if graph builder is running as task
-        self.task = None
+        self.task = None       
 
         self.__options = {
             "connectionType": "Nearest neighbor",            
@@ -68,24 +72,32 @@ class GraphBuilder:
             "createRandomGraph": True,          
             "usePolygonsAsForbidden": False,
             "usePolygonsInCostFunction": False,
-            "useAdditionalPoints": False
+            "useAdditionalPoints": False,
+            "createShortestPathView": False
         }
 
         self.__randomOptions = {
             "numberOfVertices": 100,
+            "seed": None,
             "area": "Germany"
         }
 
     def setPolygonsForCostFunction(self, vectorLayer):
+        """
+        Set polygons for use in the cost function. Call method multiple times
+        to set multiple polygon layers.
+
+        :type vectorLayer: QgsVectorLayer containing polygons
+        """
         if vectorLayer.geometryType() != QgsWkbTypes.PolygonGeometry:
             raise TypeError("Not a polygon geometry")
         
         self.__options["usePolygonsInCostFunction"] = True
-        self.polygonsForCostFunction = vectorLayer
+        self.polygonsForCostFunction.append(vectorLayer)
     
     def setForbiddenAreas(self, vectorLayer):
         """
-        All edges crossing the polygon will be deleted from the graph
+        All edges crossing the polygon will be deleted from the graph.
         
         :type vectorLayer: QgsVectorLayer containing polygons
         """
@@ -98,7 +110,7 @@ class GraphBuilder:
     def setAdditionalPointLayer(self, vectorLayer):
         """
         Additional points to a given line layer. The points will be added in addition to the
-        network generated for the line layer and connected to the nearest point
+        network generated for the line layer and connected to the nearest point.
 
         :type vectorLayer: QgsVectorLayer containing points
         """
@@ -140,226 +152,17 @@ class GraphBuilder:
         """       
         self.__options["distanceStrategy"] = "Advanced"
                                                
-        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), self.__options["usePolygonsInCostFunction"])             
+        syntaxCheckResult = self.syntaxCheck(function, self.vLayer.fields(), len(self.rLayers), len(self.polygonsForCostFunction))
         if syntaxCheckResult[0] == "No error found":
             function = syntaxCheckResult[1]
             self.costFunctions.append(function)
                 
         return syntaxCheckResult[0]
-    
-    @staticmethod 
-    def findClosingBracketIndex(functionPart, startIndex):
-        stack = []
-        closingBracketIndex = startIndex
-        for i in functionPart:
-            if i == "(":
-                stack.append(i)
-            elif i == ")":                                          
-                stack.pop()    
-                if len(stack) == 0:
-                    return closingBracketIndex                        
-                      
-            closingBracketIndex+=1
         
     @staticmethod                   
-    def syntaxCheck(function, fields, numberOfRasterData, polygonsSet):
-        """
-        Checks if the function is valid and exchanges the brackets with other
-        symbols to enable future analysis
-        """
-        costFunction = function.replace(" ", "").replace('"', '').replace("(","").replace(")","")
-        function = function.replace(" ", "").replace('"', '')
-        formulaParts = re.split("\+|-|\*|/", costFunction)
-        possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
-        possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance",
-                                  "standDev", "gradientSum", "gradientMin", "gradientMax", "pixelValue"]
-        comparisonOperators = ["<",">","==",]
-               
-        possibleFields = []
-        for field in fields:
-            possibleFields.append(field.name())
-                    
-        for i in range(len(formulaParts)):
-            var = formulaParts[i]            
-            if not (var in possibleMetrics or var.isnumeric() or "." in var or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):
-                return ("Invalid operand", "")
-                                        
-        # check parentheses
-        openList = ["[","("]
-        closeList = ["]",")"]
-        stack = []
-        for i in function:
-            if i in openList:
-                stack.append(i)
-            elif i in closeList:
-                pos = closeList.index(i)
-                if((len(stack)>0) and openList[pos] == stack[len(stack)-1]):
-                    stack.pop()
-                else:
-                    return ("Unbalanced parentheses", "")    
-        if len(stack) != 0:
-            return ("Unbalanced parentheses", "")        
-     
-        if ("insidePolygon" in function or "crossesPolygon" in function) and polygonsSet == False:
-            return ("No polygon layer set", "")
-     
-        # check all random operands   
-        found = True
-        while(found):
-            found = False    
-            index = function.find("random(")
-            if index != -1:
-                found = True
-                # replace brackets
-                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)
-                function = function[0:closingBracketIndex] + "&" + function[closingBracketIndex+1:]                                                         
-                function = function.replace("random(","rnd?",1)                
-                if not "," in function[index:closingBracketIndex]:
-                    return ("Incorrect use of random function", "")
-                randomRangeValues = function[index+4:closingBracketIndex-3].split(",")
-                for v in randomRangeValues:                                  
-                    if not v.isnumeric() or "." in v:
-                        return ("Incorrect use of random function", "")
-        
-        # check all if constructs
-        found = True
-        while(found):
-            found = False    
-            index =  function.find("if(")
-            if index != -1:
-                found = True
-                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)
-               
-                function = function[0:closingBracketIndex] + "}" + function[closingBracketIndex+1:]                                                                                                                                               
-                function = function[0:index] + function[index:].replace("(","{",1) 
-                                               
-                ifParts = function[index:closingBracketIndex].split(";")
-                if not len(ifParts) == 3:
-                    return ("Two values in if function necessary", "")
-                
-                if "if(" in function[index:closingBracketIndex]:
-                    return ("Nested if construct not allowed", "")
-                                         
-                for part in ifParts:
-                    if len(part) == 0:
-                        return ("Values in if construct necessary", "") 
-                             
-                compOpSearch = re.compile(r'<|>|==')
-                res = compOpSearch.search(ifParts[0])
-                if res == None:
-                    return ("Missing comparison operator","")
-
-                # check percentOfValues operator
-                findPercentOfValuesRegex = re.compile(r'percentOfValues\(?[0-9]*\)?')
-                percentParts = findPercentOfValuesRegex.findall(ifParts[0])
-                for percentPart in percentParts:
-                    if not "(" in percentPart or not ")" in percentPart:
-                        return ("Percentage value missing", "")
-                    if not (percentPart.split("(")[1].split(")")[0]).isnumeric():
-                        return ("No integer number as percentage given", "")
-
-                
-                andOrSeperatedParts = re.split("or|and", ifParts[0])
-                for andOrPart in andOrSeperatedParts:              
-                    comparedOperands = re.split(r'<|>|==', andOrPart)
-                    if len(comparedOperands) != 2:
-                        return ("Error in if condition", "")
-                    if "if{" in comparedOperands[0]:
-                        firstOperand = comparedOperands[0].split("if{")[1]
-                    else:
-                        firstOperand = comparedOperands[0]    
-                    secondOperand = comparedOperands[1]
-                    secondOperand = secondOperand.replace("=","")
-                    possOperandsRegex = re.compile(r'field|crossesPolygon|insidePolygon|math|raster|rnd|True|False')
-                    res = possOperandsRegex.search(firstOperand)
-                    if res == None and not firstOperand.isnumeric():
-                        return ("Error in first operand of if construct", "")                 
-                    res = possOperandsRegex.search(secondOperand)                              
-                    if res == None and not secondOperand.isnumeric():
-                        return ("Error in second operand of if construct", "")
-                     
-                    #check polygons set if polygon function used
-                    if firstOperand == "crossesPolygon" and secondOperand != "True" and secondOperand != "False":
-                         return ("crossesPolygon can only be compared to False or True", "")
-                    if firstOperand == "insidePolygon" and secondOperand != "True" and secondOperand != "False": 
-                        return ("insidePolygon can only be compared to False or True", "") 
-                          
-                if not "math" in ifParts[1] and not "raster" in ifParts[1] and not "rnd" in ifParts[1] and not ifParts[1].isnumeric() and not "." in ifParts[1]:
-                    return ("Invalid value in if construct", "")        
-                if not "math" in ifParts[2] and not "raster" in ifParts[2] and not "rnd" in ifParts[1] and not ifParts[2].isnumeric() and not "." in ifParts[1]:
-                    return ("Invalid value in if construct", "")      
-                                     
-        # check math constructs   
-        found = True
-        while(found):
-            found = False    
-            regex = re.compile(r'math.[a-z]+\(')            
-            res = regex.search(function)            
-            if res != None:                               
-                index = res.start()                                      
-                found = True                                                                                        
-                closingBracketIndex = GraphBuilder.findClosingBracketIndex(function[index:], index)                
-                function = function[0:closingBracketIndex] + "$" + function[closingBracketIndex+1:]                                                                                                                                               
-                function = function[0:index] + function[index:].replace("(","%",1) 
-                if("rnd" in function[index+4:closingBracketIndex] or "if" in function[index+4:closingBracketIndex] or "math" in function[index+4:closingBracketIndex]):
-                    return ("Nested construct in math", "")
-                
-                number = function[index:].split("$")[0].split("%")[1]
-                
-                if not "," in number and (not number.isnumeric() and not "field:" in number and not "raster" in number):
-                    return ("At least one operand in math construct necessary", "")
-                
-                if "," in number:
-                    multNumbers = number.split(",")
-                    if len(multNumbers) > 2:
-                        return ("Only operations with two variables supported", "")
-                    for n in multNumbers:                       
-                        if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n:
-                            return("Invalid value in math construct ","")
-         
-        # raster check       
-        regex = re.compile(r'raster\[[0-9]*\]:?')
-        res = regex.findall(function)
-        for matchString in res:
-         
-            rasterIndexNumber = matchString.split("[")[1].split("]")[0]
-            if not rasterIndexNumber.isnumeric():
-                return ("Index necessary to reference raster data", "")
-            if not ":" in matchString:
-                return(": missing after index of raster data", "")
-            
-            if int(rasterIndexNumber) > numberOfRasterData-1 or int(rasterIndexNumber) < 0:
-                return ("Invalid index of raster data","")               
-        
-        regex = re.compile(r'raster\[[0-9]+\]:[A-z]*')
-        res = regex.findall(function)
-        for matchString in res:               
-            analysisType = re.split("<|>|,|\)|=", matchString.split("]:")[1])[0]  
-            if not analysisType in possibleRasterAnalysis and not("percentOfValues" in analysisType):
-                return ("Invalid raster analysis", "")    
-       
-        # fields check
-        foundFieldConstruct = False 
-        regex = re.compile(r'field:?')  
-        res = regex.findall(function)
-        for matchString in res:        
-            foundFieldConstruct = True      
-            if not ":" in matchString:
-                return (": missing after field", "")
-        
-        fieldSet = False  
-        regex = re.compile(r'field:[A-z]+')   
-        res = regex.findall(function)  
-        for matchString in res: 
-            fieldSet = True
-            fieldName = matchString.split("field:")[1]
-            if not fieldName in possibleFields:
-                return ("Invalid field name", "")     
-        
-        if foundFieldConstruct == True and fieldSet == False:
-            return ("No field name defined","")
-                            
-        return ("No error found", function) 
+    def syntaxCheck(function, fields, numberOfRasterData, numberOfPolygons):
+        # formulaCheck method in FormulaCheck.py file
+        return formulaCheck(function, fields, numberOfRasterData, numberOfPolygons)
     
     def getCostFunction(self, index):
         return self.costFunctions[index]
@@ -380,9 +183,22 @@ class GraphBuilder:
         self.__randomOptions[optionType] = value        
     
     def __createRandomVertices(self):
-        for i in range(self.__randomOptions["numberOfVertices"]):
+        """
+        Create random vertices in specified area of the globe.
+        CRS is set to EPSG:4326 and the number of vertices can be defined as an option   .
+        """
+        seed = self.__randomOptions["seed"]
+        if seed is None:
+            random.seed()  # reset initial seed
+            seed = random.randrange(sys.maxsize)  # create seed because not possible to get seed from random
+        random.seed(seed)
+        self.graph.setRandomSeed(seed)
+
+        for i in range(self.__randomOptions["numberOfVertices"]):           
             if self.task is not None and self.task.isCanceled():
                 break
+            if self.task is not None:
+                self.task.setProgress(self.task.progress() + 10/self.__randomOptions["numberOfVertices"])
             if self.__randomOptions["area"] == "Germany":
                 self.graph.addVertex(QgsPointXY(random.uniform(6.803,13.480), random.uniform(47.420,55.000)))
             elif self.__randomOptions["area"] == "France":
@@ -401,20 +217,47 @@ class GraphBuilder:
                                                 random.uniform(rectangleExtent.yMinimum(), rectangleExtent.yMaximum())))
                 
     def __createVerticesForPoints(self):
-        for feat in self.vLayer.getFeatures():
+        """
+        Method creates a new vertex in the graph for every point inside
+        the given vectorLayer.
+        """
+        for feat in self.vLayer.getFeatures():            
             if self.task is not None and self.task.isCanceled():
                 break
+            if self.task is not None:
+                self.task.setProgress(self.task.progress() + 10/self.vLayer.featureCount())
             geom = feat.geometry()
+            
+            if self.__options["distanceStrategy"] == "Advanced":               
+                self.graph.pointsToFeatureHash[geom.asPoint().toString()] = feat
             self.graph.addVertex(geom.asPoint())
             
     def __createComplete(self):
+        """
+        Create an edge for every pair of vertices
+        """
         for i in range(self.graph.vertexCount()-1):
-            for j in range(i+1, self.graph.vertexCount()):
-                if self.task is not None and self.task.isCanceled():
+            if self.task is not None and self.task.isCanceled():
                     return
+            if self.task is not None:
+                if self.__options["distanceStrategy"] == "Advanced":
+                    newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                else:
+                    newProgress = self.task.progress() + 90/self.graph.vertexCount()    
+                if newProgress <= 100:               
+                    self.task.setProgress(newProgress)
+            for j in range(i+1, self.graph.vertexCount()):             
+                if self.__options["distanceStrategy"] == "Advanced":
+                    self.graph.featureMatchings.append(self.graph.mVertices[j].mCoordinates)
                 self.graph.addEdge(i, j)
-
-    def __createNearestNeighbor(self):      
+                if self.__options["edgeDirection"] == "Directed":
+                    self.graph.addEdge(j, i)
+    
+    def __createNearestNeighbor(self):
+        """
+        The edges for the options DistanceNN and Nearest neighbor are created inside
+        this method. A KD-Tree is used to find the nearest points.
+        """
         points = []
         for i in range(self.graph.vertexCount()):
             point = self.graph.vertex(i).point()
@@ -426,19 +269,29 @@ class GraphBuilder:
             if self.__options["createRandomGraph"] == True:
                 crsUnitRead = QgsCoordinateReferenceSystem("EPSG:4326")                
             else:
-                crsUnitRead = self.vLayer.crs() 
-            
+                crsUnitRead = self.vLayer.crs()            
 
-        for i in range(self.graph.vertexCount()):
+        for i in range(self.graph.vertexCount()):   
             if self.task is not None and self.task.isCanceled():
                 return
-            
+            if self.task is not None:
+                if self.__options["distanceStrategy"] == "Advanced":
+                    newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                else:
+                    newProgress = self.task.progress() + 90/self.graph.vertexCount()  
+                       
             point = self.graph.vertex(i).point()
             
             if self.__options["connectionType"] == "Nearest neighbor":
-                listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1)
+                if self.__options["edgeDirection"] == "Directed":
+                    listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1)
+                else:
+                    if len(self.graph.mVertices[i].mIncomingEdges) < self.__options["neighborNumber"]:
+                        listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1-len(self.graph.mVertices[i].mIncomingEdges))
+                    else:
+                        listOfNeighbors = []
             elif self.__options["connectionType"] == "DistanceNN":
-                # make distance transformation                                                                                                                                                                                                                      
+                    # make distance transformation
                     transDistValue = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                    
                     listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2))                                              
             for j in range(1,len(listOfNeighbors)):
@@ -448,11 +301,18 @@ class GraphBuilder:
                     neighborPoint = listOfNeighbors[j]
                 if i != neighborPoint[2]:
                     self.graph.addEdge(i,neighborPoint[2])
-            
+                
+                if self.__options["distanceStrategy"] == "Advanced":
+                    self.graph.featureMatchings.append(self.graph.mVertices[neighborPoint[2]].mCoordinates)
+
             if self.__options["connectionType"] == "Nearest neighbor" and self.__options["nnAllowDoubleEdges"] == False:
                 self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
 
     def __createCluster(self):
+        """
+        The edges for the options ClusterNN and ClusterComplete are created inside
+        this method. A KD-Tree is used to find the nearest points.
+        """
         # if a random graph was created the vLayer has to be set manually
         if self.__options["createRandomGraph"] == True:
 
@@ -488,14 +348,32 @@ class GraphBuilder:
                 self.kdTree = kdtree.create(points)
                 count = 0
                 for i in range(len(allPointsInCluster)):
+                    if self.task is not None:
+                        if self.__options["distanceStrategy"] == "Advanced":
+                            newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                        else:
+                            newProgress = self.task.progress() + 90/self.graph.vertexCount() 
+                    
                     if self.task is not None and self.task.isCanceled():
                         return
                     if len(allPointsInCluster)>1:
                         vertex = self.graph.vertex(allPointsInCluster[i]).point()
-                        nearestPoints = self.kdTree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],self.__options["neighborNumber"]+1)
+                        
+                        if self.__options["edgeDirection"] == "Directed":
+                            nearestPoints = self.kdTree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],self.__options["neighborNumber"]+1)
+                        else:
+                            nearestPoints = []
+                            if len(self.graph.vertex(allPointsInCluster[i]).mIncomingEdges) < self.__options["neighborNumber"]:
+                                nearestPoints = self.kdTree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],self.__options["neighborNumber"]+1-(len(self.graph.vertex(allPointsInCluster[i]).mIncomingEdges)))               
+                        
                         for t in range(1,len(nearestPoints)):
                             neighborPoint = nearestPoints[t][0].data
+                            
                             self.graph.addEdge(allPointsInCluster[i],neighborPoint[2])
+                            
+                            if self.__options["distanceStrategy"] == "Advanced":
+                                self.graph.featureMatchings.append(self.graph.mVertices[neighborPoint[2]].mCoordinates)
+                            
                         if self.__options["nnAllowDoubleEdges"] == False:
                             self.kdTree = self.kdTree.remove([vertex.x(),vertex.y(), allPointsInCluster[i]])
 
@@ -504,29 +382,18 @@ class GraphBuilder:
                     self.graph.vertex(allPointsInCluster[i]).setClusterID(cluster)
                     if self.task is not None and self.task.isCanceled():
                         return
+                    if self.task is not None:
+                        if self.__options["distanceStrategy"] == "Advanced":
+                            newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                        else:
+                            newProgress = self.task.progress() + 90/self.graph.vertexCount() 
                     for j in range(i+1,len(allPointsInCluster)):
                          self.graph.addEdge(allPointsInCluster[i],allPointsInCluster[j])
+                         if self.__options["edgeDirection"] == "Directed":
+                             self.graph.addEdge(allPointsInCluster[j], allPointsInCluster[i],)
+                         if self.__options["distanceStrategy"] == "Advanced":
+                            self.graph.featureMatchings.append(self.graph.mVertices[allPointsInCluster[j]].mCoordinates)
 
-    def __createDistanceNN(self):
-        points = []
-        for i in range(self.graph.vertexCount()):
-            point = self.graph.vertex(i).point()
-            points.append([point.x(),point.y(),i])
-
-        self.kdTree = kdtree.create(points)
-
-        for i in range(self.graph.vertexCount()):
-            if self.task is not None and self.task.isCanceled():
-                return
-            point = self.graph.vertex(i).point()
-            listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(self.__options["distance"][0],2))
-            
-            for j in range(1,len(listOfNeighbors)):
-                neighborPoint = listOfNeighbors[j]
-                self.graph.addEdge(i,neighborPoint[2])
-            
-            if self.__options["nnAllowDoubleEdges"] == False:
-                self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
 
     def __createGraphForLineGeometry(self):
         """
@@ -534,27 +401,67 @@ class GraphBuilder:
         very edge is a vertex in the graph and an edge is added between them.
         """
         # get all the lines and set end nodes as vertices and connections as edges
+        vertexHash = {}
+        lastVertexID = None
         for feature in self.vLayer.getFeatures():
+            if self.task is not None:
+                if self.__options["distanceStrategy"] == "Advanced":
+                    newProgress = self.task.progress() + 30/self.vLayer.featureCount()
+                else:
+                    newProgress = self.task.progress() + 100/self.vLayer.featureCount()
+                if newProgress <= 100:
+                    self.task.setProgress(newProgress)
+            
             if self.task is not None and self.task.isCanceled():
                 return
             geom = feature.geometry()
             if QgsWkbTypes.isMultiType(geom.wkbType()):
                 for part in geom.asMultiPolyline():
-                    for i in range(len(part)):
-                        addedID = self.graph.addVertex(part[i]) 
-                        if i!=0:                               
-                            self.graph.addEdge(addedID-1, addedID)
-                            self.graph.featureMatchings.append(feature)
-
+                    for i in range(len(part)):                   
+                        if part[i].toString() in vertexHash:                            
+                            searchVertex = vertexHash[part[i].toString()]
+                            if i!=0:                               
+                                self.graph.addEdge(lastVertexID, searchVertex)
+                                if self.__options["distanceStrategy"] == "Advanced":
+                                    self.graph.featureMatchings.append(feature)
+                            lastVertexID = searchVertex                                                       
+                        else:                                                          
+                            addedID = self.graph.addVertex(part[i])   
+                            vertexHash[part[i].toString()] = addedID                                                                                         
+                            if i!=0:                               
+                                self.graph.addEdge(lastVertexID, addedID)
+                                self.graph.featureMatchings.append(feature)
+                            lastVertexID = addedID    
             else:                        
                 vertices = geom.asPolyline()                       
                 for i in range(len(vertices)-1):
                     startVertex = vertices[i]
-                    endVertex = vertices[i+1]
-                    id1 = self.graph.addVertex(startVertex)
-                    id2 = self.graph.addVertex(endVertex)                    
-                    self.graph.addEdge(id1, id2)
-                    self.graph.featureMatchings.append(feature)
+                    endVertex = vertices[i+1]                  
+                    if startVertex.toString() in vertexHash and endVertex.toString() in vertexHash:
+                        searchVertex1 = vertexHash[startVertex.toString()]
+                        searchVertex2 = vertexHash[endVertex.toString()]
+                        self.graph.addEdge(searchVertex1, searchVertex2)
+                    
+                    elif startVertex.toString() in vertexHash:
+                        searchVertex = vertexHash[startVertex.toString()]
+                        id2 = self.graph.addVertex(endVertex) 
+                        vertexHash[endVertex.toString()] = id2
+                        self.graph.addEdge(searchVertex, id2)
+                    
+                    elif endVertex.toString() in vertexHash:
+                        searchVertex = vertexHash[endVertex.toString()]
+                        id1 = self.graph.addVertex(startVertex)
+                        vertexHash[startVertex.toString()] = id1
+                        self.graph.addEdge(id1, searchVertex)
+                    
+                    else:                                          
+                        id1 = self.graph.addVertex(startVertex)
+                        id2 = self.graph.addVertex(endVertex)  
+                        vertexHash[startVertex.toString()] = id1
+                        vertexHash[endVertex.toString()] = id2                  
+                        self.graph.addEdge(id1, id2)
+                        if self.__options["distanceStrategy"] == "Advanced":
+                            self.graph.featureMatchings.append(feature) 
 
         # add points and connection to network if additional points are given
         # use kd tree to get the nearest point
@@ -567,8 +474,7 @@ class GraphBuilder:
             # build kd tree
             self.kdTree = kdtree.create(points)
             counter = 0
-            for feature in self.additionalPointLayer.getFeatures():
-               
+            for feature in self.additionalPointLayer.getFeatures():              
                 if self.task is not None and self.task.isCanceled():
                     return
                 counter+=1
@@ -579,6 +485,10 @@ class GraphBuilder:
                 self.graph.addEdge(pointID, nearestPointID)
 
     def __removeIntersectingEdges(self):
+        """
+        Method is called if polygons as forbidden areas are given. All the intersecting edges
+        get deleted from the graph.
+        """
         # create the current edge layer
         currentEdges = self.createEdgeLayer(False,True)
         # call QGIS tool to extract all the edges which cross the polygon
@@ -713,8 +623,8 @@ class GraphBuilder:
     def createGraphLayer(self, addToCanvas):
         """
         Create graph layer from created graph
-        :param addToCanvas:
-        :return:
+        :type addToCanvas: Boolean
+        :return QgsGraphLayer
         """
         graphLayer = QgsGraphLayer()
 
@@ -775,6 +685,7 @@ class GraphBuilder:
         :return ExtGraph
         """
         self.graph = ExtGraph()
+        
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
         self.graph.setConnectionType(self.__options["connectionType"])
@@ -803,15 +714,6 @@ class GraphBuilder:
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:      
             self.__createGraphForLineGeometry()
 
-        # add every edge again in opposite direction if its an undirected graph
-        if self.__options["edgeDirection"] == "Undirected":
-            if self.task is not None and self.task.isCanceled():
-                return
-            eCount = self.graph.edgeCount()
-            for i in range(eCount):
-                edge = self.graph.edge(i)
-                self.graph.addEdge(edge.toVertex(), edge.fromVertex())  
-
         # remove edges that cross the polygons
         if self.__options["usePolygonsAsForbidden"] == True:
             self.__removeIntersectingEdges()
@@ -819,12 +721,13 @@ class GraphBuilder:
         # call AdvancedCostCalculations methods
         if self.__options["distanceStrategy"] == "Advanced":
             # create AdvancedCostCalculator object with the necessary parameters
-            costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands)
+            costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands, self.task, self.__options["createShortestPathView"])
 
             # call the setEdgeCosts method of the AdvancedCostCalculator for every defined cost function
             # the costCalculator returns a ExtGraph where costs are assigned multiple weights if more then one cost function is defined
             for func in self.costFunctions:
                 self.graph = costCalculator.setEdgeCosts(func)
+                self.shortestPathViewLayers = costCalculator.shortestPathViewLayers
 
         # create the layers for QGIS
         if self.__options["createGraphAsLayers"] == True:
@@ -838,8 +741,8 @@ class GraphBuilder:
     def makeGraphTask(self, task, graphLayer, graphName=""):
         """
         Task function of makeGraph() to build a graph in the background
-        :param task: own QgsTask instance
-        :return:
+        :param task: Own QgsTask instance
+        :return dictionary
         """
         QgsMessageLog.logMessage('Started task {}'.format(task.description()), level=Qgis.Info)
         # save task in instance for usage in other methods
@@ -860,7 +763,6 @@ class GraphBuilder:
         if not self.task.isCanceled():
             # set graph to graph layer
             graphLayer.setGraph(self.graph)
-                       
 
         if self.task.isCanceled():
             # if task is canceled by User or QGIS
@@ -870,4 +772,4 @@ class GraphBuilder:
         else:
             QgsMessageLog.logMessage("Make graph finished", level=Qgis.Info)
             self.task = None
-            return {"graph": graph, "graphLayer": graphLayer, "graphName": graphName}
+            return {"graph": graph, "graphLayer": graphLayer, "graphName": graphName, "shortestPathViewLayers": self.shortestPathViewLayers}

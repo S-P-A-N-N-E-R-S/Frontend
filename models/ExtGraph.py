@@ -141,6 +141,7 @@ class ExtGraph(QObject):
         self.clusterNumber = 5
         self.nnAllowDoubleEdges = True
         self.distance = 0
+        self.randomSeed = None
 
         self.kdTree = None
 
@@ -212,6 +213,9 @@ class ExtGraph(QObject):
 
     def setJobID(self, jobId):
         self.mJobId = jobId
+
+    def setRandomSeed(self, seed):
+        self.randomSeed = seed
 
     def setDistanceStrategy(self, strategy):
         """
@@ -307,7 +311,11 @@ class ExtGraph(QObject):
         toPoint = self.vertex(self.findVertexByID(edgeFromIdx.toVertex())).point()
         distArea = QgsDistanceArea()
         distArea.setEllipsoid(self.crs.ellipsoidAcronym())
-        return distArea.measureLine(fromPoint, toPoint)
+        ellDist = distArea.measureLine(fromPoint, toPoint)
+        if str(ellDist) == "nan":
+            return -1
+        else:
+            return ellDist
 
     def euclideanDist(self, edgeIdx):
         edgeFromIdx = self.edge(edgeIdx)
@@ -914,7 +922,7 @@ class ExtGraph(QObject):
             vertexIDCount = 0
             for line in lines:
                 if '<node' in line:
-                    nodeIDs.append(line.split('id="')[1].split('"')[0])
+                    nodeIDs.append(int(line.split('id="')[1].split('"')[0]))
 
                 elif 'x="' in line:
                     xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
@@ -925,8 +933,8 @@ class ExtGraph(QObject):
                     vertexIDCount += 1
 
                 elif '<edge' in line:
-                    fromVertex = line.split('source="')[1].split('"')[0]
-                    toVertex = line.split('target="')[1].split('"')[0]
+                    fromVertex = int(line.split('source="')[1].split('"')[0])
+                    toVertex = int(line.split('target="')[1].split('"')[0])
                     # fromVertexID = 0
                     # toVertexID = 0
 
@@ -940,10 +948,7 @@ class ExtGraph(QObject):
                     # if edgeTypeDirection == "Undirected":
                     #     self.addEdge(toVertexID, fromVertexID)
 
-                    self.addEdge(fromVertex, toVertex)
-                    if edgeTypeDirection == "Undirected":
-                        # TODO: direction in graph and hasEdge
-                        self.addEdge(toVertex, fromVertex)
+                    self.addEdge(fromVertex, toVertex)                    
 
         # if no coordinates are given assign random
         else:
@@ -970,6 +975,4 @@ class ExtGraph(QObject):
                     # self.addEdge(fromVertexID, toVertexID)
                     
                     self.addEdge(fromVertex, toVertex)
-                    if edgeTypeDirection == "Undirected":
-                        # TODO: direction in graph and hasEdge
-                        self.addEdge(toVertex, fromVertex)
+                   

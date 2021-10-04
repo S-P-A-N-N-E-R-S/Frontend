@@ -1,14 +1,7 @@
 from .baseContentView import BaseContentView
 from ..controllers.ogdfAnalysis import OGDFAnalysisController
-from ..models.ExtGraph import ExtGraph
-from ..models.QgsGraphLayer import QgsGraphLayer
+from ..network import parserManager
 from .widgets.QgsOgdfParametersWidget import QgsOGDFParametersWidget
-from .. import mainPlugin
-
-from qgis.core import QgsMapLayerProxyModel
-from qgis.PyQt.QtWidgets import QLabel
-
-import os
 
 
 class OGDFAnalysisView(BaseContentView):
@@ -40,8 +33,8 @@ class OGDFAnalysisView(BaseContentView):
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
 
     def _analysisChanged(self):
-        requestName, requestKey = self.getAnalysis()
-        request = mainPlugin.OGDFPlugin.requests.get(requestKey)
+        _requestName, requestKey = self.getAnalysis()
+        request = parserManager.getRequestParser(requestKey)
         if request:
             self.setParameterFields(request.getFieldInfo())
             # show description

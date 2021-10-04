@@ -46,7 +46,6 @@ class ExtVertexUndoCommand(QUndoCommand):
             self.undoString = "Move vertex " + str(self.mVertexID) + " back"
         
         self.redoString = self.mOperation + " vertex " + str(self.mVertexID)
-
         self.setText(self.undoString)
     
     def __del__(self):
