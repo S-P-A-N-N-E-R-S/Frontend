@@ -135,6 +135,10 @@ class ExtGraph(QObject):
         self.mMaxEdgeID = 0
         self.mMaxVertexID = 0
 
+        # holds the feature IDs if lines where used to create graph
+        self.featureMatchings = []
+        self.pointsToFeatureHash = {}
+
         # default information from GraphBuilder
         self.numberNeighbours = 20
         self.edgeDirection = "Directed"
