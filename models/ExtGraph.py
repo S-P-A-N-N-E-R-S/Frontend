@@ -880,7 +880,9 @@ class ExtGraph(QObject):
             '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
 
         file.writelines(header)
-        file.write('\t<graph id="G" edgedefault="directed">\n')
+
+        edgeDefault = "directed" if self.edgeDirection == "Directed" else "undirected"
+        file.write('\t<graph id="G" edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy + '">\n')
 
         for idx in range(self.mVertexCount):
             vertex = self.vertex(idx)
@@ -895,7 +897,7 @@ class ExtGraph(QObject):
 
         for idx in range(self.mEdgeCount):
             edge = self.edge(idx)
-            edgeLine = '\t\t<edge source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
+            edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
             file.write(edgeLine)
 
         file.write("\t</graph>\n")
@@ -920,6 +922,10 @@ class ExtGraph(QObject):
             elif 'x="' in line and 'y="' in line:
                 nodeCoordinatesGiven = True
                 break
+            
+            if 'distancestrategy' in line:
+                self.distanceStrategy = line.split('distancestrategy="')[1].split('"')[0]
+                print(self.distanceStrategy)
 
         # maybe no coordinate are given in the .graphml file
         if nodeCoordinatesGiven == True:
