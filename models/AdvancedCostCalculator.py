@@ -66,7 +66,8 @@ class AdvancedCostCalculator():
         :type edgesInPolygonList: List of features
         :type edgesCrossingPolygonsList: List of features
         :return translated part as string
-        """    
+        """  
+          
         # check if part string was already translated
         if part in self.translatedParts.keys():
             return self.translatedParts[part]                       
@@ -131,23 +132,27 @@ class AdvancedCostCalculator():
             except:
                 pass
                      
-        if "rnd?" in part:                            
+        if "rnd?" in part:                      
             lb = part.split("?")[1].split("§")[0]
             ub = part.split("&")[0].split("§")[1]                                 
             
-            if lb.isnumeric() and ub.isnumeric():               
+            if lb.isnumeric() and ub.isnumeric():   
+                if int(lb) > int(ub):
+                    return str(0)                        
                 return str(random.randint(int(lb),int(ub)))              
             try:
                 convertedLB = float(eval(lb))
-                convertedUB = float(eval(ub))                               
+                convertedUB = float(eval(ub))
+                if convertedLB > convertedUB:
+                    return str(0)                                           
                 return str(random.uniform(convertedLB,convertedUB))               
             except:
                 pass    
-                                                             
+            
             return part
-                                                   
+                                                                                                               
         # translate if part        
-        if "if" in part:                                
+        if "if" in part:                            
             expression = part.split(";")[0].split("{",1)[1]    
             expression = expression.replace("and", " and ")
             expression = expression.replace("or", " or ")                                
@@ -160,7 +165,7 @@ class AdvancedCostCalculator():
                         equalTrue = False
                         for l in list:
                             toEval = re.sub(r"pixelValue\(([0-9]+,)+[0-9]+\)", "", expPart)                        
-                            toEval = l + toEval                       
+                            toEval = l + toEval                     
                             if eval(toEval) == True:
                                 expression = expression.replace(expPart, " True ")    
                                 equalTrue = True
@@ -171,7 +176,7 @@ class AdvancedCostCalculator():
                     # only one value in list
                     else:                     
                         toEval = re.sub(r"pixelValue\([0-9]\)", "", expPart)
-                        toEval = listString + toEval
+                        toEval = listString + toEval                      
                         if eval(toEval) == True:
                             expression = expression.replace(expPart, " True ")    
                             break                
@@ -187,15 +192,14 @@ class AdvancedCostCalculator():
                     for l in range(1, len(list)):
                         toEval = re.sub(r"percentOfValues\(([0-9]+,)+[0-9]+\)", "", expPart) 
                         toEval = list[l] + toEval
-                      
+                        
                         if eval(toEval) == True:
-                            trueExpFount+=1  
-                                                         
+                            trueExpFount+=1                                      
                     if int(percentage) <= (trueExpFount / (len(list)-1))*100:
                         expression = expression.replace(expPart, " True ")
                     else:
                         expression = expression.replace(expPart, " False ")       
-                     
+                    
             if eval(expression) == True:              
                 return str(eval(part.split(";")[1]))
             else:
@@ -228,7 +232,7 @@ class AdvancedCostCalculator():
                 return str((self.graph.pointsToFeatureHash[self.graph.vertex(edge.toVertex()).point().toString()])[name])
                                   
         # analysis of raster data
-        if "raster[" in part:               
+        if "raster[" in part:             
             rasterDataID = int(part.split("[")[1].split("]")[0])                
             bandForRaster = self.rasterBands[rasterDataID]    
             stringForLookup = "SAMPLE_" + str(bandForRaster)
@@ -389,20 +393,22 @@ class AdvancedCostCalculator():
         :type constructCall: Boolean
         :return translated formula
         """
-        found = True
-        while found:
-            found = False
-            regex = re.compile(regex)
+        
+        regex = re.compile(regex)
+        matches = regex.finditer(costFunction)
+        
+        matchesTranslationHash = {}
+        
+        for res in matches:       
+            translated = self.__translate(costFunction[res.start():res.end()], edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)
+            if not constructCall:
+                self.translatedParts[costFunction[res.start():res.end()]] = translated  
             
-            res = regex.search(costFunction)
-            
-            if res != None:
-                found = True          
-                translated = self.__translate(costFunction[res.start():res.end()], edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)
-                if not constructCall:
-                    self.translatedParts[costFunction[res.start():res.end()]] = translated               
-                costFunction = costFunction[:res.start()] + translated + costFunction[res.end():]                
-                
+            matchesTranslationHash[res.group()] = translated
+          
+        for key in matchesTranslationHash.keys():
+            costFunction = costFunction.replace(key, matchesTranslationHash[key])
+
         return costFunction
      
     def __fullyTranslatedCheck(self, costFunction):
@@ -564,6 +570,7 @@ class AdvancedCostCalculator():
                     break
                 for regex in constructRegexList:
                     costFunction = self.__translateRegexSearch(costFunction, regex, i, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList, True)      
+            
             weights.append(eval(costFunction))
             
         # append the list        
