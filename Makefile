@@ -57,7 +57,7 @@ PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 #	* Windows:
 #	  AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins'
 
-QGISDIR=.local/share/QGIS/QGIS3/profiles/default
+QGISDIR=.local/share/QGIS/QGIS3/profiles/default/python/plugins/
 
 #################################################
 # Normally you would not need to edit below here
@@ -89,11 +89,11 @@ deploy: transcompile proto pybind_build
 	@echo "------------------------------------------"
 	# The deploy  target only works on unix like operating system where
 	# the Python plugin directory is located at:
-	# $HOME/$(QGISDIR)/python/plugins
-	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(PY_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	$(foreach dir, $(DIRECTORIES), if [ -d "$(dir)" ]; then cp -vfr $(dir) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME); fi;)
-	cp -vf $(EXTRAS) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	# $HOME/$(QGISDIR)
+	mkdir -p $(HOME)/$(QGISDIR)/$(PLUGINNAME)
+	cp -vf $(PY_FILES) $(HOME)/$(QGISDIR)/$(PLUGINNAME)
+	$(foreach dir, $(DIRECTORIES), if [ -d "$(dir)" ]; then cp -vfr $(dir) $(HOME)/$(QGISDIR)/$(PLUGINNAME); fi;)
+	cp -vf $(EXTRAS) $(HOME)/$(QGISDIR)/$(PLUGINNAME)
 	#cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) 			# Translation files
 	#cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
 	# Copy extra directories if any
@@ -105,7 +105,7 @@ derase:
 	@echo "-------------------------"
 	@echo "Removing deployed plugin."
 	@echo "-------------------------"
-	rm -Rf $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	rm -Rf $(HOME)/$(QGISDIR)/$(PLUGINNAME)
 
 proto:
 	mkdir -p network/protocol/build
