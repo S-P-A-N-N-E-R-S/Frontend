@@ -155,7 +155,6 @@ class TestGraphBuilder(TestCase):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.shp")))
         self.graphBuilder.setOption("connectionType", "DistanceNN")
         self.graphBuilder.setOption("nnAllowDoubleEdges", True)
-        self.graphBuilder.setOption("neighborNumber", 2)
         self.graphBuilder.setOption("distance", (0.5, QgsUnitTypes.DistanceDegrees))
 
         graph = self.graphBuilder.makeGraph()
