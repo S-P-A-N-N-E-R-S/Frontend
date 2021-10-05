@@ -332,7 +332,7 @@ class QgsGraphMapTool(QgsMapTool):
                     foundVerticesIDString += str(vertex.id())
                     if i + 1 < len(foundVertexIndices):
                         foundVerticesIDString += ", "
-                    if i % 5 == 0:
+                    if i % 5 == 0 and i > 0:
                         foundVerticesIDString += "\n"
 
                 # QLabel with information about the found vertices
