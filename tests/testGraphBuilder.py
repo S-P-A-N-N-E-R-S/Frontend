@@ -317,62 +317,6 @@ class TestGraphBuilder(TestCase):
         for vertex in graph.vertices():
             self.assertTrue(rectangle.contains(vertex.point()))
 
-    def test_add_vertex_complete(self):
-        self.graphBuilder.setRandomOption("numberOfVertices", 10)
-        self.graphBuilder.setOption("connectionType", "Complete")
-        graph = self.graphBuilder.makeGraph()
-
-        self.graphBuilder.addVertex([-1.0, 1.0])
-        modGraph = self.graphBuilder.makeGraph()
-
-        self.assertEqual(11, modGraph.vertexCount())
-        newVertex = modGraph.vertex(modGraph.findVertex(QgsPointXY(-1.0, 1.0)))
-        self.assertTrue(len(newVertex.outgoingEdges())+len(newVertex.incomingEdges()), 10)
-
-    def test_add_vertex_nearest_neighbor(self):
-        self.graphBuilder.setRandomOption("numberOfVertices", 10)
-        self.graphBuilder.setOption("connectionType", "Nearest neighbor")
-        graph = self.graphBuilder.makeGraph()
-
-        self.graphBuilder.addVertex([-1.0, 1.0])
-        modGraph = self.graphBuilder.makeGraph()
-
-        self.assertEqual(11, modGraph.vertexCount())
-        self.assertNotEqual(-1, modGraph.findVertex(QgsPointXY(-1.0, 1.0)))
-
-    def test_add_vertex_distanceNN(self):
-        self.graphBuilder.setRandomOption("numberOfVertices", 10)
-        self.graphBuilder.setOption("connectionType", "DistanceNN")
-        graph = self.graphBuilder.makeGraph()
-
-        self.graphBuilder.addVertex([-1.0, 1.0])
-        modGraph = self.graphBuilder.makeGraph()
-
-        self.assertEqual(11, modGraph.vertexCount())
-        self.assertNotEqual(-1, modGraph.findVertex(QgsPointXY(-1.0, 1.0)))
-
-    def test_add_vertex_clusterComplete(self):
-        self.graphBuilder.setRandomOption("numberOfVertices", 10)
-        self.graphBuilder.setOption("connectionType", "ClusterComplete")
-        graph = self.graphBuilder.makeGraph()
-
-        self.graphBuilder.addVertex([-1.0, 1.0])
-        modGraph = self.graphBuilder.makeGraph()
-
-        self.assertEqual(11, modGraph.vertexCount())
-        self.assertNotEqual(-1, modGraph.findVertex(QgsPointXY(-1.0, 1.0)))
-
-    def test_add_vertex_clusterNN(self):
-        self.graphBuilder.setRandomOption("numberOfVertices", 10)
-        self.graphBuilder.setOption("connectionType", "ClusterNN")
-        graph = self.graphBuilder.makeGraph()
-
-        self.graphBuilder.addVertex([-1.0, 1.0])
-        modGraph = self.graphBuilder.makeGraph()
-
-        self.assertEqual(11, modGraph.vertexCount())
-        self.assertNotEqual(-1, modGraph.findVertex(QgsPointXY(-1.0, 1.0)))
-
 
 if __name__ == '__main__':
     unittest.main()

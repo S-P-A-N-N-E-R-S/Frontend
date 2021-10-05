@@ -2,6 +2,7 @@ from qgis.testing import unittest, start_app, TestCase
 from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem
 
 from ..models.ExtGraph import ExtGraph
+from ..models.GraphBuilder import GraphBuilder
 from ..helperFunctions import getPluginPath
 
 import os
@@ -69,6 +70,8 @@ class TestExtGraph(TestCase):
         self.assertEqual(QgsPointXY(0.5, 0.5), self.graph.vertex(fifthIndex).point())
 
     def test_edge_addition(self):
+        self.graph.setSorted(False)
+
         firstVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
         secondVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
         thirdVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 1.0))
@@ -236,9 +239,61 @@ class TestExtGraph(TestCase):
         self.assertEqual(firstVertexIndex, self.graph.findVertex(QgsPointXY(1.5, 1.0), 1))
         self.assertEqual(secondVertexIndex, self.graph.findVertex(QgsPointXY(0.0, 0.0), 0))
 
-    def test_addVertexWithEdges(self):
-        # todo: the current version does not look finished
-        pass
+    def test_add_vertex_complete(self):
+        graphBuilder = GraphBuilder()
+        graphBuilder.setRandomOption("numberOfVertices", 10)
+        graphBuilder.setOption("connectionType", "Complete")
+        graph = graphBuilder.makeGraph()
+
+        graph.addVertexWithEdges([-1.0, 1.0])
+
+        self.assertEqual(11, graph.vertexCount())
+        newVertex = graph.vertex(graph.findVertex(QgsPointXY(-1.0, 1.0)))
+        self.assertTrue(len(newVertex.outgoingEdges())+len(newVertex.incomingEdges()), 10)
+
+    def test_add_vertex_nearest_neighbor(self):
+        graphBuilder = GraphBuilder()
+        graphBuilder.setRandomOption("numberOfVertices", 10)
+        graphBuilder.setOption("connectionType", "Nearest neighbor")
+        graph = graphBuilder.makeGraph()
+
+        graph.addVertexWithEdges([-1.0, 1.0])
+
+        self.assertEqual(11, graph.vertexCount())
+        self.assertNotEqual(-1, graph.findVertex(QgsPointXY(-1.0, 1.0)))
+
+    def test_add_vertex_distanceNN(self):
+        graphBuilder = GraphBuilder()
+        graphBuilder.setRandomOption("numberOfVertices", 10)
+        graphBuilder.setOption("connectionType", "DistanceNN")
+        graph = graphBuilder.makeGraph()
+
+        graph.addVertexWithEdges([-1.0, 1.0])
+
+        self.assertEqual(11, graph.vertexCount())
+        self.assertNotEqual(-1, graph.findVertex(QgsPointXY(-1.0, 1.0)))
+
+    def test_add_vertex_clusterComplete(self):
+        graphBuilder = GraphBuilder()
+        graphBuilder.setRandomOption("numberOfVertices", 10)
+        graphBuilder.setOption("connectionType", "ClusterComplete")
+        graph = graphBuilder.makeGraph()
+
+        graph.addVertexWithEdges([-1.0, 1.0])
+
+        self.assertEqual(11, graph.vertexCount())
+        self.assertNotEqual(-1, graph.findVertex(QgsPointXY(-1.0, 1.0)))
+
+    def test_add_vertex_clusterNN(self):
+        graphBuilder = GraphBuilder()
+        graphBuilder.setRandomOption("numberOfVertices", 10)
+        graphBuilder.setOption("connectionType", "ClusterNN")
+        graph = graphBuilder.makeGraph()
+
+        graph.addVertexWithEdges([-1.0, 1.0])
+
+        self.assertEqual(11, graph.vertexCount())
+        self.assertNotEqual(-1, graph.findVertex(QgsPointXY(-1.0, 1.0)))
 
 
 if __name__ == '__main__':
