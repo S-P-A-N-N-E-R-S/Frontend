@@ -77,9 +77,6 @@ class AvailableHandlersResponse:
             for result in handler.results:
                 responseObj.addResult(self.parseResult(result))
 
-            responseObj.initEdgeCostFields()
-            responseObj.initVertexCostFields()
-
             if not requestObj.key:
                 # raise ParseError("Missing handlerType")
                 requestObj.key = requestObj.name
