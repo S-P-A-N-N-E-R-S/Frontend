@@ -62,7 +62,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         if isinstance(self.mGraph, ExtGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
-                converter = iface.mapCanvas().getCoordinateTransform()
+                converter = self.renderContext().mapToPixel()
                 
                 for idx in range(self.mGraph.vertexCount()):
                     vertex = self.mGraph.vertex(idx)
@@ -195,6 +195,9 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mShowEdgeText = False
         self.mShowDirection = False
         self.mShowLines = True
+
+        self.exportPoints = True
+        self.exportLines = True
 
         self.mRandomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
