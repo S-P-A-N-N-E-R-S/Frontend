@@ -73,17 +73,20 @@ class BaseGraphResponse(BaseResponse):
         return vertexCostFields
 
     def initGraphField(self):
-        self.data[self.graphKey] = ExtGraph()
+        newGraph = ExtGraph()
+        newGraph.setDistanceStrategy("Advanced")
+        self.data[self.graphKey] = newGraph
 
-    def initEdgeCostFields(self):
-        for index, result in enumerate(self.results.values()):
+    def initCostFields(self):
+        edgeCostIndex = 0
+        vertexCostIndex = 0
+        for result in self.results.values():
             if result.type == available_handlers_pb2.ResultInformation.HandlerReturnType.EDGE_COSTS:
-                self.data[result.key] = index
-
-    def initVertexCostFields(self):
-        for index, result in enumerate(self.results.values()):
+                self.data[result.key] = edgeCostIndex
+                edgeCostIndex += 1
             if result.type == available_handlers_pb2.ResultInformation.HandlerReturnType.VERTEX_COSTS:
-                self.data[result.key] = index
+                self.data[result.key] = vertexCostIndex
+                vertexCostIndex += 1
 
     def addResult(self, result):
         if isinstance(result, graphField.GraphResult):
@@ -99,8 +102,7 @@ class BaseGraphResponse(BaseResponse):
     def resetData(self):
         super().resetData()
         self.initGraphField()
-        self.initEdgeCostFields()
-        self.initVertexCostFields()
+        self.initCostFields()
 
     def getGraph(self):
         return self.data[self.graphKey]
