@@ -1,5 +1,6 @@
 from qgis.testing import unittest, start_app, TestCase
 from qgis.core import QgsApplication, QgsProviderRegistry, QgsProviderMetadata, QgsProject, QgsPointXY, QgsRenderChecker, QgsMapSettings, QgsRectangle, QgsVectorLayer, QgsCoordinateReferenceSystem
+from qgis.utils import iface
 
 from qgis.PyQt.QtGui import QColor
 
@@ -78,9 +79,10 @@ class TestQgsGraphLayer(TestCase):
         graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")
         self.graph.readGraphML(graphmlFile)
         self.graphLayer.setGraph(self.graph)
-        self.graphLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         pointLayer, lineLayer = self.graphLayer.createVectorLayer()
+        pointLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+        lineLayer.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         # save to temporary shapefile due to conflicts with geometry type
         tmp_path = os.path.join(self.tempDir, "graph_vertices_layer.shp")
