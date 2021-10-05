@@ -372,14 +372,16 @@ class ExtGraph(QObject):
         vertex1ID = self.vertex(vertex1Idx).id()
         vertex2ID = self.vertex(vertex2Idx).id()
 
-        for edgeIdx in self.vertex(vertex1Idx).outgoingEdges():
+        for edgeID in self.vertex(vertex1Idx).outgoingEdges():
+            edgeIdx = self.findEdgeByID(edgeID)
             edge = self.mEdges[edgeIdx]
 
             if edge.fromVertex() == vertex1ID and edge.toVertex() == vertex2ID:
                 return edgeIdx
 
         if self.edgeDirection == "Undirected":
-            for edgeIdx in self.vertex(vertex1Idx).incomingEdges():
+            for edgeID in self.vertex(vertex1Idx).incomingEdges():
+                edgeIdx = self.findEdgeByID(edgeID)
                 edge = self.mEdges[edgeIdx]
 
                 if edge.fromVertex() == vertex2ID and edge.toVertex() == vertex1ID:
