@@ -640,7 +640,7 @@ class ExtGraph(QObject):
                 rangeStart = 1
                 rangeEnd = len(listOfNeighbors)
             elif self.mConnectionType == "DistanceNN":
-                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(self.distance,2))
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(self.distance[0],2))
                 rangeStart = 0
                 rangeEnd = len(listOfNeighbors)-1
 
