@@ -48,7 +48,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     costFunction = function.replace(" ", "").replace('"', '')
     
     function = function.replace(" ", "").replace('"', '')
-    formulaParts = re.split("\+|-|\*|/|;|<|>", costFunction)
+    formulaParts = re.split("\+|-|\*|/|;|<|>|==", costFunction)
     possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
     possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance", "standDev", "gradientSum", "gradientMin", "gradientMax", 
                                "ascent", "descent", "totalClimb", "spSum", "spMean", "spMedian", "spMin", "spMax", 
