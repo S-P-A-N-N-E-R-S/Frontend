@@ -253,17 +253,19 @@ class AdvancedCostCalculator():
                     heurID = int(part.split("(")[1].split(")")[0].split(",")[0])
                 else:
                     heurID = int(part.split("(")[1].split(")")[0]) 
-                    
+                numberOfDiagonals = None   
                 for aStarObj in self.aStarAlgObjects:
                     
-                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:               
+                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:   
+                                  
                         if self.pixelValuesForEdge[rasterDataID*6 + heurID] == None:            
                             pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
                             self.pixelValuesForEdge[rasterDataID*6 + heurID] = pixelValues
+                        numberOfDiagonals = aStarObj.getNumberOfDiagonals()  
                 if "," in part:
                     part = part.split("(")[0] + "(" + part.split(",")[1]   
 
-                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[rasterDataID*6 + heurID], part.split(":sp")[1], rasterDataID)
+                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[rasterDataID*6 + heurID], part.split(":sp")[1], rasterDataID, numberOfDiagonals)
             else:
                 return self.__calculateRasterAnalysis(self.pointValuesForEdge[rasterDataID], part.split(":")[1])
                    
@@ -273,7 +275,7 @@ class AdvancedCostCalculator():
         
         return str("0")
           
-    def __calculateRasterAnalysis(self, values, analysis, rLayerIndex = 0):
+    def __calculateRasterAnalysis(self, values, analysis, rLayerIndex = 0, numberOfDiagonals = None):
         """
         Method is responsible to translate all the raster analysis constructs.
         
@@ -343,16 +345,25 @@ class AdvancedCostCalculator():
             listOfPixelValuesAsString = listOfPixelValuesAsString + ")"           
             return listOfPixelValuesAsString
         elif "euclidean" in analysis.lower():
-            shortestPathEucl = self.euclDistPixelNeighbors[rLayerIndex] * len(values)-1
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.euclDistPixelNeighbors[rLayerIndex],2) + math.pow(self.euclDistPixelNeighbors[rLayerIndex],2)))            
+            nonDiagonalLength = self.euclDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
+            shortestPathEucl = diagonalLength + nonDiagonalLength     
             return str(shortestPathEucl)
         elif "manhattan" in analysis.lower():
-            shortestPathMan = self.manDistPixelNeighbors[rLayerIndex] * len(values)-1
+            shortestPathMan = self.manDistPixelNeighbors[rLayerIndex] * len(values)-1          
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.manDistPixelNeighbors[rLayerIndex],2) + math.pow(self.manDistPixelNeighbors[rLayerIndex],2)))            
+            nonDiagonalLength = self.manDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
+            shortestPathMan = diagonalLength + nonDiagonalLength           
             return str(shortestPathMan)
-        elif "geodesic" in analysis.lower():
-            shortestPathGeo = self.geoDistPixelNeighbors[rLayerIndex] * len(values)-1
+        elif "geodesic" in analysis.lower():   
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.geoDistPixelNeighbors[rLayerIndex],2) + math.pow(self.geoDistPixelNeighbors[rLayerIndex],2)))            
+            nonDiagonalLength = self.geoDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
+            shortestPathGeo = diagonalLength + nonDiagonalLength                           
             return str(shortestPathGeo)
         elif "ellipsoidal" in analysis.lower():
-            shortestPathEll = self.ellDistPixelNeighbors[rLayerIndex] * len(values)-1    
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.ellDistPixelNeighbors[rLayerIndex],2) + math.pow(self.ellDistPixelNeighbors[rLayerIndex],2)))            
+            nonDiagonalLength = self.ellDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
+            shortestPathEll = diagonalLength + nonDiagonalLength     
             return str(shortestPathEll)
     
     def __createEdgeLayer(self): 
@@ -466,6 +477,7 @@ class AdvancedCostCalculator():
         
         # precalculate the distance between neighboring pixels 
         if "spEuclidean" in costFunction or "spManhattan" in costFunction or "spGeodesic" in costFunction or "spEllipsoidal" in costFunction:
+            
             for rLayer in self.rLayers:
                 ds = gdal.Open(rLayer.source())
                 cols = ds.RasterXSize
@@ -482,7 +494,7 @@ class AdvancedCostCalculator():
                 originalPoint = QgsPointXY(xCoord, yCoord)
                 
                 #get coordinates of a neighbor
-                xCoordN = (pixelWidth*1) + xOrigin + (pixelWidth/2)
+                xCoordN = xOrigin + (pixelWidth/2)
                 yCoordN = (pixelHeight*1) + yOrigin + (pixelHeight/2) 
                 originalPointN = QgsPointXY(xCoordN, yCoordN)
                 

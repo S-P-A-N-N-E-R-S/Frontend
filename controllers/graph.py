@@ -23,7 +23,7 @@ class CreateGraphController(BaseController):
         Constructor
         :type view: CreateGraphView
         """
-        super().__init__(view)                         
+        super().__init__(view)                           
                 
         self.view.addRandomArea(self.tr("Germany"), "Germany")
         self.view.addRandomArea(self.tr("France"), "France")
@@ -32,8 +32,8 @@ class CreateGraphController(BaseController):
         self.view.addRandomArea(self.tr("Rome"), "Rome")
         self.view.addRandomArea(self.tr("Australia"), "Australia")
 
-        self.view.addConnectionType(self.tr("None"), "None")
         self.view.addConnectionType(self.tr("Nearest neighbor"), "Nearest neighbor")
+        self.view.addConnectionType(self.tr("None"), "None")      
         self.view.addConnectionType(self.tr("Complete"), "Complete")
         self.view.addConnectionType(self.tr("ClusterComplete"), "ClusterComplete")
         self.view.addConnectionType(self.tr("ClusterNN"), "ClusterNN")

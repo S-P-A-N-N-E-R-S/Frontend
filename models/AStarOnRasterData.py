@@ -87,6 +87,9 @@ class AStarOnRasterData:
 		numpyTransform = np.matrix(self.aStarCObject.getShortestPathMatrix3())
 		return numpyTransform
 	
+	def getNumberOfDiagonals(self):
+		return self.aStarCObject.getNumberOfDiagonals()
+	
 	
 	
 	
