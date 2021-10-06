@@ -1,7 +1,7 @@
 from qgis.gui import QgsMessageBar
 from qgis.core import Qgis
 
-from PyQt5.QtWidgets import QFileDialog, QAction
+from PyQt5.QtWidgets import QFileDialog
 from qgis.PyQt.QtCore import QObject
 
 
@@ -20,7 +20,7 @@ class BaseContentView(QObject):
 
         # setup message bar
         self.bar = QgsMessageBar()
-        self.dialog.content_widget.layout().insertWidget(0, self.bar)
+        self.dialog.content_widget.layout().insertWidget(-1, self.bar)
 
     def setMinimized(self, minimized=True):
         """ Minimizes the plugin dialog """
