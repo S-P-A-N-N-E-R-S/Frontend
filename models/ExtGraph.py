@@ -887,7 +887,13 @@ class ExtGraph(QObject):
                 advancedKeys += '\t<key id="c' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
 
         edgeDefault = "directed" if self.edgeDirection == "Directed" else "undirected"
-        file.write('\t<graph id="G" edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy + '">\n')
+
+        graphString = '\t<graph id="G" '
+        graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
+        graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
+        graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
+        graphString += (('" seed="' + str(self.randomSeed)) if self.randomSeed else '') +'">\n'
+        file.write(graphString) 
 
         for idx in range(self.mVertexCount):
             vertex = self.vertex(idx)
@@ -931,12 +937,25 @@ class ExtGraph(QObject):
         for line in lines:
             if 'edgedefault="undirected"' in line:
                 edgeTypeDirection = "Undirected"
-            elif 'x="' in line and 'y="' in line:
-                nodeCoordinatesGiven = True
-                break
             
             if 'distancestrategy' in line:
                 self.distanceStrategy = line.split('distancestrategy="')[1].split('"')[0]
+
+            if 'numberneighbors' in line:
+                self.numberNeighbours = int(line.split('numberneighbors="')[1].split('"')[0])
+
+            if 'nnallowdoubleedges' in line:
+                self.nnAllowDoubleEdges = line.split('nnallowdoubleedges="')[1].split('"')[0] == "True"
+
+            if 'distance=' in line:
+                self.distance = [float(line.split('distance="')[1].split('"')[0])]
+
+            if 'seed' in line:
+                self.randomSeed = float(line.split('seed="')[1].split('"')[0])
+
+            if 'x="' in line and 'y="' in line:
+                nodeCoordinatesGiven = True
+                break
 
         self.edgeDirection = edgeTypeDirection
 
