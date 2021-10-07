@@ -640,7 +640,8 @@ class ExtGraph(QObject):
                 rangeStart = 1
                 rangeEnd = len(listOfNeighbors)
             elif self.mConnectionType == "DistanceNN":
-                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(self.distance,2))
+                transDistValue = self.distance[0] * QgsUnitTypes.fromUnitToUnitFactor(self.distance[1], self.crs.mapUnits())
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(transDistValue,2))
                 rangeStart = 0
                 rangeEnd = len(listOfNeighbors)-1
 
@@ -892,7 +893,8 @@ class ExtGraph(QObject):
         graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
         graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
         graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
-        graphString += (('" seed="' + str(self.randomSeed)) if self.randomSeed else '') +'">\n'
+        graphString += '" distanceunit="' + str(self.distance[1]) + (('" seed="' + str(self.randomSeed)) if self.randomSeed else '')
+        graphString += '" crs="' + self.crs.authid() + '">\n'
         file.write(graphString) 
 
         for idx in range(self.mVertexCount):
@@ -950,8 +952,14 @@ class ExtGraph(QObject):
             if 'distance=' in line:
                 self.distance = [float(line.split('distance="')[1].split('"')[0])]
 
+            if 'distanceunit=' in line:
+                self.distance.append(int(line.split('distanceunit="')[1].split('"')[0]))
+
             if 'seed' in line:
                 self.randomSeed = float(line.split('seed="')[1].split('"')[0])
+
+            if 'crs' in line:
+                self.crs = QgsCoordinateReferenceSystem(line.split('crs="')[1].split('"')[0])
 
             if 'x="' in line and 'y="' in line:
                 nodeCoordinatesGiven = True

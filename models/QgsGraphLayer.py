@@ -264,6 +264,9 @@ class QgsGraphLayer(QgsPluginLayer):
             # TODO: does this shallow copy work after all?
             self.mGraph = graph
 
+            if not self.mGraph.crs:
+                self.mGraph.crs = self.crs()
+
             if graph.edgeCount() != 0:
                 self.hasEdges = True
                 
@@ -503,6 +506,7 @@ class QgsGraphLayer(QgsPluginLayer):
             srsNode = srsNode.nextSibling()
 
         self.crs().readXml(srsNode)
+        self.mGraph.crs = self.crs()
 
         # find graph node in xml
         graphNode = srsNode
