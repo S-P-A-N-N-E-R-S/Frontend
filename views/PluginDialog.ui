@@ -1424,6 +1424,13 @@ QListWidget::item::selected {
               </sizepolicy>
              </property>
              <layout class="QGridLayout" name="gridLayout">
+              <item row="7" column="7">
+               <widget class="QPushButton" name="start_benchmark">
+                <property name="text">
+                 <string>Start Benchmark</string>
+                </property>
+               </widget>
+              </item>
               <item row="0" column="0">
                <widget class="QLabel" name="label">
                 <property name="text">
@@ -1431,29 +1438,10 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
-              <item row="8" column="1" colspan="3">
-               <widget class="QLineEdit" name="lineEdit">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
+              <item row="7" column="0">
+               <widget class="QLabel" name="label_6">
                 <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="4" colspan="2">
-               <widget class="QPushButton" name="clear_graph_selection">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Clear</string>
+                 <string>Job Name:</string>
                 </property>
                </widget>
               </item>
@@ -1473,10 +1461,10 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
-              <item row="6" column="0" colspan="4">
-               <widget class="QLabel" name="label_4">
+              <item row="5" column="4">
+               <widget class="QLabel" name="label_5">
                 <property name="text">
-                 <string>Analysis Specification</string>
+                 <string>Visualisation Options</string>
                 </property>
                </widget>
               </item>
@@ -1487,8 +1475,15 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="refresh_all_graphs">
+              <item row="5" column="0" colspan="4">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Analysis Specification</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4" colspan="2">
+               <widget class="QPushButton" name="clear_graph_selection">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1496,7 +1491,7 @@ QListWidget::item::selected {
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Refresh</string>
+                 <string>Clear</string>
                 </property>
                </widget>
               </item>
@@ -1513,37 +1508,6 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
-              <item row="6" column="4">
-               <widget class="QLabel" name="label_5">
-                <property name="text">
-                 <string>Visualisation Options</string>
-                </property>
-               </widget>
-              </item>
-              <item row="8" column="0">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Job Name:</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="4">
-               <widget class="QListWidget" name="all_graphs">
-                <property name="dragDropMode">
-                 <enum>QAbstractItemView::DragOnly</enum>
-                </property>
-                <property name="selectionMode">
-                 <enum>QAbstractItemView::ExtendedSelection</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="8" column="7">
-               <widget class="QPushButton" name="start_benchmark">
-                <property name="text">
-                 <string>Start Benchmark</string>
-                </property>
-               </widget>
-              </item>
               <item row="3" column="0" colspan="5">
                <widget class="QLabel" name="label_3">
                 <property name="text">
@@ -1551,7 +1515,7 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
-              <item row="7" column="4" colspan="4">
+              <item row="6" column="4" colspan="4">
                <widget class="QListWidget" name="visualisation_options">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1585,7 +1549,33 @@ QListWidget::item::selected {
                 </item>
                </widget>
               </item>
-              <item row="7" column="0" colspan="4">
+              <item row="7" column="1" colspan="3">
+               <widget class="QLineEdit" name="lineEdit">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="refresh_all_graphs">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Refresh</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0" colspan="4">
                <widget class="QListWidget" name="analysis_specification">
                 <item>
                  <property name="text">
@@ -1632,6 +1622,16 @@ QListWidget::item::selected {
                 </item>
                </widget>
               </item>
+              <item row="1" column="0" colspan="4">
+               <widget class="QListWidget" name="all_graphs">
+                <property name="dragDropMode">
+                 <enum>QAbstractItemView::DragOnly</enum>
+                </property>
+                <property name="selectionMode">
+                 <enum>QAbstractItemView::ExtendedSelection</enum>
+                </property>
+               </widget>
+              </item>
               <item row="4" column="3" colspan="5">
                <widget class="QScrollArea" name="ogdf_parameters_area">
                 <property name="sizePolicy">
@@ -1654,17 +1654,10 @@ QListWidget::item::selected {
                    <x>0</x>
                    <y>0</y>
                    <width>589</width>
-                   <height>227</height>
+                   <height>238</height>
                   </rect>
                  </property>
                 </widget>
-               </widget>
-              </item>
-              <item row="5" column="0">
-               <widget class="QPushButton" name="load_parameters">
-                <property name="text">
-                 <string>Load</string>
-                </property>
                </widget>
               </item>
              </layout>

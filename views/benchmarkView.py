@@ -21,9 +21,9 @@ class BenchmarkView(BaseContentView):
         self.controller = BenchmarkController(self)  
         
         self.dialog.refresh_all_graphs.clicked.connect(self._updateAllGraphs)
-        self.dialog.clear_graph_selection.clicked.connect(self._clearGraphSelection)
-        self.dialog.load_parameters.clicked.connect(self._loadOGDFParameters)       
+        self.dialog.clear_graph_selection.clicked.connect(self._clearGraphSelection)     
         self.dialog.start_benchmark.clicked.connect(self.controller.runJob)
+        self.dialog.graph_selection.model().rowsInserted.connect(self._updateOGDFParameters)
         
         self._updateAllGraphs()
         self.dialog.all_graphs.itemDoubleClicked.connect(self._addItemToSelected)
@@ -33,12 +33,10 @@ class BenchmarkView(BaseContentView):
         self.ogdfBenchmarkWidget = QgsOGDFBenchmarkWidget(self.dialog)
             
         self.dialog.ogdf_parameters.setLayout(self.ogdfBenchmarkWidget.layout)
+        self.dialog.ogdf_algorithms.itemChanged.connect(self._updateOGDFParameters)
             
    
-    def _getOGDFParameters(self):
-        self.ogdfBenchmarkWidget.getBenchmarkDataObjects()
-   
-    def _loadOGDFParameters(self):
+    def _updateOGDFParameters(self):
         if self.dialog.graph_selection.count() > 0:
             ogdfAlgs = []
             requests = []
@@ -55,8 +53,12 @@ class BenchmarkView(BaseContentView):
             self.ogdfBenchmarkWidget.setParameterFields(requests)
             
         else:
-            self.ogdfBenchmarkWidget.clearWidgets()    
-            
+            self.ogdfBenchmarkWidget.clearWidgets() 
+        
+   
+    def _getOGDFParameters(self):
+        self.ogdfBenchmarkWidget.getBenchmarkDataObjects()
+
     def _updateAllGraphs(self): 
         for layer in QgsProject.instance().mapLayers().values():
             if isinstance(layer, QgsPluginLayer) and not self.dialog.all_graphs.findItems(layer.name(), Qt.MatchExactly):
@@ -67,9 +69,11 @@ class BenchmarkView(BaseContentView):
         
     def _deleteItem(self, item):
         self.dialog.graph_selection.takeItem(self.dialog.graph_selection.row(item))
+        self._updateOGDFParameters()
                 
     def _clearGraphSelection(self): 
         self.dialog.graph_selection.clear()    
+        self._updateOGDFParameters()
            
     def addOGDFAlg(self, analysis):
         item = QListWidgetItem(analysis)

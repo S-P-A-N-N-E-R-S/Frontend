@@ -82,19 +82,18 @@ class QgsOGDFBenchmarkWidget(QWidget):
         """
         Read all data from the widgets and create all BenchmarkData objects        
         """
-        
-                
+              
         # IDEA: just one loop, go throw every field and store for every field the value ranges in an array
         # store array in dict together with field
         # create all permutations of those arrays (normal fields with one value have array of size 1)
         # use itertools.product(*allArrays)
         
+        self.benchmarkObjectsHash = {}
         
         diffForGraphs = [FieldInformation.FieldType.VERTEX_ID, FieldInformation.FieldType.EDGE_ID, FieldInformation.FieldType.VERTEX_COSTS, FieldInformation.FieldType.EDGE_COSTS]
         
         listOfGraphs = []   
-        rangeFields = [FieldInformation.FieldType.INT, FieldInformation.FieldType.DOUBLE, FieldInformation.FieldType.EDGE_ID, FieldInformation.FieldType.VERTEX_ID]
-                 
+        rangeFields = [FieldInformation.FieldType.INT, FieldInformation.FieldType.DOUBLE, FieldInformation.FieldType.EDGE_ID, FieldInformation.FieldType.VERTEX_ID]       
         for i in range(self.dialog.graph_selection.count()):
             listOfGraphs.append(self.dialog.graph_selection.item(i))
         
@@ -104,29 +103,28 @@ class QgsOGDFBenchmarkWidget(QWidget):
             if self.dialog.ogdf_algorithms.item(i).checkState() == Qt.Checked:
                 rangesForEachAlg.append([])
                 allSelectedAlgs.append(str(self.dialog.ogdf_algorithms.item(i).text()))
-        
         alreadyDoneFields = []
+        for i in range(len(self.fieldsList)):
+            alreadyDoneFields.append([])
         # go through graphs
         for graphName in listOfGraphs:  
             algCount = 0
             # go through all selected algorithms
             for fields in self.fieldsList:
-                
-                ranges = {}
-                
+                ranges = {}   
                 # go through all fields
                 for key in fields:
                     field = fields[key]   
-                    if field.get("label") in alreadyDoneFields and not field.get("type") in diffForGraphs:
+                    if field.get("label") in alreadyDoneFields[algCount] and not field.get("type") in diffForGraphs:
                         continue        
-                    
-                    alreadyDoneFields.append(field.get("label"))        
+                    alreadyDoneFields[algCount].append(field.get("label"))        
                     if field.get("type") in rangeFields:
                         start = 1.0
                         end = 1.0
                         incr = 1.0
                         # find widgets for this field
                         for i in range(self.dialog.ogdf_parameters.layout().count()):
+                            
                             widget = self.dialog.ogdf_parameters.layout().itemAt(i).widget()
                             if field.get("label") in widget.objectName():                                
                                 if (widget.objectName() == (field.get("label") + graphName.text() + "From")) or (widget.objectName() == (field.get("label") + "From")):
@@ -138,7 +136,7 @@ class QgsOGDFBenchmarkWidget(QWidget):
                        
                         rangeValues = []
                         current = start
-                        while current <= end:
+                        while current <= end:                          
                             rangeValues.append(current)
                             current += incr
                             
@@ -189,15 +187,16 @@ class QgsOGDFBenchmarkWidget(QWidget):
                             widget = self.dialog.ogdf_parameters.layout().itemAt(i).widget()
                             if widget.objectName() == field.get("label") and widget.objectName() != "":
                                 
-                                ranges[field.get("label")] = [str(widget.currentText())]   
-                                      
+                                ranges[field.get("label")] = [str(widget.currentText())]               
                 
-                
-                # holds labels of fields and all the values
-                rangesForEachAlg[algCount].append(ranges)    
+                # holds labels of fields and all the values (list of list of dictionaries, first index for the algorithm, second for the graph) 
+                rangesForEachAlg[algCount].append(ranges)   
                 algCount+=1 
                         
-        
+        print("RangesForEachAlg: ")
+        print(rangesForEachAlg)
+        print("........................")    
+        toDeleteFieldIndices = [] 
         # create permutations
         for i in range(len(rangesForEachAlg)):
             allLists = []
@@ -207,42 +206,47 @@ class QgsOGDFBenchmarkWidget(QWidget):
                 for v in rangesForEachAlg[i][j].values():
                     allLists.append(v)
              
-            permutationRes = list(itertools.product(*allLists))    
+            permutationRes = list(itertools.product(*allLists))               
+            
+            print(permutationRes)
             
             # find algorithm name
             algName = allSelectedAlgs[i]
-            
-            for permutation in permutationRes:
-                            
-                # permutation holds one parameter setting
+            # permutation holds one parameter setting
+            for permutation in permutationRes:       
+                                               
                 alreadyDoneMatches = {}
+                
                 for g in range(len(listOfGraphs)):
-                                 
+                    counter = 0                             
+                    for index in toDeleteFieldIndices:
+                        permutation = permutation[0:index-counter] + permutation[index+1-counter:]        
+                        counter+=1
+                        
+                    toDeleteFieldIndices = []  
                     graph = listOfGraphs[g].text()
                     bo = BenchmarkData(graph, algName)
-                    
-                    
-                    # go through fields for algorithm and read values from permutation
-                    
+                                     
+                    # go through fields for algorithm and read values from permutation                 
                     fieldLabels = list(rangesForEachAlg[i][g].keys())
 
-                    for key in self.fieldsList[i]:
+                    for key in self.fieldsList[i]:                      
                         field = self.fieldsList[i][key]
-                        
                         if field.get("label") in alreadyDoneMatches.keys():
+                            print("found match: " + field.get("label") + ", " + str(permutation[alreadyDoneMatches[field.get("label")]]))
+                            print(permutation)
                             bo.setParameterField(key, permutation[alreadyDoneMatches[field.get("label")]])
-                            
                         else:
                             # get position in permutation tuple            
                             for rangesKeyIndex in range(len(fieldLabels)):
                                 
                                 if field.get("label") == fieldLabels[rangesKeyIndex]:
                                     alreadyDoneMatches[field.get("label")] = rangesKeyIndex                     
-                                  
+                                    
                                     bo.setParameterField(key, permutation[rangesKeyIndex])
                                     
                                     if field.get("type") in diffForGraphs:
-                                        permutation = permutation[0:rangesKeyIndex] + permutation[rangesKeyIndex+1:]
+                                        toDeleteFieldIndices.append(rangesKeyIndex)
 
                     if not bo.toString() in self.benchmarkObjectsHash:                   
                         self.benchmarkObjectsHash[bo.toString()] = bo                   
@@ -253,8 +257,6 @@ class QgsOGDFBenchmarkWidget(QWidget):
         creates and shows all parameter fields as widgets
         :return:
         """
-              
-        
         posCounter = 0
         diffForGraphs = [FieldInformation.FieldType.VERTEX_ID, FieldInformation.FieldType.EDGE_ID, FieldInformation.FieldType.VERTEX_COSTS, FieldInformation.FieldType.EDGE_COSTS]
         
@@ -360,6 +362,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
                 spinBoxWidget.setRange(1, 2147483647)
             else:
                 spinBoxWidget.setRange(-2147483648, 2147483647)
+                
+                
             """
             if field.get("default") and isinstance(field.get("default"), int):
                 spinBoxWidget.setValue(field.get("default"))
@@ -454,11 +458,15 @@ class QgsOGDFBenchmarkWidget(QWidget):
                 labelWidget = QLabel("To")
             elif i == 2:    
                 labelWidget = QLabel("Increment")
-        
+                
             widgetList.append(labelWidget)
             spinBoxWidget = QSpinBox()
             spinBoxWidget.setObjectName(field.get("label") + graphName + labelWidget.text())
-            spinBoxWidget.setRange(0, graph.edgeCount())
+            
+            if labelWidget.text() == "Increment":
+                spinBoxWidget.setRange(1, 2147483647)
+            else:           
+                spinBoxWidget.setRange(0, graph.edgeCount())
             widgetList.append(spinBoxWidget)
                       
         return widgetList   
@@ -477,7 +485,10 @@ class QgsOGDFBenchmarkWidget(QWidget):
             widgetList.append(labelWidget)
             spinBoxWidget = QSpinBox()
             spinBoxWidget.setObjectName(field.get("label") + graphName + labelWidget.text())
-            spinBoxWidget.setRange(0, graph.vertexCount())
+            if labelWidget.text() == "Increment":
+                spinBoxWidget.setRange(1, 2147483647)
+            else:           
+                spinBoxWidget.setRange(0, graph.vertexCount())
             widgetList.append(spinBoxWidget)
                       
         return widgetList   

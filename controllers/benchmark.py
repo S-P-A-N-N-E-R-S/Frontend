@@ -26,13 +26,14 @@ class BenchmarkController(BaseController):
         self.authManager = QgsApplication.authManager()
 
         # add available analysis
-
         for requestKey, request in parserManager.getRequestParsers().items():
             self.view.addOGDFAlg(request.name)
           
 
     def runJob(self):
         # todo: pass authId to client
+        print("RUN JOB START")
+        
         authId = self.settings.value("ogdfplugin/authId")
         
         # create and get BenchmarkData object 
@@ -40,6 +41,7 @@ class BenchmarkController(BaseController):
         
         for benchmarkDO in benchmarksDOs:
             print("--------------------------")
+            print(benchmarkDO.algorithm)
             print(benchmarkDO.graphName)
             print(benchmarkDO.parameters)
             
@@ -50,11 +52,10 @@ class BenchmarkController(BaseController):
             for key in benchmarkDO.parameters:
                 fieldData = benchmarkDO.parameters[key]
                 request.setFieldData(key, fieldData)
-
-            """
+            """    
             try:
                 with Client(helper.getHost(), helper.getPort()) as client:
-                    client.send(request)
+                    client.sendJobRequest(request)
                     self.view.showSuccess("Job started!")
         
             except (NetworkClientError, ParseError) as error:

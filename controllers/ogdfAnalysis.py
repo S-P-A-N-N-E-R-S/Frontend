@@ -48,6 +48,7 @@ class OGDFAnalysisController(BaseController):
         # set field data into request
         request = parserManager.getRequestParser(requestKey)
         request.resetData()
+
         for key in parameterFieldsData:
             fieldData = parameterFieldsData[key]
             request.setFieldData(key, fieldData)
