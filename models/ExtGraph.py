@@ -881,6 +881,11 @@ class ExtGraph(QObject):
 
         file.writelines(header)
 
+        if self.distanceStrategy == "Advanced":
+            advancedKeys = ''
+            for costIdx in range(self.amountOfEdgeCostFunctions()):
+                advancedKeys += '\t<key id="c' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
+
         edgeDefault = "directed" if self.edgeDirection == "Directed" else "undirected"
         file.write('\t<graph id="G" edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy + '">\n')
 
@@ -901,13 +906,10 @@ class ExtGraph(QObject):
             file.write(edgeLine)
 
             if self.distanceStrategy == "Advanced":
-                edgeCosts = '\t\t\t<key for="edge" id="' + str(edge.id()) + '" costs="' + str(self.amountOfEdgeCostFunctions())
-
+                edgeData = ''
                 for costIdx in range(self.amountOfEdgeCostFunctions()):
-                    edgeCosts += '" cost_' + str(costIdx) + '="' + str(self.costOfEdge(idx, costIdx))
-
-                edgeCosts += '"/>\n'
-                file.write(edgeCosts)
+                    edgeData += '\t\t\t<data key="c' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
+                file.write(edgeData)
 
         file.write("\t</graph>\n")
         file.write("</graphml>")
@@ -923,7 +925,8 @@ class ExtGraph(QObject):
         lines = file.readlines()
         nodeCoordinatesGiven = False
         edgeTypeDirection = "Directed"
-        nodeIDs = []
+        currNodeID = 0
+        currEdgeID = 0
 
         for line in lines:
             if 'edgedefault="undirected"' in line:
@@ -934,78 +937,36 @@ class ExtGraph(QObject):
             
             if 'distancestrategy' in line:
                 self.distanceStrategy = line.split('distancestrategy="')[1].split('"')[0]
-                print(self.distanceStrategy)
 
-        # maybe no coordinate are given in the .graphml file
-        if nodeCoordinatesGiven == True:
-            vertexIDCount = 0
-            for line in lines:
-                if '<node' in line:
-                    nodeIDs.append(int(line.split('id="')[1].split('"')[0]))
+        self.edgeDirection = edgeTypeDirection
 
-                elif 'x="' in line:
-                    xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
-                    yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
-                    
-                    # add vertex with correct coordinates and ID
-                    self.addVertex(QgsPointXY(xValue, yValue), -1, nodeIDs[vertexIDCount])
-                    vertexIDCount += 1
+        for line in lines:
+            if '<node' in line:
+                currNodeID = int(line.split('id="')[1].split('"')[0])
 
-                elif '<edge' in line:
-                    fromVertex = int(line.split('source="')[1].split('"')[0])
-                    toVertex = int(line.split('target="')[1].split('"')[0])
-                    # fromVertexID = 0
-                    # toVertexID = 0
-
-                    # for i in range(len(nodeIDs)):
-                    #     if nodeIDs[i] == fromVertex:
-                    #         fromVertexID = i
-                    #     elif nodeIDs[i] == toVertex:
-                    #         toVertexID = i
-
-                    # self.addEdge(fromVertexID, toVertexID)
-                    # if edgeTypeDirection == "Undirected":
-                    #     self.addEdge(toVertexID, fromVertexID)
-
-                    self.addEdge(fromVertex, toVertex)
-
-                elif '<key' in line:
-                    edgeID = line.split('id="')[1].split('"')[0]
-                    if edgeID != "d1":
-                        edgeID = int(edgeID)
-                    else:
-                        # key line not associated with an edge
-                        continue
-
-                    edgeIdx = self.findEdgeByID(int(line.split('id="')[1].split('"')[0]))
-                    amountOfCosts = int(line.split('costs="')[1].split('"')[0])
-                    for costIdx in range(amountOfCosts):    
-                        cost = float(line.split('cost_' + str(costIdx) + '="')[1].split('"')[0])
-                        self.setCostOfEdge(edgeIdx, costIdx, cost)     
-
-        # if no coordinates are given assign random
-        else:
-            vertexIDCount = 0
-            for line in lines:
-                if '<node' in line:
-                    nodeIDs.append(line.split('id="')[1].split('"')[0])
-                    
+                if not nodeCoordinatesGiven:
                     # add vertex with random coordinates and correct ID
-                    self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, nodeIDs[vertexIDCount]))
-                    vertexIDCount += 1
+                    self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, currNodeID))
 
-                elif '<edge' in line:
-                    fromVertex = line.split('source="')[1].split('"')[0]
-                    toVertex = line.split('target="')[1].split('"')[0]
-                    # fromVertexID = 0
-                    # toVertexID = 0
+            elif 'x="' in line:
+                xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
+                yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
+                
+                # add vertex with correct coordinates and ID
+                self.addVertex(QgsPointXY(xValue, yValue), -1, currNodeID)
 
-                    # for i in range(len(nodeIDs)):
-                    #     if nodeIDs[i] == fromVertex:
-                    #         fromVertexID = i
-                    #     elif nodeIDs[i] == toVertex:
-                    #         toVertexID = i
-                    # self.addEdge(fromVertexID, toVertexID)
+            elif '<edge' in line:
+                fromVertex = int(line.split('source="')[1].split('"')[0])
+                toVertex = int(line.split('target="')[1].split('"')[0])
+                currEdgeID = int(line.split('id="')[1].split('"')[0])
+
+                # add edge (no need to give ID here)
+                self.addEdge(fromVertex, toVertex)
+
+            elif '<data' in line:
+                if 'key="c' in line:
+                    costIdx = int(line.split('key="c')[1].split('"')[0])
+                    edgeIdx = self.findEdgeByID(currEdgeID)   
+                    cost = float(line.split('<data key="c' + str(costIdx) + '">')[1].split('<')[0])
                     
-                    self.addEdge(fromVertex, toVertex)
-                   
+                    self.setCostOfEdge(edgeIdx, costIdx, cost)
