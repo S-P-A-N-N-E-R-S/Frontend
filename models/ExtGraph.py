@@ -125,8 +125,8 @@ class ExtGraph(QObject):
 
         # Set to true while building the graph to indicate that the arrays are
         # sorted by id, so binary search is possible
-        self.verticesSorted = False
-        self.edgesSorted = False
+        self.verticesSorted = True
+        self.edgesSorted = True
 
         self.mEdgeCount = 0
         self.mVertexCount = 0
@@ -210,10 +210,6 @@ class ExtGraph(QObject):
         file.write(sizeString)
 
         file.close()
-
-    def setSorted(self, sorted):
-        self.verticesSorted = sorted
-        self.edgesSorted = sorted
 
     def setJobID(self, jobId):
         self.mJobId = jobId
@@ -533,6 +529,14 @@ class ExtGraph(QObject):
 
         self.mEdges.insert(addIndex, addedEdge)
 
+        # check downwards sorting
+        if self.edgesSorted and addIndex - 1 >= 0:
+            self.edgesSorted = self.mEdges[addIndex - 1].id() < addedEdgeID
+
+        # check updwards sorting
+        if self.edgesSorted and addIndex + 1 < len(self.mEdges):
+            self.edgesSorted = self.mEdges[addIndex + 1].id() > addedEdgeID
+
         # add entries for edgeWeights at the correct idx
         for functionIdx in range(len(self.edgeWeights)):
             # add default value 0
@@ -571,6 +575,14 @@ class ExtGraph(QObject):
             self.mMaxVertexID = addedVertexID + 1
 
         self.mVertices.insert(addIndex, self.ExtVertex(point, addedVertexID))
+
+        # check downwards sorting
+        if self.verticesSorted and addIndex - 1 >= 0:
+            self.verticesSorted = self.mVertices[addIndex - 1].id() < addedVertexID
+
+        # check updwards sorting
+        if self.verticesSorted and addIndex + 1 < len(self.mVertices):
+            self.verticesSorted = self.mVertices[addIndex + 1].id() > addedVertexID
 
         if hasattr(self, "mNextClusterID"):
             self.mVertices[addIndex].setClusterID(self.mNextClusterID)

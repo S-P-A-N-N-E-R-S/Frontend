@@ -70,8 +70,6 @@ class TestExtGraph(TestCase):
         self.assertEqual(QgsPointXY(0.5, 0.5), self.graph.vertex(fifthIndex).point())
 
     def test_edge_addition(self):
-        self.graph.setSorted(False)
-
         firstVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
         secondVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
         thirdVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 1.0))

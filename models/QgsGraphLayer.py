@@ -306,7 +306,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
             # self.mGraph.calculateSize()
         
-        
     def getGraph(self):
         return self.mGraph
 
@@ -546,18 +545,11 @@ class QgsGraphLayer(QgsPluginLayer):
 
 
         # get vertex information and add them to graph
-        pastID = -1
-        verticesSorted = True
         for vertexIdx in range(vertexNodes.length()):
             if vertexNodes.at(vertexIdx).isElement():
                 elem = vertexNodes.at(vertexIdx).toElement()
                 vertex = QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y")))
                 vID = int(elem.attribute("id"))
-                
-                # check if vertices are loaded in order
-                if vID <= pastID:
-                    verticesSorted = False
-                pastID = vID
 
                 addedVertexIdx = self.mGraph.addVertex(vertex, -1, vID)
 
@@ -567,19 +559,12 @@ class QgsGraphLayer(QgsPluginLayer):
                         self.mGraph.setNextClusterID(int(elem.attribute("clusterID")) + 1)
 
         # get edge information and add them to graph
-        pastID = -1
-        edgesSorted = True
         for edgeIdx in range(edgeNodes.length()):
             if edgeNodes.at(edgeIdx).isElement():
                 elem = edgeNodes.at(edgeIdx).toElement()
                 fromVertexID = int(elem.attribute("fromVertex"))
                 toVertexID = int(elem.attribute("toVertex"))
                 eID = int(elem.attribute("id"))
-
-                # check if edges are loaded in order
-                if eID <= pastID:
-                    edgesSorted = False
-                pastID = eID
 
                 highlighted = elem.attribute("highlighted") == "True"
                 
@@ -599,7 +584,6 @@ class QgsGraphLayer(QgsPluginLayer):
                         costValue = float(costElem.attribute("value"))
                         self.mGraph.setCostOfEdge(addedIdx, functionIndex, costValue)
 
-        self.mGraph.setSorted(verticesSorted and edgesSorted)
         return True
 
     def writeXml(self, node, doc, context):
