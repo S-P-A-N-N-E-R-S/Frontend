@@ -882,10 +882,15 @@ class ExtGraph(QObject):
 
         file.writelines(header)
 
+        if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
+            clusterKey = '\t<key id="cluster" for="node" attr.name="clusterid" attr.type="int"/>\n'
+            file.write(clusterKey)
+
         if self.distanceStrategy == "Advanced":
             advancedKeys = ''
             for costIdx in range(self.amountOfEdgeCostFunctions()):
                 advancedKeys += '\t<key id="c' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
+            file.write(advancedKeys)
 
         edgeDefault = "directed" if self.edgeDirection == "Directed" else "undirected"
 
@@ -907,6 +912,9 @@ class ExtGraph(QObject):
             file.write(coordinates)
             file.write('\t\t\t\t</y:ShapeNode>\n')
             file.write('\t\t\t</data>\n')
+
+            if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
+                file.write('\t\t\t<data key="cluster">' + str(vertex.clusterID()) + '</data>\n')
 
         for idx in range(self.mEdgeCount):
             edge = self.edge(idx)
@@ -934,7 +942,8 @@ class ExtGraph(QObject):
         nodeCoordinatesGiven = False
         edgeTypeDirection = "Directed"
         currNodeID = 0
-        currEdgeID = 0
+        currNodeIdx = 0
+        currEdgeIdx = 0
 
         for line in lines:
             if 'edgedefault="undirected"' in line:
@@ -942,6 +951,9 @@ class ExtGraph(QObject):
             
             if 'distancestrategy' in line:
                 self.distanceStrategy = line.split('distancestrategy="')[1].split('"')[0]
+
+            if 'connectiontype' in line:
+                self.mConnectionType = line.split('connectiontype="')[1].split('"')[0]
 
             if 'numberneighbors' in line:
                 self.numberNeighbours = int(line.split('numberneighbors="')[1].split('"')[0])
@@ -956,7 +968,7 @@ class ExtGraph(QObject):
                 self.distance.append(int(line.split('distanceunit="')[1].split('"')[0]))
 
             if 'seed' in line:
-                self.randomSeed = float(line.split('seed="')[1].split('"')[0])
+                self.randomSeed = int(line.split('seed="')[1].split('"')[0])
 
             if 'crs' in line:
                 self.crs = QgsCoordinateReferenceSystem(line.split('crs="')[1].split('"')[0])
@@ -973,27 +985,28 @@ class ExtGraph(QObject):
 
                 if not nodeCoordinatesGiven:
                     # add vertex with random coordinates and correct ID
-                    self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, currNodeID))
+                    currNodeIdx = self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, currNodeID))
 
             elif 'x="' in line:
                 xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
                 yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
                 
                 # add vertex with correct coordinates and ID
-                self.addVertex(QgsPointXY(xValue, yValue), -1, currNodeID)
+                currNodeIdx = self.addVertex(QgsPointXY(xValue, yValue), -1, currNodeID)
 
             elif '<edge' in line:
                 fromVertex = int(line.split('source="')[1].split('"')[0])
                 toVertex = int(line.split('target="')[1].split('"')[0])
-                currEdgeID = int(line.split('id="')[1].split('"')[0])
 
                 # add edge (no need to give ID here)
-                self.addEdge(fromVertex, toVertex)
+                currEdgeIdx = self.addEdge(fromVertex, toVertex)
 
             elif '<data' in line:
-                if 'key="c' in line:
+                if 'key="cluster"' in line:
+                    self.vertex(currNodeIdx).setClusterID(int(line.split('<data key="cluster">')[1].split('<')[0]))
+                
+                elif 'key="c' in line:
                     costIdx = int(line.split('key="c')[1].split('"')[0])
-                    edgeIdx = self.findEdgeByID(currEdgeID)   
                     cost = float(line.split('<data key="c' + str(costIdx) + '">')[1].split('<')[0])
                     
-                    self.setCostOfEdge(edgeIdx, costIdx, cost)
+                    self.setCostOfEdge(currEdgeIdx, costIdx, cost)
