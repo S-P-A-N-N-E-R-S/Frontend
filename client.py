@@ -41,7 +41,9 @@ class Client():
 
     def getAvailableHandlers(self):
         # Send request of type AVAILABLE_HANDLERS with empty container to receive handlers
-        self._sendProtoBufString(meta_pb2.RequestType.AVAILABLE_HANDLERS, bytearray())
+        metaString = protoParser.getMetaStringFromType(meta_pb2.RequestType.AVAILABLE_HANDLERS)
+
+        self._sendProtoBufString(metaString, bytearray())
 
         # Wait for answer
         self.recv()
@@ -49,8 +51,13 @@ class Client():
 
     def getJobStatus(self):
         # Send status request
-        self._sendProtoBufString(meta_pb2.RequestType.STATUS,
-            protoParser.createProtoBuf(StatusRequest()))
+        request = StatusRequest()
+        protoBufString = protoParser.createProtoBuf(request)
+        compressedProtoBufString = gzip.compress(protoBufString)
+
+        metaString = protoParser.getMetaStringFromRequest(request, len(compressedProtoBufString))
+
+        self._sendProtoBufString(metaString, compressedProtoBufString)
 
         # Wait for answer
         self.recv()
@@ -61,8 +68,13 @@ class Client():
         pass
 
     def getJobResult(self, jobId):
-        self._sendProtoBufString(meta_pb2.RequestType.RESULT,
-            protoParser.createProtoBuf(ResultRequest(jobId)))
+        request = ResultRequest(jobId)
+        protoBufString = protoParser.createProtoBuf(request)
+        compressedProtoBufString = gzip.compress(protoBufString)
+
+        metaString = protoParser.getMetaStringFromRequest(request, len(compressedProtoBufString))
+
+        self._sendProtoBufString(metaString, compressedProtoBufString)
 
         # Wait for answer
         handlerType = statusManager.getJobState(jobId).handlerType
@@ -72,23 +84,17 @@ class Client():
     def sendJobRequest(self, request):
         # Create compressed wire format
         protoBufString = protoParser.createProtoBuf(request)
-        self._sendProtoBufString(request.type, protoBufString, request.key)
+        compressedProtoBufString = gzip.compress(protoBufString)
+
+        metaString = protoParser.getMetaStringFromRequest(request, len(compressedProtoBufString))
+
+        self._sendProtoBufString(metaString, compressedProtoBufString)
 
         # Wait for answer
         newjobResponse = self.recv()
         return newjobResponse.jobId
 
-    def _sendProtoBufString(self, requestType, protoBufString, handlerType=None):
-        compressedProtoBufString = gzip.compress(protoBufString)
-
-        # Create meta message
-        metaData = meta_pb2.MetaData()
-        metaData.containerSize = len(compressedProtoBufString)
-        metaData.type = requestType
-        if handlerType:
-            metaData.handlerType = handlerType
-        metaString = metaData.SerializeToString()
-
+    def _sendProtoBufString(self, metaString, compressedProtoBufString):
         # Pack message and send
         msg = struct.pack('!Q', len(metaString)) + metaString + compressedProtoBufString
 
