@@ -21,6 +21,29 @@ def createProtoBuf(request):
     return protoBuf.SerializeToString()
 
 
+def getMetaStringFromType(requestType):
+    metaData = meta_pb2.MetaData()
+    metaData.containerSize = 0
+    metaData.type = requestType
+    return metaData.SerializeToString()
+
+
+def getMetaStringFromRequest(request, requestStringLen):
+    metaData = meta_pb2.MetaData()
+    metaData.containerSize = requestStringLen
+    metaData.type = request.type
+
+    if getattr(request, "key", None):
+        metaData.handlerType = request.key
+
+    if getattr(request, "jobName", None):
+        metaData.jobName = request.jobName
+
+    metaString = metaData.SerializeToString()
+
+    return metaString
+
+
 def parseProtoBuf(protoBufString, responseType, handlerType=None):
     protoBuf = container_pb2.ResponseContainer()
     protoBuf.ParseFromString(protoBufString)

@@ -12,6 +12,7 @@ class BaseRequest():
 
         self.key = ""
         self.name = ""
+        self.jobName = ""
         self.description = ""
 
         self.fields = {}
