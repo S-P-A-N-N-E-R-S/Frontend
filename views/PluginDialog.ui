@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1103</width>
-    <height>899</height>
+    <width>1089</width>
+    <height>914</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -145,8 +145,8 @@ QListWidget::item::selected {
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>907</width>
-           <height>879</height>
+           <width>893</width>
+           <height>894</height>
           </rect>
          </property>
          <property name="minimumSize">
@@ -302,9 +302,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>0</y>
-                         <width>351</width>
-                         <height>1086</height>
+                         <y>-307</y>
+                         <width>849</width>
+                         <height>1082</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1418,34 +1418,122 @@ QListWidget::item::selected {
             </widget>
             <widget class="QWidget" name="benchmarks">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
              <layout class="QGridLayout" name="gridLayout">
-              <item row="7" column="7">
-               <widget class="QPushButton" name="start_benchmark">
-                <property name="text">
-                 <string>Start Benchmark</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="0">
                <widget class="QLabel" name="label">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Sunken</enum>
+                </property>
                 <property name="text">
                  <string>All Graphs</string>
                 </property>
                </widget>
               </item>
-              <item row="7" column="0">
-               <widget class="QLabel" name="label_6">
+              <item row="3" column="0" colspan="6">
+               <widget class="QLabel" name="label_3">
                 <property name="text">
-                 <string>Job Name:</string>
+                 <string>OGDF Algorithms</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="4" colspan="4">
+              <item row="5" column="0" colspan="8">
+               <widget class="QScrollArea" name="analysis_area">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAsNeeded</enum>
+                </property>
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAsNeeded</enum>
+                </property>
+                <property name="sizeAdjustPolicy">
+                 <enum>QAbstractScrollArea::AdjustIgnored</enum>
+                </property>
+                <property name="widgetResizable">
+                 <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="analysis_visualisation">
+                 <property name="geometry">
+                  <rect>
+                   <x>0</x>
+                   <y>0</y>
+                   <width>873</width>
+                   <height>250</height>
+                  </rect>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_2">
+                  <item row="1" column="0">
+                   <widget class="QListWidget" name="benchmark_selection_1">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>380</width>
+                      <height>192</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLabel" name="label_5">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Visualisation</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QListWidget" name="visualisation_1">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>380</width>
+                      <height>192</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Benchmark Selection</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+              <item row="1" column="5" colspan="3">
                <widget class="QListWidget" name="graph_selection">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1453,179 +1541,14 @@ QListWidget::item::selected {
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>410</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="dragDropMode">
                  <enum>QAbstractItemView::DropOnly</enum>
-                </property>
-                <property name="selectionMode">
-                 <enum>QAbstractItemView::ExtendedSelection</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="4">
-               <widget class="QLabel" name="label_5">
-                <property name="text">
-                 <string>Visualisation Options</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0" colspan="3">
-               <widget class="QListWidget" name="ogdf_algorithms">
-                <property name="editTriggers">
-                 <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="0" colspan="4">
-               <widget class="QLabel" name="label_4">
-                <property name="text">
-                 <string>Analysis Specification</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="4" colspan="2">
-               <widget class="QPushButton" name="clear_graph_selection">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Clear</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="4" colspan="2">
-               <widget class="QLabel" name="label_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Graph Selection</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0" colspan="5">
-               <widget class="QLabel" name="label_3">
-                <property name="text">
-                 <string>OGDF Algorithms</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="4" colspan="4">
-               <widget class="QListWidget" name="visualisation_options">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <item>
-                 <property name="text">
-                  <string>Points without connections</string>
-                 </property>
-                 <property name="checkState">
-                  <enum>Unchecked</enum>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Points with connections</string>
-                 </property>
-                 <property name="checkState">
-                  <enum>Unchecked</enum>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Bar chart</string>
-                 </property>
-                 <property name="checkState">
-                  <enum>Unchecked</enum>
-                 </property>
-                </item>
-               </widget>
-              </item>
-              <item row="7" column="1" colspan="3">
-               <widget class="QLineEdit" name="lineEdit">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="refresh_all_graphs">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Refresh</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="0" colspan="4">
-               <widget class="QListWidget" name="analysis_specification">
-                <item>
-                 <property name="text">
-                  <string>Number of Edges</string>
-                 </property>
-                 <property name="checkState">
-                  <enum>Unchecked</enum>
-                 </property>
-                 <property name="flags">
-                  <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Number of Vertices</string>
-                 </property>
-                 <property name="checkState">
-                  <enum>Unchecked</enum>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Average Degree</string>
-                 </property>
-                 <property name="checkState">
-                  <enum>Unchecked</enum>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Sparseness</string>
-                 </property>
-                 <property name="checkState">
-                  <enum>Unchecked</enum>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Runtime</string>
-                 </property>
-                 <property name="checkState">
-                  <enum>Unchecked</enum>
-                 </property>
-                </item>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="4">
-               <widget class="QListWidget" name="all_graphs">
-                <property name="dragDropMode">
-                 <enum>QAbstractItemView::DragOnly</enum>
                 </property>
                 <property name="selectionMode">
                  <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -1645,6 +1568,9 @@ QListWidget::item::selected {
                   <pointsize>11</pointsize>
                  </font>
                 </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
                 <property name="widgetResizable">
                  <bool>true</bool>
                 </property>
@@ -1653,11 +1579,119 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>589</width>
-                   <height>238</height>
+                   <width>565</width>
+                   <height>250</height>
                   </rect>
                  </property>
                 </widget>
+               </widget>
+              </item>
+              <item row="2" column="5" colspan="2">
+               <widget class="QPushButton" name="clear_graph_selection">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0" colspan="3">
+               <widget class="QListWidget" name="ogdf_algorithms">
+                <property name="editTriggers">
+                 <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5" colspan="2">
+               <widget class="QLabel" name="label_2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Graph Selection</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Job Name:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="refresh_all_graphs">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Refresh</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="7">
+               <widget class="QPushButton" name="start_benchmark">
+                <property name="text">
+                 <string>Start Benchmark</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1" colspan="2">
+               <widget class="QLineEdit" name="lineEdit">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="4">
+               <widget class="QToolButton" name="add_all_graphs">
+                <property name="text">
+                 <string>...</string>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>32</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="popupMode">
+                 <enum>QToolButton::InstantPopup</enum>
+                </property>
+                <property name="arrowType">
+                 <enum>Qt::RightArrow</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="4">
+               <widget class="QListWidget" name="all_graphs">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="dragDropMode">
+                 <enum>QAbstractItemView::DragOnly</enum>
+                </property>
+                <property name="selectionMode">
+                 <enum>QAbstractItemView::ExtendedSelection</enum>
+                </property>
                </widget>
               </item>
              </layout>

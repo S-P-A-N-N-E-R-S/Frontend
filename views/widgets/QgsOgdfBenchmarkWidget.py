@@ -4,7 +4,7 @@ from qgis.gui import QgsMapLayerComboBox
 from qgis.core import  *
 
 from .QgsGraphEdgePickerWidget import QgsGraphEdgePickerWidget
-from .BenchmarkData import BenchmarkData
+from ...models.benchmark.BenchmarkData import BenchmarkData
 from .QgsGraphVertexPickerWidget import QgsGraphVertexPickerWidget
 from ...exceptions import FieldRequiredError
 
@@ -53,7 +53,6 @@ class QgsOGDFBenchmarkWidget(QWidget):
         self._createParameterWidgets()
     
     def setParameterFields(self, fields):
-        self.fieldsList = [] 
         self.fieldsList = fields
         self._createParameterWidgets()
         
@@ -216,7 +215,7 @@ class QgsOGDFBenchmarkWidget(QWidget):
             for permutation in permutationRes:       
                                                
                 alreadyDoneMatches = {}
-                
+                toDeleteFieldIndices = [] 
                 for g in range(len(listOfGraphs)):
                     counter = 0                             
                     for index in toDeleteFieldIndices:
@@ -236,14 +235,17 @@ class QgsOGDFBenchmarkWidget(QWidget):
                             print("found match: " + field.get("label") + ", " + str(permutation[alreadyDoneMatches[field.get("label")]]))
                             print(permutation)
                             bo.setParameterField(key, permutation[alreadyDoneMatches[field.get("label")]])
+                            bo.setParameterKeyHash(field.get("label"), key)
                         else:
                             # get position in permutation tuple            
                             for rangesKeyIndex in range(len(fieldLabels)):
                                 
                                 if field.get("label") == fieldLabels[rangesKeyIndex]:
                                     alreadyDoneMatches[field.get("label")] = rangesKeyIndex                     
-                                    
+                                    print(permutation)
+                                    print(rangesKeyIndex)
                                     bo.setParameterField(key, permutation[rangesKeyIndex])
+                                    bo.setParameterKeyHash(field.get("label"), key)
                                     
                                     if field.get("type") in diffForGraphs:
                                         toDeleteFieldIndices.append(rangesKeyIndex)
