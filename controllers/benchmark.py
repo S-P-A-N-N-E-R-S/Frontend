@@ -18,11 +18,14 @@ from ..network.exceptions import NetworkClientError, ParseError
 import time
 
 class BenchmarkController(BaseController):
-
+    """
+    Controller which does the calls to the server, collects the results and executes the 
+    visualisation process. 
+    """
     def __init__(self, view):
         """
         Constructor
-        :type view: OGDFAnalysisView
+        :type view: benchmarkView
         """
         super().__init__(view)
 
@@ -35,7 +38,6 @@ class BenchmarkController(BaseController):
             StatusType.ABORTED: self.tr("aborted"),
         }
 
-
         self.settings = QgsSettings()
         self.authManager = QgsApplication.authManager()
 
@@ -47,11 +49,10 @@ class BenchmarkController(BaseController):
 
     def _visualisationControl(self):
         
-        analysis = self.view.getAnalysis()[0]
+        visualisations = self.view.getVisualisation() 
         
-        
+        # go through all the benchmark requests created    
         for sIndex in range(len(self.view.getSelection1())):
-            print("BENCHMARK VISUAL CREATE")
             benchVis = BenchmarkVisualisation(self.view.getAnalysis()[sIndex])
             
             selectionList = self.view.getSelection1()[sIndex]
@@ -86,8 +87,7 @@ class BenchmarkController(BaseController):
             
             # split the partition into individual dictionary entries
             for dictKey in partition.keys():
-                
-                
+                            
                 dictValue = partition[dictKey]
                 
                 if isinstance(dictKey, tuple):                    
@@ -109,7 +109,7 @@ class BenchmarkController(BaseController):
                         dictHelp = self.doWrapper.partition("Parameter", dictHelp, self.doWrapper.parameterKeyHash[selection])  
                 
                 # get all the analysis values and save them so they can be plotted later
-                # store into dictHelp (same keys and transform dos into numbers)
+                # store into dictHelp (same keys and transform DOs into numbers)
                 xParameters = []
                 xValues = []
                 for dictKey2 in dictHelp:
@@ -135,9 +135,7 @@ class BenchmarkController(BaseController):
                         xLabel = selection
                     else:    
                         xLabel = xLabel + "/" + selection
-                
-                
-                
+                         
                 xParametersValues = []
                 for p in range(len(xParameters)):
                     xParameters[p] = xParameters[p].replace(" ","")
@@ -157,33 +155,31 @@ class BenchmarkController(BaseController):
                                 axisValue = axisValue + " / " + diffPara                         
             
                     xParametersValues.append(axisValue)
-            
-                benchVis.setOnePlotData(xLabel, xParametersValues, zParameter, xValues)
-                
-            
-            benchVis.plotPoints(False, sIndex)
-            # here you can plot the values of zParameter, by looking at xParameters and xValues
-            
-            
-            """
-            # call partition method with one dict entry
-            for selectionList in self.view.getSelection2():
-                for selection in selectionList:
-                    if selection == "Graphs" or selection == "Algorithms":
-                        partition = self.doWrapper.partition(selection, partition)
-                    else:
-                        partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.keyHash[selection])  
                     
-                    print(partition)
-            """
-            
+                
+                benchVis.setOnePlotData(xLabel, xParametersValues, zParameter, xValues)
+                   
+                       
+            visCounter = 0            
+            for vis in visualisations[sIndex]:
+                if vis == "Points without connection":
+                    benchVis.plotPoints(False, sIndex + visCounter)
+                elif vis == "Points with connection":
+                    benchVis.plotPoints(True, sIndex + visCounter)
+                elif vis == "Bar chart":
+                    benchVis.plotBarChart(sIndex + visCounter)
+                elif vis == "Lines":
+                    benchVis.plotLines(sIndex + visCounter)
+                elif vis == "Box plot":         
+                    benchVis.plotBoxPlot(sIndex + visCounter)
+                visCounter+=1
             
     def runJob(self):
         # todo: pass authId to client
         print("RUN JOB START")
         authId = self.settings.value("ogdfplugin/authId")
         
-        # create and get BenchmarkData object 
+        # create and get BenchmarkData objects
         benchmarkDOs = self.view.ogdfBenchmarkWidget.getBenchmarkDataObjects()  
         
         for benchmarkDO in benchmarkDOs:
@@ -223,22 +219,21 @@ class BenchmarkController(BaseController):
                         job = statusManager.getJobState(id)                                          
                         status = self.STATUS_TEXTS.get(job.status, "status not supported")
                         print(status)
-                        
-                                                                 
-                    
+        
                 except (NetworkClientError, ParseError) as error:
                     self.view.showError(str(error), self.tr("Network Error"))
-                                         
-            try:
-                with Client(helper.getHost(), helper.getPort()) as client:
-                    response = client.getJobResult(job.jobId)
-                    benchmarkDO.setServerResponse(response)
-                    benchmarkDO.setResponseGraph(response.getGraph())
-
-            except (NetworkClientError, ParseError) as error:
-                self.view.showError(str(error), self.tr("Network Error"))
             
-                      
+            for exe in range(self.view.getExecutions(benchmarkDO.algorithm)):                             
+                try:
+                    with Client(helper.getHost(), helper.getPort()) as client:
+                    
+                        response = client.getJobResult(job.jobId)
+                        benchmarkDO.setServerResponse(response)
+                        benchmarkDO.setResponseGraph(response.getGraph())
+
+                except (NetworkClientError, ParseError) as error:
+                    self.view.showError(str(error), self.tr("Network Error"))
+                                
         self.doWrapper = BenchmarkDataObjWrapper(benchmarkDOs)              
         
         self._visualisationControl()   

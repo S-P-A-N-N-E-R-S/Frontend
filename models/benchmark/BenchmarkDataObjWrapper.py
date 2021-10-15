@@ -2,10 +2,15 @@ from statistics import mean
 
 
 class BenchmarkDataObjWrapper():
-      
+    """
+    Wrapper for all the BenchmarkData objects. It provides an interface to get the information necessary for the
+    visualisation process. After the objects are created the benchmark controller only communicates with this wrapper.  
+    """
     def __init__(self, DOs):
+        # all the BenchmarkData objects created by executing all the permutations
         self.benchmarkDOs = DOs
         
+        # dicts the switch between labels and keys of the the fields
         self.parameterKeyHash = {}
         self.labelHash = {}
         
@@ -19,37 +24,48 @@ class BenchmarkDataObjWrapper():
             self.labelHash[parameterKey] = label    
         
 
-    # gets called at the end of the partitioning process
+
     def getAnalysisValue(self, analysis, dataObjs):
-        print(dataObjs)
-        print(analysis)
+        """
+        Method gets called at the end of the partitioning process. Returns a value depending on the
+        chosen analysis. Since multiple execution of the same parameters are possible a list of
+        values might be returned.
+        
+        :type analysis: String
+        :type dataObjs: list of BenchmarkData objects
+        :return list
+        """
         values = []
         for dataObj in dataObjs:
             
             originalGraph = dataObj.getGraph()
-            responseGraph = dataObj.getResponseGraph()
             if analysis == "Runtime":
                 print("TODO")
                 values.append(0)
             elif analysis == "Number of Edges":
-                values.append(responseGraph.edgeCount())
+                values.append(dataObj.getAvgNumberOfEdgesResponse())
             elif analysis == "Number of Vertices":
-                values.append(responseGraph.vertexCount())
+                values.append(dataObj.getAvgNumberOfVerticesResponse())
             elif analysis == "Edges Difference":
-                values.append(abs(originalGraph.edgeCount() - responseGraph.edgeCount()))
+                values.append(abs(originalGraph.edgeCount() - dataObj.getAvgNumberOfEdgesResponse()))
             elif analysis == "Vertices Difference":
-                values.append(abs(originalGraph.vertexCount() - responseGraph.vertexCount()))
+                values.append(abs(dataObj.getAvgNumberOfVerticesResponse() - originalGraph.vertexCount()))
             elif analysis == "Average Degree":
-                values.append(responseGraph.edgeCount() / responseGraph.vertexCount())
+                values.append(dataObj.getAvgNumberOfEdgesResponse() / dataObj.getAvgNumberOfVerticesResponse())
             elif analysis == "Sparseness":
-                values.append(responseGraph.edgeCount() / originalGraph.edgeCount()  ) 
+                values.append(dataObj.getAvgNumberOfEdgesResponse() / originalGraph.edgeCount()) 
             
         return mean(values)      
     
               
     def firstPartition(self, type, parameterKey = None):
-        # creates the first partitioning of all data objects (into dictionary)
-       
+        """
+        Creates the first partitioning of all data objects into a dictionary.
+        
+        :type type: String
+        :type parameterKey: String (only set if type is "Parameters")
+        :returns dictionary
+        """
         partition = {}
         
         if type == "Graphs":
@@ -76,7 +92,7 @@ class BenchmarkDataObjWrapper():
                 partition[algName] = dataObjsForPartition
         
         elif type == "Parameter":  
-        # there should be one list for every range value  
+            # there should be one list for every range value  
             allValues = self._getAllParameterValues(parameterKey, self.benchmarkDOs)
             
             for value in allValues:
@@ -93,10 +109,16 @@ class BenchmarkDataObjWrapper():
         return partition
     
     def partition(self, type, dict, parameterKey = None):
+        """
+        Method is called multiple times, depending on the number of selections made.
+        
+        :type type: String
+        :type parameterKey: String (only set if type is "Parameters")
+        :returns dictionary
+        """
         partition = {}
         for key in dict.keys():
-            doList = dict[key]
-            
+            doList = dict[key]          
             if type == "Graphs":
                 allGraphs = self._getAllGraphs(doList)
                 for i in range(len(allGraphs)):  
@@ -105,17 +127,14 @@ class BenchmarkDataObjWrapper():
                     for j in range(len(doList)):
                         dataObj = doList[j]
                         if dataObj.getGraphName() == graphName:
-                            dataObjsForPartition.append(dataObj)
-                
+                            dataObjsForPartition.append(dataObj)          
                     keyTuple = key
                     if isinstance(keyTuple, tuple):
                         listConv = list(keyTuple)
                         listConv.append(graphName)
                         keyTuple = tuple(listConv)
                     else:
-                        keyTuple = (key, graphName)
-                    
-                        
+                        keyTuple = (key, graphName)             
                     
                     partition[keyTuple] = dataObjsForPartition 
             
@@ -127,27 +146,22 @@ class BenchmarkDataObjWrapper():
                     for j in range(len(doList)):
                         dataObj = doList[j]
                         if dataObj.getAlgorithm() == algName:
-                            dataObjsForPartition.append(dataObj)
-                
+                            dataObjsForPartition.append(dataObj)              
                     keyTuple = key
                     if isinstance(keyTuple, tuple):
                         listConv = list(keyTuple)
                         listConv.append(algName)
                         keyTuple = tuple(listConv)
                     else:
-                        keyTuple = (key, algName)
-                    
-                        
+                        keyTuple = (key, algName)       
                     
                     partition[keyTuple] = dataObjsForPartition       
              
-            else:  
-        
+            else:         
                 # there should be one list for every range value  
                 allValues = self._getAllParameterValues(parameterKey, doList)
                                         
-                for value in allValues:
-                    
+                for value in allValues:                   
                     dataObjsForPartition = []
                     for i in range(len(doList)):
                         dataObj = doList[i]
@@ -155,8 +169,7 @@ class BenchmarkDataObjWrapper():
                         for param in parameters.keys():
                             if param == parameterKey and parameters[param] == value:
                                 dataObjsForPartition.append(dataObj)
-                    
-                    
+                                      
                     keyTuple = key
                     if isinstance(keyTuple, tuple):
                         listConv = list(keyTuple)
@@ -164,10 +177,8 @@ class BenchmarkDataObjWrapper():
                         keyTuple = tuple(listConv)
                     else:
                         keyTuple = (key, parameterKey + "#" + str(value))
-                    
-                                
-                    partition[keyTuple] = dataObjsForPartition 
-                    
+                                                  
+                    partition[keyTuple] = dataObjsForPartition                         
         
         return partition
         

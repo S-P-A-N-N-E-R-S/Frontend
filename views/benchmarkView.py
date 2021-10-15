@@ -7,7 +7,6 @@ from .. import mainPlugin
 from ..network import parserManager
 from ..network.protocol.build.available_handlers_pb2 import FieldInformation
 
-
 from qgis.gui import QgsFileWidget
 from qgis.core import *
 
@@ -60,8 +59,7 @@ class BenchmarkView(BaseContentView):
             FieldInformation.FieldType.VERTEX_COSTS,
             FieldInformation.FieldType.EDGE_ID,
             FieldInformation.FieldType.VERTEX_ID]
-    
-    
+        
     def _createNewBenchmarkSelections(self, initial = False):
         # delete all widgets
         copy = self.benchmarkAnalysisCounter
@@ -70,8 +68,7 @@ class BenchmarkView(BaseContentView):
         # create the same amount of updated widgets
         for i in range(1,copy+1):
             self._newBenchmarkSelection()
-          
-        
+                 
     def _newBenchmarkSelection(self):
         self.benchmarkAnalysisCounter+=1
         listWidgetBenchmark = QListWidget()
@@ -191,6 +188,22 @@ class BenchmarkView(BaseContentView):
         item = QListWidgetItem("Lines")
         item.setCheckState(Qt.Unchecked)
         listWidgetVisualisation.addItem(item)
+        item = QListWidgetItem("Box plot")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetVisualisation.addItem(item)
+        
+        item = QListWidgetItem("------------------------------Additional Options------------------------------")
+        listWidgetVisualisation.addItem(item)
+        
+        item = QListWidgetItem("Logarithmic x-axis")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetVisualisation.addItem(item)
+        item = QListWidgetItem("Logarithmic y-axis")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetVisualisation.addItem(item)
+        item = QListWidgetItem("Create legend")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetVisualisation.addItem(item)
         
         removeButton = QToolButton()
         removeButton.setText("➖")
@@ -212,6 +225,7 @@ class BenchmarkView(BaseContentView):
         if self.dialog.graph_selection.count() > 0:
             ogdfAlgs = []
             requests = []
+            # get all checked algorithms
             for i in range(self.dialog.ogdf_algorithms.count()):
                 if self.dialog.ogdf_algorithms.item(i).checkState() == Qt.Checked:
                     ogdfAlgs.append(self.dialog.ogdf_algorithms.item(i))         
@@ -222,6 +236,7 @@ class BenchmarkView(BaseContentView):
                 if request:          
                     requests.append(request.getFieldInfo())
             
+            # set the parameter fields so the widgets can be created
             self.ogdfBenchmarkWidget.setParameterFields(requests)
             
         else:
@@ -256,8 +271,12 @@ class BenchmarkView(BaseContentView):
         self.dialog.ogdf_algorithms.addItem(item)
         
     def getSelection1(self):
-        # returns 2D object
+        """
+        Method to get the first selections of all the benchmark_visualisation QtListWidgets.
+        These selections are used in the first partitioning step.
         
+        :returns 2D list   
+        """ 
         grid = self.dialog.analysis_visualisation.layout()
         selection1 = []
         
@@ -274,6 +293,12 @@ class BenchmarkView(BaseContentView):
         return selection1
         
     def getSelection2(self):
+        """
+        Method to get the first selections of all the benchmark_visualisation QtListWidgets.
+        These selections are used in the second partitioning step.
+        
+        :returns 2D list   
+        """
         grid = self.dialog.analysis_visualisation.layout()
         selection2 = []
         
@@ -293,6 +318,12 @@ class BenchmarkView(BaseContentView):
         return selection2
     
     def getAnalysis(self):
+        """
+        Method to get the analysis of all the benchmark_visualisation QtListWidgets.
+        The selection is used to perform a specified analysis like number of edges or sparseness.
+                
+        :returns list
+        """
         grid = self.dialog.analysis_visualisation.layout()
         analysis = []
         
@@ -308,8 +339,13 @@ class BenchmarkView(BaseContentView):
                     if radioB.isChecked():
                         analysis.append(radioB.text())      
         return analysis
-    
+        
     def getVisualisation(self): 
+        """
+        Method to get the selected visualisations of all the benchmark requests. 
+        
+        :returns 2D list
+        """
         grid = self.dialog.analysis_visualisation.layout()  
         visualisation = []
         
@@ -317,19 +353,25 @@ class BenchmarkView(BaseContentView):
             visualisationSelWidget = grid.itemAtPosition(c,1).widget()
             oneSelection = []
             for i in range(visualisationSelWidget.count()):
+                if "Additional Options" in visualisationSelWidget.item(i).text():
+                    break                
                 if visualisationSelWidget.item(i).checkState() == Qt.Checked:
                     oneSelection.append(visualisationSelWidget.item(i).text())
             visualisation.append(oneSelection)
             
         return visualisation
         
-                
+    
+    def getExecutions(self, algName):
+        for i in range(self.dialog.ogdf_parameters.layout().count()):
+            widget = self.dialog.ogdf_parameters.layout().itemAt(i).widget()
+            if widget.objectName() == "Executions_" + algName:
+                return widget.value()
+        
+        return -1          
             
         
         
         
-        
-       
-        
-        
+
                

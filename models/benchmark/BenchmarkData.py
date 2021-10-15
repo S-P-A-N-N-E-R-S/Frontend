@@ -1,4 +1,5 @@
-from qgis.core import  *
+from qgis.core import *
+from statistics import mean
 
 class BenchmarkData():
     """
@@ -6,26 +7,21 @@ class BenchmarkData():
     """
     def __init__(self, graph, algorithm):
         # holds field labels (field.get("label")) and values
-        self.parameters = {}
-        
-        self.graphName = graph
-        
+        self.parameters = {}       
+        self.graphName = graph       
         self.graph = None
         for layer in QgsProject.instance().mapLayers().values():
             if isinstance(layer, QgsPluginLayer) and layer.name() == self.graphName:
                 self.graph = layer.getGraph()
         
         self.algorithm = algorithm
-        
-        self.serverResponse = None
-        self.responseGraph = None
-  
-        # parameters + graph to be returned as data for the server request
+        self.serverResponses = []
+        self.responseGraphs = []
+        # set the graph parameter for the server request
         self.parameters["graph"] = self.graph
-        
+        # dict holds field labels as keys and the the field keys as keys
         self.parameterKeyHash = {}
-               
-        
+                     
     def setParameterField(self, key, value):
         self.parameters[key] = value    
      
@@ -36,23 +32,45 @@ class BenchmarkData():
         return self.parameterKeyHash[label]
      
     def setServerResponse(self, response):
-        self.serverResponse = response
+        self.serverResponses.append(response)
 
     def setResponseGraph(self, graph):
-        self.responseGraph = graph
+        self.responseGraphs.append(graph)
   
     def getNumberOfEdgesRequest(self):
         return self.graph.edgeCount()
         
-    def getNumberOfEdgesResponse(self): 
-        return self.responseGraph.edgeCount()
+    def getAvgNumberOfEdgesResponse(self): 
+        values = []
+        for i in range(len(self.responseGraphs)):
+            values.append(self.responseGraphs[i].edgeCount())
+        
+        return mean(values)
+    
+    def getAllNumberOfEdgesResponse(self):
+        values = []
+        for i in range(len(self.responseGraphs)):
+            values.append(self.responseGraphs[i].edgeCount())
+        
+        return values
     
     def getNumberOfVerticesRequest(self):
         return self.graph.vertexCount()
     
-    def getNumberOfVerticesResponse(self):
-        return self.responseGraph.vertexCount()       
+    def getAvgNumberOfVerticesResponse(self):
+        values = []
+        for i in range(len(self.responseGraphs)):
+            values.append(self.responseGraphs[i].vertexCount())
+        
+        return mean(values)     
   
+    def getAllNumberOfVerticesResponse(self):
+        values = []
+        for i in range(len(self.responseGraphs)):
+            values.append(self.responseGraphs[i].vertexCount())
+        
+        return values
+    
     def getServerResponse(self):
         return self.serverResponse
     
@@ -68,8 +86,8 @@ class BenchmarkData():
     def getGraph(self):
         return self.graph
   
-    def getResponseGraph(self):
-        return self.responseGraph
+    def getResponseGraphs(self):
+        return self.responseGraphs
   
     def toString(self):
         string = self.graphName + self.algorithm
