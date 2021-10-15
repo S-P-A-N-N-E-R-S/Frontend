@@ -498,7 +498,10 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph.nnAllowDoubleEdges = graphElem.attribute("nnAllowDoubleEdges") == "True"
             self.mGraph.distance = float(graphElem.attribute("distance")), int(graphElem.attribute("distanceUnit"))
             self.mGraph.setDistanceStrategy(graphElem.attribute("distanceStrategy"))
-            self.mGraph.setRandomSeed(int(graphElem.attribute("randomSeed")))
+            
+            # random seed only found in randomly created graphs
+            if graphElem.hasAttribute("randomSeed"):
+                self.mGraph.setRandomSeed(int(graphElem.attribute("randomSeed")))
 
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
@@ -629,7 +632,10 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.setAttribute("distanceStrategy", self.mGraph.distanceStrategy)
         if self.mGraph.distanceStrategy == "Advanced":
             graphNode.setAttribute("edgeCostFunctions", self.mGraph.amountOfEdgeCostFunctions())
-        graphNode.setAttribute("randomSeed", str(self.mGraph.randomSeed))
+        
+        # don't add 'None' as randomSeed for not randomly created graphs
+        if self.mGraph.randomSeed:
+            graphNode.setAttribute("randomSeed", str(self.mGraph.randomSeed))
         node.appendChild(graphNode)
 
         # vertexNode saves all vertices with tis coordinates
