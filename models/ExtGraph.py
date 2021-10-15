@@ -889,10 +889,10 @@ class ExtGraph(QObject):
         if self.distanceStrategy == "Advanced":
             advancedKeys = ''
             for costIdx in range(self.amountOfEdgeCostFunctions()):
-                advancedKeys += '\t<key id="c' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
+                advancedKeys += '\t<key id="c_' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
             file.write(advancedKeys)
 
-        edgeDefault = "directed" if self.edgeDirection == "Directed" else "undirected"
+        edgeDefault = self.edgeDirection.lower()
 
         graphString = '\t<graph id="G" '
         graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
@@ -900,7 +900,7 @@ class ExtGraph(QObject):
         graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
         graphString += '" distanceunit="' + str(self.distance[1]) + (('" seed="' + str(self.randomSeed)) if self.randomSeed else '')
         graphString += '" crs="' + self.crs.authid() + '">\n'
-        file.write(graphString) 
+        file.write(graphString)
 
         for idx in range(self.mVertexCount):
             vertex = self.vertex(idx)
@@ -924,7 +924,7 @@ class ExtGraph(QObject):
             if self.distanceStrategy == "Advanced":
                 edgeData = ''
                 for costIdx in range(self.amountOfEdgeCostFunctions()):
-                    edgeData += '\t\t\t<data key="c' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
+                    edgeData += '\t\t\t<data key="c_' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
                 file.write(edgeData)
 
         file.write("\t</graph>\n")
@@ -1005,8 +1005,8 @@ class ExtGraph(QObject):
                 if 'key="cluster"' in line:
                     self.vertex(currNodeIdx).setClusterID(int(line.split('<data key="cluster">')[1].split('<')[0]))
                 
-                elif 'key="c' in line:
-                    costIdx = int(line.split('key="c')[1].split('"')[0])
-                    cost = float(line.split('<data key="c' + str(costIdx) + '">')[1].split('<')[0])
+                elif 'key="c_' in line:
+                    costIdx = int(line.split('key="c_')[1].split('"')[0])
+                    cost = float(line.split('<data key="c_' + str(costIdx) + '">')[1].split('<')[0])
                     
                     self.setCostOfEdge(currEdgeIdx, costIdx, cost)
