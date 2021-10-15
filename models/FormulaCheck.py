@@ -48,7 +48,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     costFunction = function.replace(" ", "").replace('"', '')
     
     function = function.replace(" ", "").replace('"', '')
-    formulaParts = re.split("\+|-|\*|/", costFunction)
+    formulaParts = re.split("\+|-|\*|/|;|<|>|==", costFunction)
     possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
     possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance", "standDev", "gradientSum", "gradientMin", "gradientMax", 
                                "ascent", "descent", "totalClimb", "spSum", "spMean", "spMedian", "spMin", "spMax", 
@@ -63,12 +63,41 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     # check for invalid operands
     partCounter = 1            
     for i in range(len(formulaParts)):
-        var = formulaParts[i].replace("(","").replace(")","")        
-        if not (var in possibleMetrics or var.isnumeric() or "." in var or "if(" in var or "field:" in var or "math." in var or "raster[" in var or "random(" in var):      
-
-            toReturn = ("Invalid operand", "", 0, len(originalFunction))      
-
+        var = formulaParts[i].replace("(","").replace(")","").replace("=","")
+        if var == "":
+            toReturn = ("Missing operand", "", 0, len(originalFunction))      
             return toReturn
+        if var in "euclidean" and len(var) < 9:
+            toReturn = ("Invalid operand", "", 0, len(originalFunction))      
+            return toReturn    
+        if var in "manhattan" and len(var) < 9:
+            toReturn = ("Invalid operand", "", 0, len(originalFunction))      
+            return toReturn
+        if var in "geodesic" and len(var) < 8:
+            toReturn = ("Invalid operand", "", 0, len(originalFunction))      
+            return toReturn
+        if var in "ellipsoidal" and len(var) < 11:       
+            toReturn = ("Invalid operand", "", 0, len(originalFunction))      
+            return toReturn
+        
+        if not(any(var in s for s in possibleMetrics) or var.isnumeric() or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):      
+            try:
+                float(var)
+            except:
+                if "," in var:
+                    splitVarRes = var.split(",")
+                    for res in splitVarRes:
+                        if not(any(res in s for s in possibleMetrics) or res.isnumeric() or "if" in res or "field:" in res or "math." in res or "raster[" in res or "random" in res):      
+                            try:
+                                float(res)
+                            except:                                  
+                                toReturn = ("Invalid operand", "", 0, len(originalFunction))      
+                                return toReturn 
+                else:                                    
+                    toReturn = ("Invalid operand", "", 0, len(originalFunction))      
+                    return toReturn    
+             
+                  
         partCounter+=1
                                     
     # check parentheses
@@ -94,34 +123,26 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
             toReturn = ("Forbidden special character used", "", 0, len(originalFunction))
             return toReturn
     
-        
-    # check all random operands   
-    partCounter = 1 
-    found = True
-    while(found):
-        found = False    
-        index = function.find("random(")
-        if index != -1:
-            found = True
-            # replace brackets
-            closingBracketIndex = __findClosingBracketIndex(function[index:], index)
-            function = function[0:closingBracketIndex] + "&" + function[closingBracketIndex+1:]                                                        
-            function = function.replace("random(","rnd?",1)               
-            function = function[:index] + function[index:closingBracketIndex-2].replace(",","§") + function[closingBracketIndex-2:]                 
-            searchMath = re.finditer('math\.[a-z]+\(.+?§.+?\)', function[index:closingBracketIndex])
-            for matchObj in searchMath:                  
-                function = function[:matchObj.start()] + function[matchObj.start():matchObj.end()].replace("§",",") + function[matchObj.end():]                          
-            if not "§" in function[index:closingBracketIndex]:
-                errorPos = __findConstructPosition(originalFunction, "random", partCounter)               
-                toReturn = ("Error in random function: Two values necessary", "", errorPos[0], errorPos[1])
-                return toReturn
-            randomRangeValues = function[index+4:closingBracketIndex-3].split("§")
-            for v in randomRangeValues:                                  
-                if not v.isnumeric() and not "." in v and not v in possibleMetrics and not "raster[" in v and not "math." in v and not "if(" in v:
-                    errorPos = __findConstructPosition(originalFunction, "random", partCounter)               
-                    toReturn = ("Error in random function: Invalid upper or lower bound", "", errorPos[0], errorPos[1])
-                    return toReturn
-            partCounter+=1
+    # check brackets in if and random
+    partCounter = 1
+    regex = re.compile(r'if\(?')
+    res = regex.findall(function)
+    for matchString in res:
+        if not "(" in matchString:
+            errorPos = __findConstructPosition(originalFunction, "if", partCounter)               
+            toReturn = ("Error in if construct: Missing opening bracket", "", errorPos[0], errorPos[1])
+            return toReturn
+        partCounter+=1
+            
+    partCounter = 1
+    regex = re.compile(r'random\(?')
+    res = regex.findall(function)
+    for matchString in res:
+        if not "(" in matchString:
+            errorPos = __findConstructPosition(originalFunction, "random", partCounter)               
+            toReturn = ("Error in random function: Missing opening bracket", "", errorPos[0], errorPos[1])
+            return toReturn
+        partCounter+=1
     
     # check all if constructs
     partCounter = 1 
@@ -150,7 +171,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                     toReturn = ("Error in if construct: Two values in if function necessary", "", errorPos[0], errorPos[1])
                     return toReturn   
                          
-            compOpSearch = re.compile(r'<|>|==')
+            compOpSearch = re.compile(r'<|>|==|!=')
             res = compOpSearch.search(ifParts[0])
             if res == None:              
                 toReturn = ("Error in if construct: Missing comparison operator", "", errorPos[0], errorPos[1])
@@ -168,10 +189,10 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                 if not percent.isnumeric() or int(percent) < 0 or int(percent) > 100:              
                     toReturn = ("Error in if construct: No valid integer number as percentage", "", errorPos[0], errorPos[1])
                     return toReturn                                         
-            
+            ifParts[0] = ifParts[0].replace("random","rnd")
             andOrSeperatedParts = re.split("or|and", ifParts[0])
-            for andOrPart in andOrSeperatedParts:              
-                comparedOperands = re.split(r'<|>|==', andOrPart)
+            for andOrPart in andOrSeperatedParts:             
+                comparedOperands = re.split(r'<|>|==|!=', andOrPart)
                 
                 if len(comparedOperands) != 2:             
                     toReturn = ("Error in if construct: Missing comparison value", "", errorPos[0], errorPos[1])
@@ -183,9 +204,9 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                     firstOperand = comparedOperands[0]    
                 secondOperand = comparedOperands[1]
                 secondOperand = secondOperand.replace("=","")
-                possOperandsRegex = re.compile(r'field|polygon|math|raster|rnd|True|False|euclidean|manhattan|geodesic|ellipsoidal')
+                possOperandsRegex = re.compile(r'field|polygon|math|raster|rnd|random|True|False|euclidean|manhattan|geodesic|ellipsoidal')
                 res = possOperandsRegex.search(firstOperand)
-                if res == None and not firstOperand.isnumeric():              
+                if res == None and not firstOperand.isnumeric():                                      
                     toReturn = ("Error in if construct: Invalid first operand of comparison", "", errorPos[0], errorPos[1])
                     return toReturn  
               
@@ -202,16 +223,87 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                 if "insidePolygon" in firstOperand and secondOperand != "True" and secondOperand != "False":               
                     toReturn = ("Error in if construct: insidePolygon can only be compared to False or True", "", errorPos[0], errorPos[1])
                     return toReturn                      
-                      
-            if not ifParts[1] in possibleMetrics and not "math" in ifParts[1] and not "raster" in ifParts[1] and not "rnd" in ifParts[1] and not ifParts[1].isnumeric() and not "." in ifParts[1]:             
+                     
+            seperatedParts = re.split("\+|-|\*|/", ifParts[1])
+                     
+            for sepPart in seperatedParts:      
+                if not any(sepPart in s for s in possibleMetrics) and not "math" in sepPart and not "raster" in sepPart and not "rnd" in sepPart and not "random" in sepPart and not sepPart.isnumeric():             
+                    try:
+                        float(sepPart)
+                    except:                  
+                        toReturn = ("Error in if construct: Invalid true value", "", errorPos[0], errorPos[1])
+                        return toReturn  
+            
+            seperatedParts = re.split("\+|-|\*|/", ifParts[2])
+            
+            for sepPart in seperatedParts:
+                if not any(sepPart in s for s in possibleMetrics) and not "math" in sepPart and not "raster" in sepPart and not "rnd" in sepPart and not "random" in sepPart and not sepPart.isnumeric():             
+                    try:
+                        float(sepPart)
+                    except: 
+                        toReturn = ("Error in if construct: Invalid false value", "", errorPos[0], errorPos[1])
+                        return toReturn       
+            
+            if "pixelvalue" in ifParts[1].lower() or "percentofvalues" in ifParts[1].lower():
                 toReturn = ("Error in if construct: Invalid true value", "", errorPos[0], errorPos[1])
                 return toReturn  
-     
-            if not ifParts[2] in possibleMetrics and not "math" in ifParts[2] and not "raster" in ifParts[2] and not "rnd" in ifParts[2] and not ifParts[2].isnumeric() and not "." in ifParts[2]:             
+            if "pixelvalue" in ifParts[2].lower() or "percentofvalues" in ifParts[2].lower():
                 toReturn = ("Error in if construct: Invalid false value", "", errorPos[0], errorPos[1])
-                return toReturn       
-            
-            partCounter+=1                     
+                return toReturn  
+                       
+            partCounter+=1
+           
+    # check all random operands   
+    partCounter = 1 
+    found = True
+    while(found):
+        found = False    
+        index = function.find("random(")
+        if index != -1:
+            found = True
+            # replace brackets
+            closingBracketIndex = __findClosingBracketIndex(function[index:], index)
+            function = function[0:closingBracketIndex] + "&" + function[closingBracketIndex+1:]                                                        
+            function = function.replace("random(","rnd?",1)               
+            function = function[:index] + function[index:closingBracketIndex-2].replace(",","§") + function[closingBracketIndex-2:]                 
+            searchMath = re.finditer('math\.[a-z]+\(.+?\)', function[index:closingBracketIndex])
+            for matchObj in searchMath:         
+                function = function[:matchObj.start()+index] + function[matchObj.start()+index:matchObj.end()+index].replace("§",",") + function[matchObj.end()+index:]                        
+            if not "§" in function[index:closingBracketIndex] or len(function[index:closingBracketIndex].split("§")) != 2:
+                errorPos = __findConstructPosition(originalFunction, "random", partCounter)               
+                toReturn = ("Error in random function: Two valid values necessary", "", errorPos[0], errorPos[1])
+                return toReturn
+            randomRangeValues = function[index+4:closingBracketIndex-3].split("§")
+            for value in randomRangeValues:   
+                value = value.replace("(","") .replace(")","")   
+                sepParts = re.split("\+|-|\*", value)
+                for v in sepParts:
+                                         
+                    if not v.isnumeric() and not v in possibleMetrics and not "raster[" in v and not "math." in v and not "if" in v:
+                        try:
+                            float(v)
+                        except:
+                            if "," in v:
+                                splitRes = v.split(",")                      
+                                for res in splitRes:  
+                                    if not res.isnumeric() and not res in possibleMetrics and not "raster[" in res and not "math." in res and not "if" in res:
+                                        try:
+                                            float(res)
+                                        except:
+                                           errorPos = __findConstructPosition(originalFunction, "random", partCounter)               
+                                           toReturn = ("Error in random function: Invalid upper or lower bound", "", errorPos[0], errorPos[1])
+                                           return toReturn    
+                            
+                            
+                            else:
+                                errorPos = __findConstructPosition(originalFunction, "random", partCounter)               
+                                toReturn = ("Error in random function: Invalid upper or lower bound", "", errorPos[0], errorPos[1])
+                                return toReturn  
+                                              
+            partCounter+=1
+    
+    
+                         
     
     # check all polygon constructs
     partCounter = 1
@@ -241,7 +333,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     
     # check math constructs    
     partCounter = 1                      
-    regex = re.compile(r'math\..+\(?')
+    regex = re.compile(r'math\.[A-z]+\(?')
     res = regex.findall(function)
     for matchString in res: 
         if not "(" in matchString:
@@ -249,6 +341,16 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
             toReturn = ("Error in math construct: No opening bracket", "", errorPos[0], errorPos[1])
             return toReturn
         partCounter+=1
+    
+    partCounter = 1 
+    regex = re.compile(r'math\.?')
+    res = regex.findall(function)
+    for matchString in res:                          
+        if not "." in matchString:
+            errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
+            toReturn = ("Error in math construct: No function specified", "", errorPos[0], errorPos[1])
+            return toReturn
+        partCounter+=1 
     
     partCounter = 1 
     regex = re.compile(r'math\.[A-z]*')
@@ -260,36 +362,31 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
             toReturn = ("Error in math construct: No function specified", "", errorPos[0], errorPos[1])
             return toReturn
         partCounter+=1 
-    
+       
     partCounter = 1        
-    regex = re.compile(r'math\.[a-z]*\(?')   
-    res = regex.findall(function)
-    for matchString in res: 
-        if "(" in matchString:
-            mathEvalTest1 = matchString + "10)"
+    regex = re.compile(r'math\.[A-z]*\(?')   
+    res = regex.finditer(function)
+    for matchObj in res:
+        matchString = matchObj.group().replace("(","")
+        closingAt = __findClosingBracketIndex(function[matchObj.start():], matchObj.start())
+        matchString2 = function[matchObj.start():closingAt+1]
+                   
+        if "," in matchString2:                                                  
+            mathEvalTest2 = matchString + "(10,10)"  
+            try:                                          
+                eval(mathEvalTest2)                    
+            except:
+                errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
+                toReturn = ("Error in math construct: Unable to execute", "", errorPos[0], errorPos[1])
+                return toReturn     
         else:
-            mathEvalTest1 = matchString + "(10)"                       
-        checkTwoValuesRegex = re.compile(r'math\.[a-z]*\(?.*?\)')  
-        checkTwoValuesRes = checkTwoValuesRegex.findall(function)
-        for matchString2 in checkTwoValuesRes:
-            if "," in matchString2:                                                  
-                if "(" in matchString:
-                    mathEvalTest2 = matchString + "10,10)"
-                else:
-                    mathEvalTest1 = matchString + "(10,10)"  
-                try:                       
-                    eval(mathEvalTest2)
-                except:
-                    errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
-                    toReturn = ("Error in math construct: Unable to execute", "", errorPos[0], errorPos[1])
-                    return toReturn     
-            else:
-                try:
-                    eval(mathEvalTest1)
-                except:
-                    errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
-                    toReturn = ("Error in math construct: Unable to execute", "", errorPos[0], errorPos[1])
-                    return toReturn 
+            mathEvalTest1 = matchString + "(10)"                
+            try:
+                eval(mathEvalTest1)               
+            except:
+                errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
+                toReturn = ("Error in math construct: Unable to execute", "", errorPos[0], errorPos[1])
+                return toReturn 
         partCounter+=1 
     
     partCounter = 1                         
@@ -316,7 +413,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                 if not number.isnumeric() and not "field:" in number and not "raster" in number and not "." in number and not "rnd" in number and not "if" in number:
                     if not number in possibleMetrics:
                         errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
-                        toReturn = ("Error in math construct: At least one operand necessary", "", errorPos[0], errorPos[1])
+                        toReturn = ("Error in math construct: At least one valid operand necessary", "", errorPos[0], errorPos[1])
                         return toReturn 
              
             # two operands
@@ -329,9 +426,12 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                 for n in multNumbers:                    
                     if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n and not "if" in n:
                         if not n in possibleMetrics:
-                            errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
-                            toReturn = ("Error in math construct: Invalid value", "", errorPos[0], errorPos[1])
-                            return toReturn                   
+                            try:
+                                float(n)
+                            except:   
+                                errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
+                                toReturn = ("Error in math construct: Invalid value", "", errorPos[0], errorPos[1])
+                                return toReturn                   
             partCounter+=1
                    
     # raster check    
@@ -382,33 +482,45 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     spParts = findspRegex.findall(function)
     for spPart in spParts:
         if not "(" in spPart or not ")" in spPart:
-            errorPos = __findConstructPosition(originalFunction, "raster", partCounter)               
+            errorPos = __findConstructPosition(originalFunction, "raster\[[0-9]+\]:sp", partCounter)               
             toReturn = ("Error in raster analysis: Heuristic index for shortest path missing", "", errorPos[0], errorPos[1])
             return toReturn  
         heuristicIndex = spPart.split("(")[1].split(")")[0]
         if "," in heuristicIndex:
+            if "pixelValue" in spPart or "PixelValue" in spPart:
+                 errorPos = __findConstructPosition(originalFunction, "raster\[[0-9]+\]:sp", partCounter)               
+                 toReturn = ("Error in raster analysis: Only heuristic index necessary", "", errorPos[0], errorPos[1])
+                 return toReturn  
+            
             heuristicIndex = heuristicIndex.split(",")[0]
             percentage = spPart.split(",")[1].split(")")[0]
             if not percentage.isnumeric() or int(percentage) < 0 or int(percentage) > 100:
-                errorPos = __findConstructPosition(originalFunction, "raster", partCounter)               
+                errorPos = __findConstructPosition(originalFunction, "raster\[[0-9]+\]:sp", partCounter)               
                 toReturn = ("Error in raster analysis: No valid integer number as percentage", "", errorPos[0], errorPos[1])
                 return toReturn 
         if not heuristicIndex.isnumeric() or int(heuristicIndex) < 0 or int(heuristicIndex) > 5:
-            errorPos = __findConstructPosition(originalFunction, "raster", partCounter)               
-            toReturn = ("Error in raster analsis: No valid integer number as heuristic index", "", errorPos[0], errorPos[1])
+            errorPos = __findConstructPosition(originalFunction, "raster\[[0-9]+\]:sp", partCounter)               
+            toReturn = ("Error in raster analysis: No valid integer number as heuristic index", "", errorPos[0], errorPos[1])
             return toReturn        
         partCounter+=1
     
-    percentPixelRegexList = ['(if\{)?raster\[[0-9]+\]:pixelValue', '(if\{)?raster\[[0-9]+\]:spPixelValue', '(if\{)?raster\[[0-9]+\]:percentOfValues', '(if\{)?raster\[[0-9]+\]:spPercentOfValues']        
+    percentPixelRegexList = ['raster\[[0-9]+\]:pixelValue', 'raster\[[0-9]+\]:spPixelValue', 'raster\[[0-9]+\]:percentOfValues', 'raster\[[0-9]+\]:spPercentOfValues']        
     for regex in percentPixelRegexList:
         partCounter = 1
         regexCompiled = re.compile(regex)
-        findPercentOrPixel = regexCompiled.findall(function)
-        for part in findPercentOrPixel: 
-            if not "if" in part:
-                errorPos = __findConstructPosition(originalFunction, "raster", partCounter)               
+        findPercentOrPixel = regexCompiled.finditer(function)
+        for matchObj in findPercentOrPixel:  
+            if matchObj.start() == 0:
+                errorPos = __findConstructPosition(originalFunction, regex, partCounter)               
                 toReturn = ("Error in raster analysis: PixelValue analysis can only be used inside if construct", "", errorPos[0], errorPos[1])
-                return toReturn
+                return toReturn 
+            findIf = function[matchObj.start()-3:]
+            if not "if" in findIf:
+                if not "and" or "or" in findIf:
+                    errorPos = __findConstructPosition(originalFunction, regex, partCounter)               
+                    toReturn = ("Error in raster analysis: PixelValue analysis can only be used inside if construct", "", errorPos[0], errorPos[1])
+                    return toReturn 
+                   
             partCounter+=1
     
     # fields check

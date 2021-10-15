@@ -149,3 +149,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# raster data xml
+*.tif.aux.xml

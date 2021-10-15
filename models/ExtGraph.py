@@ -125,8 +125,8 @@ class ExtGraph(QObject):
 
         # Set to true while building the graph to indicate that the arrays are
         # sorted by id, so binary search is possible
-        self.verticesSorted = False
-        self.edgesSorted = False
+        self.verticesSorted = True
+        self.edgesSorted = True
 
         self.mEdgeCount = 0
         self.mVertexCount = 0
@@ -210,10 +210,6 @@ class ExtGraph(QObject):
         file.write(sizeString)
 
         file.close()
-
-    def setSorted(self, sorted):
-        self.verticesSorted = sorted
-        self.edgesSorted = sorted
 
     def setJobID(self, jobId):
         self.mJobId = jobId
@@ -372,14 +368,16 @@ class ExtGraph(QObject):
         vertex1ID = self.vertex(vertex1Idx).id()
         vertex2ID = self.vertex(vertex2Idx).id()
 
-        for edgeIdx in self.vertex(vertex1Idx).outgoingEdges():
+        for edgeID in self.vertex(vertex1Idx).outgoingEdges():
+            edgeIdx = self.findEdgeByID(edgeID)
             edge = self.mEdges[edgeIdx]
 
             if edge.fromVertex() == vertex1ID and edge.toVertex() == vertex2ID:
                 return edgeIdx
 
         if self.edgeDirection == "Undirected":
-            for edgeIdx in self.vertex(vertex1Idx).incomingEdges():
+            for edgeID in self.vertex(vertex1Idx).incomingEdges():
+                edgeIdx = self.findEdgeByID(edgeID)
                 edge = self.mEdges[edgeIdx]
 
                 if edge.fromVertex() == vertex2ID and edge.toVertex() == vertex1ID:
@@ -464,7 +462,7 @@ class ExtGraph(QObject):
 
         :type vertex: QgsPointXY
         :type tolerance: int
-        :return vertexId: Integer
+        :return vertexIdx: Integer
         """
         if tolerance > 0:
             toleranceRect = QgsRectangle.fromCenterAndSize(vertex, tolerance, tolerance)
@@ -531,6 +529,14 @@ class ExtGraph(QObject):
 
         self.mEdges.insert(addIndex, addedEdge)
 
+        # check downwards sorting
+        if self.edgesSorted and addIndex - 1 >= 0:
+            self.edgesSorted = self.mEdges[addIndex - 1].id() < addedEdgeID
+
+        # check updwards sorting
+        if self.edgesSorted and addIndex + 1 < len(self.mEdges):
+            self.edgesSorted = self.mEdges[addIndex + 1].id() > addedEdgeID
+
         # add entries for edgeWeights at the correct idx
         for functionIdx in range(len(self.edgeWeights)):
             # add default value 0
@@ -569,6 +575,14 @@ class ExtGraph(QObject):
             self.mMaxVertexID = addedVertexID + 1
 
         self.mVertices.insert(addIndex, self.ExtVertex(point, addedVertexID))
+
+        # check downwards sorting
+        if self.verticesSorted and addIndex - 1 >= 0:
+            self.verticesSorted = self.mVertices[addIndex - 1].id() < addedVertexID
+
+        # check updwards sorting
+        if self.verticesSorted and addIndex + 1 < len(self.mVertices):
+            self.verticesSorted = self.mVertices[addIndex + 1].id() > addedVertexID
 
         if hasattr(self, "mNextClusterID"):
             self.mVertices[addIndex].setClusterID(self.mNextClusterID)
@@ -871,14 +885,14 @@ class ExtGraph(QObject):
 
         :type path: String
         """
-        file = open(path, "w")
-        header = ['<?xml version="1.0" encoding="UTF-8"?>\n',
-            '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n',
-            '\txmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n',
-            '\txmlns:y="http://www.yworks.com/xml/graphml"\n',
-            '\txsi:schemaLocation="http://graphml.graphdrawing.org/xmlns\n',
-            '\t http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">\n',
-            '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
+        with open(path, "w") as file:
+            header = ['<?xml version="1.0" encoding="UTF-8"?>\n',
+                '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n',
+                '\txmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n',
+                '\txmlns:y="http://www.yworks.com/xml/graphml"\n',
+                '\txsi:schemaLocation="http://graphml.graphdrawing.org/xmlns\n',
+                '\t http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">\n',
+                '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
 
         file.writelines(header)
 
@@ -937,8 +951,8 @@ class ExtGraph(QObject):
 
         :type path: String
         """
-        file = open(path, "r")
-        lines = file.readlines()
+        with open(path, "r") as file:
+            lines = file.readlines()
         nodeCoordinatesGiven = False
         edgeTypeDirection = "Directed"
         currNodeID = 0

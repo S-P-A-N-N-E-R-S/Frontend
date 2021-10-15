@@ -293,8 +293,8 @@ class GraphBuilder:
             elif self.__options["connectionType"] == "DistanceNN":
                     # make distance transformation
                     transDistValue = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                    
-                    listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2))                                              
-            for j in range(1,len(listOfNeighbors)):
+                    listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2))                                       
+            for j in range(0,len(listOfNeighbors)):
                 if self.__options["connectionType"] == "Nearest neighbor":
                     neighborPoint = listOfNeighbors[j][0].data
                 elif self.__options["connectionType"] == "DistanceNN":    
@@ -305,7 +305,7 @@ class GraphBuilder:
                 if self.__options["distanceStrategy"] == "Advanced":
                     self.graph.featureMatchings.append(self.graph.mVertices[neighborPoint[2]].mCoordinates)
 
-            if self.__options["connectionType"] == "Nearest neighbor" and self.__options["nnAllowDoubleEdges"] == False:
+            if (self.__options["connectionType"] == "Nearest neighbor" or self.__options["connectionType"] == "DistanceNN") and self.__options["nnAllowDoubleEdges"] == False:
                 self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
 
     def __createCluster(self):
@@ -733,8 +733,6 @@ class GraphBuilder:
         if self.__options["createGraphAsLayers"] == True:
             self.createVertexLayer(True)
             self.createEdgeLayer(True)
-
-        self.graph.setSorted(True)
         
         return self.graph
 

@@ -66,7 +66,8 @@ class AdvancedCostCalculator():
         :type edgesInPolygonList: List of features
         :type edgesCrossingPolygonsList: List of features
         :return translated part as string
-        """    
+        """  
+          
         # check if part string was already translated
         if part in self.translatedParts.keys():
             return self.translatedParts[part]                       
@@ -131,23 +132,27 @@ class AdvancedCostCalculator():
             except:
                 pass
                      
-        if "rnd?" in part:                            
+        if "rnd?" in part:                      
             lb = part.split("?")[1].split("§")[0]
             ub = part.split("&")[0].split("§")[1]                                 
             
-            if lb.isnumeric() and ub.isnumeric():               
+            if lb.isnumeric() and ub.isnumeric():   
+                if int(lb) > int(ub):
+                    return str(0)                        
                 return str(random.randint(int(lb),int(ub)))              
             try:
                 convertedLB = float(eval(lb))
-                convertedUB = float(eval(ub))                               
+                convertedUB = float(eval(ub))
+                if convertedLB > convertedUB:
+                    return str(0)                                           
                 return str(random.uniform(convertedLB,convertedUB))               
             except:
                 pass    
-                                                             
+            
             return part
-                                                   
+                                                                                                               
         # translate if part        
-        if "if" in part:                                
+        if "if" in part:                            
             expression = part.split(";")[0].split("{",1)[1]    
             expression = expression.replace("and", " and ")
             expression = expression.replace("or", " or ")                                
@@ -160,7 +165,7 @@ class AdvancedCostCalculator():
                         equalTrue = False
                         for l in list:
                             toEval = re.sub(r"pixelValue\(([0-9]+,)+[0-9]+\)", "", expPart)                        
-                            toEval = l + toEval                       
+                            toEval = l + toEval                     
                             if eval(toEval) == True:
                                 expression = expression.replace(expPart, " True ")    
                                 equalTrue = True
@@ -171,7 +176,7 @@ class AdvancedCostCalculator():
                     # only one value in list
                     else:                     
                         toEval = re.sub(r"pixelValue\([0-9]\)", "", expPart)
-                        toEval = listString + toEval
+                        toEval = listString + toEval                      
                         if eval(toEval) == True:
                             expression = expression.replace(expPart, " True ")    
                             break                
@@ -187,15 +192,14 @@ class AdvancedCostCalculator():
                     for l in range(1, len(list)):
                         toEval = re.sub(r"percentOfValues\(([0-9]+,)+[0-9]+\)", "", expPart) 
                         toEval = list[l] + toEval
-                      
+                        
                         if eval(toEval) == True:
-                            trueExpFount+=1  
-                                                         
+                            trueExpFount+=1                                      
                     if int(percentage) <= (trueExpFount / (len(list)-1))*100:
                         expression = expression.replace(expPart, " True ")
                     else:
                         expression = expression.replace(expPart, " False ")       
-                     
+                    
             if eval(expression) == True:              
                 return str(eval(part.split(";")[1]))
             else:
@@ -228,7 +232,7 @@ class AdvancedCostCalculator():
                 return str((self.graph.pointsToFeatureHash[self.graph.vertex(edge.toVertex()).point().toString()])[name])
                                   
         # analysis of raster data
-        if "raster[" in part:               
+        if "raster[" in part:             
             rasterDataID = int(part.split("[")[1].split("]")[0])                
             bandForRaster = self.rasterBands[rasterDataID]    
             stringForLookup = "SAMPLE_" + str(bandForRaster)
@@ -249,17 +253,19 @@ class AdvancedCostCalculator():
                     heurID = int(part.split("(")[1].split(")")[0].split(",")[0])
                 else:
                     heurID = int(part.split("(")[1].split(")")[0]) 
-                    
+                numberOfDiagonals = None   
                 for aStarObj in self.aStarAlgObjects:
                     
-                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:               
+                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:   
+                                  
                         if self.pixelValuesForEdge[rasterDataID*6 + heurID] == None:            
                             pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
                             self.pixelValuesForEdge[rasterDataID*6 + heurID] = pixelValues
+                        numberOfDiagonals = aStarObj.getNumberOfDiagonals()  
                 if "," in part:
                     part = part.split("(")[0] + "(" + part.split(",")[1]   
 
-                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[rasterDataID*6 + heurID], part.split(":sp")[1], rasterDataID)
+                return self.__calculateRasterAnalysis(self.pixelValuesForEdge[rasterDataID*6 + heurID], part.split(":sp")[1], rasterDataID, numberOfDiagonals)
             else:
                 return self.__calculateRasterAnalysis(self.pointValuesForEdge[rasterDataID], part.split(":")[1])
                    
@@ -269,7 +275,7 @@ class AdvancedCostCalculator():
         
         return str("0")
           
-    def __calculateRasterAnalysis(self, values, analysis, rLayerIndex = 0):
+    def __calculateRasterAnalysis(self, values, analysis, rLayerIndex = 0, numberOfDiagonals = None):
         """
         Method is responsible to translate all the raster analysis constructs.
         
@@ -339,16 +345,25 @@ class AdvancedCostCalculator():
             listOfPixelValuesAsString = listOfPixelValuesAsString + ")"           
             return listOfPixelValuesAsString
         elif "euclidean" in analysis.lower():
-            shortestPathEucl = self.euclDistPixelNeighbors[rLayerIndex] * len(values)-1
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.euclDistPixelNeighbors[rLayerIndex],2) + math.pow(self.euclDistPixelNeighbors[rLayerIndex],2)))            
+            nonDiagonalLength = self.euclDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
+            shortestPathEucl = diagonalLength + nonDiagonalLength     
             return str(shortestPathEucl)
         elif "manhattan" in analysis.lower():
-            shortestPathMan = self.manDistPixelNeighbors[rLayerIndex] * len(values)-1
+            shortestPathMan = self.manDistPixelNeighbors[rLayerIndex] * len(values)-1          
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.manDistPixelNeighbors[rLayerIndex],2) + math.pow(self.manDistPixelNeighbors[rLayerIndex],2)))            
+            nonDiagonalLength = self.manDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
+            shortestPathMan = diagonalLength + nonDiagonalLength           
             return str(shortestPathMan)
-        elif "geodesic" in analysis.lower():
-            shortestPathGeo = self.geoDistPixelNeighbors[rLayerIndex] * len(values)-1
+        elif "geodesic" in analysis.lower():   
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.geoDistPixelNeighbors[rLayerIndex],2) + math.pow(self.geoDistPixelNeighbors[rLayerIndex],2)))            
+            nonDiagonalLength = self.geoDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
+            shortestPathGeo = diagonalLength + nonDiagonalLength                           
             return str(shortestPathGeo)
         elif "ellipsoidal" in analysis.lower():
-            shortestPathEll = self.ellDistPixelNeighbors[rLayerIndex] * len(values)-1    
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.ellDistPixelNeighbors[rLayerIndex],2) + math.pow(self.ellDistPixelNeighbors[rLayerIndex],2)))            
+            nonDiagonalLength = self.ellDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
+            shortestPathEll = diagonalLength + nonDiagonalLength     
             return str(shortestPathEll)
     
     def __createEdgeLayer(self): 
@@ -389,20 +404,22 @@ class AdvancedCostCalculator():
         :type constructCall: Boolean
         :return translated formula
         """
-        found = True
-        while found:
-            found = False
-            regex = re.compile(regex)
+        
+        regex = re.compile(regex)
+        matches = regex.finditer(costFunction)
+        
+        matchesTranslationHash = {}
+        
+        for res in matches:       
+            translated = self.__translate(costFunction[res.start():res.end()], edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)
+            if not constructCall:
+                self.translatedParts[costFunction[res.start():res.end()]] = translated  
             
-            res = regex.search(costFunction)
-            
-            if res != None:
-                found = True          
-                translated = self.__translate(costFunction[res.start():res.end()], edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)
-                if not constructCall:
-                    self.translatedParts[costFunction[res.start():res.end()]] = translated               
-                costFunction = costFunction[:res.start()] + translated + costFunction[res.end():]                
-                
+            matchesTranslationHash[res.group()] = translated
+          
+        for key in matchesTranslationHash.keys():
+            costFunction = costFunction.replace(key, matchesTranslationHash[key])
+
         return costFunction
      
     def __fullyTranslatedCheck(self, costFunction):
@@ -460,6 +477,7 @@ class AdvancedCostCalculator():
         
         # precalculate the distance between neighboring pixels 
         if "spEuclidean" in costFunction or "spManhattan" in costFunction or "spGeodesic" in costFunction or "spEllipsoidal" in costFunction:
+            
             for rLayer in self.rLayers:
                 ds = gdal.Open(rLayer.source())
                 cols = ds.RasterXSize
@@ -476,7 +494,7 @@ class AdvancedCostCalculator():
                 originalPoint = QgsPointXY(xCoord, yCoord)
                 
                 #get coordinates of a neighbor
-                xCoordN = (pixelWidth*1) + xOrigin + (pixelWidth/2)
+                xCoordN = xOrigin + (pixelWidth/2)
                 yCoordN = (pixelHeight*1) + yOrigin + (pixelHeight/2) 
                 originalPointN = QgsPointXY(xCoordN, yCoordN)
                 
@@ -564,6 +582,7 @@ class AdvancedCostCalculator():
                     break
                 for regex in constructRegexList:
                     costFunction = self.__translateRegexSearch(costFunction, regex, i, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList, True)      
+            
             weights.append(eval(costFunction))
             
         # append the list        

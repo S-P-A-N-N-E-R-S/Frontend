@@ -51,6 +51,7 @@ class OGDFAnalysisController(BaseController):
         for key in parameterFieldsData:
             fieldData = parameterFieldsData[key]
             request.setFieldData(key, fieldData)
+        request.jobName = self.view.getJobName()
 
         try:
             with Client(helper.getHost(), helper.getPort()) as client:

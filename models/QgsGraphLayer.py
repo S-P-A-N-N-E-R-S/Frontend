@@ -62,7 +62,7 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         if isinstance(self.mGraph, ExtGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
-                converter = iface.mapCanvas().getCoordinateTransform()
+                converter = self.renderContext().mapToPixel()
                 
                 for idx in range(self.mGraph.vertexCount()):
                     vertex = self.mGraph.vertex(idx)
@@ -196,6 +196,9 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mShowDirection = False
         self.mShowLines = True
 
+        self.exportPoints = True
+        self.exportLines = True
+
         self.mRandomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         self.mRenderedCostFunction = 0
@@ -303,7 +306,6 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mLineFields.append(toVertexField)
 
             # self.mGraph.calculateSize()
-        
         
     def getGraph(self):
         return self.mGraph
@@ -522,7 +524,10 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph.nnAllowDoubleEdges = graphElem.attribute("nnAllowDoubleEdges") == "True"
             self.mGraph.distance = float(graphElem.attribute("distance")), int(graphElem.attribute("distanceUnit"))
             self.mGraph.setDistanceStrategy(graphElem.attribute("distanceStrategy"))
-            self.mGraph.setRandomSeed(int(graphElem.attribute("randomSeed")))
+            
+            # random seed only found in randomly created graphs
+            if graphElem.hasAttribute("randomSeed"):
+                self.mGraph.setRandomSeed(int(graphElem.attribute("randomSeed")))
 
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
@@ -568,18 +573,11 @@ class QgsGraphLayer(QgsPluginLayer):
 
 
         # get vertex information and add them to graph
-        pastID = -1
-        verticesSorted = True
         for vertexIdx in range(vertexNodes.length()):
             if vertexNodes.at(vertexIdx).isElement():
                 elem = vertexNodes.at(vertexIdx).toElement()
                 vertex = QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y")))
                 vID = int(elem.attribute("id"))
-                
-                # check if vertices are loaded in order
-                if vID <= pastID:
-                    verticesSorted = False
-                pastID = vID
 
                 addedVertexIdx = self.mGraph.addVertex(vertex, -1, vID)
 
@@ -589,19 +587,12 @@ class QgsGraphLayer(QgsPluginLayer):
                         self.mGraph.setNextClusterID(int(elem.attribute("clusterID")) + 1)
 
         # get edge information and add them to graph
-        pastID = -1
-        edgesSorted = True
         for edgeIdx in range(edgeNodes.length()):
             if edgeNodes.at(edgeIdx).isElement():
                 elem = edgeNodes.at(edgeIdx).toElement()
                 fromVertexID = int(elem.attribute("fromVertex"))
                 toVertexID = int(elem.attribute("toVertex"))
                 eID = int(elem.attribute("id"))
-
-                # check if edges are loaded in order
-                if eID <= pastID:
-                    edgesSorted = False
-                pastID = eID
 
                 highlighted = elem.attribute("highlighted") == "True"
                 
@@ -621,7 +612,6 @@ class QgsGraphLayer(QgsPluginLayer):
                         costValue = float(costElem.attribute("value"))
                         self.mGraph.setCostOfEdge(addedIdx, functionIndex, costValue)
 
-        self.mGraph.setSorted(verticesSorted and edgesSorted)
         return True
 
     def writeXml(self, node, doc, context):
@@ -651,7 +641,10 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.setAttribute("distanceStrategy", self.mGraph.distanceStrategy)
         if self.mGraph.distanceStrategy == "Advanced":
             graphNode.setAttribute("edgeCostFunctions", self.mGraph.amountOfEdgeCostFunctions())
-        graphNode.setAttribute("randomSeed", str(self.mGraph.randomSeed))
+        
+        # don't add 'None' as randomSeed for not randomly created graphs
+        if self.mGraph.randomSeed:
+            graphNode.setAttribute("randomSeed", str(self.mGraph.randomSeed))
         node.appendChild(graphNode)
 
         # vertexNode saves all vertices with tis coordinates
@@ -842,9 +835,11 @@ class QgsGraphLayerType(QgsPluginLayerType):
         :return Boolean
         """
         layer.activateUniqueName()
-        if hasattr(self, "win") and self.win:
+        if hasattr(self, "win") and self.win and layer.id() == self.layerID:
             self.win.setVisible(True)
             return True
+
+        self.layerID = layer.id()
 
         self.win = QDialog(iface.mainWindow())
         self.win.setVisible(True)

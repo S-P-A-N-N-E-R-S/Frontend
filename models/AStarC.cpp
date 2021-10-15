@@ -57,7 +57,8 @@ class AStarC {
 			srand(time(NULL));		
 		}
 		
-		std::vector<int> shortestPath(int x1, int y1, int x2, int y2){		
+		std::vector<int> shortestPath(int x1, int y1, int x2, int y2){	
+			diagonals = 0;	
 			std::vector<std::vector<int>> pixelWeights(matrix.size(), std::vector<int>(matrix[0].size()));	
 			std::vector<std::vector<std::tuple<int,int>>> predMatrix (matrix.size(), std::vector<std::tuple<int,int>>(matrix[0].size()));
 			
@@ -93,7 +94,13 @@ class AStarC {
 							shortestPathMatrix3[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomBlue) / 2;
 						}
 						shortestPathWeights.push_back(matrix[std::get<0>(u)][std::get<1>(u)]);
+						int prevX = std::get<0>(u);
+						int prevY = std::get<1>(u);
 						u = predMatrix[std::get<0>(u)][std::get<1>(u)];
+						if(std::get<0>(u) != prevX and std::get<1>(u) != prevY){
+							diagonals++;
+						}
+						
 						currPathPoint = Point(std::get<0>(u),std::get<1>(u),0);
 					}
 					shortestPathWeights.push_back(matrix[startPoint.x][startPoint.y]);	
@@ -112,6 +119,7 @@ class AStarC {
 				
 				std::vector<std::tuple<int,int>> neighbors = getNeighborIndices(current.x, current.y);
 				
+				int nIndexCounter = 0;
 				for(std::tuple<int,int> neighbor : neighbors){
 					int neighborX = std::get<0>(neighbor);
 					int neighborY = std::get<1>(neighbor);
@@ -135,7 +143,7 @@ class AStarC {
 							pq.push(Point(neighborX, neighborY, heuristicWeight));
 						}				
 					}
-					
+					nIndexCounter++;
 				}
 				
 			}		
@@ -152,6 +160,10 @@ class AStarC {
 		std::vector<std::vector<short>> &getShortestPathMatrix3(){
 			return shortestPathMatrix3;	
 		}
+		int &getNumberOfDiagonals(){
+			return diagonals;
+		}
+		
 		
 		
 		
@@ -164,18 +176,22 @@ class AStarC {
 		std::vector<std::vector<short>> shortestPathMatrix1;
 		std::vector<std::vector<short>> shortestPathMatrix2;
 		std::vector<std::vector<short>> shortestPathMatrix3;
+		int diagonals = 0;
 		
 		std::vector<std::tuple<int,int>> getNeighborIndices(int i, int j){
-			std::tuple<int,int> bl = std::make_tuple(i-1,j-1);
-			std::tuple<int,int> bm = std::make_tuple(i-1,j);
-			std::tuple<int,int> br = std::make_tuple(i-1,j+1);
+			// non diagonal
+			std::tuple<int,int> bm = std::make_tuple(i-1,j);		
 			std::tuple<int,int> ml = std::make_tuple(i,j-1);
-			std::tuple<int,int> mr = std::make_tuple(i,j+1);
-			std::tuple<int,int> tl = std::make_tuple(i+1,j-1);
+			std::tuple<int,int> mr = std::make_tuple(i,j+1);		
 			std::tuple<int,int> tm = std::make_tuple(i+1,j);
+			
+			//diagonal
+			std::tuple<int,int> bl = std::make_tuple(i-1,j-1);
+			std::tuple<int,int> br = std::make_tuple(i-1,j+1);
+			std::tuple<int,int> tl = std::make_tuple(i+1,j-1);
 			std::tuple<int,int> tr = std::make_tuple(i+1,j+1);	
 			
-			std::vector<std::tuple<int,int>> toReturn = {bl,bm,br,ml,mr,tl,tm,tr};
+			std::vector<std::tuple<int,int>> toReturn = {bm,ml,mr,tm,bl,br,tl,tr};
 			
 			return toReturn;
 			
@@ -214,5 +230,6 @@ PYBIND11_MODULE(AStarC,m) {
 	.def("shortestPath", &AStarC::shortestPath)
 	.def("getShortestPathMatrix1", &AStarC::getShortestPathMatrix1)
 	.def("getShortestPathMatrix2", &AStarC::getShortestPathMatrix2)
-	.def("getShortestPathMatrix3", &AStarC::getShortestPathMatrix3);
+	.def("getShortestPathMatrix3", &AStarC::getShortestPathMatrix3)
+	.def("getNumberOfDiagonals", &AStarC::getNumberOfDiagonals);
 }
