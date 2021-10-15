@@ -733,8 +733,6 @@ class GraphBuilder:
         if self.__options["createGraphAsLayers"] == True:
             self.createVertexLayer(True)
             self.createEdgeLayer(True)
-
-        self.graph.setSorted(True)
         
         return self.graph
 
