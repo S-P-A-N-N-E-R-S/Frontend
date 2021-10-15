@@ -267,6 +267,9 @@ class QgsGraphLayer(QgsPluginLayer):
             # TODO: does this shallow copy work after all?
             self.mGraph = graph
 
+            if not self.mGraph.crs:
+                self.mGraph.crs = self.crs()
+
             if graph.edgeCount() != 0:
                 self.hasEdges = True
                 
@@ -294,18 +297,15 @@ class QgsGraphLayer(QgsPluginLayer):
             edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
             fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
             toVertexField = QgsField("toVertex", QVariant.Double, "double")
-            costField = QgsField("edgeCost", QVariant.Double, "double")
             
-            self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField], False)
+            self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField], False)
                 
             # update line fields
             self.mLineFields.append(edgeIdField)
             self.mLineFields.append(fromVertexField)
             self.mLineFields.append(toVertexField)
-            self.mLineFields.append(costField)
 
             # self.mGraph.calculateSize()
-        
         
     def getGraph(self):
         return self.mGraph
@@ -324,6 +324,23 @@ class QgsGraphLayer(QgsPluginLayer):
                 self.mDataProvider.addFeature(feat, True, vertexIdx)
 
         if self.exportLines:
+            # add fields for advanced costs
+            if self.mGraph.distanceStrategy == "Advanced":
+                for costIdx in range(self.mGraph.amountOfEdgeCostFunctions()):
+                    fieldName = "cost_" + str(costIdx)
+                    costField = QgsField(fieldName, QVariant.Double, "double")
+
+                    self.mDataProvider.addAttributes([costField], False)
+                    
+                    self.mLineFields.append(costField)
+            
+            # only use one field for one cost function
+            else:
+                costField = QgsField("edgeCost", QVariant.Double, "double")
+                self.mDataProvider.addAttributes([costField], False)
+                self.mLineFields.append(costField)
+
+
             # build line features
             for edgeIdx in range(self.mGraph.edgeCount()):
                 edge = self.mGraph.edge(edgeIdx)
@@ -333,9 +350,17 @@ class QgsGraphLayer(QgsPluginLayer):
                 toVertex = self.mGraph.vertex(self.mGraph.findVertexByID(edge.toVertex())).point()
                 feat.setGeometry(QgsGeometry.fromPolyline([QgsPoint(fromVertex), QgsPoint(toVertex)]))
 
-                # features only save one value for edge cost even if multiple cost functions are given
-                feat.setAttributes([edge.id(), edge.fromVertex(), edge.toVertex(), self.mGraph.costOfEdge(edgeIdx)])
+                attr = [edge.id(), edge.fromVertex(), edge.toVertex()]
 
+                if self.mGraph.distanceStrategy == "Advanced":
+
+                    for costIdx in range(self.mGraph.amountOfEdgeCostFunctions()):
+                        attr.append(self.mGraph.costOfEdge(edgeIdx, costIdx))
+
+                else:
+                    attr.append(self.mGraph.costOfEdge(edgeIdx))
+
+                feat.setAttributes(attr)
                 self.mDataProvider.addFeature(feat, False, edgeIdx)
 
     def __destroyFeatures(self):
@@ -365,29 +390,29 @@ class QgsGraphLayer(QgsPluginLayer):
         driver = ""
 
         if saveFileName[1] == "Shapefile (*.shp)": # Shapefile
-            pointFileName += "Points.shp"
-            lineFileName += "Lines.shp"
+            pointFileName += "Points.shp" if not "Points.shp" in pointFileName else ""
+            lineFileName += "Lines.shp" if not "Lines.shp" in lineFileName else ""
             driver = "ESRI Shapefile"
 
         elif saveFileName[1] == "Geopackage (*.gpkg)": # Geopackage
-            pointFileName += "Points.gpkg"
-            lineFileName += "Lines.gpkg"
+            pointFileName += "Points.gpkg" if not "Points.gpkg" in pointFileName else ""
+            lineFileName += "Lines.gpkg" if not "Lines.gpkg" in lineFileName else ""
             driver = "GPKG"
 
         elif saveFileName[1] == "CSV (*.csv)": # CSV
-            pointFileName += "Points.csv"
-            lineFileName += "Lines.csv"
+            pointFileName += "Points.csv" if not "Points.csv" in pointFileName else ""
+            lineFileName += "Lines.csv"if not "Lines.csv" in lineFileName else ""
             driver = "CSV"
         
         elif saveFileName[1] == "GraphML (*.graphml)":
             # GraphML can store both points and lines
-            pointFileName += ".graphml"
+            pointFileName += ".graphml" if not ".graphml" in pointFileName else ""
             self.mGraph.writeGraphML(pointFileName)
             return True
 
         elif saveFileName[1] == "GeoJSON (*.geojson)":
-            pointFileName += "Points.geojson"
-            lineFileName += "Lines.geojson"
+            pointFileName += "Points.geojson" if not "Points.geojson" in pointFileName else ""
+            lineFileName += "Lines.geojson" if not "Lines.geojson" in lineFileName else ""
             driver = "GeoJSON"
         else:
             return False
@@ -483,6 +508,7 @@ class QgsGraphLayer(QgsPluginLayer):
             srsNode = srsNode.nextSibling()
 
         self.crs().readXml(srsNode)
+        self.mGraph.crs = self.crs()
 
         # find graph node in xml
         graphNode = srsNode
@@ -498,7 +524,10 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph.nnAllowDoubleEdges = graphElem.attribute("nnAllowDoubleEdges") == "True"
             self.mGraph.distance = float(graphElem.attribute("distance")), int(graphElem.attribute("distanceUnit"))
             self.mGraph.setDistanceStrategy(graphElem.attribute("distanceStrategy"))
-            self.mGraph.setRandomSeed(int(graphElem.attribute("randomSeed")))
+            
+            # random seed only found in randomly created graphs
+            if graphElem.hasAttribute("randomSeed"):
+                self.mGraph.setRandomSeed(int(graphElem.attribute("randomSeed")))
 
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
@@ -533,31 +562,22 @@ class QgsGraphLayer(QgsPluginLayer):
         edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
         fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
         toVertexField = QgsField("toVertex", QVariant.Double, "double")
-        costField = QgsField("edgeCost", QVariant.Double, "double")
         
         # self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
-        self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField, costField], False)
+        self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField], False)
         
         # update line fields
         self.mLineFields.append(edgeIdField)
         self.mLineFields.append(fromVertexField)
         self.mLineFields.append(toVertexField)
-        self.mLineFields.append(costField)
 
 
         # get vertex information and add them to graph
-        pastID = -1
-        verticesSorted = True
         for vertexIdx in range(vertexNodes.length()):
             if vertexNodes.at(vertexIdx).isElement():
                 elem = vertexNodes.at(vertexIdx).toElement()
                 vertex = QgsPointXY(float(elem.attribute("x")), float(elem.attribute("y")))
                 vID = int(elem.attribute("id"))
-                
-                # check if vertices are loaded in order
-                if vID <= pastID:
-                    verticesSorted = False
-                pastID = vID
 
                 addedVertexIdx = self.mGraph.addVertex(vertex, -1, vID)
 
@@ -567,19 +587,12 @@ class QgsGraphLayer(QgsPluginLayer):
                         self.mGraph.setNextClusterID(int(elem.attribute("clusterID")) + 1)
 
         # get edge information and add them to graph
-        pastID = -1
-        edgesSorted = True
         for edgeIdx in range(edgeNodes.length()):
             if edgeNodes.at(edgeIdx).isElement():
                 elem = edgeNodes.at(edgeIdx).toElement()
                 fromVertexID = int(elem.attribute("fromVertex"))
                 toVertexID = int(elem.attribute("toVertex"))
                 eID = int(elem.attribute("id"))
-
-                # check if edges are loaded in order
-                if eID <= pastID:
-                    edgesSorted = False
-                pastID = eID
 
                 highlighted = elem.attribute("highlighted") == "True"
                 
@@ -599,7 +612,6 @@ class QgsGraphLayer(QgsPluginLayer):
                         costValue = float(costElem.attribute("value"))
                         self.mGraph.setCostOfEdge(addedIdx, functionIndex, costValue)
 
-        self.mGraph.setSorted(verticesSorted and edgesSorted)
         return True
 
     def writeXml(self, node, doc, context):
@@ -629,7 +641,10 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.setAttribute("distanceStrategy", self.mGraph.distanceStrategy)
         if self.mGraph.distanceStrategy == "Advanced":
             graphNode.setAttribute("edgeCostFunctions", self.mGraph.amountOfEdgeCostFunctions())
-        graphNode.setAttribute("randomSeed", str(self.mGraph.randomSeed))
+        
+        # don't add 'None' as randomSeed for not randomly created graphs
+        if self.mGraph.randomSeed:
+            graphNode.setAttribute("randomSeed", str(self.mGraph.randomSeed))
         node.appendChild(graphNode)
 
         # vertexNode saves all vertices with tis coordinates

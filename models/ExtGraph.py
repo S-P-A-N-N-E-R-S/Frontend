@@ -125,8 +125,8 @@ class ExtGraph(QObject):
 
         # Set to true while building the graph to indicate that the arrays are
         # sorted by id, so binary search is possible
-        self.verticesSorted = False
-        self.edgesSorted = False
+        self.verticesSorted = True
+        self.edgesSorted = True
 
         self.mEdgeCount = 0
         self.mVertexCount = 0
@@ -210,10 +210,6 @@ class ExtGraph(QObject):
         file.write(sizeString)
 
         file.close()
-
-    def setSorted(self, sorted):
-        self.verticesSorted = sorted
-        self.edgesSorted = sorted
 
     def setJobID(self, jobId):
         self.mJobId = jobId
@@ -533,6 +529,14 @@ class ExtGraph(QObject):
 
         self.mEdges.insert(addIndex, addedEdge)
 
+        # check downwards sorting
+        if self.edgesSorted and addIndex - 1 >= 0:
+            self.edgesSorted = self.mEdges[addIndex - 1].id() < addedEdgeID
+
+        # check updwards sorting
+        if self.edgesSorted and addIndex + 1 < len(self.mEdges):
+            self.edgesSorted = self.mEdges[addIndex + 1].id() > addedEdgeID
+
         # add entries for edgeWeights at the correct idx
         for functionIdx in range(len(self.edgeWeights)):
             # add default value 0
@@ -571,6 +575,14 @@ class ExtGraph(QObject):
             self.mMaxVertexID = addedVertexID + 1
 
         self.mVertices.insert(addIndex, self.ExtVertex(point, addedVertexID))
+
+        # check downwards sorting
+        if self.verticesSorted and addIndex - 1 >= 0:
+            self.verticesSorted = self.mVertices[addIndex - 1].id() < addedVertexID
+
+        # check updwards sorting
+        if self.verticesSorted and addIndex + 1 < len(self.mVertices):
+            self.verticesSorted = self.mVertices[addIndex + 1].id() > addedVertexID
 
         if hasattr(self, "mNextClusterID"):
             self.mVertices[addIndex].setClusterID(self.mNextClusterID)
@@ -642,7 +654,8 @@ class ExtGraph(QObject):
                 rangeStart = 1
                 rangeEnd = len(listOfNeighbors)
             elif self.mConnectionType == "DistanceNN":
-                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(self.distance[0],2))
+                transDistValue = self.distance[0] * QgsUnitTypes.fromUnitToUnitFactor(self.distance[1], self.crs.mapUnits())
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y()], pow(transDistValue,2))
                 rangeStart = 0
                 rangeEnd = len(listOfNeighbors)-1
 
@@ -881,27 +894,56 @@ class ExtGraph(QObject):
                 '\t http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">\n',
                 '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
 
-            file.writelines(header)
-            file.write('\t<graph id="G" edgedefault="directed">\n')
+        file.writelines(header)
 
-            for idx in range(self.mVertexCount):
-                vertex = self.vertex(idx)
-                nodeLine = '\t\t<node id="' + str(vertex.id()) + '"/>\n'
-                file.write(nodeLine)
-                file.write('\t\t\t<data key="d1">\n')
-                file.write('\t\t\t\t<y:ShapeNode>\n')
-                coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(vertex.point().x()) + '" y="' + str(vertex.point().y()) + '"/>\n'
-                file.write(coordinates)
-                file.write('\t\t\t\t</y:ShapeNode>\n')
-                file.write('\t\t\t</data>\n')
+        if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
+            clusterKey = '\t<key id="cluster" for="node" attr.name="clusterid" attr.type="int"/>\n'
+            file.write(clusterKey)
 
-            for idx in range(self.mEdgeCount):
-                edge = self.edge(idx)
-                edgeLine = '\t\t<edge source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
-                file.write(edgeLine)
+        if self.distanceStrategy == "Advanced":
+            advancedKeys = ''
+            for costIdx in range(self.amountOfEdgeCostFunctions()):
+                advancedKeys += '\t<key id="c_' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
+            file.write(advancedKeys)
 
-            file.write("\t</graph>\n")
-            file.write("</graphml>")
+        edgeDefault = self.edgeDirection.lower()
+
+        graphString = '\t<graph id="G" '
+        graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
+        graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
+        graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
+        graphString += '" distanceunit="' + str(self.distance[1]) + (('" seed="' + str(self.randomSeed)) if self.randomSeed else '')
+        graphString += '" crs="' + self.crs.authid() + '">\n'
+        file.write(graphString)
+
+        for idx in range(self.mVertexCount):
+            vertex = self.vertex(idx)
+            nodeLine = '\t\t<node id="' + str(vertex.id()) + '"/>\n'
+            file.write(nodeLine)
+            file.write('\t\t\t<data key="d1">\n')
+            file.write('\t\t\t\t<y:ShapeNode>\n')
+            coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(vertex.point().x()) + '" y="' + str(vertex.point().y()) + '"/>\n'
+            file.write(coordinates)
+            file.write('\t\t\t\t</y:ShapeNode>\n')
+            file.write('\t\t\t</data>\n')
+
+            if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
+                file.write('\t\t\t<data key="cluster">' + str(vertex.clusterID()) + '</data>\n')
+
+        for idx in range(self.mEdgeCount):
+            edge = self.edge(idx)
+            edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'            
+            file.write(edgeLine)
+
+            if self.distanceStrategy == "Advanced":
+                edgeData = ''
+                for costIdx in range(self.amountOfEdgeCostFunctions()):
+                    edgeData += '\t\t\t<data key="c_' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
+                file.write(edgeData)
+
+        file.write("\t</graph>\n")
+        file.write("</graphml>")
+        file.close()
 
     def readGraphML(self, path):
         """
@@ -913,71 +955,72 @@ class ExtGraph(QObject):
             lines = file.readlines()
         nodeCoordinatesGiven = False
         edgeTypeDirection = "Directed"
-        nodeIDs = []
+        currNodeID = 0
+        currNodeIdx = 0
+        currEdgeIdx = 0
 
         for line in lines:
             if 'edgedefault="undirected"' in line:
                 edgeTypeDirection = "Undirected"
-            elif 'x="' in line and 'y="' in line:
+            
+            if 'distancestrategy' in line:
+                self.distanceStrategy = line.split('distancestrategy="')[1].split('"')[0]
+
+            if 'connectiontype' in line:
+                self.mConnectionType = line.split('connectiontype="')[1].split('"')[0]
+
+            if 'numberneighbors' in line:
+                self.numberNeighbours = int(line.split('numberneighbors="')[1].split('"')[0])
+
+            if 'nnallowdoubleedges' in line:
+                self.nnAllowDoubleEdges = line.split('nnallowdoubleedges="')[1].split('"')[0] == "True"
+
+            if 'distance=' in line:
+                self.distance = [float(line.split('distance="')[1].split('"')[0])]
+
+            if 'distanceunit=' in line:
+                self.distance.append(int(line.split('distanceunit="')[1].split('"')[0]))
+
+            if 'seed' in line:
+                self.randomSeed = int(line.split('seed="')[1].split('"')[0])
+
+            if 'crs' in line:
+                self.crs = QgsCoordinateReferenceSystem(line.split('crs="')[1].split('"')[0])
+
+            if 'x="' in line and 'y="' in line:
                 nodeCoordinatesGiven = True
                 break
 
-        # maybe no coordinate are given in the .graphml file
-        if nodeCoordinatesGiven == True:
-            vertexIDCount = 0
-            for line in lines:
-                if '<node' in line:
-                    nodeIDs.append(int(line.split('id="')[1].split('"')[0]))
+        self.edgeDirection = edgeTypeDirection
 
-                elif 'x="' in line:
-                    xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
-                    yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
-                    
-                    # add vertex with correct coordinates and ID
-                    self.addVertex(QgsPointXY(xValue, yValue), -1, nodeIDs[vertexIDCount])
-                    vertexIDCount += 1
+        for line in lines:
+            if '<node' in line:
+                currNodeID = int(line.split('id="')[1].split('"')[0])
 
-                elif '<edge' in line:
-                    fromVertex = int(line.split('source="')[1].split('"')[0])
-                    toVertex = int(line.split('target="')[1].split('"')[0])
-                    # fromVertexID = 0
-                    # toVertexID = 0
-
-                    # for i in range(len(nodeIDs)):
-                    #     if nodeIDs[i] == fromVertex:
-                    #         fromVertexID = i
-                    #     elif nodeIDs[i] == toVertex:
-                    #         toVertexID = i
-
-                    # self.addEdge(fromVertexID, toVertexID)
-                    # if edgeTypeDirection == "Undirected":
-                    #     self.addEdge(toVertexID, fromVertexID)
-
-                    self.addEdge(fromVertex, toVertex)                    
-
-        # if no coordinates are given assign random
-        else:
-            vertexIDCount = 0
-            for line in lines:
-                if '<node' in line:
-                    nodeIDs.append(line.split('id="')[1].split('"')[0])
-                    
+                if not nodeCoordinatesGiven:
                     # add vertex with random coordinates and correct ID
-                    self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, nodeIDs[vertexIDCount]))
-                    vertexIDCount += 1
+                    currNodeIdx = self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, currNodeID))
 
-                elif '<edge' in line:
-                    fromVertex = line.split('source="')[1].split('"')[0]
-                    toVertex = line.split('target="')[1].split('"')[0]
-                    # fromVertexID = 0
-                    # toVertexID = 0
+            elif 'x="' in line:
+                xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
+                yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
+                
+                # add vertex with correct coordinates and ID
+                currNodeIdx = self.addVertex(QgsPointXY(xValue, yValue), -1, currNodeID)
 
-                    # for i in range(len(nodeIDs)):
-                    #     if nodeIDs[i] == fromVertex:
-                    #         fromVertexID = i
-                    #     elif nodeIDs[i] == toVertex:
-                    #         toVertexID = i
-                    # self.addEdge(fromVertexID, toVertexID)
+            elif '<edge' in line:
+                fromVertex = int(line.split('source="')[1].split('"')[0])
+                toVertex = int(line.split('target="')[1].split('"')[0])
+
+                # add edge (no need to give ID here)
+                currEdgeIdx = self.addEdge(fromVertex, toVertex)
+
+            elif '<data' in line:
+                if 'key="cluster"' in line:
+                    self.vertex(currNodeIdx).setClusterID(int(line.split('<data key="cluster">')[1].split('<')[0]))
+                
+                elif 'key="c_' in line:
+                    costIdx = int(line.split('key="c_')[1].split('"')[0])
+                    cost = float(line.split('<data key="c_' + str(costIdx) + '">')[1].split('<')[0])
                     
-                    self.addEdge(fromVertex, toVertex)
-                   
+                    self.setCostOfEdge(currEdgeIdx, costIdx, cost)
