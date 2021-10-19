@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import date, datetime
+
 
 class BenchmarkVisualisation():
     
     
-    def __init__(self, yLabel):
+    def __init__(self, yLabel, createLegend, logSelected, tightLayout):
         
         # xLabels and values are 2D
         # zLabels is 1D 
@@ -12,20 +14,58 @@ class BenchmarkVisualisation():
         self.yLabel = yLabel
         self.zLabels = []
         self.values = []
+        self.xParametersMultiExe = []
+        self.zLabelsMultiExe = []
+        self.valuesMultiExe = []
+        self.createLegend = createLegend
+        self.logSelected = logSelected
+        self.tightLayout = tightLayout
         
-    
+        
+    def setOneMultiExePlotData(self, xLabel, xParameters, zLabel, values):
+        self.xParametersMultiExe.append(xParameters)
+        self.zLabelsMultiExe.append(zLabel)
+        self.valuesMultiExe.append(values)
+        self.xLabel = xLabel
+           
     def setOnePlotData(self, xLabel, xParameters, zLabel, values):
         self.xParameters.append(xParameters)
         self.zLabels.append(zLabel)
         self.values.append(values)
         self.xLabel = xLabel
-    
-    def plotPoints(self, withLines, callNumber):
-        print(self.yLabel)
-        print(self.xParameters)
-        print(self.zLabels)
-        print(self.values)
         
+    def createTextFile(self, path):
+        dateString = date.today().strftime("%b_%d_%Y_")
+        timeString = datetime.now().strftime("%H_%M_%S")
+        if path == "":
+            f = open(path + "BenchmarkResult_" + dateString + timeString + ".txt","w")
+        else:          
+            f = open(path + "/" + "BenchmarkResult_" + dateString + timeString + ".txt","w")
+        
+        longestParasIndex = 0
+        longestParasLength = len(self.xParameters[0])
+        for counter, xParaList in enumerate(self.xParameters):
+            if longestParasLength < len(xParaList):
+                longestParasIndex = counter
+                longestParasLength = len(xParaList)
+         
+        f.write(str(self.xLabel)) 
+                 
+        for parameter in self.xParameters[longestParasIndex]:
+            f.write("\t" + parameter)
+   
+        f.write("\n")
+        
+        for i in range(len(self.zLabels)):
+            f.write(self.zLabels[i] + "\t")
+            for value in self.values[i]:
+                f.write(str(value) + "\t")
+            f.write("\n")     
+        
+
+        f.close()
+    
+    def plotPoints(self, withLines, callNumber):       
         plt.figure(callNumber)
         
         for i in range(len(self.zLabels)):
@@ -34,22 +74,22 @@ class BenchmarkVisualisation():
             if withLines == True:
                 plt.plot(self.xParameters[i], self.values[i], marker = "o", label=zLabel, linestyle = '-')
             else:
-                print("TEST")
                 plt.scatter(self.xParameters[i], self.values[i], label=zLabel)
         
         plt.ylabel(self.yLabel)
         plt.xlabel(self.xLabel)
-        plt.legend(loc = "best")
-        #plt.tight_layout()
+        if self.createLegend:
+            plt.legend(loc = "best")
+            
+        if self.logSelected:    
+            plt.yscale("log")      
+        
+        if self.tightLayout:    
+            plt.tight_layout()
         plt.show()
         
                 
-    def plotLines(self, callNumber):
-        print(self.yLabel)
-        print(self.xParameters)
-        print(self.zLabels)
-        print(self.values)
-        
+    def plotLines(self, callNumber):      
         plt.figure(callNumber)
         
         for i in range(len(self.zLabels)):
@@ -59,16 +99,18 @@ class BenchmarkVisualisation():
         
         plt.ylabel(self.yLabel)
         plt.xlabel(self.xLabel)
-        plt.legend(loc = "best")
-        #plt.tight_layout()
+        if self.createLegend:
+            plt.legend(loc = "best")
+        
+        if self.logSelected:    
+            plt.yscale("log")      
+            
+        if self.tightLayout:    
+            plt.tight_layout()
+            
         plt.show()
     
-    def plotBarChart(self, callNumber):     
-        print(self.yLabel)
-        print(self.xParameters)
-        print(self.zLabels)
-        print(self.values)
-        
+    def plotBarChart(self, callNumber):             
         plt.figure(callNumber)
         
         width = 0.35
@@ -94,20 +136,44 @@ class BenchmarkVisualisation():
         plt.ylabel(self.yLabel)
         plt.xlabel(self.xLabel)
         plt.xticks([r + ((width/2)*(len(self.zLabels)-1)) for r in range(len(self.xParameters[longestParaIndex]))], self.xParameters[longestParaIndex])
-        plt.legend(loc = "best")
-        #plt.tight_layout()
+        if self.createLegend:
+            plt.legend(loc = "best")
+        
+        if self.logSelected:    
+            plt.yscale("log")    
+            
+        if self.tightLayout:    
+            plt.tight_layout()
+        
         plt.show()
         
-
-        
+       
     def plotBoxPlot(self, callNumber):
-        print("TODO")    
         
+        #plt.figure(callNumber)
+        fig, ax = plt.subplots()
+        subplots = []
+        boxes = []
+        colors = ["blue", "green", "purple", "tan", "pink", "red"]
+        for i in range(len(self.zLabelsMultiExe)):
+            zLabel = self.zLabelsMultiExe[i]
+            bp = ax.boxplot(self.valuesMultiExe[i], labels=self.xParametersMultiExe[i], patch_artist = True)
+            subplots.append(bp)
+            patch = bp["boxes"][0]
+            patch.set_facecolor(colors[i])
+            boxes.append(patch)
+              
+        plt.ylabel(self.yLabel)
+        plt.xlabel(self.xLabel)
+        if self.createLegend:
+            plt.legend(boxes, self.zLabelsMultiExe,loc = "best")
+        if self.logSelected:    
+            ax.set_yscale("log")                
         
-        
-        
-        
-        
+        if self.tightLayout:    
+            plt.tight_layout()
+
+        plt.show()
         
         
         

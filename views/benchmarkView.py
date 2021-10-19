@@ -36,6 +36,7 @@ class BenchmarkView(BaseContentView):
         self.dialog.clear_graph_selection.clicked.connect(self._clearGraphSelection)     
         self.dialog.start_benchmark.clicked.connect(self.controller.runJob)
         self.dialog.add_all_graphs.clicked.connect(self._addAllGraphs)
+        self.dialog.abort_benchmark.clicked.connect(self._setAbort)
         
         self.dialog.graph_selection.model().rowsInserted.connect(self._updateOGDFParameters)
         
@@ -170,6 +171,10 @@ class BenchmarkView(BaseContentView):
         listWidgetBenchmark.addItem(item)
         listWidgetBenchmark.setItemWidget(item, QRadioButton("Sparseness"))
         
+        item = QListWidgetItem()      
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Lightness"))
+        
         listWidgetVisualisation = QListWidget()
         listWidgetVisualisation.setMinimumSize(380,192)
         listWidgetVisualisation.setObjectName("visualisation_"+ str(self.benchmarkAnalysisCounter))
@@ -195,13 +200,13 @@ class BenchmarkView(BaseContentView):
         item = QListWidgetItem("------------------------------Additional Options------------------------------")
         listWidgetVisualisation.addItem(item)
         
-        item = QListWidgetItem("Logarithmic x-axis")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetVisualisation.addItem(item)
         item = QListWidgetItem("Logarithmic y-axis")
         item.setCheckState(Qt.Unchecked)
         listWidgetVisualisation.addItem(item)
         item = QListWidgetItem("Create legend")
+        item.setCheckState(Qt.Checked)
+        listWidgetVisualisation.addItem(item)
+        item = QListWidgetItem("Tight layout")
         item.setCheckState(Qt.Unchecked)
         listWidgetVisualisation.addItem(item)
         
@@ -368,10 +373,65 @@ class BenchmarkView(BaseContentView):
             if widget.objectName() == "Executions_" + algName:
                 return widget.value()
         
-        return -1          
-            
+        return -1
+    
+    def getCreateLegendSelection(self):
+        legendSelections = []
+        grid = self.dialog.analysis_visualisation.layout()
+        for c in range(1,grid.rowCount()):
+            visualisationSelWidget = grid.itemAtPosition(c,1).widget()
+            for i in range(visualisationSelWidget.count()):
+                if "Create legend" == visualisationSelWidget.item(i).text():
+                    if visualisationSelWidget.item(i).checkState() == Qt.Checked:
+                        legendSelections.append(True)
+                    else:
+                        legendSelections.append(False)
+           
+                    
+                    
+        return legendSelections   
+                   
+    def getLogAxisSelection(self):
+        logSelections = []
+        grid = self.dialog.analysis_visualisation.layout()  
+        for c in range(1,grid.rowCount()):
+            visualisationSelWidget = grid.itemAtPosition(c,1).widget()
+            for i in range(visualisationSelWidget.count()):
+                if "Logarithmic y-axis" == visualisationSelWidget.item(i).text():
+                    if visualisationSelWidget.item(i).checkState() == Qt.Checked:
+                        logSelections.append(True)
+                    else:
+                        logSelections.append(False)
+                    
+        return logSelections    
         
-        
-        
-
+    def getTightLayoutSelection(self):
+        tightSelections = []    
+        grid = self.dialog.analysis_visualisation.layout()    
+        for c in range(1,grid.rowCount()):
+            visualisationSelWidget = grid.itemAtPosition(c,1).widget()
+            for i in range(visualisationSelWidget.count()):
+                if "Tight layout" == visualisationSelWidget.item(i).text():
+                    if visualisationSelWidget.item(i).checkState() == Qt.Checked:
+                        tightSelections.append(True)
+                    else:
+                        tightSelections.append(False)
+                    
+        return tightSelections      
+       
+    def getNumberOfRequestedBenchmarks(self):
+        return self.benchmarkAnalysisCounter
+    
+    def getTextFilePath(self):
+        return self.dialog.txt_path.filePath()
+    
+    def getTxtCreationSelection(self):
+        if self.dialog.create_as_txt.checkState() == Qt.Checked:
+            return True
+        else:
+            return False
+     
+    def _setAbort(self):
+        if self.controller.running == True:
+            self.controller.abort = True
                

@@ -25,7 +25,7 @@ class BenchmarkDataObjWrapper():
         
 
 
-    def getAnalysisValue(self, analysis, dataObjs):
+    def getAnalysisValue(self, analysis, dataObjs, average):
         """
         Method gets called at the end of the partitioning process. Returns a value depending on the
         chosen analysis. Since multiple execution of the same parameters are possible a list of
@@ -33,7 +33,8 @@ class BenchmarkDataObjWrapper():
         
         :type analysis: String
         :type dataObjs: list of BenchmarkData objects
-        :return list
+        :type average: boolean
+        :return list (2D if average false and multiple executions (box plot))
         """
         values = []
         for dataObj in dataObjs:
@@ -43,19 +44,55 @@ class BenchmarkDataObjWrapper():
                 print("TODO")
                 values.append(0)
             elif analysis == "Number of Edges":
-                values.append(dataObj.getAvgNumberOfEdgesResponse())
+                if average:                 
+                    values.append(dataObj.getAvgNumberOfEdgesResponse())
+                else:
+                    values = dataObj.getAllNumberOfEdgesResponse()
             elif analysis == "Number of Vertices":
-                values.append(dataObj.getAvgNumberOfVerticesResponse())
+                if average: 
+                    values.append(dataObj.getAvgNumberOfVerticesResponse())
+                else:
+                    values = dataObj.getAllNumberOfVerticesResponse()  
             elif analysis == "Edges Difference":
-                values.append(abs(originalGraph.edgeCount() - dataObj.getAvgNumberOfEdgesResponse()))
+                if average: 
+                    values.append(abs(originalGraph.edgeCount() - dataObj.getAvgNumberOfEdgesResponse()))
+                else:
+                    for edgeCount in dataObj.getAllNumberOfEdgesResponse():                     
+                        values.append(abs(originalGraph.edgeCount() - edgeCount))  
             elif analysis == "Vertices Difference":
-                values.append(abs(dataObj.getAvgNumberOfVerticesResponse() - originalGraph.vertexCount()))
+                if average: 
+                    values.append(abs(dataObj.getAvgNumberOfVerticesResponse() - originalGraph.vertexCount()))
+                else:
+                    for vertexCount in dataObj.getAllNumberOfVerticesResponse():                     
+                        values.append(abs(originalGraph.vertexCount() - vertexCount))     
+                    
             elif analysis == "Average Degree":
-                values.append(dataObj.getAvgNumberOfEdgesResponse() / dataObj.getAvgNumberOfVerticesResponse())
+                if average: 
+                    values.append(dataObj.getAvgNumberOfEdgesResponse() / dataObj.getAvgNumberOfVerticesResponse())
+                else:
+                    allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
+                    allVertexCounts = dataObj.getAllNumberOfVerticesResponse()
+                    for i in range(len(allEdgeCounts)):
+                        values.append(allEdgeCounts[i] / allVertexCounts[i])
+                    
             elif analysis == "Sparseness":
-                values.append(dataObj.getAvgNumberOfEdgesResponse() / originalGraph.edgeCount()) 
-            
-        return mean(values)      
+                if average:     
+                    values.append(dataObj.getAvgNumberOfEdgesResponse() / originalGraph.edgeCount()) 
+                else:
+                    allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
+                    for edgeCount in allEdgeCounts:
+                        values.append(edgeCount / originalGraph.edgeCount()) 
+                        
+            elif analysis == "Lightness":
+                print("TODO")
+                values.append(0)          
+        
+        if average:    
+            return mean(values)
+        else:
+            print(values)
+            print("...............................")
+            return values  
     
               
     def firstPartition(self, type, parameterKey = None):
