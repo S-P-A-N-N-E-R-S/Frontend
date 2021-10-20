@@ -121,6 +121,18 @@ class BenchmarkView(BaseContentView):
         item = QListWidgetItem("Graphs")
         item.setCheckState(Qt.Unchecked)
         listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Edges")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Vertices")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Densities")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
               
         item = QListWidgetItem("Algorithms")
         item.setCheckState(Qt.Unchecked)
@@ -430,6 +442,9 @@ class BenchmarkView(BaseContentView):
             return True
         else:
             return False
+     
+    def getNumberOfSelectedGraphs(self):
+        return self.dialog.graph_selection.count()
      
     def _setAbort(self):
         if self.controller.running == True:

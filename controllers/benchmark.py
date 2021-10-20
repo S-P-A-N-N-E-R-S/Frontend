@@ -113,8 +113,12 @@ class BenchmarkController(BaseController):
                 dictHelp = {dictKey : dictValue}            
                 selectionList2 = self.view.getSelection2()[sIndex]
                 for selection in selectionList2:
-                    if selection == "Graphs" or selection == "Algorithms":
+                    if selection == "Algorithms" or selection == "Graphs":
                         dictHelp = self.doWrapper.partition(selection, dictHelp)
+                                      
+                    elif selection == "Graph Vertices" or selection == "Graph Edges" or selection == "Graph Densities":
+                        dictHelp = self.doWrapper.partition("Graphs", dictHelp, graphAnalysis = selection.split(" ")[1])
+                    
                     else:
                         dictHelp = self.doWrapper.partition("Parameter", dictHelp, self.doWrapper.parameterKeyHash[selection])  
                 
@@ -173,7 +177,7 @@ class BenchmarkController(BaseController):
                                 axisValue = diffPara
                             else:
                                 axisValue = axisValue + " / " + diffPara                         
-            
+                    
                     xParametersValues.append(axisValue)
                                   
                 benchVis.setOnePlotData(xLabel, xParametersValues, zParameter, xValues)
@@ -204,17 +208,20 @@ class BenchmarkController(BaseController):
         analysisList = self.view.getAnalysis()
         visualisation = self.view.getVisualisation() 
         
+        if self.view.getNumberOfSelectedGraphs() == 0:
+            self.view.showError("Select at least one graph", self.tr("Error in benchmark number " + str(counter+1)))
+            return False
+        
         # check selection 2
         for counter, sel2 in enumerate(selection2):
             if len(sel2) == 0:
                 self.view.showError("Enter at least one parameter in selection 2", self.tr("Error in benchmark number " + str(counter+1)))
                 return False
-        
-        # check analysis selections
-        for counter, analysis in enumerate(analysisList):
-            if len(analysis) == 0:
-                self.view.showError("One analysis selection necessary", self.tr("Error in benchmark number " + str(counter+1)))
-                return False
+
+        # check analysis selections      
+        if len(selection2) != len(analysisList):
+            self.view.showError("One analysis selection necessary", self.tr("Error in benchmark number " + str(counter+1)))
+            return False
         
         # check no duplicate selections
         for counter, sel1  in enumerate(selection1):
@@ -228,6 +235,19 @@ class BenchmarkController(BaseController):
             if len(vis) == 0:
                 self.view.showError("No visualisation selected", self.tr("Error in benchmark number " + str(counter+1)))
                 return False
+        
+        if self.view.getNumberOfSelectedGraphs() == 1:
+            for counter, sel1  in enumerate(selection1):
+                for sel in sel1:
+                    if sel == "Graphs":
+                        self.view.showError("Select multiple graphs", self.tr("Error in benchmark number " + str(counter+1)))
+                        return False
+            
+            for counter, sel2  in enumerate(selection2):
+                for sel in sel2:
+                    if sel == "Graphs":
+                        self.view.showError("Select multiple graphs", self.tr("Error in benchmark number " + str(counter+1)))
+                        return False
                 
         return True
          
@@ -309,7 +329,6 @@ class BenchmarkController(BaseController):
                                 
         self.doWrapper = BenchmarkDataObjWrapper(benchmarkDOs)              
         
-        print(self.view.getNumberOfRequestedBenchmarks())
         if self.view.getNumberOfRequestedBenchmarks() > 0:
             self._visualisationControl()
  

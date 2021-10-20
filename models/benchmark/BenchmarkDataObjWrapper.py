@@ -1,4 +1,5 @@
 from statistics import mean
+from collections import OrderedDict
 
 
 class BenchmarkDataObjWrapper():
@@ -90,8 +91,6 @@ class BenchmarkDataObjWrapper():
         if average:    
             return mean(values)
         else:
-            print(values)
-            print("...............................")
             return values  
     
               
@@ -145,7 +144,7 @@ class BenchmarkDataObjWrapper():
             
         return partition
     
-    def partition(self, type, dict, parameterKey = None):
+    def partition(self, type, dict, parameterKey = None, graphAnalysis = None):
         """
         Method is called multiple times, depending on the number of selections made.
         
@@ -157,24 +156,59 @@ class BenchmarkDataObjWrapper():
         for key in dict.keys():
             doList = dict[key]          
             if type == "Graphs":
+                partitionToSort = {}
                 allGraphs = self._getAllGraphs(doList)
-                for i in range(len(allGraphs)):  
-                    graphName = allGraphs[i]  
+                for i in range(len(allGraphs)):
+                    
+                    graphName = allGraphs[i][0]  
                     dataObjsForPartition = []           
                     for j in range(len(doList)):
                         dataObj = doList[j]
                         if dataObj.getGraphName() == graphName:
                             dataObjsForPartition.append(dataObj)          
                     keyTuple = key
-                    if isinstance(keyTuple, tuple):
-                        listConv = list(keyTuple)
-                        listConv.append(graphName)
-                        keyTuple = tuple(listConv)
-                    else:
-                        keyTuple = (key, graphName)             
                     
-                    partition[keyTuple] = dataObjsForPartition 
-            
+                    # check if the graph name should be used or a graph attribute
+                    if graphAnalysis == None:
+                        axisEntry = graphName
+                    else:
+                        if graphAnalysis == "Edges":
+                            axisEntry = allGraphs[i][1].edgeCount()
+                        elif graphAnalysis == "Vertices":
+                            axisEntry = allGraphs[i][1].vertexCount()
+                        elif graphAnalysis == "Densities":                           
+                            if allGraphs[i][1].edgeDirection == "Directed":
+                                axisEntry = allGraphs[i][1].edgeCount() / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
+                            else:       
+                                axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
+                        
+                        partitionToSort[axisEntry] = dataObjsForPartition
+                    
+                    if graphAnalysis == None:
+                        if isinstance(keyTuple, tuple):
+                            listConv = list(keyTuple)
+                            listConv.append(axisEntry)
+                            keyTuple = tuple(listConv)
+                        else:
+                            keyTuple = (key, axisEntry)             
+                        
+                        
+                        partition[keyTuple] = dataObjsForPartition 
+                                                                     
+                if graphAnalysis != None: 
+                    partition = OrderedDict()                   
+                         
+                    for sortedKey in sorted(partitionToSort.keys()):
+                        keyTuple = key 
+                        if isinstance(keyTuple, tuple):
+                            listConv = list(keyTuple)
+                            listConv.append(str(sortedKey))
+                            keyTuple = tuple(listConv)
+                        else:
+                            keyTuple = (key, str(sortedKey)) 
+                            
+                        partition[keyTuple] = partitionToSort[sortedKey]
+                                    
             elif type == "Algorithms":
                 allAlgs = self._getAllAlgs(doList)
                 for i in range(len(allAlgs)):  
@@ -235,7 +269,7 @@ class BenchmarkDataObjWrapper():
         graphList = []
         for dataObj in dataObjects:
             if not dataObj.getGraphName() in graphList:
-                graphList.append(dataObj.getGraphName())
+                graphList.append((dataObj.getGraphName(),dataObj.getGraph()))
         
         return graphList
     

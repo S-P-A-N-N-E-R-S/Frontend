@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1089</width>
-    <height>914</height>
+    <height>942</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -146,7 +146,7 @@ QListWidget::item::selected {
            <x>0</x>
            <y>0</y>
            <width>893</width>
-           <height>894</height>
+           <height>922</height>
           </rect>
          </property>
          <property name="minimumSize">
@@ -1424,64 +1424,6 @@ QListWidget::item::selected {
               </sizepolicy>
              </property>
              <layout class="QGridLayout" name="gridLayout">
-              <item row="3" column="0" colspan="6">
-               <widget class="QLabel" name="label_3">
-                <property name="text">
-                 <string>OGDF Algorithms</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="3" colspan="5">
-               <widget class="QScrollArea" name="ogdf_parameters_area">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>11</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="widgetResizable">
-                 <bool>true</bool>
-                </property>
-                <widget class="QWidget" name="ogdf_parameters">
-                 <property name="geometry">
-                  <rect>
-                   <x>0</x>
-                   <y>0</y>
-                   <width>566</width>
-                   <height>238</height>
-                  </rect>
-                 </property>
-                </widget>
-               </widget>
-              </item>
-              <item row="8" column="0">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Job Name:</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="7">
-               <widget class="QCheckBox" name="create_as_txt">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Create text file</string>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="4">
                <widget class="QToolButton" name="add_all_graphs">
                 <property name="text">
@@ -1508,30 +1450,16 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label">
-                <property name="frameShape">
-                 <enum>QFrame::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Sunken</enum>
+              <item row="2" column="5" colspan="2">
+               <widget class="QPushButton" name="clear_graph_selection">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>All Graphs</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="1" colspan="6">
-               <widget class="QgsFileWidget" name="txt_path">
-                <property name="storageMode">
-                 <enum>QgsFileWidget::GetDirectory</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="0">
-               <widget class="QLabel" name="label_7">
-                <property name="text">
-                 <string>Path:</string>
+                 <string>Clear</string>
                 </property>
                </widget>
               </item>
@@ -1558,7 +1486,7 @@ QListWidget::item::selected {
                    <x>0</x>
                    <y>0</y>
                    <width>873</width>
-                   <height>238</height>
+                   <height>247</height>
                   </rect>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_2">
@@ -1637,10 +1565,132 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
+              <item row="1" column="0" colspan="4">
+               <widget class="QListWidget" name="all_graphs">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="dragDropMode">
+                 <enum>QAbstractItemView::DragOnly</enum>
+                </property>
+                <property name="selectionMode">
+                 <enum>QAbstractItemView::ExtendedSelection</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Sunken</enum>
+                </property>
+                <property name="text">
+                 <string>All Graphs</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5" colspan="2">
+               <widget class="QLabel" name="label_2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Graph Selection</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="5" colspan="3">
+               <widget class="QListWidget" name="graph_selection">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>411</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="dragDropMode">
+                 <enum>QAbstractItemView::DropOnly</enum>
+                </property>
+                <property name="selectionMode">
+                 <enum>QAbstractItemView::ExtendedSelection</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0" colspan="6">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>OGDF Algorithms</string>
+                </property>
+               </widget>
+              </item>
               <item row="4" column="0" colspan="3">
                <widget class="QListWidget" name="ogdf_algorithms">
                 <property name="editTriggers">
                  <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>Path:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="3" colspan="5">
+               <widget class="QScrollArea" name="ogdf_parameters_area">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="widgetResizable">
+                 <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="ogdf_parameters">
+                 <property name="geometry">
+                  <rect>
+                   <x>0</x>
+                   <y>0</y>
+                   <width>566</width>
+                   <height>248</height>
+                  </rect>
+                 </property>
+                </widget>
+               </widget>
+              </item>
+              <item row="6" column="7">
+               <widget class="QCheckBox" name="create_as_txt">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Create text file</string>
                 </property>
                </widget>
               </item>
@@ -1679,22 +1729,6 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
-              <item row="1" column="0" colspan="4">
-               <widget class="QListWidget" name="all_graphs">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="dragDropMode">
-                 <enum>QAbstractItemView::DragOnly</enum>
-                </property>
-                <property name="selectionMode">
-                 <enum>QAbstractItemView::ExtendedSelection</enum>
-                </property>
-               </widget>
-              </item>
               <item row="8" column="7">
                <widget class="QPushButton" name="start_benchmark">
                 <property name="enabled">
@@ -1724,64 +1758,10 @@ QListWidget::item::selected {
                 </property>
                </widget>
               </item>
-              <item row="8" column="1" colspan="5">
-               <widget class="QLineEdit" name="lineEdit">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="5" colspan="2">
-               <widget class="QPushButton" name="clear_graph_selection">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Clear</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="5" colspan="2">
-               <widget class="QLabel" name="label_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Graph Selection</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="5" colspan="3">
-               <widget class="QListWidget" name="graph_selection">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>411</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="dragDropMode">
-                 <enum>QAbstractItemView::DropOnly</enum>
-                </property>
-                <property name="selectionMode">
-                 <enum>QAbstractItemView::ExtendedSelection</enum>
+              <item row="6" column="1" colspan="6">
+               <widget class="QgsFileWidget" name="txt_path">
+                <property name="storageMode">
+                 <enum>QgsFileWidget::GetDirectory</enum>
                 </property>
                </widget>
               </item>

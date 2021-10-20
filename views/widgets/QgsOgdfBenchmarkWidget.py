@@ -165,13 +165,15 @@ class QgsOGDFBenchmarkWidget(QWidget):
                                     if layer.getGraph().distanceStrategy == "Advanced":
                                         rangeValues = []
                                         for c in range(len(layer.getGraph().edgeWeights)):
-                                            rangeValues.append(("Advanced",c))                                                                                    
+                                            rangeValues.append(c)
+                                            #rangeValues.append(("Advanced",c))                                                                                    
                                     else:    
                                         rangeValues = [("Euclidean",0), ("Manhattan",0), ("Geodesic",0), ("Ellipsoidal",0)]
                                     ranges[field.get("label")] = rangeValues
                                 else:
                                     if layer.getGraph().distanceStrategy == "Advanced":
-                                        ranges[field.get("label")] = [("Advanced", int(widget.currentText().split(":")[1]))] 
+                                        ranges[field.get("label")] = [0] 
+                                        #ranges[field.get("label")] = [("Advanced", int(widget.currentText().split(":")[1]))] 
                                     else:                                          
                                         ranges[field.get("label")] = [(str(widget.currentText()),0)]    
                
@@ -200,16 +202,14 @@ class QgsOGDFBenchmarkWidget(QWidget):
             # find algorithm name
             algName = allSelectedAlgs[i]
             # permutation holds one parameter setting
-            for permutation in permutationRes:       
-                                               
+            for permutation in permutationRes:                                    
                 alreadyDoneMatches = {}
                 toDeleteFieldIndices = [] 
                 for g in range(len(listOfGraphs)):
                     counter = 0                             
-                    for index in toDeleteFieldIndices:
+                    for index in toDeleteFieldIndices:                     
                         permutation = permutation[0:index-counter] + permutation[index+1-counter:]        
                         counter+=1
-                        
                     toDeleteFieldIndices = []  
                     graph = listOfGraphs[g].text()
                     bo = BenchmarkData(graph, algName)
@@ -222,6 +222,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
                         if field.get("label") in alreadyDoneMatches.keys():
                             bo.setParameterField(key, permutation[alreadyDoneMatches[field.get("label")]])
                             bo.setParameterKeyHash(field.get("label"), key)
+                            if field.get("type") in diffForGraphs:
+                                toDeleteFieldIndices.append(alreadyDoneMatches[field.get("label")])
                         else:
                             # get position in permutation tuple            
                             for rangesKeyIndex in range(len(fieldLabels)):
