@@ -74,7 +74,7 @@ class BenchmarkDataObjWrapper():
                     allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
                     allVertexCounts = dataObj.getAllNumberOfVerticesResponse()
                     for i in range(len(allEdgeCounts)):
-                        values.append(allEdgeCounts[i] / allVertexCounts[i])
+                        values.append(round(allEdgeCounts[i] / allVertexCounts[i],3))
                     
             elif analysis == "Sparseness":
                 if average:     
@@ -82,7 +82,7 @@ class BenchmarkDataObjWrapper():
                 else:
                     allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
                     for edgeCount in allEdgeCounts:
-                        values.append(edgeCount / originalGraph.edgeCount()) 
+                        values.append(round(edgeCount / originalGraph.edgeCount(),3)) 
                         
             elif analysis == "Lightness":
                 print("TODO")
@@ -182,6 +182,7 @@ class BenchmarkDataObjWrapper():
                             else:       
                                 axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
                         
+                        axisEntry = round(axisEntry,3)
                         partitionToSort[axisEntry] = dataObjsForPartition
                     
                     if graphAnalysis == None:

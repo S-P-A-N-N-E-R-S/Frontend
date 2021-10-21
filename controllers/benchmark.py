@@ -236,6 +236,13 @@ class BenchmarkController(BaseController):
                 self.view.showError("No visualisation selected", self.tr("Error in benchmark number " + str(counter+1)))
                 return False
         
+        for counter, sel1  in enumerate(selection1):
+            for checkedItem1 in sel1:
+                for checkedItem2 in selection2[counter]:
+                    if checkedItem1 == "Graphs" and (checkedItem2 == "Graph Edges" or checkedItem2 == "Graph Vertices" or checkedItem2 == "Graph Densities"):
+                        self.view.showError("No further graph attribute selection possible", self.tr("Error in benchmark number " + str(counter+1)))
+                        return False
+        
         if self.view.getNumberOfSelectedGraphs() == 1:
             for counter, sel1  in enumerate(selection1):
                 for sel in sel1:
