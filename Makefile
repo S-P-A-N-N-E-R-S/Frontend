@@ -55,7 +55,7 @@ PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 #	* Mac OS X:
 #	  Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins
 #	* Windows:
-#	  AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins'
+#	  AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins
 
 QGISDIR=.local/share/QGIS/QGIS3/profiles/default/python/plugins/
 
@@ -117,8 +117,13 @@ clean_proto:
 	rm -Rf network/protocol/build
 
 pybind_build:
-	@chmod +x scripts/AStarBuildScript.sh
-	@scripts/AStarBuildScript.sh
+	echo "Script to build shared object with pybind"
+	echo "Start build"
+	echo "Execute setup.py"
+	python3 scripts/setup.py build_ext --build-lib models/
+	echo "Remove build folder"
+	rm -rf build
+	echo "End pybind build"
 
 zip:
 	@echo

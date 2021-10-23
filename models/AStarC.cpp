@@ -43,7 +43,7 @@ struct Point{
 		return weight > other.weight;
 	}
 	bool operator==(const Point& other) {
-		if(x == other.x and y == other.y){
+		if(x == other.x && y == other.y){
 			return true;
 		}
 		else{
@@ -51,7 +51,7 @@ struct Point{
 		}
 	}
 	bool operator!=(const Point& other) {
-		if(x == other.x and y == other.y){
+		if(x == other.x && y == other.y){
 			return false;
 		}
 		else{
@@ -99,7 +99,7 @@ class AStarC {
 			std::priority_queue<Point> pq;
 			pq.push(startPoint);
 			
-			while(not pq.empty()){				
+			while(!pq.empty()){
 				Point current = pq.top();
 				pq.pop();
 				
@@ -117,7 +117,7 @@ class AStarC {
 						int prevX = std::get<0>(u);
 						int prevY = std::get<1>(u);
 						u = predMatrix[std::get<0>(u)][std::get<1>(u)];
-						if(std::get<0>(u) != prevX and std::get<1>(u) != prevY){
+						if(std::get<0>(u) != prevX && std::get<1>(u) != prevY){
 							diagonals++;
 						}
 						
@@ -146,13 +146,13 @@ class AStarC {
 				
 					int newDistance = pixelWeights[current.x][current.y] + matrix[current.x][current.y];
 					
-					if(neighborX > 0 and neighborY > 0 and neighborX < int(matrix.size()) and neighborY < int(matrix[0].size())){
+					if(neighborX > 0 && neighborY > 0 && neighborX < int(matrix.size()) && neighborY < int(matrix[0].size())){
 						if(newDistance < pixelWeights[neighborX][neighborY]){
 							predMatrix[neighborX][neighborY] = std::make_tuple(current.x, current.y);
 							pixelWeights[neighborX][neighborY] = newDistance;
 							
 							if(createShortestPathMatrix){
-								if(shortestPathMatrix1[current.x][current.y] == 0 and shortestPathMatrix2[current.x][current.y] == 0 and shortestPathMatrix3[current.x][current.y] == 0){
+								if(shortestPathMatrix1[current.x][current.y] == 0 && shortestPathMatrix2[current.x][current.y] == 0 && shortestPathMatrix3[current.x][current.y] == 0){
 									shortestPathMatrix1[current.x][current.y] = 255;
 									shortestPathMatrix2[current.x][current.y] = 255;
 									shortestPathMatrix3[current.x][current.y] = 255;
