@@ -17,6 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 from qgis.PyQt.QtWidgets import QWidget, QVBoxLayout, QComboBox, QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox, QLabel
+from qgis.PyQt.QtCore import pyqtSignal
 
 from qgis.gui import QgsMapLayerComboBox
 from qgis.core import  QgsMapLayerProxyModel
@@ -34,6 +35,8 @@ class QgsOGDFParametersWidget(QWidget):
     """
     Dynamically creates and shows input widgets created from parameter list
     """
+
+    toggleDialogVisibility = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -262,10 +265,14 @@ class QgsOGDFParametersWidget(QWidget):
         return QComboBox(self)
 
     def _createEdgeWidget(self, field):
-        return QgsGraphEdgePickerWidget(self)
+        edgePickerWidget = QgsGraphEdgePickerWidget(self)
+        edgePickerWidget.toggleDialogVisibility.connect(lambda visible: self.toggleDialogVisibility.emit(visible))
+        return edgePickerWidget
 
     def _createVertexWidget(self, field):
-        return QgsGraphVertexPickerWidget(self)
+        vertexPickerWidget = QgsGraphVertexPickerWidget(self)
+        vertexPickerWidget.toggleDialogVisibility.connect(lambda visible: self.toggleDialogVisibility.emit(visible))
+        return vertexPickerWidget
 
     # functions to get field data
 
