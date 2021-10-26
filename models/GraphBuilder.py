@@ -91,7 +91,8 @@ class GraphBuilder:
             "usePolygonsAsForbidden": False,
             "usePolygonsInCostFunction": False,
             "useAdditionalPoints": False,
-            "createShortestPathView": False
+            "createShortestPathView": False,
+            "randomConnectionNumber": 100
         }
 
         self.__randomOptions = {
@@ -270,6 +271,28 @@ class GraphBuilder:
                 self.graph.addEdge(i, j)
                 if self.__options["edgeDirection"] == "Directed":
                     self.graph.addEdge(j, i)
+    
+    def __createRandomConnections(self):
+        notUsedVertexPairs = []
+        for i in range(self.graph.vertexCount()):
+            for j in range(self.graph.vertexCount()):
+                if self.__options["edgeDirection"] == "Directed":
+                    notUsedVertexPairs.append((i,j))
+                    notUsedVertexPairs.append((j,i))
+                else:
+                    notUsedVertexPairs.append((i,j))
+        
+        for i in range(self.__options["randomConnectionNumber"]):
+            if len(notUsedVertexPairs) == 0:
+                break      
+            pairID = random.randint(0, len(notUsedVertexPairs))
+            p1 = notUsedVertexPairs[pairID][0]
+            p2 = notUsedVertexPairs[pairID][1]
+                    
+            self.graph.addEdge(p1, p2)
+            del notUsedVertexPairs[pairID]
+            
+             
     
     def __createNearestNeighbor(self):
         """
@@ -727,6 +750,8 @@ class GraphBuilder:
                 self.__createNearestNeighbor()
             elif self.__options["connectionType"] == "ClusterComplete" or self.__options["connectionType"] == "ClusterNN":
                 self.__createCluster()
+            elif self.__options["connectionType"] == "Random":
+                self.__createRandomConnections()     
                           
         # user gives lines as input
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:      

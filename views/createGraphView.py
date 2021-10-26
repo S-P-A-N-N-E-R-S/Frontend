@@ -174,6 +174,7 @@ class CreateGraphView(BaseContentView):
 
         self.dialog.create_graph_connection_parameters.setVisible(layer is not None or self.isRandom())
         self.dialog.create_graph_connectiontype_input.setEnabled(isPointLayer or self.isRandom())
+        
 
         if isLineLayer:
             # disable all parameters associated with connection type
@@ -221,6 +222,7 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_numberneighbor_input.setEnabled(connectionType != "DistanceNN")
         self.dialog.create_graph_distance_widget.setEnabled(connectionType == "DistanceNN")
         self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
+        self.dialog.create_graph_randomnumber_input.setEnabled(connectionType == "Random")
 
     def _distanceStrategyChanged(self):
         """
@@ -518,6 +520,9 @@ class CreateGraphView(BaseContentView):
 
     def getDistanceStrategy(self):
         return self.dialog.create_graph_distancestrategy_input.currentText(), self.dialog.create_graph_distancestrategy_input.currentData()
+
+    def getRandomEdgesNumber(self):
+        return self.dialog.create_graph_randomnumber_input.value()
 
     def getRasterData(self):
         """
