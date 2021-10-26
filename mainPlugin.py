@@ -78,7 +78,7 @@ class OGDFPlugin:
         :return:
         """
         try:
-            with Client(getHost(), getPort(), 1) as client:
+            with Client(getHost(), getPort()) as client:
                 client.getAvailableHandlers()
         except (NetworkClientError, ParseError) as error:
             iface.messageBar().pushMessage("OGDF Plugin Error", str(error), level=Qgis.Critical)

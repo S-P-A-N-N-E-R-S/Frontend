@@ -14,7 +14,7 @@ LENGTH_FIELD_SIZE = 8
 
 class Client():
 
-    def __init__(self, host, port, maxRetryAttempts=10):
+    def __init__(self, host, port, maxRetryAttempts=1):
         self.host = host
         self.port = port
         self.maxRetryAttempts = maxRetryAttempts

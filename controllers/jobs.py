@@ -86,7 +86,7 @@ class JobsController(BaseController):
 
         # get response
         try:
-            with Client(helper.getHost(), helper.getPort(), 1) as client:
+            with Client(helper.getHost(), helper.getPort()) as client:
                 states = client.getJobStatus()
                 # add jobs
                 for job in states.values():
