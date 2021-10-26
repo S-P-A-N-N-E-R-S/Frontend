@@ -306,7 +306,10 @@ class BenchmarkController(BaseController):
             
             status = "waiting"    
             counter = 0         
-            while status != "success":           
+            while status != "success":  
+                if status == "failed":
+                    self.view.showError("Execution failed", self.tr("Error: "))
+                    return   
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:                        
                         if counter == 0:
