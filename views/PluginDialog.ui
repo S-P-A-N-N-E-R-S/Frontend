@@ -297,9 +297,9 @@ QListWidget::item::selected {
                        <property name="geometry">
                         <rect>
                          <x>0</x>
-                         <y>0</y>
+                         <y>-393</y>
                          <width>756</width>
-                         <height>1082</height>
+                         <height>1136</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -714,6 +714,20 @@ QListWidget::item::selected {
                                  </property>
                                  <property name="value">
                                   <number>5</number>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="label">
+                                 <property name="text">
+                                  <string>Random Edges Number</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QSpinBox" name="create_graph_randomnumber_input">
+                                 <property name="maximum">
+                                  <number>10000000</number>
                                  </property>
                                 </widget>
                                </item>
@@ -1285,8 +1299,8 @@ QListWidget::item::selected {
                          <rect>
                           <x>0</x>
                           <y>0</y>
-                          <width>510</width>
-                          <height>630</height>
+                          <width>186</width>
+                          <height>178</height>
                          </rect>
                         </property>
                         <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0">
