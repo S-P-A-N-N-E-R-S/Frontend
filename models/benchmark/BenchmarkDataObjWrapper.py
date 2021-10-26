@@ -107,14 +107,13 @@ class BenchmarkDataObjWrapper():
         if type == "Graphs":
             allGraphs = self._getAllGraphs(self.benchmarkDOs)
             for i in range(len(allGraphs)):  
-                graphName = allGraphs[i]  
+                graphName = allGraphs[i][0] 
                 dataObjsForPartition = []           
                 for j in range(len(self.benchmarkDOs)):
                     dataObj = self.benchmarkDOs[j]
                     if dataObj.getGraphName() == graphName:
                         dataObjsForPartition.append(dataObj)
-                partition[graphName] = dataObjsForPartition
-                
+                partition[graphName] = dataObjsForPartition               
                 
         elif type == "Algorithms":
             allAlgs = self._getAllAlgs(self.benchmarkDOs)

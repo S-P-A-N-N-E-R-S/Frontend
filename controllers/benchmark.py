@@ -95,7 +95,7 @@ class BenchmarkController(BaseController):
                 
             # at this point all the different to plot values are sorted out (all the value functions)
             
-            # split the partition into individual dictionary entries
+            # split the partition into individual dictionary entries           
             for dictKey in partition.keys():
                             
                 dictValue = partition[dictKey]
