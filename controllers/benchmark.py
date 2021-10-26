@@ -296,38 +296,39 @@ class BenchmarkController(BaseController):
             for key in benchmarkDO.parameters:
                 fieldData = benchmarkDO.parameters[key]
                 request.setFieldData(key, fieldData)
-                      
-            try:
-                with Client(helper.getHost(), helper.getPort()) as client:
-                    client.sendJobRequest(request)
-                    self.view.showSuccess("Job started!")                   
-            except (NetworkClientError, ParseError) as error:
-                self.view.showError(str(error), self.tr("Network Error"))          
-            
-            status = "waiting"    
-            counter = 0         
-            while status != "success":  
-                if status == "failed":
-                    self.view.showError("Execution failed", self.tr("Error: "))
-                    return   
+             
+            for exe in range(self.view.getExecutions(benchmarkDO.algorithm)): 
+                          
                 try:
-                    with Client(helper.getHost(), helper.getPort()) as client:                        
-                        if counter == 0:
-                            time.sleep(0.5) 
-                            counter+=1
-                        else:
-                            time.sleep(1)    
-                        states = client.getJobStatus()
-                        jobState = list(states.values())[-1]                       
-                        id = jobState.jobId                        
-                        job = statusManager.getJobState(id)                                          
-                        status = self.STATUS_TEXTS.get(job.status, "status not supported")
-                        print(status)
-                        
+                    with Client(helper.getHost(), helper.getPort()) as client:
+                        client.sendJobRequest(request)
+                        self.view.showSuccess("Job started!")                   
                 except (NetworkClientError, ParseError) as error:
-                    self.view.showError(str(error), self.tr("Network Error"))
-            
-            for exe in range(self.view.getExecutions(benchmarkDO.algorithm)):                             
+                    self.view.showError(str(error), self.tr("Network Error"))          
+                
+                status = "waiting"    
+                counter = 0         
+                while status != "success":  
+                    if status == "failed":
+                        self.view.showError("Execution failed", self.tr("Error: "))
+                        return   
+                    try:
+                        with Client(helper.getHost(), helper.getPort()) as client:                        
+                            if counter == 0:
+                                time.sleep(0.5) 
+                                counter+=1
+                            else:
+                                time.sleep(1)    
+                            states = client.getJobStatus()
+                            jobState = list(states.values())[-1]                       
+                            id = jobState.jobId                        
+                            job = statusManager.getJobState(id)                                          
+                            status = self.STATUS_TEXTS.get(job.status, "status not supported")
+                            print(status)
+                            
+                    except (NetworkClientError, ParseError) as error:
+                        self.view.showError(str(error), self.tr("Network Error"))
+                                                        
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:                   
                         response = client.getJobResult(job.jobId)
