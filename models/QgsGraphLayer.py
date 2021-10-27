@@ -998,6 +998,9 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(editSeparator)
 
         # button to enable editing
+        editBox = QGroupBox()
+        editBoxLayout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+
         editButton = QPushButton(tr("Toggle Editing"))
         editButton.clicked.connect(layer.toggleEdit)
         editButton.setVisible(True)
@@ -1011,7 +1014,35 @@ class QgsGraphLayerType(QgsPluginLayerType):
                                 +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
                                 +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
                                 +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection"))
-        layout.addWidget(editButton)
+        editBoxLayout.addWidget(editButton)
+
+        def __toolTip():
+            print("Debug")
+            toolTipWin = QDialog(iface.mainWindow())
+            toolTipWin.setVisible(True)
+            toolTipLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+            toolTipLabel = QLabel(tr("List of Options") + ":"\
+                                +"\n " + tr("LeftClick: Add Vertex without Edges")\
+                                +"\n " + tr("CTRL+LeftClick: Add Vertex with Edges")\
+                                +"\n " + tr("RightClick: Select Vertex")\
+                                +"\n " + tr(" 1) Select Vertex")\
+                                +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
+                                +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
+                                +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
+                                +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
+                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection"))
+            toolTipLayout.addWidget(toolTipLabel)
+            toolTipWin.setLayout(toolTipLayout)
+            toolTipWin.adjustSize()
+
+        # add button for tool tip window
+        toolTipButton = QPushButton("?")
+        toolTipButton.setMaximumWidth(25)
+        toolTipButton.clicked.connect(__toolTip)
+        editBoxLayout.addWidget(toolTipButton)
+
+        editBox.setLayout(editBoxLayout)
+        layout.addWidget(editBox)
 
         # undo button
         undoButton = QToolButton()
