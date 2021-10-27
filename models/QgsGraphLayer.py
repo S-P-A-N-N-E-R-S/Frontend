@@ -876,19 +876,27 @@ class QgsGraphLayerType(QgsPluginLayerType):
         informationLabel.setStyleSheet("border: 1px solid black;")
         layout.addWidget(informationLabel)
         
-        # QLabel with information about the layers fields
-        pointFieldsText = tr("PointFields") + ":"
-        for field in layer.fields(True):
-            pointFieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
-        lineFieldsText = tr("LineFields") + ":"
-        for field in layer.fields(False):
-            lineFieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
-        fieldsText = pointFieldsText + "\n" + lineFieldsText
-        fieldsLabel = QLabel(fieldsText)
-        fieldsLabel.setWordWrap(True)
-        fieldsLabel.setVisible(True)
-        fieldsLabel.setStyleSheet("border: 1px solid black;")
-        layout.addWidget(fieldsLabel)
+        # QLabel with information about the graphs information
+        graphInformationText = tr("DistanceStrategy: ") + layer.mGraph.distanceStrategy +\
+                                "\n" + tr("Edge Direction: ") + layer.mGraph.edgeDirection +\
+                                "\n" + tr("Connection Type: ") + layer.mGraph.mConnectionType
+
+        if layer.mGraph.mConnectionType == "Nearest neighbor" or layer.mGraph.mConnectionType == "DistanceNN" or layer.mGraph.mConnectionType == "ClusterNN":
+            graphInformationText += "\n" + tr("Number Neighbors: ") + str(layer.mGraph.numberNeighbours)
+        
+        if layer.mGraph.mConnectionType == "DistanceNN":
+            graphInformationText += "\n" + tr("Distance: ") + str(layer.mGraph.distance[0])
+
+        if layer.mGraph.mConnectionType == "ClusterComplete" or layer.mGraph.mConnectionType == "ClusterNN":
+            graphInformationText += "\n" + tr("Number Clusters: ") + str(layer.mGraph.clusterNumber)
+
+        graphInformationText += "\n" + tr("Allow Double Edges: ") + str(layer.mGraph.nnAllowDoubleEdges)
+
+        graphLabel = QLabel(graphInformationText)
+        graphLabel.setWordWrap(True)
+        graphLabel.setVisible(True)
+        graphLabel.setStyleSheet("border: 1px solid black;")
+        layout.addWidget(graphLabel)
 
         # button to zoom to layers extent
         zoomExtentButton = QPushButton(tr("Zoom to Layer"))
