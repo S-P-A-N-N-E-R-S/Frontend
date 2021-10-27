@@ -877,7 +877,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         layout.addWidget(informationLabel)
         
         # QLabel with information about the graphs information
-        graphInformationText = tr("DistanceStrategy: ") + layer.mGraph.distanceStrategy +\
+        graphInformationText = tr("DistanceStrategy: ") + layer.mGraph.distanceStrategy + ("(" + str(layer.mGraph.amountOfEdgeCostFunctions()) + ")" if layer.mGraph.distanceStrategy == "Advanced" else "") +\
                                 "\n" + tr("Edge Direction: ") + layer.mGraph.edgeDirection +\
                                 "\n" + tr("Connection Type: ") + layer.mGraph.mConnectionType
 
