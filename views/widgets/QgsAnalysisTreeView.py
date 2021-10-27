@@ -139,7 +139,7 @@ class QgsAnalysisTreeView(QTreeView):
         # append new analysis
         analysisItem = QgsAnalysisItem(analysisName, QgsAnalysisItem.ItemType.Analysis, analysis, userData)
         if lastGroupItem is None:
-            # if not a path btw. no group existing
+            # if not a path or no group existing
             self.treeModel.appendRow(analysisItem)
         else:
             lastGroupItem.appendRow(analysisItem)
@@ -153,7 +153,7 @@ class QgsAnalysisTreeView(QTreeView):
         if selectedItem is not None and selectedItem.getItemType() == QgsAnalysisItem.ItemType.Analysis:
                 return selectedItem.getAnalysis(), selectedItem.getUserData()
 
-        return None
+        return None, None
 
     def removeAllAnalysis(self):
         self.treeModel.clear()

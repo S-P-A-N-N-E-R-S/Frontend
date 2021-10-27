@@ -51,10 +51,10 @@ class OGDFAnalysisController(BaseController):
         # todo: pass authId to client
         _authId = self.settings.value("ogdfplugin/authId")
 
-        if not self.view.getAnalysis():
+        _analysisLabel, requestKey = self.view.getAnalysis()
+        if requestKey is None:
             self.view.showError(self.tr("No analysis selected!"))
             return
-        _analysisLabel, requestKey = self.view.getAnalysis()
 
         # get user parameter fields data
         try:
