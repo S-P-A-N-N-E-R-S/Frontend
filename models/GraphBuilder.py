@@ -274,18 +274,22 @@ class GraphBuilder:
     
     def __createRandomConnections(self):
         notUsedVertexPairs = []
-        for i in range(self.graph.vertexCount()):
-            for j in range(self.graph.vertexCount()):
+        for i in range(self.graph.vertexCount()-1):
+            for j in range(i+1, self.graph.vertexCount()):
                 if self.__options["edgeDirection"] == "Directed":
                     notUsedVertexPairs.append((i,j))
                     notUsedVertexPairs.append((j,i))
                 else:
                     notUsedVertexPairs.append((i,j))
+        print(notUsedVertexPairs)
         
         for i in range(self.__options["randomConnectionNumber"]):
             if len(notUsedVertexPairs) == 0:
                 break      
-            pairID = random.randint(0, len(notUsedVertexPairs))
+            pairID = random.randint(0, len(notUsedVertexPairs)-1)
+            print(pairID)
+            print(len(notUsedVertexPairs))
+            print("---------")
             p1 = notUsedVertexPairs[pairID][0]
             p2 = notUsedVertexPairs[pairID][1]
                     
