@@ -74,6 +74,22 @@ class QgsOGDFBenchmarkWidget(QWidget):
         
         return list(self.benchmarkObjectsHash.values())
    
+    def getSelectedAlgs(self):
+        checked = []
+        root = self.dialog.ogdf_algorithms.invisibleRootItem()
+        childCount = root.childCount()
+        
+        for i in range(childCount):
+            child = root.child(i)
+            numChildren = child.childCount()
+            
+            for n in range(numChildren):
+                child2 = child.child(n)
+                if child2.checkState(0) == Qt.Checked:
+                    checked.append(child.text(0) + "/" + child2.text(0))
+                    
+        return checked  
+   
     def _createBenchmarkDataObjects(self):
         """
         Read all data from the widgets and create all BenchmarkData objects        
@@ -89,11 +105,9 @@ class QgsOGDFBenchmarkWidget(QWidget):
         diffForGraphs = [FieldInformation.FieldType.VERTEX_ID, FieldInformation.FieldType.EDGE_ID, FieldInformation.FieldType.VERTEX_COSTS, FieldInformation.FieldType.EDGE_COSTS]
         
         rangesForEachAlg = []
-        allSelectedAlgs = []
-        for i in range(self.dialog.ogdf_algorithms.count()):
-            if self.dialog.ogdf_algorithms.item(i).checkState() == Qt.Checked:
-                rangesForEachAlg.append([])
-                allSelectedAlgs.append(str(self.dialog.ogdf_algorithms.item(i).text()))
+        allSelectedAlgs = self.getSelectedAlgs()
+        for i in range(len(allSelectedAlgs)):
+            rangesForEachAlg.append([])
                      
         listOfGraphs = []   
         rangeFields = [FieldInformation.FieldType.INT, FieldInformation.FieldType.DOUBLE, FieldInformation.FieldType.EDGE_ID, FieldInformation.FieldType.VERTEX_ID]       
@@ -247,12 +261,7 @@ class QgsOGDFBenchmarkWidget(QWidget):
         """
         posCounter = 0
         diffForGraphs = [FieldInformation.FieldType.VERTEX_ID, FieldInformation.FieldType.EDGE_ID, FieldInformation.FieldType.VERTEX_COSTS, FieldInformation.FieldType.EDGE_COSTS]
-        allSelectedAlgs = []
-              
-        for i in range(self.dialog.ogdf_algorithms.count()):
-            if self.dialog.ogdf_algorithms.item(i).checkState() == Qt.Checked:               
-                allSelectedAlgs.append(str(self.dialog.ogdf_algorithms.item(i).text()))
-               
+        allSelectedAlgs = self.getSelectedAlgs()         
         self.clearWidgets()
         # loop over algorithms
         algCounter = 0

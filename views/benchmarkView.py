@@ -77,15 +77,12 @@ class BenchmarkView(BaseContentView):
         listWidgetBenchmark.setObjectName("benchmark_selection_" + str(self.benchmarkAnalysisCounter))
         self.dialog.analysis_visualisation.layout().addWidget(listWidgetBenchmark,*(self.benchmarkAnalysisCounter,0))
         
-        ogdfAlgs = []
-        requests = []
-        for i in range(self.dialog.ogdf_algorithms.count()):
-            if self.dialog.ogdf_algorithms.item(i).checkState() == Qt.Checked:
-                ogdfAlgs.append(self.dialog.ogdf_algorithms.item(i))         
+        ogdfAlgs = self.getSelectedAlgs()
+        requests = []             
          
         # get field information for all selected algorithms        
         for alg in ogdfAlgs:
-            request = parserManager.getRequestParser(alg.text())         
+            request = parserManager.getRequestParser(alg)         
             if request:          
                 requests.append(request.getFieldInfo())
         
@@ -240,16 +237,12 @@ class BenchmarkView(BaseContentView):
          
     def _updateOGDFParameters(self):
         if self.dialog.graph_selection.count() > 0:
-            ogdfAlgs = []
+            ogdfAlgs = self.getSelectedAlgs()
             requests = []
-            # get all checked algorithms
-            for i in range(self.dialog.ogdf_algorithms.count()):
-                if self.dialog.ogdf_algorithms.item(i).checkState() == Qt.Checked:
-                    ogdfAlgs.append(self.dialog.ogdf_algorithms.item(i))         
-             
+                  
             # get field information for all selected algorithms        
             for alg in ogdfAlgs:
-                request = parserManager.getRequestParser(alg.text())         
+                request = parserManager.getRequestParser(alg)         
                 if request:          
                     requests.append(request.getFieldInfo())
             
@@ -283,10 +276,48 @@ class BenchmarkView(BaseContentView):
         self._updateOGDFParameters()
            
     def addOGDFAlg(self, analysis):
-        item = QListWidgetItem(analysis)
-        item.setCheckState(Qt.Unchecked)
-        self.dialog.ogdf_algorithms.addItem(item)
+        item = QTreeWidgetItem(self.dialog.ogdf_algorithms)
+        item.setText(0, analysis)
+        item.setCheckState(0,Qt.Unchecked)
+        self.dialog.ogdf_algorithms.insertTopLevelItem(0,item)
+     
+    def addOGDFAlgs(self, analysisList):
+        groups = {}
+        for analysis in analysisList:
+            try:
+                groups[analysis.split("/")[0]]
+            except:
+                groups[analysis.split("/")[0]] = []
+            
+            groups[analysis.split("/")[0]].append(analysis.split("/")[1])
         
+        items = []
+        for key, values in groups.items():
+            item = QTreeWidgetItem([key])
+            for value in values:
+                child = QTreeWidgetItem([value])
+                child.setCheckState(0, Qt.Unchecked)
+                item.addChild(child)
+            items.append(item)    
+        
+        self.dialog.ogdf_algorithms.insertTopLevelItems(0, items)
+     
+    def getSelectedAlgs(self):
+        checked = []
+        root = self.dialog.ogdf_algorithms.invisibleRootItem()
+        childCount = root.childCount()
+        
+        for i in range(childCount):
+            child = root.child(i)
+            numChildren = child.childCount()
+            
+            for n in range(numChildren):
+                child2 = child.child(n)
+                if child2.checkState(0) == Qt.Checked:
+                    checked.append(child.text(0) + "/" + child2.text(0))
+                   
+        return checked     
+                         
     def getSelection1(self):
         """
         Method to get the first selections of all the benchmark_visualisation QtListWidgets.

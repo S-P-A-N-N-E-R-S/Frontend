@@ -43,8 +43,11 @@ class BenchmarkController(BaseController):
         self.authManager = QgsApplication.authManager()
 
         # add available analysis
+        requestNameList = []
         for requestKey, request in parserManager.getRequestParsers().items():
-            self.view.addOGDFAlg(request.name)
+           requestNameList.append(request.name)
+        
+        self.view.addOGDFAlgs(requestNameList)
         
         self.doWrapper = None 
         self.running = False
