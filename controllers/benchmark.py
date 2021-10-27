@@ -279,9 +279,9 @@ class BenchmarkController(BaseController):
     def runJob(self):        
         # todo: pass authId to client
         authId = self.settings.value("ogdfplugin/authId")
-        
-        if not self._checkSelections():
-            return
+        if self.view.getNumberOfRequestedBenchmarks() > 0:
+            if not self._checkSelections():
+                return
         
         # create and get BenchmarkData objects
         benchmarkDOs = self.view.ogdfBenchmarkWidget.getBenchmarkDataObjects()  
