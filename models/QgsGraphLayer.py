@@ -948,6 +948,12 @@ class QgsGraphLayerType(QgsPluginLayerType):
         toggleDirectionButton.clicked.connect(layer.toggleDirection)
         layout.addWidget(toggleDirectionButton)
 
+        # button to randomize vertex color
+        randomColorButton = QPushButton(tr("Random Vertex Color"))
+        randomColorButton.clicked.connect(layer.newRandomColor)
+        randomColorButton.setVisible(True)
+        layout.addWidget(randomColorButton)
+
         fileSeparator = QFrame()
         fileSeparator.setFrameShape(QFrame.HLine | QFrame.Plain)
         fileSeparator.setLineWidth(1)
@@ -980,17 +986,6 @@ class QgsGraphLayerType(QgsPluginLayerType):
         exportFButton.clicked.connect(layer.exportToFile)
         exportFButton.setVisible(True)
         layout.addWidget(exportFButton)
-
-        colorSeparator = QFrame()
-        colorSeparator.setFrameShape(QFrame.HLine | QFrame.Plain)
-        colorSeparator.setLineWidth(1)
-        layout.addWidget(colorSeparator)
-
-        # button to randomize vertex color
-        randomColorButton = QPushButton(tr("Random Vertex Color"))
-        randomColorButton.clicked.connect(layer.newRandomColor)
-        randomColorButton.setVisible(True)
-        layout.addWidget(randomColorButton)
 
         editSeparator = QFrame()
         editSeparator.setFrameShape(QFrame.HLine | QFrame.Plain)
