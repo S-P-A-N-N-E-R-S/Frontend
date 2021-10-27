@@ -42,7 +42,11 @@ class BaseContentView(QObject):
 
     def setMinimized(self, minimized=True):
         """ Minimizes the plugin dialog """
-        self.dialog.activateWindow() if minimized else self.dialog.showMinimized()
+        if minimized:
+            self.dialog.showMinimized()
+        else:
+            self.dialog.showNormal()
+            self.dialog.activateWindow()
 
     def showError(self, msg, title="Error"):
         self.bar.pushMessage(title, msg, level=Qgis.Critical)

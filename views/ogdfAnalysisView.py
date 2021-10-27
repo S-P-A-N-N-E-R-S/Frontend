@@ -42,6 +42,7 @@ class OGDFAnalysisView(BaseContentView):
         # set up analysis parameter widget
         layout = self.dialog.ogdf_analysis_parameters_box.layout()
         self.ogdfParametersWidget = QgsOGDFParametersWidget()
+        self.ogdfParametersWidget.toggleDialogVisibility.connect(lambda visible: self.setMinimized(not visible))
         layout.addWidget(self.ogdfParametersWidget)
 
         # change analysis parameters
