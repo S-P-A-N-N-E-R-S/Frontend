@@ -327,8 +327,7 @@ class BenchmarkView(BaseContentView):
         """ 
         grid = self.dialog.analysis_visualisation.layout()
         selection1 = []
-        
-        for c in range(1,grid.rowCount()):
+        for c in range(1,self.benchmarkAnalysisCounter+1):
             benchmarkSelWidget = grid.itemAtPosition(c,0).widget()
             oneSelection = []
             for i in range(benchmarkSelWidget.count()):
@@ -350,7 +349,7 @@ class BenchmarkView(BaseContentView):
         grid = self.dialog.analysis_visualisation.layout()
         selection2 = []
         
-        for c in range(1,grid.rowCount()):
+        for c in range(1,self.benchmarkAnalysisCounter+1):
             benchmarkSelWidget = grid.itemAtPosition(c,0).widget()
             oneSelection = []
             sectionFound = False
@@ -375,7 +374,7 @@ class BenchmarkView(BaseContentView):
         grid = self.dialog.analysis_visualisation.layout()
         analysis = []
         
-        for c in range(1,grid.rowCount()):
+        for c in range(1,self.benchmarkAnalysisCounter+1):
             benchmarkSelWidget = grid.itemAtPosition(c,0).widget()
             sectionFound = False
             for i in range(benchmarkSelWidget.count()):
@@ -397,7 +396,7 @@ class BenchmarkView(BaseContentView):
         grid = self.dialog.analysis_visualisation.layout()  
         visualisation = []
         
-        for c in range(1,grid.rowCount()):
+        for c in range(1,self.benchmarkAnalysisCounter+1):
             visualisationSelWidget = grid.itemAtPosition(c,1).widget()
             oneSelection = []
             for i in range(visualisationSelWidget.count()):
@@ -421,7 +420,7 @@ class BenchmarkView(BaseContentView):
     def getCreateLegendSelection(self):
         legendSelections = []
         grid = self.dialog.analysis_visualisation.layout()
-        for c in range(1,grid.rowCount()):
+        for c in range(1,self.benchmarkAnalysisCounter+1):
             visualisationSelWidget = grid.itemAtPosition(c,1).widget()
             for i in range(visualisationSelWidget.count()):
                 if "Create legend" == visualisationSelWidget.item(i).text():
@@ -437,7 +436,7 @@ class BenchmarkView(BaseContentView):
     def getLogAxisSelection(self):
         logSelections = []
         grid = self.dialog.analysis_visualisation.layout()  
-        for c in range(1,grid.rowCount()):
+        for c in range(1,self.benchmarkAnalysisCounter+1):
             visualisationSelWidget = grid.itemAtPosition(c,1).widget()
             for i in range(visualisationSelWidget.count()):
                 if "Logarithmic y-axis" == visualisationSelWidget.item(i).text():
@@ -451,7 +450,7 @@ class BenchmarkView(BaseContentView):
     def getTightLayoutSelection(self):
         tightSelections = []    
         grid = self.dialog.analysis_visualisation.layout()    
-        for c in range(1,grid.rowCount()):
+        for c in range(1,self.benchmarkAnalysisCounter+1):
             visualisationSelWidget = grid.itemAtPosition(c,1).widget()
             for i in range(visualisationSelWidget.count()):
                 if "Tight layout" == visualisationSelWidget.item(i).text():
