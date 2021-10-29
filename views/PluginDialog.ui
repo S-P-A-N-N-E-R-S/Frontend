@@ -1689,7 +1689,7 @@ QListWidget::item::selected {
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Create text file</string>
+                 <string>Create .csv file</string>
                 </property>
                </widget>
               </item>
@@ -1783,6 +1783,11 @@ QListWidget::item::selected {
                 <property name="headerHidden">
                  <bool>true</bool>
                 </property>
+                <column>
+                 <property name="text">
+                  <string notr="true">1</string>
+                 </property>
+                </column>
                </widget>
               </item>
              </layout>

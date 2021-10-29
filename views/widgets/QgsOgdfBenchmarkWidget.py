@@ -514,9 +514,4 @@ class QgsOGDFBenchmarkWidget(QWidget):
         
     
     
-    
-    
-    
-    
-    
             

@@ -130,8 +130,7 @@ class BenchmarkController(BaseController):
                 xParameters = []
                 xValues = []
                 xValuesBox = []
-                for dictKey2 in dictHelp:
-                    
+                for dictKey2 in dictHelp:                   
                     if isinstance(dictKey2, tuple):
                         parameterString = ""
                         for parameter in dictKey2[len(selectionList):]:
@@ -185,7 +184,7 @@ class BenchmarkController(BaseController):
                                   
                 benchVis.setOnePlotData(xLabel, xParametersValues, zParameter, xValues)
 
-                benchVis.setOneMultiExePlotData(xLabel, xParametersValues, zParameter, xValuesBox)
+                benchVis.setOneBoxPlotData(xLabel, xParametersValues, zParameter, xValuesBox)
                 
                       
             for vis in visualisations[sIndex]:
@@ -202,7 +201,7 @@ class BenchmarkController(BaseController):
                 visCounter+=1
                 # create text file
                 if self.view.getTxtCreationSelection():
-                    benchVis.createTextFile(self.view.getTextFilePath())
+                    benchVis.createTextFile(self.view.getTextFilePath(), vis == "Box plot")
                 
     
     def _checkSelections(self):

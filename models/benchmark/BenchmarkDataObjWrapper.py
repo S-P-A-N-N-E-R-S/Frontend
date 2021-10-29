@@ -48,12 +48,14 @@ class BenchmarkDataObjWrapper():
                 if average:                 
                     values.append(dataObj.getAvgNumberOfEdgesResponse())
                 else:
-                    values = dataObj.getAllNumberOfEdgesResponse()
+                    for value in dataObj.getAllNumberOfEdgesResponse():                      
+                        values.append(value)
             elif analysis == "Number of Vertices":
                 if average: 
                     values.append(dataObj.getAvgNumberOfVerticesResponse())
                 else:
-                    values = dataObj.getAllNumberOfVerticesResponse()  
+                    for value in dataObj.getAllNumberOfVerticesResponse():
+                        values.append(value)
             elif analysis == "Edges Difference":
                 if average: 
                     values.append(abs(originalGraph.edgeCount() - dataObj.getAvgNumberOfEdgesResponse()))
