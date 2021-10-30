@@ -34,9 +34,9 @@ class BenchmarkView(BaseContentView):
         
         self.dialog.refresh_all_graphs.clicked.connect(self._updateAllGraphs)
         self.dialog.clear_graph_selection.clicked.connect(self._clearGraphSelection)     
-        self.dialog.start_benchmark.clicked.connect(self.controller.runJob)
+        self.dialog.start_benchmark.clicked.connect(self.controller.runTask)
         self.dialog.add_all_graphs.clicked.connect(self._addAllGraphs)
-        self.dialog.abort_benchmark.clicked.connect(self._setAbort)
+        self.dialog.abort_benchmark.clicked.connect(self.controller.abortTask)
         
         self.dialog.graph_selection.model().rowsInserted.connect(self._updateOGDFParameters)
         
@@ -476,7 +476,4 @@ class BenchmarkView(BaseContentView):
     def getNumberOfSelectedGraphs(self):
         return self.dialog.graph_selection.count()
      
-    def _setAbort(self):
-        if self.controller.running == True:
-            self.controller.abort = True
                

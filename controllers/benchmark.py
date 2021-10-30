@@ -1,6 +1,6 @@
 import os
 
-from qgis.core import QgsSettings, QgsApplication, QgsProject, QgsTask, QgsMessageLog, Qgis
+from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog
 
 from .base import BaseController
 from .. import mainPlugin
@@ -50,8 +50,6 @@ class BenchmarkController(BaseController):
         self.view.addOGDFAlgs(requestNameList)
         
         self.doWrapper = None 
-        self.running = False
-        self.abort = False
         self.task = None
 
     def _visualisationControl(self):
@@ -260,32 +258,33 @@ class BenchmarkController(BaseController):
                 
         return True
          
-    def runTask(self, task):
-        self.task = task
-        task1 = QgsTask.fromFunction("Start benchmark process", self.runJob, on_finished=self.completed)
-        id = QgsApplication.taskManager().addTask(task1)
+    def runTask(self):
+        # create and get BenchmarkData objects
+        if self.task == None:
+            self.benchmarkDOs = self.view.ogdfBenchmarkWidget.getBenchmarkDataObjects()
+            if not self._checkSelections():
+                return             
+            task = QgsTask.fromFunction("Start benchmark process", self.runJob, on_finished=self.completed)
+            self.task = task   
+            QgsApplication.taskManager().addTask(task)     
      
-    def completed(self, exception, result=None):
-        self.running = False
-        self.abort = False
-        print("PROCESS COMPLETED")
-        
+    def completed(self, exception, result=None):      
         if exception is not None:
             QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
             raise exception
-        self.task = None
+        
+        if self.task is not None and not self.task.isCanceled() and self.view.getNumberOfRequestedBenchmarks() > 0:
+            self._visualisationControl()
             
-    def runJob(self):        
+        self.task = None    
+     
+    def abortTask(self): 
+        self.task.cancel()
+            
+    def runJob(self, task):                  
         # todo: pass authId to client
-        authId = self.settings.value("ogdfplugin/authId")
-        if self.view.getNumberOfRequestedBenchmarks() > 0:
-            if not self._checkSelections():
-                return
-        
-        # create and get BenchmarkData objects
-        benchmarkDOs = self.view.ogdfBenchmarkWidget.getBenchmarkDataObjects()  
-        
-        for benchmarkDO in benchmarkDOs:
+        #authId = self.settings.value("ogdfplugin/authId")                   
+        for benchmarkDO in self.benchmarkDOs:
             print("--------------------------")
             print(benchmarkDO.algorithm)
             print(benchmarkDO.graphName)
@@ -295,6 +294,8 @@ class BenchmarkController(BaseController):
             request = parserManager.getRequestParser(requestKey)
             request.resetData()
             
+            
+            
             for key in benchmarkDO.parameters:
                 fieldData = benchmarkDO.parameters[key]
                 request.setFieldData(key, fieldData)
@@ -303,8 +304,7 @@ class BenchmarkController(BaseController):
                           
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:
-                        client.sendJobRequest(request)
-                        self.view.showSuccess("Job started!")                   
+                        client.sendJobRequest(request)                 
                 except (NetworkClientError, ParseError) as error:
                     self.view.showError(str(error), self.tr("Network Error"))          
                 
@@ -313,9 +313,14 @@ class BenchmarkController(BaseController):
                 while status != "success":  
                     if status == "failed":
                         self.view.showError("Execution failed", self.tr("Error: "))
+                        return  
+                    if self.task is not None and self.task.isCanceled():
+                        print("Task canceled")
                         return   
+                     
                     try:
                         with Client(helper.getHost(), helper.getPort()) as client:                        
+                                                                              
                             if counter == 0:
                                 time.sleep(0.5) 
                                 counter+=1
@@ -339,10 +344,8 @@ class BenchmarkController(BaseController):
 
                 except (NetworkClientError, ParseError) as error:
                     self.view.showError(str(error), self.tr("Network Error"))
+            
+            self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs)) 
                                 
-        self.doWrapper = BenchmarkDataObjWrapper(benchmarkDOs)              
-        
-        if self.view.getNumberOfRequestedBenchmarks() > 0:
-            self._visualisationControl()
- 
+        self.doWrapper = BenchmarkDataObjWrapper(self.benchmarkDOs)              
         

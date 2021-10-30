@@ -94,11 +94,6 @@ class QgsOGDFBenchmarkWidget(QWidget):
         """
         Read all data from the widgets and create all BenchmarkData objects        
         """
-              
-        # IDEA: just one loop, go throw every field and store for every field the value ranges in an array
-        # store array in dict together with field
-        # create all permutations of those arrays (normal fields with one value have array of size 1)
-        # use itertools.product(*allArrays)
         
         self.benchmarkObjectsHash = {}
         
