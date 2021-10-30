@@ -16,10 +16,13 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+from qgis.PyQt.QtWidgets import QSizePolicy
+
 from .baseContentView import BaseContentView
 from ..controllers.ogdfAnalysis import OGDFAnalysisController
 from ..network import parserManager
 from .widgets.QgsOgdfParametersWidget import QgsOGDFParametersWidget
+from .widgets.QgsAnalysisTreeView import QgsAnalysisTreeView
 
 
 class OGDFAnalysisView(BaseContentView):
@@ -39,13 +42,22 @@ class OGDFAnalysisView(BaseContentView):
         #     lambda: self._browseFile("ogdf_analysis_graph_input", "GraphML (*.graphml)")
         # )
 
+        # set up analysis tree view
+        self.analysisTreeView = QgsAnalysisTreeView()
+        self.analysisTreeView.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.analysisTreeView.setToolTip(self.tr("Select an analysis"))
+        self.dialog.ogdf_analysis_analysis_analysis_tree_widget.layout().addWidget(self.analysisTreeView)
+
         # set up analysis parameter widget
         layout = self.dialog.ogdf_analysis_parameters_box.layout()
         self.ogdfParametersWidget = QgsOGDFParametersWidget()
+        self.ogdfParametersWidget.toggleDialogVisibility.connect(lambda visible: self.setMinimized(not visible))
         layout.addWidget(self.ogdfParametersWidget)
+        self.dialog.ogdf_analysis_parameters_box.hide()
 
         # change analysis parameters
-        self.dialog.ogdf_analysis_analysis_input.currentIndexChanged.connect(self._analysisChanged)
+        self.analysisTreeView.analysisSelected.connect(self._analysisChanged)
+        self.analysisTreeView.analysisDeselected.connect(lambda: self.dialog.ogdf_analysis_parameters_box.hide())
 
         self.controller = OGDFAnalysisController(self)
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
@@ -58,6 +70,8 @@ class OGDFAnalysisView(BaseContentView):
             # show description
             self.setDescriptionHtml(request.description)
             self.setDescriptionVisible(request.description != "")
+            # show parameters
+            self.dialog.ogdf_analysis_parameters_box.show()
 
     # def hasInput(self):
     #     """
@@ -122,10 +136,10 @@ class OGDFAnalysisView(BaseContentView):
         return self.dialog.ogdf_analysis_job_input.text()
 
     def getAnalysis(self):
-        return self.dialog.ogdf_analysis_analysis_input.currentText(), self.dialog.ogdf_analysis_analysis_input.currentData()
+        return self.analysisTreeView.getAnalysis()
 
     def addAnalysis(self, analysis, userData=None):
-        self.dialog.ogdf_analysis_analysis_input.addItem(analysis, userData)
+        self.analysisTreeView.addAnalysis(analysis, userData)
 
     # analysis parameters
 
