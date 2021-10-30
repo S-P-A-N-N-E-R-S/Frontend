@@ -1331,10 +1331,21 @@ QListWidget::item::selected {
                             </widget>
                            </item>
                            <item>
-                            <widget class="QComboBox" name="ogdf_analysis_analysis_input">
-                             <property name="toolTip">
-                              <string>Select analysis</string>
-                             </property>
+                            <widget class="QWidget" name="ogdf_analysis_analysis_analysis_tree_widget" native="true">
+                             <layout class="QVBoxLayout" name="verticalLayout_19">
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                             </layout>
                             </widget>
                            </item>
                            <item>
