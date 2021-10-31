@@ -1,3 +1,5 @@
+from PyQt5.QtWidgets import QComboBox
+
 from .baseField import BaseField, BaseResult, GraphDependencyMixin
 from ..exceptions import ParseError
 from ..protocol.build import available_handlers_pb2, generic_container_pb2
@@ -32,6 +34,13 @@ class EdgeCostsField(BaseField, GraphDependencyMixin):
                     protoField.append(edgeCost)
             except AttributeError as error:
                 raise ParseError(f"Invalid key: {self.key}") from error
+
+    def createWidget(self, parent):
+        widget = QComboBox(parent)
+        return widget
+
+    def getWidgetData(self, widget):
+        return widget.currentData()
 
 
 class EdgeCostsResult(BaseResult, GraphDependencyMixin):

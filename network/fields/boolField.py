@@ -1,3 +1,5 @@
+from PyQt5.QtWidgets import QCheckBox
+
 from .baseField import BaseField
 from ..exceptions import ParseError
 from ..protocol.build import available_handlers_pb2
@@ -30,3 +32,14 @@ class BoolField(BaseField):
                 raise ParseError(f"Invalid key: {self.key}") from error
             except ValueError as error:
                 raise ParseError(f"Invalid value: {data[self.key]}") from error
+
+    def createLabel(self):
+        return None
+
+    def createWidget(self, parent):
+        widget = QCheckBox(self.label, parent)
+        widget.setChecked(self.default is True)
+        return widget
+
+    def getWidgetData(self, widget):
+        return widget.isChecked()

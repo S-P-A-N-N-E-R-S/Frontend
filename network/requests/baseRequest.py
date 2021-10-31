@@ -36,6 +36,12 @@ class BaseRequest():
     def addField(self, field):
         self.fields[field.key] = field
 
+    def createWidget(self, fieldKey, parent):
+        return self.fields[fieldKey].createWidget(parent)
+
+    def getWidgetData(self, fieldKey, widget):
+        return self.fields[fieldKey].getWidgetData(widget)
+
     def toProtoBuf(self):
         request = self.protoRequest()
 

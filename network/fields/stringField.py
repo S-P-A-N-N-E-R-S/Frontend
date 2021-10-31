@@ -1,3 +1,5 @@
+from PyQt5.QtWidgets import QLineEdit
+
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
 from ..protocol.build import available_handlers_pb2
@@ -26,6 +28,13 @@ class StringField(BaseField):
                 setattr(request, self.key, data[self.key])
             except AttributeError as error:
                 raise ParseError(f"Invalid key: {self.key}") from error
+
+    def createWidget(self, parent):
+        widget = QLineEdit(str(self.default), parent)
+        return widget
+
+    def getWidgetData(self, widget):
+        return widget.text() if len(widget.text()) > 0 else None
 
 
 class StringResult(BaseResult):

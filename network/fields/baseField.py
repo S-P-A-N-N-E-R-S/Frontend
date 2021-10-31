@@ -1,3 +1,5 @@
+from PyQt5.QtWidgets import QLabel
+
 from ..exceptions import ParseError
 
 class BaseField:
@@ -16,6 +18,15 @@ class BaseField:
             "default": self.default,
             "required": self.required,
         }
+
+    def createLabel(self):
+        return QLabel(self.label)
+
+    def createWidget(self, parent):
+        raise NameError("Not implemented!")
+
+    def getWidgetData(self, _widget):
+        return self.default
 
 
 class BaseResult:

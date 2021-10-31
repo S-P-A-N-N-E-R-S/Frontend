@@ -1,3 +1,5 @@
+from ...views.widgets.QgsGraphVertexPickerWidget import QgsGraphVertexPickerWidget
+
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
 from ..protocol.build import available_handlers_pb2
@@ -29,6 +31,14 @@ class VertexIDField(BaseField):
                 setattr(request, self.key, data[self.key])
             except AttributeError as error:
                 raise ParseError(f"Invalid key: {self.key}") from error
+
+    def createWidget(self, parent):
+        vertexPickerWidget = QgsGraphVertexPickerWidget(parent)
+        vertexPickerWidget.toggleDialogVisibility.connect(lambda visible: parent.toggleDialogVisibility.emit(visible))
+        return vertexPickerWidget
+
+    def getWidgetData(self, widget):
+        return widget.getVertex()
 
 
 class VertexIDResult(BaseResult):
