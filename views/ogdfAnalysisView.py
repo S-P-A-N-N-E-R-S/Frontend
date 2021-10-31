@@ -63,10 +63,9 @@ class OGDFAnalysisView(BaseContentView):
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
 
     def _analysisChanged(self):
-        _requestName, requestKey = self.getAnalysis()
-        request = parserManager.getRequestParser(requestKey)
+        request = self.getAnalysis()
         if request:
-            self.setParameterFields(request.getFieldInfo())
+            self.setParameterFields(request)
             # show description
             self.setDescriptionHtml(request.description)
             self.setDescriptionVisible(request.description != "")
@@ -136,19 +135,20 @@ class OGDFAnalysisView(BaseContentView):
         return self.dialog.ogdf_analysis_job_input.text()
 
     def getAnalysis(self):
-        return self.analysisTreeView.getAnalysis()
+        _requestName, requestKey = self.analysisTreeView.getAnalysis()
+        return parserManager.getRequestParser(requestKey)
 
     def addAnalysis(self, analysis, userData=None):
         self.analysisTreeView.addAnalysis(analysis, userData)
 
     # analysis parameters
 
-    def setParameterFields(self, fields):
+    def setParameterFields(self, request):
         """
         Sets parameter fields which should be shown as input widgets
-        :param fields: fields dictionary
+        :param request: request instance
         """
-        self.ogdfParametersWidget.setParameterFields(fields)
+        self.ogdfParametersWidget.setParameterFields(request)
 
     def getParameterFieldsData(self):
         """

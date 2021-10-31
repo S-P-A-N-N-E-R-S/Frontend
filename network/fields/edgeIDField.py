@@ -1,3 +1,5 @@
+from ...views.widgets.QgsGraphEdgePickerWidget import QgsGraphEdgePickerWidget
+
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
 from ..protocol.build import available_handlers_pb2
@@ -26,6 +28,14 @@ class EdgeIDField(BaseField):
                 setattr(request, self.key, data[self.key])
             except AttributeError as error:
                 raise ParseError(f"Invalid key: {self.key}") from error
+
+    def createWidget(self, parent):
+        edgePickerWidget = QgsGraphEdgePickerWidget(parent)
+        edgePickerWidget.toggleDialogVisibility.connect(lambda visible: parent.toggleDialogVisibility.emit(visible))
+        return edgePickerWidget
+
+    def getWidgetData(self, widget):
+        return widget.getEdge()
 
 
 class EdgeIDResult(BaseResult):

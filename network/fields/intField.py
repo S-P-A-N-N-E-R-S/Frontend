@@ -1,3 +1,5 @@
+from PyQt5.QtWidgets import QSpinBox
+
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
 from ..protocol.build import available_handlers_pb2
@@ -29,6 +31,17 @@ class IntField(BaseField):
                 setattr(request, self.key, data[self.key])
             except AttributeError as error:
                 raise ParseError(f"Invalid key: {self.key}") from error
+
+    def createWidget(self, parent):
+        widget = QSpinBox(parent)
+        # highest minimum and maximum
+        widget.setRange(-2147483648, 2147483647)
+        if self.default and isinstance(self.default, int):
+            widget.setValue(self.default)
+        return widget
+
+    def getWidgetData(self, widget):
+        return widget.value()
 
 
 class IntResult(BaseResult):

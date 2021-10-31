@@ -1,4 +1,5 @@
-from qgis.core import QgsPointXY
+from qgis.core import QgsPointXY, QgsMapLayerProxyModel
+from qgis.gui import QgsMapLayerComboBox
 
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
@@ -28,6 +29,20 @@ class GraphField(BaseField):
             protoEdge.uid = edge.id()
             protoEdge.inVertexIndex = data[self.key].findVertexByID(edge.fromVertex())
             protoEdge.outVertexIndex = data[self.key].findVertexByID(edge.toVertex())
+
+    def createWidget(self, parent):
+        widget = QgsMapLayerComboBox(parent)
+        widget.setFilters(QgsMapLayerProxyModel.PluginLayer)
+        widget.setAllowEmptyLayer(True)
+        widget.setCurrentIndex(0)
+        widget.currentIndexChanged.connect(parent.graphChanged)
+        return widget
+
+    def getWidgetData(self, widget):
+        layer = widget.currentLayer()
+        if layer is not None and layer.isValid():
+            return layer.getGraph()
+        return None
 
 
 class GraphResult(BaseResult):

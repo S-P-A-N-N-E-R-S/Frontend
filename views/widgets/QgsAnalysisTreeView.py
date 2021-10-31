@@ -28,8 +28,8 @@ from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 class QgsAnalysisItem(QStandardItem):
 
     class ItemType(Enum):
-        Analysis = 0
-        Group = 1
+        ANALYSIS = 0
+        GROUP = 1
 
     def __init__(self, label, itemType, analysis=None, userData=None):
         """
@@ -45,7 +45,7 @@ class QgsAnalysisItem(QStandardItem):
         self.analysis = analysis
         self.userData = userData
 
-        if self.itemType == self.ItemType.Group:
+        if self.itemType == self.ItemType.GROUP:
             self.setSelectable(False)
 
     def getLabel(self):
@@ -85,11 +85,11 @@ class QgsAnalysisTreeView(QTreeView):
 
         self.selectionModel().currentChanged.connect(self._itemChanged)
 
-    def _itemChanged(self, currentItemIndex, previousItemIndex):
+    def _itemChanged(self, currentItemIndex, _previousItemIndex):
         """Emits signal if analysis is changed"""
         item = self.treeModel.itemFromIndex(currentItemIndex)
         if item is not None:
-            if item.getItemType() == QgsAnalysisItem.ItemType.Analysis:
+            if item.getItemType() == QgsAnalysisItem.ItemType.ANALYSIS:
                 self.analysisSelected.emit(item.getAnalysis())
             else:
                 self.analysisDeselected.emit()
@@ -129,7 +129,7 @@ class QgsAnalysisTreeView(QTreeView):
         # if not all groups found, create missing groups
         if lastGroupIndex < len(groups)-1:
             for index in range(lastGroupIndex+1, len(groups)):
-                newGroup = QgsAnalysisItem(groups[index], QgsAnalysisItem.ItemType.Group)
+                newGroup = QgsAnalysisItem(groups[index], QgsAnalysisItem.ItemType.GROUP)
                 if lastGroupItem is None:
                     self.treeModel.appendRow(newGroup)
                 else:
@@ -137,7 +137,7 @@ class QgsAnalysisTreeView(QTreeView):
                 lastGroupItem = newGroup
 
         # append new analysis
-        analysisItem = QgsAnalysisItem(analysisName, QgsAnalysisItem.ItemType.Analysis, analysis, userData)
+        analysisItem = QgsAnalysisItem(analysisName, QgsAnalysisItem.ItemType.ANALYSIS, analysis, userData)
         if lastGroupItem is None:
             # if not a path or no group existing
             self.treeModel.appendRow(analysisItem)
@@ -150,8 +150,8 @@ class QgsAnalysisTreeView(QTreeView):
         :return:
         """
         selectedItem = self.treeModel.itemFromIndex(self.currentIndex())
-        if selectedItem is not None and selectedItem.getItemType() == QgsAnalysisItem.ItemType.Analysis:
-                return selectedItem.getAnalysis(), selectedItem.getUserData()
+        if selectedItem is not None and selectedItem.getItemType() == QgsAnalysisItem.ItemType.ANALYSIS:
+            return selectedItem.getAnalysis(), selectedItem.getUserData()
 
         return None, None
 

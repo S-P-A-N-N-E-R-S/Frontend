@@ -22,7 +22,7 @@ def getRequestParser(handlerType):
 def getRequestParsers():
     requests = {}
     for key, parserPair in parser.items():
-        requests[key] = parserPair.request
+        requests[key] = deepcopy(parserPair.request)
     return requests
 
 
@@ -38,7 +38,7 @@ def getResponseParser(handlerType):
 def getResponseParsers():
     responses = {}
     for key, parserPair in parser.items():
-        responses[key] = parserPair.response
+        responses[key] = deepcopy(parserPair.response)
     return responses
 
 
@@ -46,8 +46,8 @@ def getParserPairs():
     requests = {}
     responses = {}
     for key, parserPair in parser.items():
-        requests[key] = parserPair.request
-        responses[key] = parserPair.response
+        requests[key] = deepcopy(parserPair.request)
+        responses[key] = deepcopy(parserPair.response)
 
     return requests, responses
 
