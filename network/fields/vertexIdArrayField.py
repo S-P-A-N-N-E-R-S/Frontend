@@ -1,6 +1,6 @@
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
-from ..protocol.build import available_handlers_pb2, generic_container_pb2
+from ..protocol.build import available_handlers_pb2
 
 
 class VertexIdArrayField(BaseField):

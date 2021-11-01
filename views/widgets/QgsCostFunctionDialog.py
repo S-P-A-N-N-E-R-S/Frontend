@@ -84,39 +84,51 @@ class QgsExpressionContext(QObject):
                     {
                         "label": "if",
                         "expressionText": " if( ; ; ) ",
-                        "description": self.tr("Tests a condition and returns a different result depending on the conditional check."),
-                        "syntax": self.tr("if(condition; exprIfTrue; exprIfFalse)"),
-                        "example": self.tr("if[field:ELEV > 100, raster[0]:sum, raster[0]:min]")
+                        "description": self.tr("Tests the specified condition and returns a different result depending on the conditional check."),
+                        "syntax": self.tr("if(condition; result_if_True; result_if_False)"),
+                        "example": self.tr("if(field:ELEV > 100, raster[0]:sum, raster[0]:min)")
                     },
                     {
                         "label": self.tr("crossesPolygon"),
                         "expressionText": "crossesPolygon",
-                        "description": self.tr("Checks whether an edge crosses a polygon.")
+                        "syntax": self.tr("polygon[index]:crossesPolygon"),
+                        "description": self.tr("Checks whether an edge crosses a polygon."),
+                        "example": self.tr("if(polygon[0]:crossesPolygon == True, 10; 20)")
                     },
                     {
                         "label": self.tr("insidePolygon"),
                         "expressionText": "insidePolygon",
-                        "description": self.tr("Checks whether an edge is inside a polygon.")
+                        "syntax": self.tr("polygon[index]:insidePolygon"),
+                        "description": self.tr("Checks whether an edge is inside a polygon."),
+                        "example": self.tr("if(polygon[0]:insidePolygon == True, 10; 20)")
                     },
                     {
                         "label": self.tr("pixelValue"),
                         "expressionText": "raster[]:pixelValue",
-                        "description": self.tr("Check if one pixel value of a raster data satisfies the condition. Only usable with raster data")
+                        "syntax": self.tr("raster[index]:pixelValue"),
+                        "description": self.tr("Check if one pixel value of a raster data satisfies the condition. Only usable with raster data"),
+                        "example": self.tr("if(raster[0]:pixelValue > 100; 10; 20)")        
                     },
                     {
                         "label": self.tr("percentOfValues"),
                         "expressionText": "raster[]:percentOfValues()",
-                        "description": self.tr("Check if a specified percentage of the shortest path pixels values satisfy the condition. Only usable with raster data")                      
+                        "syntax": self.tr("raster[index]:percentOfValues(percentage)"),
+                        "description": self.tr("Check if a specified percentage of the pixels values satisfy the condition. Only usable with raster data"),
+                        "example": self.tr("if(raster[0]:percentOfValues(50) > 100; 10; 20)")                      
                     },
                     {
                         "label": self.tr("spPixelValue"),
-                        "expressionText": "raster[]:pixelValue()",
-                        "description": self.tr("Check if one pixel value of the shortest path satisfies the condition. Only usable with raster data")
+                        "expressionText": "raster[]:spPixelValue()",
+                        "syntax": self.tr("raster[index]:spPixelValue(heuristic_index)"),
+                        "description": self.tr("Check if one pixel value of the shortest path satisfies the condition. Only usable with raster data"),
+                        "example": self.tr("if(raster[0]:spPixelValue(3) > 100; 10; 20)")
                     },
                     {
                         "label": self.tr("spPercentOfValues"),
-                        "expressionText": "raster[]:percentOfValues(heuristic, percentage)",
-                        "description": self.tr("Check if a specified percentage of shortest path pixel values satisfy the condition. Only usable with raster data")                       
+                        "expressionText": "raster[]:percentOfValues( , )",
+                        "syntax": self.tr("raster[index]:percentOfValues(heuristic, percentage)"),
+                        "description": self.tr("Check if a specified percentage of shortest path pixel values satisfy the condition. Only usable with raster data"),                     
+                        "example": self.tr("if(raster[0]:spPercentOfValues(2,50) > 100; 10; 20)")
                     },                                       
                 ],
             },
@@ -148,23 +160,30 @@ class QgsExpressionContext(QObject):
                     {
                         "label": "spEuclidean",
                         "expressionText": "raster[]:spEuclidean()",
-                        "description": self.tr("Calculates the euclidean metric of the shortest path.")
+                        "syntax": self.tr("raster[index]:spEuclidean(heuristic_index)"),
+                        "description": self.tr("Calculates the euclidean metric of the shortest path."),
+                        "example": self.tr("raster[0]:spEuclidean(3)")
                     },
                     {
                         "label": "spManhattan",
                         "expressionText": "raster[]:spManhattan()",
-                        "description": self.tr("Calculates the manhattan metric of the shortest path.")
+                        "syntax": self.tr("raster[index]:spManhattan(heuristic_index)"),
+                        "description": self.tr("Calculates the manhattan metric of the shortest path."),
+                        "example": self.tr("raster[0]:spManhattan(3)")
                     },
                     {
                         "label": "spGeodesic",
                         "expressionText": "raster[]:spGeodesic()",
-                        "description": self.tr("Calculates the geodesic metric of the shortest path.")
+                        "syntax": self.tr("raster[index]:spGeodesic(heuristic_index)"),
+                        "description": self.tr("Calculates the geodesic metric of the shortest path."),
+                        "example": self.tr("raster[0]:spGeodesic(3)")
                     },
                     {
                         "label": "spEllipsoidal",
                         "expressionText": "raster[]:spEllipsoidal()",
-                        "description": self.tr("Calculates the ellipsoidal distance of the shortest path. Not usable with all CRS!")
-                        
+                        "syntax": self.tr("raster[index]:spEllipsoidal(heuristic_index)"),
+                        "description": self.tr("Calculates the ellipsoidal distance of the shortest path. Not usable with all CRS!"),
+                        "example": self.tr("raster[0]:spEllipsoidal(3)")
                     },                                       
                 ],
             },
@@ -424,10 +443,9 @@ class QgsExpressionContext(QObject):
                 "expressions": [
                     {
                         "label": "Random function",
-                        "expressionText": "random(value1, value2)",
+                        "expressionText": "random( , )",
                         "description": self.tr("Random value between value1 and value2"),
-                        "syntax": self.tr("random(value1,value2)"),
-                        "example": self.tr("random(5, 60) → 6.4803846462162"),
+                        "syntax": self.tr("random(value1,value2)")
                     },                           
                 ]
             },
@@ -530,132 +548,132 @@ class QgsExpressionContext(QObject):
                     {
                         "label": "sum",
                         "expressionText": "sum",
-                        "description": self.tr("Returns the raster sum of an edge.")
+                        "description": self.tr("Returns the sum of all pixel values.")
                     },
                     {
                         "label": "mean",
                         "expressionText": "mean",
-                        "description": self.tr("Returns the raster mean of an edge.")
+                        "description": self.tr("Returns the mean of all pixel values.")
                     },
                     {
                         "label": "median",
                         "expressionText": "median",
-                        "description": self.tr("Returns the raster median of an edge.")
+                        "description": self.tr("Returns the median of all pixel values.")
                     },
                     {
                         "label": "min",
                         "expressionText": "min",
-                        "description": self.tr("Returns the raster minimum of an edge.")
+                        "description": self.tr("Returns the minimum of all pixel values.")
                     },
                     {
                         "label": "max",
                         "expressionText": "max",
-                        "description": self.tr("Returns the raster maximum of an edge.")
+                        "description": self.tr("Returns the maximum of all pixel values.")
                     },
                     {
                         "label": "variance",
                         "expressionText": "variance",
-                        "description": self.tr("Returns the raster variance of an edge.")
+                        "description": self.tr("Returns the variance of all pixel values.")
                     },
                     {
                         "label": "standDev",
                         "expressionText": "standDev",
-                        "description": self.tr("Returns the raster standard deviation of an edge.")
+                        "description": self.tr("Returns the standard deviation of all pixel values.")
                     },
                     {
                         "label": "gradientSum",
                         "expressionText": "gradientSum",
-                        "description": self.tr("Returns the raster gradient sum of an edge.")
+                        "description": self.tr("Returns the sum of all gradients.")
                     },
                     {
                         "label": "gradientMin",
                         "expressionText": "gradientMin",
-                        "description": self.tr("Returns the raster gradient minimum of an edge.")
+                        "description": self.tr("Returns the minimum of all gradients.")
                     },
                     {
                         "label": "gradientMax",
                         "expressionText": "gradientMax",
-                        "description": self.tr("Returns the raster variance of an edge.")
+                        "description": self.tr("Returns the maximum of all gradients.")
                     },
                     {
                         "label": "ascent",
                         "expressionText": "ascent",
-                        "description": self.tr("Returns the raster ascent of an edge.")
+                        "description": self.tr("Returns the ascent (difference of neighboring pixels) of all pixel values.")
                     },
                     {
                         "label": "descent",
                         "expressionText": "descent",
-                        "description": self.tr("Returns the raster descent of an edge.")
+                        "description": self.tr("Returns the descent (difference of neighboring pixels) of all pixel values.")
                     },
                     {
                         "label": "totalClimb",
                         "expressionText": "totalClimb",
-                        "description": self.tr("Returns the raster total climb of an edge.")
+                        "description": self.tr("Returns the total difference of neighboring pixels.")
                     },
                     {
                         "label": "spSum",
                         "expressionText": "spSum()",
-                        "description": self.tr("Returns the sum of the shortest path.")
+                        "description": self.tr("Returns the sum of the shortest path pixels.")
                     },
                     {
                         "label": "spMean",
                         "expressionText": "spMean()",
-                        "description": self.tr("Returns the mean of the shortest path.")
+                        "description": self.tr("Returns the mean of the shortest path pixels.")
                     },
                     {
                         "label": "spMedian",
                         "expressionText": "spMedian()",
-                        "description": self.tr("Returns the median of the shortest path.")
+                        "description": self.tr("Returns the median of the shortest path pixels.")
                     },
                     {
                         "label": "spMin",
                         "expressionText": "spMin()",
-                        "description": self.tr("Returns the minimum of the shortest path.")
+                        "description": self.tr("Returns the minimum of the shortest path pixels.")
                     },
                     {
                         "label": "spMax",
                         "expressionText": "spMax()",
-                        "description": self.tr("Returns the maximum of the shortest path.")
+                        "description": self.tr("Returns the maximum of the shortest path pixels.")
                     },
                     {
                         "label": "spVariance",
                         "expressionText": "spVariance()",
-                        "description": self.tr("Returns the variance of the shortest path.")
+                        "description": self.tr("Returns the variance of the shortest path pixels.")
                     },
                     {
                         "label": "spStandDev",
                         "expressionText": "spStandDev()",
-                        "description": self.tr("Returns the standard deviation of the shortest path.")
+                        "description": self.tr("Returns the standard deviation of the shortest path pixels.")
                     },
                     {
                         "label": "spGradientSum",
                         "expressionText": "spGradientSum()",
-                        "description": self.tr("Returns the sum of all gradients of the shortest path.")
+                        "description": self.tr("Returns the sum of all gradients of the shortest path pixels.")
                     },
                     {
                         "label": "spGradientMin",
                         "expressionText": "spGradientMin()",
-                        "description": self.tr("Returns the minimum of all gradients of the shortest path..")
+                        "description": self.tr("Returns the minimum of all gradients of the shortest path pixels.")
                     },
                     {
                         "label": "spGradientMax",
                         "expressionText": "spGradientMax()",
-                        "description": self.tr("Returns the maximum of all gradients of the shortest path.")
+                        "description": self.tr("Returns the maximum of all gradients of the shortest path pixels.")
                     },
                     {
                         "label": "spAscent",
                         "expressionText": "spAscent()",
-                        "description": self.tr("Returns the ascent of the shortest path.")
+                        "description": self.tr("Returns the ascent of the shortest path pixels.")
                     },
                     {
                         "label": "spDescent",
                         "expressionText": "spDescent()",
-                        "description": self.tr("Returns the descent of the shortest path.")
+                        "description": self.tr("Returns the descent of the shortest path pixels.")
                     },
                     {
                         "label": "spTotalClimb",
                         "expressionText": "spTotalClimb()",
-                        "description": self.tr("Returns the total climb of the shortest path.")
+                        "description": self.tr("Returns the total climb of the shortest path pixels.")
                     },                         
                 ],
             },

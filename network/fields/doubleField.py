@@ -1,3 +1,7 @@
+import sys
+
+from PyQt5.QtWidgets import QDoubleSpinBox
+
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
 from ..protocol.build import available_handlers_pb2
@@ -29,6 +33,19 @@ class DoubleField(BaseField):
                 setattr(request, self.key, data[self.key])
             except AttributeError as error:
                 raise ParseError(f"Invalid key: {self.key}") from error
+
+    def createWidget(self, parent):
+        widget = QDoubleSpinBox(parent)
+        # highest minimum and maximum
+        widget.setRange(-sys.float_info.min, sys.float_info.max)
+        widget.setDecimals(6)
+        widget.setValue(1.0)  # default value
+        if self.default and isinstance(self.default, float):
+            widget.setValue(self.default)
+        return widget
+
+    def getWidgetData(self, widget):
+        return widget.value()
 
 
 class DoubleResult(BaseResult):
