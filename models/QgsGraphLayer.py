@@ -235,6 +235,8 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.mUndoStack = QUndoStack()
 
+        self.nameChanged.connect(self.activateUniqueName)
+
     def deleteLater(self, dummy):
         self.toggleEdit(True)
         
@@ -828,9 +830,23 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mRenderedCostFunction = idx
 
     def activateUniqueName(self):
-        # sets the layers name to its id,  'unique but not nice'
+        # sets the layers name to a combination of graph information
         if self.name() == "RandomGraphLayer":
-            self.setName(self.id())
+            constructName = self.mGraph.connectionType() if self.mGraph.connectionType() != "Nearest neighbor" else "NN"
+            constructName += "_" + self.mGraph.distanceStrategy + "_" + self.mGraph.edgeDirection
+
+            mapLayers = QgsProject.instance().mapLayers()
+            currHighestNr = 0
+            for layer in mapLayers.values():
+                if constructName == layer.name() and currHighestNr == 0:
+                    currHighestNr = 1
+                elif constructName in layer.name():
+                    nameNr = int(layer.name().split(constructName)[1])
+
+                    if currHighestNr <= nameNr:
+                        currHighestNr = nameNr + 1
+
+            self.setName(constructName + (str(currHighestNr) if currHighestNr > 0 else ""))
 
 class QgsGraphLayerType(QgsPluginLayerType):
     """
@@ -852,7 +868,6 @@ class QgsGraphLayerType(QgsPluginLayerType):
         :type layer: QgsGraphLayer
         :return Boolean
         """
-        layer.activateUniqueName()
         if hasattr(self, "win") and self.win and layer.id() == self.layerID:
             self.win.setVisible(True)
             return True
