@@ -36,7 +36,10 @@ class BenchmarkData():
 
     def setResponseGraph(self, graph):
         self.responseGraphs.append(graph)
-  
+    
+    def getRuntime(self):
+        return 0
+    
     def getNumberOfEdgesRequest(self):
         return self.graph.edgeCount()
         

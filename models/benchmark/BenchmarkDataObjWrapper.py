@@ -35,11 +35,10 @@ class BenchmarkDataObjWrapper():
         :type analysis: String
         :type dataObjs: list of BenchmarkData objects
         :type average: boolean
-        :return list (2D if average false and multiple executions (box plot))
+        :return list or value
         """
         values = []
-        for dataObj in dataObjs:
-            
+        for dataObj in dataObjs:          
             originalGraph = dataObj.getGraph()
             if analysis == "Runtime":
                 print("TODO")

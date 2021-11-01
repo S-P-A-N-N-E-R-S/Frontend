@@ -1,4 +1,5 @@
 import os
+from datetime import date, datetime
 
 from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog
 
@@ -198,7 +199,7 @@ class BenchmarkController(BaseController):
                     benchVis.plotBoxPlot(visCounter)                    
                 visCounter+=1
                 # create text file
-                if self.view.getTxtCreationSelection():
+                if self.view.getCsvCreationSelection():
                     benchVis.createTextFile(self.view.getTextFilePath(), vis == "Box plot")
                 
     
@@ -273,7 +274,72 @@ class BenchmarkController(BaseController):
             QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
             raise exception
         
-        if self.task is not None and not self.task.isCanceled() and self.view.getNumberOfRequestedBenchmarks() > 0:
+        if self.task is not None and not self.task.isCanceled():
+            try:
+                if self.view.getCsvCreationSelection(): 
+                    path = self.view.getTextFilePath()
+                    dateString = date.today().strftime("%b_%d_%Y_")
+                    timeString = datetime.now().strftime("%H_%M_%S")
+        
+                    if path == "":
+                        f = open(path + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
+                    else:          
+                        f = open(path + "/" + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
+                        
+                    # write header to file
+                    f.write("Algorithm,Name of Graph")               
+                    allParameters = []
+                    for benchmarkDO in self.benchmarkDOs:
+                        
+                        for key in benchmarkDO.parameters.keys():
+                            if not key in allParameters and key != "graph":
+                                allParameters.append(key)                       
+                    for paraKey in allParameters:
+                        f.write("," + str(paraKey))     
+                    
+                    f.write(",Runtime,Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness,Lightness\n") 
+                    
+                    for benchmarkDO in self.benchmarkDOs:
+                        # write all benchmark information into file
+                        f.write(benchmarkDO.algorithm +  "," + benchmarkDO.graphName) 
+                           
+                        for paraKey in allParameters:                         
+                            if paraKey in benchmarkDO.parameters.keys():
+                                f.write("," + str(benchmarkDO.parameters[paraKey]))  
+                            else:    
+                                f.write(",?")                          
+                        allNumberOfEdgesResponse = benchmarkDO.getAllNumberOfEdgesResponse()                                     
+                        f.write("," + str(benchmarkDO.getRuntime()))
+                        f.write("," + str(allNumberOfEdgesResponse).replace("[","").replace("]","").replace(",","/").replace(" ",""))                  
+                        f.write("," + str(benchmarkDO.getAllNumberOfVerticesResponse()).replace("[","").replace("]","").replace(",","/").replace(" ",""))                 
+                        edgeCountDiff = []
+                        
+                        for edgeCount in allNumberOfEdgesResponse:                     
+                            edgeCountDiff.append(abs(benchmarkDO.getGraph().edgeCount() - edgeCount))     
+                        f.write("," + str(edgeCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        vertexCountDiff = []
+                        
+                        for vertexCount in benchmarkDO.getAllNumberOfVerticesResponse():                     
+                            vertexCountDiff.append(abs(benchmarkDO.getGraph().vertexCount() - vertexCount))     
+                        f.write("," + str(vertexCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        allVertexCounts = benchmarkDO.getAllNumberOfVerticesResponse()
+                        avgDegrees = []
+                        
+                        for i in range(len(allNumberOfEdgesResponse)):
+                            avgDegrees.append(round(allNumberOfEdgesResponse[i] / allVertexCounts[i],3))
+                        f.write("," + str(avgDegrees).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        sparseness = []  
+                        
+                        for edgeCount in allNumberOfEdgesResponse:
+                            sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(),3))     
+                        f.write("," + str(sparseness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        f.write("," + "0" + "\n")                 
+                
+            except Exception as inst:
+                print(type(inst))
+                print(inst)
+                
+                  
             self._visualisationControl()
             
         self.task = None    
@@ -283,7 +349,8 @@ class BenchmarkController(BaseController):
             
     def runJob(self, task):                  
         # todo: pass authId to client
-        #authId = self.settings.value("ogdfplugin/authId")                   
+        #authId = self.settings.value("ogdfplugin/authId")              
+                          
         for benchmarkDO in self.benchmarkDOs:
             print("--------------------------")
             print(benchmarkDO.algorithm)
@@ -343,9 +410,12 @@ class BenchmarkController(BaseController):
                         benchmarkDO.setResponseGraph(response.getGraph())
 
                 except (NetworkClientError, ParseError) as error:
-                    self.view.showError(str(error), self.tr("Network Error"))
-            
+                    self.view.showError(str(error), self.tr("Network Error"))          
+                
             self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs)) 
+             
+             
+             
                                 
         self.doWrapper = BenchmarkDataObjWrapper(self.benchmarkDOs)              
         

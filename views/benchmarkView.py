@@ -467,7 +467,7 @@ class BenchmarkView(BaseContentView):
     def getTextFilePath(self):
         return self.dialog.txt_path.filePath()
     
-    def getTxtCreationSelection(self):
+    def getCsvCreationSelection(self):
         if self.dialog.create_as_txt.checkState() == Qt.Checked:
             return True
         else:
