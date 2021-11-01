@@ -98,7 +98,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
             toReturn = ("Invalid operand", "", 0, len(originalFunction))      
             return toReturn
         
-        if not(any(var in s for s in possibleMetrics) or var.isnumeric() or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):      
+        if not(any(var in s for s in possibleMetrics) or var == "True" or var == "False" or var.isnumeric() or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):      
             try:
                 float(var)
             except:
