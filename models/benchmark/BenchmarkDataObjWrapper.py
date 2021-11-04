@@ -93,19 +93,18 @@ class BenchmarkDataObjWrapper():
             return mean(values)
         else:
             return values  
-    
-              
-    def firstPartition(self, type, parameterKey = None):
+                
+    def firstPartition(self, partitionType, parameterKey = None):
         """
         Creates the first partitioning of all data objects into a dictionary.
         
-        :type type: String
+        :type partitionType: String
         :type parameterKey: String (only set if type is "Parameters")
         :returns dictionary
         """
         partition = {}
         
-        if type == "Graphs":
+        if partitionType == "Graphs":
             allGraphs = self._getAllGraphs(self.benchmarkDOs)
             for i in range(len(allGraphs)):  
                 graphName = allGraphs[i][0] 
@@ -116,7 +115,7 @@ class BenchmarkDataObjWrapper():
                         dataObjsForPartition.append(dataObj)
                 partition[graphName] = dataObjsForPartition               
                 
-        elif type == "Algorithms":
+        elif partitionType == "Algorithms":
             allAlgs = self._getAllAlgs(self.benchmarkDOs)
             for i in range(len(allAlgs)):
                 algName = allAlgs[i]
@@ -127,7 +126,7 @@ class BenchmarkDataObjWrapper():
                         dataObjsForPartition.append(dataObj)
                 partition[algName] = dataObjsForPartition
         
-        elif type == "Parameter":  
+        elif partitionType == "Parameter":  
             # there should be one list for every range value  
             allValues = self._getAllParameterValues(parameterKey, self.benchmarkDOs)
             
@@ -144,22 +143,21 @@ class BenchmarkDataObjWrapper():
             
         return partition
     
-    def partition(self, type, dict, parameterKey = None, graphAnalysis = None):
+    def partition(self, partitionType, dict, parameterKey = None, graphAnalysis = None):
         """
         Method is called multiple times, depending on the number of selections made.
         
-        :type type: String
+        :type partitionType: String
         :type parameterKey: String (only set if type is "Parameters")
         :returns dictionary
         """
         partition = {}
         for key in dict.keys():
             doList = dict[key]          
-            if type == "Graphs":
+            if partitionType == "Graphs":
                 partitionToSort = {}
                 allGraphs = self._getAllGraphs(doList)
-                for i in range(len(allGraphs)):
-                    
+                for i in range(len(allGraphs)):                
                     graphName = allGraphs[i][0]  
                     dataObjsForPartition = []           
                     for j in range(len(doList)):
@@ -180,8 +178,7 @@ class BenchmarkDataObjWrapper():
                             if allGraphs[i][1].edgeDirection == "Directed":
                                 axisEntry = allGraphs[i][1].edgeCount() / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
                             else:       
-                                axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
-                        
+                                axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))                      
                         axisEntry = round(axisEntry,3)
                         partitionToSort[axisEntry] = dataObjsForPartition
                     
@@ -191,9 +188,7 @@ class BenchmarkDataObjWrapper():
                             listConv.append(axisEntry)
                             keyTuple = tuple(listConv)
                         else:
-                            keyTuple = (key, axisEntry)             
-                        
-                        
+                            keyTuple = (key, axisEntry)                                                         
                         partition[keyTuple] = dataObjsForPartition 
                                                                      
                 if graphAnalysis != None: 
@@ -210,7 +205,7 @@ class BenchmarkDataObjWrapper():
                             
                         partition[keyTuple] = partitionToSort[sortedKey]
                                     
-            elif type == "Algorithms":
+            elif partitionType == "Algorithms":
                 allAlgs = self._getAllAlgs(doList)
                 for i in range(len(allAlgs)):  
                     algName = allAlgs[i]  
@@ -253,8 +248,7 @@ class BenchmarkDataObjWrapper():
                     partition[keyTuple] = dataObjsForPartition                         
         
         return partition
-        
-        
+               
     def _getAllParameterValues(self, parameterKey, dataObjects):
         valueList = []
         for dataObj in dataObjects:
@@ -280,7 +274,4 @@ class BenchmarkDataObjWrapper():
             if not dataObj.getAlgorithm() in algList:
                 algList.append(dataObj.getAlgorithm())
     
-        return algList    
-            
-        
-        
+        return algList          

@@ -76,7 +76,7 @@ class QgsOGDFBenchmarkWidget(QWidget):
    
     def getSelectedAlgs(self):
         checked = []
-        root = self.dialog.ogdf_algorithms.invisibleRootItem()
+        root = self.dialog.benchmark_ogdf_algorithms.invisibleRootItem()
         childCount = root.childCount()
         
         for i in range(childCount):
@@ -106,8 +106,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
                      
         listOfGraphs = []   
         rangeFields = [FieldInformation.FieldType.INT, FieldInformation.FieldType.DOUBLE, FieldInformation.FieldType.EDGE_ID, FieldInformation.FieldType.VERTEX_ID]       
-        for i in range(self.dialog.graph_selection.count()):
-            listOfGraphs.append(self.dialog.graph_selection.item(i))
+        for i in range(self.dialog.benchmark_graph_selection.count()):
+            listOfGraphs.append(self.dialog.benchmark_graph_selection.item(i))
 
         alreadyDoneFields = []
         for i in range(len(self.fieldsList)):
@@ -130,8 +130,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
                         end = 1.0
                         incr = 1.0                     
                         # find widgets for this field
-                        for i in range(self.dialog.ogdf_parameters.layout().count()):                           
-                            widget = self.dialog.ogdf_parameters.layout().itemAt(i).widget()
+                        for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):                           
+                            widget = self.dialog.benchmark_ogdf_parameters.layout().itemAt(i).widget()
                             if field.get("label") in widget.objectName():                                
                                 if (widget.objectName() == (field.get("label") + graphName.text() + "From")) or (widget.objectName() == (field.get("label") + "From")):
                                     start = widget.value()
@@ -150,8 +150,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
                         
                     elif field.get("type") == FieldInformation.FieldType.BOOL:
                         # find widget for this field
-                        for i in range(self.dialog.ogdf_parameters.layout().count()):
-                            widget = self.dialog.ogdf_parameters.layout().itemAt(i).widget()
+                        for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
+                            widget = self.dialog.benchmark_ogdf_parameters.layout().itemAt(i).widget()
                             if widget.objectName() == field.get("label"):
                                 # get value
                                 if str(widget.currentText()) == "Both":
@@ -162,8 +162,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
                                     
                         
                     elif field.get("type") == FieldInformation.FieldType.EDGE_COSTS:    
-                        for i in range(self.dialog.ogdf_parameters.layout().count()):
-                            widget = self.dialog.ogdf_parameters.layout().itemAt(i).widget()
+                        for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
+                            widget = self.dialog.benchmark_ogdf_parameters.layout().itemAt(i).widget()
                             if widget.objectName() == (field.get("label") + graphName.text()):
                                 layer = None
                                 for currLayer in QgsProject.instance().mapLayers().values():
@@ -188,8 +188,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
                
                     # normal field
                     else:    
-                        for i in range(self.dialog.ogdf_parameters.layout().count()):
-                            widget = self.dialog.ogdf_parameters.layout().itemAt(i).widget()
+                        for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
+                            widget = self.dialog.benchmark_ogdf_parameters.layout().itemAt(i).widget()
                             if widget.objectName() == field.get("label") and widget.objectName() != "":                              
                                 ranges[field.get("label")] = [str(widget.currentText())]               
                 
@@ -281,8 +281,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
     
                 widgetFunction = self.FIELD_WIDGETS.get(field.get("type"), None)       
                 listOfGraphs = []      
-                for i in range(self.dialog.graph_selection.count()):
-                    listOfGraphs.append(self.dialog.graph_selection.item(i))
+                for i in range(self.dialog.benchmark_graph_selection.count()):
+                    listOfGraphs.append(self.dialog.benchmark_graph_selection.item(i))
                 
                 if field.get("type") in diffForGraphs:
                     
@@ -450,7 +450,7 @@ class QgsOGDFBenchmarkWidget(QWidget):
     def _createVertexCostWidget(self, field, graph, graphName): 
         return QComboBox()
     
-    def _createEdgeWidget(self, field, graph):
+    def _createEdgeWidget(self, field, graph, graphName):
         widgetList = []   
         
         for i in range(3):
@@ -505,8 +505,4 @@ class QgsOGDFBenchmarkWidget(QWidget):
         widgetList.append(spinBoxWidget)
         
         return widgetList
-        
-        
-    
-    
             

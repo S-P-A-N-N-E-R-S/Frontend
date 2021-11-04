@@ -62,16 +62,14 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
         # display dialog as window with minimize and maximize buttons
         self.setWindowFlags(Qt.Window)
 
-        # setup each content view
-        self.contentViews = [
-            ExampleDataView(self),
-            CreateGraphView(self),
-            OGDFAnalysisView(self),
-            BenchmarkView(self),
-            JobsView(self),
-            OptionsView(self),
-        ]
-
+        # setup each content view     
+        self.exampleView = ExampleDataView(self)
+        self.graphView = CreateGraphView(self)
+        self.analysisView = OGDFAnalysisView(self)
+        self.benchmarkView = BenchmarkView(self)
+        self.jobsView = JobsView(self)
+        self.optionsView = OptionsView(self)
+        
         # create example data as default
         self.menu_list.setCurrentRow(0)
 

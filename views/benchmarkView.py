@@ -32,24 +32,24 @@ class BenchmarkView(BaseContentView):
         # get controller (this calls the addOGDFAlg method)
         self.controller = BenchmarkController(self)  
         
-        self.dialog.refresh_all_graphs.clicked.connect(self._updateAllGraphs)
-        self.dialog.clear_graph_selection.clicked.connect(self._clearGraphSelection)     
-        self.dialog.start_benchmark.clicked.connect(self.controller.runTask)
-        self.dialog.add_all_graphs.clicked.connect(self._addAllGraphs)
-        self.dialog.abort_benchmark.clicked.connect(self.controller.abortTask)
+        self.dialog.benchmark_refresh_all_graphs.clicked.connect(self._updateAllGraphs)
+        self.dialog.benchmark_clear_graph_selection.clicked.connect(self._clearGraphSelection)     
+        self.dialog.benchmark_start_benchmark.clicked.connect(self.controller.runTask)
+        self.dialog.benchmark_add_all_graphs.clicked.connect(self._addAllGraphs)
+        self.dialog.benchmark_abort_benchmark.clicked.connect(self.controller.abortTask)
         
-        self.dialog.graph_selection.model().rowsInserted.connect(self._updateOGDFParameters)
+        self.dialog.benchmark_graph_selection.model().rowsInserted.connect(self._updateOGDFParameters)
         
         self._updateAllGraphs()
-        self.dialog.all_graphs.itemDoubleClicked.connect(self._addItemToSelected)
-        self.dialog.graph_selection.itemDoubleClicked.connect(self._deleteItem)
+        self.dialog.benchmark_all_graphs.itemDoubleClicked.connect(self._addItemToSelected)
+        self.dialog.benchmark_graph_selection.itemDoubleClicked.connect(self._deleteItem)
         
         # load parameters for every selected ogdf algorithm
         self.ogdfBenchmarkWidget = QgsOGDFBenchmarkWidget(self.dialog)
             
-        self.dialog.ogdf_parameters.setLayout(self.ogdfBenchmarkWidget.layout)
-        self.dialog.ogdf_algorithms.itemChanged.connect(self._updateOGDFParameters)
-        self.dialog.ogdf_algorithms.itemChanged.connect(self._createNewBenchmarkSelections)
+        self.dialog.benchmark_ogdf_parameters.setLayout(self.ogdfBenchmarkWidget.layout)
+        self.dialog.benchmark_ogdf_algorithms.itemChanged.connect(self._updateOGDFParameters)
+        self.dialog.benchmark_ogdf_algorithms.itemChanged.connect(self._createNewBenchmarkSelections)
         
         self.FIELD_TYPES = [FieldInformation.FieldType.BOOL,
             FieldInformation.FieldType.INT,
@@ -60,6 +60,9 @@ class BenchmarkView(BaseContentView):
             FieldInformation.FieldType.VERTEX_COSTS,
             FieldInformation.FieldType.EDGE_ID,
             FieldInformation.FieldType.VERTEX_ID]
+    
+    def getOGDFBenchmarkWidget(self):
+        return self.ogdfBenchmarkWidget
         
     def _createNewBenchmarkSelections(self, initial = False):
         # delete all widgets
@@ -236,7 +239,7 @@ class BenchmarkView(BaseContentView):
             self.dialog.analysis_visualisation.layout().itemAtPosition(row, i).widget().setParent(None)
          
     def _updateOGDFParameters(self):
-        if self.dialog.graph_selection.count() > 0:
+        if self.dialog.benchmark_graph_selection.count() > 0:
             ogdfAlgs = self.getSelectedAlgs()
             requests = []
                   
@@ -257,29 +260,29 @@ class BenchmarkView(BaseContentView):
 
     def _updateAllGraphs(self): 
         for layer in QgsProject.instance().mapLayers().values():
-            if isinstance(layer, QgsPluginLayer) and not self.dialog.all_graphs.findItems(layer.name(), Qt.MatchExactly):
-                self.dialog.all_graphs.addItem(layer.name())
+            if isinstance(layer, QgsPluginLayer) and not self.dialog.benchmark_all_graphs.findItems(layer.name(), Qt.MatchExactly):
+                self.dialog.benchmark_all_graphs.addItem(layer.name())
     
     def _addAllGraphs(self):
-        for i in range(self.dialog.all_graphs.count()):
-            self.dialog.graph_selection.addItem(self.dialog.all_graphs.item(i).text())
+        for i in range(self.dialog.benchmark_all_graphs.count()):
+            self.dialog.benchmark_graph_selection.addItem(self.dialog.benchmark_all_graphs.item(i).text())
     
     def _addItemToSelected(self, item):
-        self.dialog.graph_selection.addItem(item.text())
+        self.dialog.benchmark_graph_selection.addItem(item.text())
         
     def _deleteItem(self, item):
-        self.dialog.graph_selection.takeItem(self.dialog.graph_selection.row(item))
+        self.dialog.benchmark_graph_selection.takeItem(self.dialog.benchmark_graph_selection.row(item))
         self._updateOGDFParameters()
                 
     def _clearGraphSelection(self): 
-        self.dialog.graph_selection.clear()    
+        self.dialog.benchmark_graph_selection.clear()    
         self._updateOGDFParameters()
            
     def addOGDFAlg(self, analysis):
-        item = QTreeWidgetItem(self.dialog.ogdf_algorithms)
+        item = QTreeWidgetItem(self.dialog.benchmark_ogdf_algorithms)
         item.setText(0, analysis)
         item.setCheckState(0,Qt.Unchecked)
-        self.dialog.ogdf_algorithms.insertTopLevelItem(0,item)
+        self.dialog.benchmark_ogdf_algorithms.insertTopLevelItem(0,item)
      
     def addOGDFAlgs(self, analysisList):
         groups = {}
@@ -287,7 +290,7 @@ class BenchmarkView(BaseContentView):
             try:
                 groups[analysis.split("/")[0]]
             except:
-                groups[analysis.split("/")[0]] = []
+                groups[analysis.split("/")[0]] = []           
             
             groups[analysis.split("/")[0]].append(analysis.split("/")[1])
         
@@ -300,11 +303,11 @@ class BenchmarkView(BaseContentView):
                 item.addChild(child)
             items.append(item)    
         
-        self.dialog.ogdf_algorithms.insertTopLevelItems(0, items)
+        self.dialog.benchmark_ogdf_algorithms.insertTopLevelItems(0, items)
      
     def getSelectedAlgs(self):
         checked = []
-        root = self.dialog.ogdf_algorithms.invisibleRootItem()
+        root = self.dialog.benchmark_ogdf_algorithms.invisibleRootItem()
         childCount = root.childCount()
         
         for i in range(childCount):
@@ -314,8 +317,7 @@ class BenchmarkView(BaseContentView):
             for n in range(numChildren):
                 child2 = child.child(n)
                 if child2.checkState(0) == Qt.Checked:
-                    checked.append(child.text(0) + "/" + child2.text(0))
-                   
+                    checked.append(child.text(0) + "/" + child2.text(0))                 
         return checked     
                          
     def getSelection1(self):
@@ -381,10 +383,10 @@ class BenchmarkView(BaseContentView):
                 if "Analysis" in benchmarkSelWidget.item(i).text():
                     sectionFound = True
                     continue
-                if sectionFound:    
-                    radioB = benchmarkSelWidget.itemWidget(benchmarkSelWidget.item(i))   
+                if sectionFound:
+                    radioB = benchmarkSelWidget.itemWidget(benchmarkSelWidget.item(i))
                     if radioB.isChecked():
-                        analysis.append(radioB.text())      
+                        analysis.append(radioB.text())
         return analysis
         
     def getVisualisation(self): 
@@ -393,7 +395,7 @@ class BenchmarkView(BaseContentView):
         
         :returns 2D list
         """
-        grid = self.dialog.analysis_visualisation.layout()  
+        grid = self.dialog.analysis_visualisation.layout()
         visualisation = []
         
         for c in range(1,self.benchmarkAnalysisCounter+1):
@@ -401,7 +403,7 @@ class BenchmarkView(BaseContentView):
             oneSelection = []
             for i in range(visualisationSelWidget.count()):
                 if "Additional Options" in visualisationSelWidget.item(i).text():
-                    break                
+                    break
                 if visualisationSelWidget.item(i).checkState() == Qt.Checked:
                     oneSelection.append(visualisationSelWidget.item(i).text())
             visualisation.append(oneSelection)
@@ -410,8 +412,8 @@ class BenchmarkView(BaseContentView):
         
     
     def getExecutions(self, algName):
-        for i in range(self.dialog.ogdf_parameters.layout().count()):
-            widget = self.dialog.ogdf_parameters.layout().itemAt(i).widget()
+        for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
+            widget = self.dialog.benchmark_ogdf_parameters.layout().itemAt(i).widget()
             if widget.objectName() == "Executions_" + algName:
                 return widget.value()
         
@@ -428,14 +430,12 @@ class BenchmarkView(BaseContentView):
                         legendSelections.append(True)
                     else:
                         legendSelections.append(False)
-           
-                    
-                    
-        return legendSelections   
+        
+        return legendSelections
                    
     def getLogAxisSelection(self):
         logSelections = []
-        grid = self.dialog.analysis_visualisation.layout()  
+        grid = self.dialog.analysis_visualisation.layout()
         for c in range(1,self.benchmarkAnalysisCounter+1):
             visualisationSelWidget = grid.itemAtPosition(c,1).widget()
             for i in range(visualisationSelWidget.count()):
@@ -445,10 +445,10 @@ class BenchmarkView(BaseContentView):
                     else:
                         logSelections.append(False)
                     
-        return logSelections    
+        return logSelections
         
     def getTightLayoutSelection(self):
-        tightSelections = []    
+        tightSelections = []
         grid = self.dialog.analysis_visualisation.layout()    
         for c in range(1,self.benchmarkAnalysisCounter+1):
             visualisationSelWidget = grid.itemAtPosition(c,1).widget()
@@ -459,21 +459,19 @@ class BenchmarkView(BaseContentView):
                     else:
                         tightSelections.append(False)
                     
-        return tightSelections      
+        return tightSelections
        
     def getNumberOfRequestedBenchmarks(self):
         return self.benchmarkAnalysisCounter
     
     def getTextFilePath(self):
-        return self.dialog.txt_path.filePath()
+        return self.dialog.benchmark_txt_path.filePath()
     
     def getCsvCreationSelection(self):
-        if self.dialog.create_as_txt.checkState() == Qt.Checked:
+        if self.dialog.benchmark_create_as_txt.checkState() == Qt.Checked:
             return True
         else:
             return False
      
     def getNumberOfSelectedGraphs(self):
-        return self.dialog.graph_selection.count()
-     
-               
+        return self.dialog.benchmark_graph_selection.count()             

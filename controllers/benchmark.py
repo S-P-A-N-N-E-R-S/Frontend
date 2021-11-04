@@ -1,7 +1,8 @@
 import os
+import sys
 from datetime import date, datetime
 
-from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog
+from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog, Qgis
 
 from .base import BaseController
 from .. import mainPlugin
@@ -46,7 +47,7 @@ class BenchmarkController(BaseController):
         # add available analysis
         requestNameList = []
         for requestKey, request in parserManager.getRequestParsers().items():
-           requestNameList.append(request.name)
+            requestNameList.append(request.name)
         
         self.view.addOGDFAlgs(requestNameList)
         
@@ -54,7 +55,11 @@ class BenchmarkController(BaseController):
         self.task = None
 
     def _visualisationControl(self):
-          
+        """
+        Method partitions the benchmark data objects and calls the visualisation with matplotlib.
+        The partitioning depends on the settings in the benchmark selection section of the benchmark view
+        and the visualisation depends on the visualisation section in the view.      
+        """
         visualisations = self.view.getVisualisation() 
         visCounter = 1
         
@@ -91,11 +96,8 @@ class BenchmarkController(BaseController):
             
                 print("*****************************************************************************************")
                   
-            else:
-                
+            else:                
                 partition = {"":self.doWrapper.benchmarkDOs}
-                
-            # at this point all the different to plot values are sorted out (all the value functions)
             
             # split the partition into individual dictionary entries           
             for dictKey in partition.keys():
@@ -141,8 +143,7 @@ class BenchmarkController(BaseController):
                         xParameters.append(parameterString)
                     else:
                         xParameters.append(dictKey2)
-                        
-                    
+                                         
                     # check if box plot selected
                     boxPlotSel = False
                     for vis in visualisations[sIndex]:
@@ -153,8 +154,7 @@ class BenchmarkController(BaseController):
                         xValuesBox.append(self.doWrapper.getAnalysisValue(self.view.getAnalysis()[sIndex], dictHelp[dictKey2], False))             
                     xValues.append(self.doWrapper.getAnalysisValue(self.view.getAnalysis()[sIndex], dictHelp[dictKey2], True))
             
-                xLabel = ""
-                
+                xLabel = ""                
                 for selection in selectionList2:
                     if xLabel == "":
                         xLabel = selection
@@ -171,21 +171,17 @@ class BenchmarkController(BaseController):
                             if axisValue == "":
                                 axisValue = diffPara.split("#")[1]
                             else:
-                                axisValue = axisValue + " / " + diffPara.split("#")[1]
-                                                                                   
+                                axisValue = axisValue + " / " + diffPara.split("#")[1]                                                                                  
                         else:
                             if axisValue == "":
                                 axisValue = diffPara
                             else:
                                 axisValue = axisValue + " / " + diffPara                         
                     
-                    xParametersValues.append(axisValue)
-                                  
+                    xParametersValues.append(axisValue)                                  
                 benchVis.setOnePlotData(xLabel, xParametersValues, zParameter, xValues)
-
                 benchVis.setOneBoxPlotData(xLabel, xParametersValues, zParameter, xValuesBox)
-                
-                      
+                                     
             for vis in visualisations[sIndex]:
                 if vis == "Points without connection":
                     benchVis.plotPoints(False, visCounter)
@@ -204,24 +200,31 @@ class BenchmarkController(BaseController):
                 
     
     def _checkSelections(self):
+        """
+        Checks if the selections made in the view are correct and no selection is missing. 
+        Returns True if the selections are all correct and returns False if not. 
+        Additionally an error is shown if the selection is not correct.
+        
+        :return Boolean
+        """
         selection1 = self.view.getSelection1()
         selection2 = self.view.getSelection2()
         analysisList = self.view.getAnalysis()
         visualisation = self.view.getVisualisation() 
         
         if self.view.getNumberOfSelectedGraphs() == 0:
-            self.view.showError("Select at least one graph", self.tr("Error in benchmark number " + str(counter+1)))
+            self.view.showError(self.tr("Select at least one graph"), self.tr("Error in benchmark"))
             return False
         
         # check selection 2
         for counter, sel2 in enumerate(selection2):
             if len(sel2) == 0:
-                self.view.showError("Enter at least one parameter in selection 2", self.tr("Error in benchmark number " + str(counter+1)))
+                self.view.showError(self.tr("Enter at least one parameter in selection 2"), self.tr("Error in benchmark number " + str(counter+1)))
                 return False
 
         # check analysis selections      
         if len(selection2) != len(analysisList):
-            self.view.showError("One analysis selection necessary", self.tr("Error in benchmark number " + str(counter+1)))
+            self.view.showError(self.tr("One analysis selection necessary"), self.tr("Error in benchmark number " + str(counter+1)))
             return False
         
         # check no duplicate selections
@@ -229,40 +232,39 @@ class BenchmarkController(BaseController):
             for checkedItem1 in sel1:
                 for checkedItem2 in selection2[counter]:
                     if checkedItem1 == checkedItem2:
-                        self.view.showError("Duplicate selection", self.tr("Error in benchmark number " + str(counter+1)))
+                        self.view.showError(self.tr("Duplicate selection"), self.tr("Error in benchmark number " + str(counter+1)))
                         return False
                 
         for counter, vis in enumerate(visualisation):
             if len(vis) == 0:
-                self.view.showError("No visualisation selected", self.tr("Error in benchmark number " + str(counter+1)))
+                self.view.showError(self.tr("No visualisation selected"), self.tr("Error in benchmark number " + str(counter+1)))
                 return False
         
         for counter, sel1  in enumerate(selection1):
             for checkedItem1 in sel1:
                 for checkedItem2 in selection2[counter]:
                     if checkedItem1 == "Graphs" and (checkedItem2 == "Graph Edges" or checkedItem2 == "Graph Vertices" or checkedItem2 == "Graph Densities"):
-                        self.view.showError("No further graph attribute selection possible", self.tr("Error in benchmark number " + str(counter+1)))
+                        self.view.showError(self.tr("No further graph attribute selection possible"), self.tr("Error in benchmark number " + str(counter+1)))
                         return False
         
         if self.view.getNumberOfSelectedGraphs() == 1:
             for counter, sel1  in enumerate(selection1):
                 for sel in sel1:
                     if sel == "Graphs":
-                        self.view.showError("Select multiple graphs", self.tr("Error in benchmark number " + str(counter+1)))
+                        self.view.showError(self.tr("Select multiple graphs"), self.tr("Error in benchmark number " + str(counter+1)))
                         return False
             
             for counter, sel2  in enumerate(selection2):
                 for sel in sel2:
                     if sel == "Graphs":
-                        self.view.showError("Select multiple graphs", self.tr("Error in benchmark number " + str(counter+1)))
-                        return False
-                
+                        self.view.showError(self.tr("Select multiple graphs"), self.tr("Error in benchmark number " + str(counter+1)))
+                        return False               
         return True
          
     def runTask(self):
         # create and get BenchmarkData objects
         if self.task == None:
-            self.benchmarkDOs = self.view.ogdfBenchmarkWidget.getBenchmarkDataObjects()
+            self.benchmarkDOs = self.view.getOGDFBenchmarkWidget().getBenchmarkDataObjects()
             if not self._checkSelections():
                 return             
             task = QgsTask.fromFunction("Start benchmark process", self.runJob, on_finished=self.completed)
@@ -270,17 +272,15 @@ class BenchmarkController(BaseController):
             QgsApplication.taskManager().addTask(task)     
      
     def completed(self, exception, result=None):      
-        if exception is not None:
-            QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
-            raise exception
-        
-        if self.task is not None and not self.task.isCanceled():
+        if not result is None:        
+            QgsMessageLog.logMessage("Exception: {}".format(result), "TaskFromFunction", Qgis.Critical)
+            
+        elif self.task is not None and not self.task.isCanceled():
             try:
                 if self.view.getCsvCreationSelection(): 
                     path = self.view.getTextFilePath()
                     dateString = date.today().strftime("%b_%d_%Y_")
-                    timeString = datetime.now().strftime("%H_%M_%S")
-        
+                    timeString = datetime.now().strftime("%H_%M_%S")       
                     if path == "":
                         f = open(path + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
                     else:          
@@ -301,8 +301,7 @@ class BenchmarkController(BaseController):
                     
                     for benchmarkDO in self.benchmarkDOs:
                         # write all benchmark information into file
-                        f.write(benchmarkDO.algorithm +  "," + benchmarkDO.graphName) 
-                           
+                        f.write(benchmarkDO.algorithm +  "," + benchmarkDO.graphName)                            
                         for paraKey in allParameters:                         
                             if paraKey in benchmarkDO.parameters.keys():
                                 f.write("," + str(benchmarkDO.parameters[paraKey]))  
@@ -333,15 +332,14 @@ class BenchmarkController(BaseController):
                         for edgeCount in allNumberOfEdgesResponse:
                             sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(),3))     
                         f.write("," + str(sparseness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        f.write("," + "0" + "\n")                 
-                
+                        f.write("," + "0" + "\n")                                
+            
             except Exception as inst:
                 print(type(inst))
                 print(inst)
-                
-                  
-            self._visualisationControl()
-            
+                                
+            self._visualisationControl()           
+        
         self.task = None    
      
     def abortTask(self): 
@@ -360,34 +358,27 @@ class BenchmarkController(BaseController):
             requestKey = benchmarkDO.algorithm
             request = parserManager.getRequestParser(requestKey)
             request.resetData()
-            
-            
-            
+                               
             for key in benchmarkDO.parameters:
                 fieldData = benchmarkDO.parameters[key]
                 request.setFieldData(key, fieldData)
              
-            for exe in range(self.view.getExecutions(benchmarkDO.algorithm)): 
-                          
+            for exe in range(self.view.getExecutions(benchmarkDO.algorithm)):                          
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:
                         client.sendJobRequest(request)                 
-                except (NetworkClientError, ParseError) as error:
-                    self.view.showError(str(error), self.tr("Network Error"))          
+                except (NetworkClientError, ParseError) as error:                 
+                    return "Network Error: " + str(error)     
                 
                 status = "waiting"    
-                counter = 0         
+                counter = 0 
                 while status != "success":  
                     if status == "failed":
-                        self.view.showError("Execution failed", self.tr("Error: "))
-                        return  
-                    if self.task is not None and self.task.isCanceled():
-                        print("Task canceled")
-                        return   
-                     
+                        return "Execution failed"
+                    if self.task is not None and self.task.isCanceled():                       
+                        return                    
                     try:
-                        with Client(helper.getHost(), helper.getPort()) as client:                        
-                                                                              
+                        with Client(helper.getHost(), helper.getPort()) as client:                                                                         
                             if counter == 0:
                                 time.sleep(0.5) 
                                 counter+=1
@@ -401,21 +392,16 @@ class BenchmarkController(BaseController):
                             print(status)
                             
                     except (NetworkClientError, ParseError) as error:
-                        self.view.showError(str(error), self.tr("Network Error"))
-                                                        
+                        return "Network Error: " + str(error)                                                    
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:                   
                         response = client.getJobResult(job.jobId)
-                        benchmarkDO.setServerResponse(response)
+                        benchmarkDO.addServerResponse(response)
                         benchmarkDO.setResponseGraph(response.getGraph())
 
                 except (NetworkClientError, ParseError) as error:
-                    self.view.showError(str(error), self.tr("Network Error"))          
+                    return "Network Error: " + str(error)             
                 
-            self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs)) 
-             
-             
-             
-                                
-        self.doWrapper = BenchmarkDataObjWrapper(self.benchmarkDOs)              
+            self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs))                                     
         
+        self.doWrapper = BenchmarkDataObjWrapper(self.benchmarkDOs)       

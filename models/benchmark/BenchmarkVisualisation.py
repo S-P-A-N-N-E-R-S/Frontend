@@ -5,7 +5,6 @@ from datetime import date, datetime
 
 class BenchmarkVisualisation():
     
-    
     def __init__(self, yLabel, createLegend, logSelected, tightLayout):       
         # xLabels and values are 2D
         # zLabels is 1D 

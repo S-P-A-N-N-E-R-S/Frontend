@@ -31,7 +31,7 @@ class BenchmarkData():
     def getParameterKey(self, label):
         return self.parameterKeyHash[label]
      
-    def setServerResponse(self, response):
+    def addServerResponse(self, response):
         self.serverResponses.append(response)
 
     def setResponseGraph(self, graph):
@@ -74,8 +74,8 @@ class BenchmarkData():
         
         return values
     
-    def getServerResponse(self):
-        return self.serverResponse
+    def getServerResponses(self):
+        return self.serverResponses
     
     def getParameters(self):
         return self.parameters
