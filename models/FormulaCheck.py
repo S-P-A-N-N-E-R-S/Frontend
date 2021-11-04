@@ -62,11 +62,11 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     :return tuple (Error message, adjusted formula if valid else empty string)
     """
     
-    originalFunction = function
-    costFunction = function.replace(" ", "").replace('"', '')
-    
+    originalFunction = function    
+    costFunction = function.replace(" ", "").replace('"', '')  
     function = function.replace(" ", "").replace('"', '')
-    formulaParts = re.split("\+|-|\*|/|;|<|>|==", costFunction)
+    
+    formulaParts = re.split("\+|-|\*|/|;|<|>|==|or|,|!=", costFunction)
     possibleMetrics = ["euclidean", "manhattan", "geodesic", "ellipsoidal"]
     possibleRasterAnalysis = ["sum", "mean", "median", "min", "max", "variance", "standDev", "gradientSum", "gradientMin", "gradientMax", 
                                "ascent", "descent", "totalClimb", "spSum", "spMean", "spMedian", "spMin", "spMax", 
@@ -79,8 +79,8 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
         possibleFields.append(field.name())
     
     # check for invalid operands
-    partCounter = 1            
-    for i in range(len(formulaParts)):
+    partCounter = 1
+    for i in range(len(formulaParts)):        
         var = formulaParts[i].replace("(","").replace(")","").replace("=","")
         if var == "":
             toReturn = ("Missing operand", "", 0, len(originalFunction))      
@@ -98,24 +98,29 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
             toReturn = ("Invalid operand", "", 0, len(originalFunction))      
             return toReturn
         
-        if not(any(var in s for s in possibleMetrics) or var == "True" or var == "False" or var.isnumeric() or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var):      
+        for metric in possibleMetrics:
+            if metric in var and len(var) != len(metric):
+                res = var.split(metric)[0]
+                if not(any(res in s for s in possibleMetrics) or res == "True" or res == "False" or res.isnumeric() or "if" in res or "field:" in res or "math." in res or "raster[" in res or "random" in res or "polygon[" in var):
+                    toReturn = ("Invalid operand", "", 0, len(originalFunction))      
+                    return toReturn
+        
+        if not(any(var in s for s in possibleMetrics) or var == "True" or var == "False" or var.isnumeric() or "if" in var or "field:" in var or "math." in var or "raster[" in var or "random" in var or "polygon[" in var):      
             try:
                 float(var)
             except:
-                if "," in var:
-                    splitVarRes = var.split(",")
-                    for res in splitVarRes:
-                        if not(any(res in s for s in possibleMetrics) or res.isnumeric() or "if" in res or "field:" in res or "math." in res or "raster[" in res or "random" in res):      
+                if "and" in var:
+                    andSepParts = var.split("and")
+                    for res in andSepParts:
+                        if not(any(res in s for s in possibleMetrics) or res == "True" or res == "False" or res.isnumeric() or "if" in res or "field:" in res or "math." in res or "raster[" in res or "random" in res or "polygon[" in var):      
                             try:
                                 float(res)
                             except:                                  
                                 toReturn = ("Invalid operand", "", 0, len(originalFunction))      
-                                return toReturn 
+                                return toReturn                  
                 else:                                    
                     toReturn = ("Invalid operand", "", 0, len(originalFunction))      
-                    return toReturn    
-             
-                  
+                    return toReturn               
         partCounter+=1
                                     
     # check parentheses
@@ -209,9 +214,8 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                     return toReturn                                         
             ifParts[0] = ifParts[0].replace("random","rnd")
             andOrSeperatedParts = re.split("or|and", ifParts[0])
-            for andOrPart in andOrSeperatedParts:             
-                comparedOperands = re.split(r'<|>|==|!=', andOrPart)
-                
+            for andOrPart in andOrSeperatedParts:           
+                comparedOperands = re.split(r'<|>|==|!=', andOrPart)              
                 if len(comparedOperands) != 2:             
                     toReturn = ("Error in if construct: Missing comparison value", "", errorPos[0], errorPos[1])
                     return toReturn 
@@ -244,17 +248,19 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                      
             seperatedParts = re.split("\+|-|\*|/", ifParts[1])
                      
-            for sepPart in seperatedParts:      
+            for sepPart in seperatedParts:
+                sepPart = sepPart.replace(")","")   
                 if not any(sepPart in s for s in possibleMetrics) and not "math" in sepPart and not "raster" in sepPart and not "rnd" in sepPart and not "random" in sepPart and not sepPart.isnumeric():             
                     try:
                         float(sepPart)
-                    except:                  
+                    except:                 
                         toReturn = ("Error in if construct: Invalid true value", "", errorPos[0], errorPos[1])
                         return toReturn  
             
             seperatedParts = re.split("\+|-|\*|/", ifParts[2])
             
             for sepPart in seperatedParts:
+                sepPart = sepPart.replace(")","") 
                 if not any(sepPart in s for s in possibleMetrics) and not "math" in sepPart and not "raster" in sepPart and not "rnd" in sepPart and not "random" in sepPart and not sepPart.isnumeric():             
                     try:
                         float(sepPart)
@@ -267,8 +273,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                 return toReturn  
             if "pixelvalue" in ifParts[2].lower() or "percentofvalues" in ifParts[2].lower():
                 toReturn = ("Error in if construct: Invalid false value", "", errorPos[0], errorPos[1])
-                return toReturn  
-                       
+                return toReturn                       
             partCounter+=1
            
     # check all random operands   
@@ -294,34 +299,28 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
             randomRangeValues = function[index+4:closingBracketIndex-3].split("§")
             for value in randomRangeValues:   
                 value = value.replace("(","") .replace(")","")   
-                sepParts = re.split("\+|-|\*", value)
-                for v in sepParts:
-                                         
+                sepParts = re.split("\+|-|\*|;|/", value)
+                for v in sepParts: 
+                    v = v.replace("}","")                                   
                     if not v.isnumeric() and not v in possibleMetrics and not "raster[" in v and not "math." in v and not "if" in v:
                         try:
                             float(v)
                         except:
                             if "," in v:
                                 splitRes = v.split(",")                      
-                                for res in splitRes:  
+                                for res in splitRes:
                                     if not res.isnumeric() and not res in possibleMetrics and not "raster[" in res and not "math." in res and not "if" in res:
                                         try:
                                             float(res)
                                         except:
                                            errorPos = __findConstructPosition(originalFunction, "random", partCounter)               
                                            toReturn = ("Error in random function: Invalid upper or lower bound", "", errorPos[0], errorPos[1])
-                                           return toReturn    
-                            
-                            
+                                           return toReturn                      
                             else:
                                 errorPos = __findConstructPosition(originalFunction, "random", partCounter)               
                                 toReturn = ("Error in random function: Invalid upper or lower bound", "", errorPos[0], errorPos[1])
-                                return toReturn  
-                                              
+                                return toReturn                                               
             partCounter+=1
-    
-    
-                         
     
     # check all polygon constructs
     partCounter = 1
@@ -346,7 +345,6 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
         if not ":crossesPolygon" in matchString and not ":insidePolygon" in matchString:              
             toReturn = ("Error in polygon construct: Define valid analysis for polygons", "", errorPos[0], errorPos[1])
             return toReturn   
-
         partCounter+=1
     
     # check math constructs    
@@ -387,12 +385,12 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     for matchObj in res:
         matchString = matchObj.group().replace("(","")
         closingAt = __findClosingBracketIndex(function[matchObj.start():], matchObj.start())
-        matchString2 = function[matchObj.start():closingAt+1]
-                   
+        matchString2 = function[matchObj.start():closingAt+1]                 
         if "," in matchString2:                                                  
             mathEvalTest2 = matchString + "(10,10)"  
             try:                                          
-                eval(mathEvalTest2)                    
+                eval(mathEvalTest2)  
+                                  
             except:
                 errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
                 toReturn = ("Error in math construct: Unable to execute", "", errorPos[0], errorPos[1])
@@ -400,7 +398,8 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
         else:
             mathEvalTest1 = matchString + "(10)"                
             try:
-                eval(mathEvalTest1)               
+                if "math.acos" in mathEvalTest1:
+                    mathEvalTest1 = mathEvalTest1.replace("10","1")                              
             except:
                 errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
                 toReturn = ("Error in math construct: Unable to execute", "", errorPos[0], errorPos[1])
@@ -425,14 +424,22 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                 return toReturn 
             
             number = function[index:].split("$")[0].split("%")[1]
-            
+            number = number.replace("(","").replace(")","").replace("==","=").replace("!","").replace("(","").replace(")","").replace("}","").replace("{","").replace("&","").replace("$","")
+            if ("<" in number or ">" in number or "=" in number) and not "if" in number:
+                errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
+                toReturn = ("Error in math construct: Nested construct", "", errorPos[0], errorPos[1])
+                return toReturn 
             # only one operand
-            if not "," in number:              
-                if not number.isnumeric() and not "field:" in number and not "raster" in number and not "." in number and not "rnd" in number and not "if" in number:
-                    if not number in possibleMetrics:
-                        errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
-                        toReturn = ("Error in math construct: At least one valid operand necessary", "", errorPos[0], errorPos[1])
-                        return toReturn 
+            if not "," in number:
+                multiNumbers = re.split("\+|-|\*|/|>|<|;|=", number)
+                for n in multiNumbers:                  
+                    if not n in possibleMetrics and not n.isnumeric() and not "field:" in n and not "raster" in n and not "rnd" in n and not "if" in n and not "and" in n and not n == "True" and not n == "False":
+                        try:
+                            float(n)
+                        except:
+                            errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
+                            toReturn = ("Error in math construct: At least one valid operand necessary", "", errorPos[0], errorPos[1])
+                            return toReturn 
              
             # two operands
             if "," in number:
@@ -441,15 +448,17 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                     errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
                     toReturn = ("Error in math construct: Only operations with two variables supported", "", errorPos[0], errorPos[1])
                     return toReturn 
-                for n in multNumbers:                    
-                    if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n and not "if" in n:
-                        if not n in possibleMetrics:
-                            try:
-                                float(n)
-                            except:   
-                                errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
-                                toReturn = ("Error in math construct: Invalid value", "", errorPos[0], errorPos[1])
-                                return toReturn                   
+                for n1 in multNumbers:
+                    n2 = re.split("\+|-|\*|/", n1)
+                    for n in n2:                                
+                        if not n.isnumeric() and not "field:" in n and not "raster" in n and not "random" in n and not "rnd" in n and not "if" in n:
+                            if not n in possibleMetrics:
+                                try:
+                                    float(n)
+                                except:   
+                                    errorPos = __findConstructPosition(originalFunction, "math", partCounter)               
+                                    toReturn = ("Error in math construct: Invalid value", "", errorPos[0], errorPos[1])
+                                    return toReturn                   
             partCounter+=1
                    
     # raster check    
@@ -484,14 +493,21 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
         partCounter+=1
     
     partCounter = 1
-    regex = re.compile(r'raster\[[0-9]+\]:[A-z]*')
+    regex = re.compile(r'raster\[[0-9]+\]:[A-z]*\(?')
     res = regex.findall(function)
-    for matchString in res:               
-        analysisType = re.split("<|>|,|\)|=", matchString.split("]:")[1])[0]  
+    for matchString in res:     
+        analysisType = re.split("<|>|,|\)|=|and|or", matchString.split("]:")[1])[0]
+        if not "sp" in analysisType and "(" in analysisType:
+            errorPos = __findConstructPosition(originalFunction, "raster", partCounter)               
+            toReturn = ("Error in raster analysis: No heuristic index necessary", "", errorPos[0], errorPos[1])
+            return toReturn
+        analysisType = analysisType.replace("(","")
         if not analysisType in possibleRasterAnalysis and not "percentOfValues" in analysisType and not "pixelValue" in analysisType and not "spPercentOfValues" in analysisType and not "spPixelValue" in analysisType:
             errorPos = __findConstructPosition(originalFunction, "raster", partCounter)               
             toReturn = ("Error in raster analysis: Invalid raster analysis", "", errorPos[0], errorPos[1])
-            return toReturn  
+            return toReturn
+        
+        
         partCounter+=1
          
     # check shortestPath operators
@@ -527,18 +543,17 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
         partCounter = 1
         regexCompiled = re.compile(regex)
         findPercentOrPixel = regexCompiled.finditer(function)
-        for matchObj in findPercentOrPixel:  
+        for matchObj in findPercentOrPixel:
             if matchObj.start() == 0:
                 errorPos = __findConstructPosition(originalFunction, regex, partCounter)               
                 toReturn = ("Error in raster analysis: PixelValue analysis can only be used inside if construct", "", errorPos[0], errorPos[1])
                 return toReturn 
-            findIf = function[matchObj.start()-3:]
+            findIf = function[matchObj.start()-3:matchObj.start()]
             if not "if" in findIf:
-                if not "and" or "or" in findIf:
+                if not "and" in findIf and not "or" in findIf:
                     errorPos = __findConstructPosition(originalFunction, regex, partCounter)               
                     toReturn = ("Error in raster analysis: PixelValue analysis can only be used inside if construct", "", errorPos[0], errorPos[1])
-                    return toReturn 
-                   
+                    return toReturn                    
             partCounter+=1
     
     # fields check

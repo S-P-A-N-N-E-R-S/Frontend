@@ -85,11 +85,10 @@ class AdvancedCostCalculator():
         :type edgesCrossingPolygonsList: List of features
         :return translated part as string
         """  
-          
+
         # check if part string was already translated
         if part in self.translatedParts.keys():
             return self.translatedParts[part]                       
-        
         edge = self.graph.edge(edgeID)       
         # operator or bracket do not need to be translated
         if part in self.operators or part.isnumeric() or part == "True" or part == "False":                                   
@@ -156,13 +155,13 @@ class AdvancedCostCalculator():
             
             if lb.isnumeric() and ub.isnumeric():   
                 if int(lb) > int(ub):
-                    return str(0)                        
+                    return str(0)                    
                 return str(random.randint(int(lb),int(ub)))              
             try:
                 convertedLB = float(eval(lb))
                 convertedUB = float(eval(ub))
                 if convertedLB > convertedUB:
-                    return str(0)                                           
+                    return str(0)                                       
                 return str(random.uniform(convertedLB,convertedUB))               
             except:
                 pass    
@@ -422,22 +421,34 @@ class AdvancedCostCalculator():
         :type constructCall: Boolean
         :return translated formula
         """
-        
+        rasterReg = False
+        rasterRegexString = 'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+(,[0-9]+)?\)|[A-z]+)'
+        if regex == rasterRegexString:
+            rasterReg = True
         regex = re.compile(regex)
         matches = regex.finditer(costFunction)
         
         matchesTranslationHash = {}
         
-        for res in matches:       
-            translated = self.__translate(costFunction[res.start():res.end()], edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)
-            if not constructCall:
-                self.translatedParts[costFunction[res.start():res.end()]] = translated  
-            
-            matchesTranslationHash[res.group()] = translated
+        for res in matches:
+            if rasterReg:
+                partBeforeAndOr = re.split(r'and|or', res.group())[0]
+                translated = self.__translate(partBeforeAndOr, edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)
+                if not constructCall:
+                    self.translatedParts[partBeforeAndOr] = translated  
+                matchesTranslationHash[partBeforeAndOr] = translated                      
+            else:                   
+                translated = self.__translate(costFunction[res.start():res.end()], edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList)
+                if not constructCall:
+                    self.translatedParts[costFunction[res.start():res.end()]] = translated              
+                matchesTranslationHash[res.group()] = translated
           
         for key in matchesTranslationHash.keys():
             costFunction = costFunction.replace(key, matchesTranslationHash[key])
-
+        
+        if rasterReg and "raster" in costFunction:
+            costFunction = self.__translateRegexSearch(costFunction, rasterRegexString, edgeID, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList, constructCall)
+        
         return costFunction
      
     def __fullyTranslatedCheck(self, costFunction):
@@ -571,7 +582,7 @@ class AdvancedCostCalculator():
         costFunction = costFunction.replace(" ", "").replace('"', '')           
         costFunctionSave = costFunction
         
-        for i in range(self.graph.edgeCount()):                           
+        for i in range(self.graph.edgeCount()):                       
             if self.task is not None and self.task.isCanceled():
                 break
 
@@ -593,7 +604,7 @@ class AdvancedCostCalculator():
             
             for regex in regexList:
                 costFunction = self.__translateRegexSearch(costFunction, regex, i, sampledPointsLayers, edgesInPolygonsList, edgesCrossingPolygonsList, False)
-            
+                
             constructRegexList = ['math\.[a-z]+%.+?\$', 'rnd\?.+?§.+?&', 'if\{.+?;.+?;.+?\}']
             while not self.__fullyTranslatedCheck(costFunction):
                 if self.task is not None and self.task.isCanceled():
