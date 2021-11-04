@@ -79,23 +79,14 @@ class BenchmarkController(BaseController):
                 if selection == "Graphs" or selection == "Algorithms":
                     partition = self.doWrapper.firstPartition(selection)             
                 else:               
-                    partition = self.doWrapper.firstPartition("Parameter", self.doWrapper.parameterKeyHash[selection])
-                
-                print(partition)
-                print("---------------------------------------------------------------------------")
+                    partition = self.doWrapper.firstPartition("Parameter", self.doWrapper.parameterKeyHash[selection])            
                 
                 for i in range(1,len(selectionList)):
                     selection = selectionList[i]
                     if selection == "Graphs" or selection == "Algorithms":
                         partition = self.doWrapper.partition(selection, partition)
                     else:
-                        partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.parameterKeyHash[selection])    
-    
-                    print(partition)
-                    print("---------------------------------------------------------------------------")
-            
-                print("*****************************************************************************************")
-                  
+                        partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.parameterKeyHash[selection])                     
             else:                
                 partition = {"":self.doWrapper.benchmarkDOs}
             
@@ -349,12 +340,7 @@ class BenchmarkController(BaseController):
         # todo: pass authId to client
         #authId = self.settings.value("ogdfplugin/authId")              
                           
-        for benchmarkDO in self.benchmarkDOs:
-            print("--------------------------")
-            print(benchmarkDO.algorithm)
-            print(benchmarkDO.graphName)
-            print(benchmarkDO.parameters)
-            
+        for benchmarkDO in self.benchmarkDOs:            
             requestKey = benchmarkDO.algorithm
             request = parserManager.getRequestParser(requestKey)
             request.resetData()
@@ -389,7 +375,6 @@ class BenchmarkController(BaseController):
                             id = jobState.jobId                        
                             job = statusManager.getJobState(id)                                          
                             status = self.STATUS_TEXTS.get(job.status, "status not supported")
-                            print(status)
                             
                     except (NetworkClientError, ParseError) as error:
                         return "Network Error: " + str(error)                                                    
