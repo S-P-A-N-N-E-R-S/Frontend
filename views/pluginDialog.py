@@ -1,4 +1,4 @@
-#  This file is part of the OGDF plugin.
+# This file is part of the OGDF plugin.
 #
 #  Copyright (C) 2021  Dennis Benz
 #
@@ -27,6 +27,7 @@ from .createGraphView import CreateGraphView
 from .ogdfAnalysisView import OGDFAnalysisView
 from .jobsView import JobsView
 from .optionsView import OptionsView
+from .benchmarkView import BenchmarkView
 
 
 
@@ -41,8 +42,9 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
         ExampleDataView = 0
         CreateGraphView = 1
         OGDFAnalysisView = 2
-        JobsView = 3
-        OptionsView = 4
+        BenchmarkView = 3
+        JobsView = 4
+        OptionsView = 5
 
     def __init__(self, parent=None):
         """Constructor."""
@@ -60,13 +62,14 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
         # display dialog as window with minimize and maximize buttons
         self.setWindowFlags(Qt.Window)
 
-        # setup each content view
+        # setup each content view     
         self.exampleView = ExampleDataView(self)
         self.graphView = CreateGraphView(self)
         self.analysisView = OGDFAnalysisView(self)
+        self.benchmarkView = BenchmarkView(self)
         self.jobsView = JobsView(self)
         self.optionsView = OptionsView(self)
-
+        
         # create example data as default
         self.menu_list.setCurrentRow(0)
 

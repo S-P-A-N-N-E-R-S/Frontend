@@ -274,8 +274,15 @@ class GraphBuilder:
     
     def __createRandomConnections(self):
         notUsedVertexPairs = []
-        for i in range(self.graph.vertexCount()):
-            for j in range(self.graph.vertexCount()):
+        for i in range(self.graph.vertexCount()-1):
+            if self.__options["distanceStrategy"] == "Advanced":
+                    newProgress = self.task.progress() + 20/self.graph.vertexCount()
+            else:
+                newProgress = self.task.progress() + 90/self.graph.vertexCount()    
+            if newProgress <= 100:               
+                self.task.setProgress(newProgress)
+                    
+            for j in range(i+1, self.graph.vertexCount()):
                 if self.__options["edgeDirection"] == "Directed":
                     notUsedVertexPairs.append((i,j))
                     notUsedVertexPairs.append((j,i))
@@ -285,15 +292,12 @@ class GraphBuilder:
         for i in range(self.__options["randomConnectionNumber"]):
             if len(notUsedVertexPairs) == 0:
                 break      
-            pairID = random.randint(0, len(notUsedVertexPairs))
+            pairID = random.randint(0, len(notUsedVertexPairs)-1)
             p1 = notUsedVertexPairs[pairID][0]
-            p2 = notUsedVertexPairs[pairID][1]
-                    
+            p2 = notUsedVertexPairs[pairID][1]                 
             self.graph.addEdge(p1, p2)
             del notUsedVertexPairs[pairID]
-            
-             
-    
+                          
     def __createNearestNeighbor(self):
         """
         The edges for the options DistanceNN and Nearest neighbor are created inside
