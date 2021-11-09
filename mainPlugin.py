@@ -112,6 +112,11 @@ class OGDFPlugin:
         self.ogdfAnalysisAction.setWhatsThis(self.tr("OGDF analysis"))
         self.ogdfAnalysisAction.setStatusTip(self.tr("OGDF analysis"))
 
+        self.benchmarksAction = QAction(self.tr("Benchmarks"), self.iface.mainWindow())
+        self.benchmarksAction.triggered.connect(lambda: self.openView(PluginDialog.Views.BenchmarkView))
+        self.benchmarksAction.setWhatsThis(self.tr("Benchmarks"))
+        self.benchmarksAction.setStatusTip(self.tr("Benchmarks"))
+
         self.ogdfJobsAction = QAction(self.tr("OGDF jobs"), self.iface.mainWindow())
         self.ogdfJobsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.JobsView))
         self.ogdfJobsAction.setWhatsThis(self.tr("OGDF jobs"))
@@ -143,6 +148,7 @@ class OGDFPlugin:
         menu.addAction(self.exampleAction)
         menu.addAction(self.graphAction)
         menu.addAction(self.ogdfAnalysisAction)
+        menu.addAction(self.benchmarksAction)
         menu.addAction(self.ogdfJobsAction)
         menu.addAction(self.optionsAction)
         self.menuAction = menu.menuAction()
