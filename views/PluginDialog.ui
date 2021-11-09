@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1089</width>
-    <height>942</height>
+    <width>1100</width>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -102,7 +102,7 @@ QListWidget::item::selected {
      </property>
      <item>
       <property name="text">
-       <string>Create example data</string>
+       <string>Create from resource</string>
       </property>
      </item>
      <item>
@@ -145,8 +145,8 @@ QListWidget::item::selected {
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>893</width>
-           <height>922</height>
+           <width>904</width>
+           <height>880</height>
           </rect>
          </property>
          <property name="minimumSize">
@@ -171,9 +171,9 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
-            <widget class="QWidget" name="create_example_data">
+            <widget class="QWidget" name="create_from_resource">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                <horstretch>0</horstretch>
@@ -184,14 +184,14 @@ QListWidget::item::selected {
               <item>
                <layout class="QFormLayout" name="formLayout">
                 <item row="1" column="0" colspan="2">
-                 <widget class="QComboBox" name="example_data_input">
+                 <widget class="QComboBox" name="create_from_resource_input">
                   <property name="toolTip">
                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select an example.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                  </widget>
                 </item>
                 <item row="3" column="0" colspan="2">
-                 <widget class="QgsFileWidget" name="example_data_output">
+                 <widget class="QgsFileWidget" name="create_from_resource_output">
                   <property name="toolTip">
                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify where and in which format the example should be saved. If this field is empty, a temporary layer will be created.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
@@ -223,7 +223,7 @@ QListWidget::item::selected {
                  </spacer>
                 </item>
                 <item row="2" column="0" colspan="2">
-                 <widget class="QLabel" name="example_data_output_label">
+                 <widget class="QLabel" name="create_from_resource_output_label">
                   <property name="toolTip">
                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify where and in which format the example should be saved. If this field is empty, a temporary layer will be created.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
@@ -233,9 +233,9 @@ QListWidget::item::selected {
                  </widget>
                 </item>
                 <item row="0" column="0" colspan="2">
-                 <widget class="QLabel" name="example_data_label">
+                 <widget class="QLabel" name="create_from_resource_label">
                   <property name="text">
-                   <string>Example data set</string>
+                   <string>Data set</string>
                   </property>
                  </widget>
                 </item>
@@ -257,7 +257,7 @@ QListWidget::item::selected {
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="create_example_data_btn">
+                 <widget class="QPushButton" name="create_from_resource_btn">
                   <property name="toolTip">
                    <string>Create example data</string>
                   </property>
@@ -303,8 +303,8 @@ QListWidget::item::selected {
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>835</width>
-                         <height>1136</height>
+                         <width>351</width>
+                         <height>1141</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1569,8 +1569,8 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>873</width>
-                   <height>247</height>
+                   <width>784</width>
+                   <height>233</height>
                   </rect>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_2">
@@ -1776,8 +1776,8 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>487</width>
-                   <height>248</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>

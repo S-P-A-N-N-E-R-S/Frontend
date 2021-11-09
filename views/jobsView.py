@@ -19,14 +19,14 @@
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QListWidgetItem
 
-from .baseContentView import BaseContentView
+from .baseView import BaseView
 from ..controllers.jobs import JobsController
 from ..network import statusManager
 from ..network.protocol.build.status_pb2 import StatusType
 from ..helperFunctions import getVectorFileFilter
 
 
-class JobsView(BaseContentView):
+class JobsView(BaseView):
 
     def __init__(self, dialog):
         super().__init__(dialog)

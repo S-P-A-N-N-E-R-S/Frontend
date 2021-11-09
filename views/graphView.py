@@ -16,9 +16,9 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from .baseContentView import BaseContentView
+from .baseView import BaseView
 from .widgets.QgsCostFunctionDialog import QgsCostFunctionDialog
-from ..controllers.graph import CreateGraphController
+from ..controllers.graph import GraphController
 from ..helperFunctions import getImagePath, getRasterFileFilter, getVectorFileFilter
 from ..models.ExtGraph import ExtGraph
 
@@ -33,7 +33,7 @@ from PyQt5.QtGui import QIcon, QRegExpValidator
 import time, os, re
 
 
-class CreateGraphView(BaseContentView):
+class GraphView(BaseView):
 
     def __init__(self, dialog):
         super().__init__(dialog)
@@ -131,7 +131,7 @@ class CreateGraphView(BaseContentView):
         self.dialog.create_graph_randomarea_input.currentIndexChanged.connect(self._randomAreaChanged)
 
         # set up controller
-        self.controller = CreateGraphController(self)
+        self.controller = GraphController(self)
 
         self.dialog.create_graph_create_btn.clicked.connect(self.controller.createGraph)
         # immediately disable button and enable after 1 seconds

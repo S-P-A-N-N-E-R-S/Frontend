@@ -97,13 +97,13 @@ class OGDFPlugin:
         return QCoreApplication.translate('OGDFPlugin', message)
 
     def initActions(self):
-        self.exampleAction = QAction(self.tr("Create example data"), self.iface.mainWindow())
-        self.exampleAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ExampleDataView))
-        self.exampleAction.setWhatsThis(self.tr("Create example data"))
-        self.exampleAction.setStatusTip(self.tr("Create example data"))
+        self.resourceAction = QAction(self.tr("Create from resource"), self.iface.mainWindow())
+        self.resourceAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ResourceView))
+        self.resourceAction.setWhatsThis(self.tr("Create from resource"))
+        self.resourceAction.setStatusTip(self.tr("Create from resource"))
 
         self.graphAction = QAction(self.tr("Create graph"), self.iface.mainWindow())
-        self.graphAction.triggered.connect(lambda: self.openView(PluginDialog.Views.CreateGraphView))
+        self.graphAction.triggered.connect(lambda: self.openView(PluginDialog.Views.GraphView))
         self.graphAction.setWhatsThis(self.tr("Create graph"))
         self.graphAction.setStatusTip(self.tr("Create graph"))
 
@@ -127,10 +127,10 @@ class OGDFPlugin:
         self.optionsAction.setWhatsThis(self.tr("Options"))
         self.optionsAction.setStatusTip(self.tr("Options"))
 
-        self.defaultAction = QAction(QIcon(getImagePath("icon.svg")), self.tr("Create example data"), self.iface.mainWindow())
-        self.defaultAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ExampleDataView))
-        self.defaultAction.setWhatsThis(self.tr("Create example data"))
-        self.defaultAction.setStatusTip(self.tr("Create example data"))
+        self.defaultAction = QAction(QIcon(getImagePath("icon.svg")), self.tr("Create from resource"), self.iface.mainWindow())
+        self.defaultAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ResourceView))
+        self.defaultAction.setWhatsThis(self.tr("Create from resource"))
+        self.defaultAction.setStatusTip(self.tr("Create from resource"))
 
     def initGui(self):
         QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
@@ -145,7 +145,7 @@ class OGDFPlugin:
         # create menu
         menu = QMenu("OGDF Plugin")
         menu.setIcon(QIcon(getImagePath("icon.svg")))
-        menu.addAction(self.exampleAction)
+        menu.addAction(self.resourceAction)
         menu.addAction(self.graphAction)
         menu.addAction(self.ogdfAnalysisAction)
         menu.addAction(self.benchmarksAction)

@@ -18,14 +18,14 @@
 
 from qgis.PyQt.QtWidgets import QSizePolicy
 
-from .baseContentView import BaseContentView
+from .baseView import BaseView
 from ..controllers.ogdfAnalysis import OGDFAnalysisController
 from ..network import parserManager
 from .widgets.QgsOgdfParametersWidget import QgsOGDFParametersWidget
 from .widgets.QgsAnalysisTreeView import QgsAnalysisTreeView
 
 
-class OGDFAnalysisView(BaseContentView):
+class OGDFAnalysisView(BaseView):
 
     def __init__(self, dialog):
         super().__init__(dialog)

@@ -24,12 +24,12 @@ from .. import helperFunctions as helper
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject, QgsVectorFileWriter, QgsRasterPipe, QgsRasterFileWriter, QgsWkbTypes, QgsProcessingUtils
 
 
-class ExampleController(BaseController):
+class ResourceController(BaseController):
 
     def __init__(self, view):
         """
         Constructor
-        :type view: ExampleDataView
+        :type view: ResourceView
         """
         super().__init__(view)
 

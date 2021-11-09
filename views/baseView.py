@@ -23,14 +23,14 @@ from PyQt5.QtWidgets import QFileDialog
 from qgis.PyQt.QtCore import QObject
 
 
-class BaseContentView(QObject):
+class BaseView(QObject):
 
     def __init__(self, dialog):
         """
         Base constuctor of a content window
         :param dialog: contains all ui elements
         """
-        super(BaseContentView, self).__init__()
+        super(BaseView, self).__init__()
 
         self.name = None
         self.dialog = dialog
