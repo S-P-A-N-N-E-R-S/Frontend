@@ -182,67 +182,119 @@ QListWidget::item::selected {
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_2">
               <item>
-               <layout class="QFormLayout" name="formLayout">
-                <item row="1" column="0" colspan="2">
-                 <widget class="QComboBox" name="create_from_resource_input">
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select an example.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <widget class="QSplitter" name="splitter_3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="opaqueResize">
+                 <bool>true</bool>
+                </property>
+                <property name="handleWidth">
+                 <number>4</number>
+                </property>
+                <widget class="QScrollArea" name="scrollArea_3">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                   <horstretch>1</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="widgetResizable">
+                  <bool>true</bool>
+                 </property>
+                 <widget class="QWidget" name="scrollAreaWidgetContents_3">
+                  <property name="geometry">
+                   <rect>
+                    <x>0</x>
+                    <y>0</y>
+                    <width>624</width>
+                    <height>827</height>
+                   </rect>
                   </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_24">
+                   <item>
+                    <widget class="QLabel" name="create_from_resource_label">
+                     <property name="text">
+                      <string>Data set</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QComboBox" name="create_from_resource_input">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select an example.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="create_from_resource_output_label">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify where and in which format the example should be saved. If this field is empty, a temporary layer will be created.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="text">
+                      <string>Destination</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QgsFileWidget" name="create_from_resource_output">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify where and in which format the example should be saved. If this field is empty, a temporary layer will be created.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="useLink">
+                      <bool>false</bool>
+                     </property>
+                     <property name="fullUrl">
+                      <bool>false</bool>
+                     </property>
+                     <property name="dialogTitle">
+                      <string/>
+                     </property>
+                     <property name="storageMode">
+                      <enum>QgsFileWidget::SaveFile</enum>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="verticalSpacer_8">
+                     <property name="orientation">
+                      <enum>Qt::Vertical</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>20</width>
+                       <height>61</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
                  </widget>
-                </item>
-                <item row="3" column="0" colspan="2">
-                 <widget class="QgsFileWidget" name="create_from_resource_output">
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify where and in which format the example should be saved. If this field is empty, a temporary layer will be created.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="useLink">
-                   <bool>false</bool>
-                  </property>
-                  <property name="fullUrl">
-                   <bool>false</bool>
-                  </property>
-                  <property name="dialogTitle">
-                   <string/>
-                  </property>
-                  <property name="storageMode">
-                   <enum>QgsFileWidget::SaveFile</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="0" colspan="2">
-                 <spacer name="verticalSpacer_3">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>40</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item row="2" column="0" colspan="2">
-                 <widget class="QLabel" name="create_from_resource_output_label">
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify where and in which format the example should be saved. If this field is empty, a temporary layer will be created.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Destination</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0" colspan="2">
-                 <widget class="QLabel" name="create_from_resource_label">
-                  <property name="text">
-                   <string>Data set</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
+                </widget>
+                <widget class="QTextBrowser" name="create_from_resource_description_textbrowser">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="openExternalLinks">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </widget>
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetDefaultConstraint</enum>
+                </property>
                 <item>
                  <spacer name="horizontalSpacer_3">
                   <property name="orientation">
@@ -303,8 +355,8 @@ QListWidget::item::selected {
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>351</width>
-                         <height>1141</height>
+                         <width>846</width>
+                         <height>1136</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1304,8 +1356,8 @@ QListWidget::item::selected {
                          <rect>
                           <x>0</x>
                           <y>0</y>
-                          <width>186</width>
-                          <height>153</height>
+                          <width>600</width>
+                          <height>776</height>
                          </rect>
                         </property>
                         <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0">
@@ -1569,7 +1621,7 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>784</width>
+                   <width>884</width>
                    <height>233</height>
                   </rect>
                  </property>
@@ -1776,8 +1828,8 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>494</width>
+                   <height>234</height>
                   </rect>
                  </property>
                 </widget>

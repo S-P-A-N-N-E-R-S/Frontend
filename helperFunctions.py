@@ -51,10 +51,21 @@ def getImagePath(image):
     return abspath(join(path, image))
 
 
-def getExamplePath(example):
-    """ Get the example path """
-    path = join(getPluginPath(), "resources/examples")
-    return abspath(join(path, example))
+def getDatasetPath(example, extension):
+    """
+    Get the example path
+    :param example: example name
+    :param extension: extension of file specifies format like .shp
+    :return: path to example data
+    """
+    path = join(getPluginPath(), "resources/datasets/data/"+example)
+    return abspath(join(path, example + extension))
+
+
+def getDatasetDescriptionPath(example):
+    """ Get the path to the html example descriptions """
+    path = join(getPluginPath(), "resources/datasets/descriptions")
+    return abspath(join(path, example + ".html"))
 
 
 def tr(message, context="@default"):

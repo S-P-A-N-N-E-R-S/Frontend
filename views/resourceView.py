@@ -22,29 +22,34 @@ from ..helperFunctions import getRasterFileFilter, getVectorFileFilter
 
 from qgis.gui import QgsFileWidget
 
+from qgis.PyQt.QtCore import QUrl
+
 
 class ResourceView(BaseView):
 
     def __init__(self, dialog):
         super().__init__(dialog)
-        self.name = "example data"
+        self.name = "resource data"
         self.controller = ResourceController(self)
 
         # set up file upload widget
         self.dialog.create_from_resource_output.setStorageMode(QgsFileWidget.SaveFile)
         self.dialog.create_from_resource_output.lineEdit().setPlaceholderText("[Save to temporary layer]")
 
-        # change example data
-        self.dialog.create_from_resource_input.currentIndexChanged.connect(self.controller.changeFilter)
+        # change resource data
+        self.dialog.create_from_resource_input.currentIndexChanged.connect(self.controller.changeResource)
 
         # create button
         self.dialog.create_from_resource_btn.clicked.connect(self.controller.createData)
 
-    def getExample(self):
+    def getResource(self):
         return self.dialog.create_from_resource_input.currentText(), self.dialog.create_from_resource_input.currentData()
 
-    def addExample(self, name, userData=None):
+    def addResource(self, name, userData=None):
         self.dialog.create_from_resource_input.addItem(name, userData)
+
+    def setDescriptionSource(self, source):
+        self.dialog.create_from_resource_description_textbrowser.setSource(QUrl(source))
 
     # destination output
 
