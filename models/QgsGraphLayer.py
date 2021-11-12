@@ -137,7 +137,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
                                 edgeCost = self.mGraph.costOfEdge(edgeIdx, self.mRenderedCostFunction)
-                                if edgeCost % 1 == 0:
+                                if not edgeCost:
+                                    painter.drawText(midPoint, "None")
+                                elif edgeCost % 1 == 0:
                                     painter.drawText(midPoint, str(edgeCost))
                                 else:
                                     painter.drawText(midPoint, str("%.3f" % edgeCost))
@@ -623,7 +625,8 @@ class QgsGraphLayer(QgsPluginLayer):
                 
                 if self.mGraph.distanceStrategy != "Advanced":
                     # TODO: is this necessary? this maybe even does not lead to anything
-                    self.mGraph.setCostOfEdge(addedIdx, 0, float(elem.attribute("edgeCost")))
+                    if not elem.attribute("edgeCost") == "None":
+                        self.mGraph.setCostOfEdge(addedIdx, 0, float(elem.attribute("edgeCost")))
                 else:
                     costNodes = edgeNodes.at(edgeIdx).childNodes()
                     for costIdx in range(costNodes.length()):
