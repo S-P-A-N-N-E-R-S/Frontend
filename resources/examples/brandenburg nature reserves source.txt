@@ -1,0 +1,6 @@
+Source notes for brandenburg nature reserves
+
+The provider of the data is Landesamt für Umwelt Brandenburg, 2019.
+The data is licensed under Data licence Germany – attribution – Version 2.0;
+The license text is available at www.govdata.de/dl-de/by-2-0. The data is located under
+https://hub.arcgis.com/maps/esri-de-content::schutzgebiete-brandenburg/about.
