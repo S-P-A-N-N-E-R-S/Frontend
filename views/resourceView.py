@@ -49,7 +49,10 @@ class ResourceView(BaseView):
         self.dialog.create_from_resource_input.addItem(name, userData)
 
     def setDescriptionSource(self, source):
-        self.dialog.create_from_resource_description_textbrowser.setSource(QUrl(source))
+        if source is None:
+            self.dialog.create_from_resource_description_textbrowser.setPlainText(self.tr("No description available"))
+        else:
+            self.dialog.create_from_resource_description_textbrowser.setSource(QUrl(source))
 
     # destination output
 

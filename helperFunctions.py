@@ -20,7 +20,7 @@
 
 from qgis.PyQt.QtCore import QCoreApplication
 
-from os.path import abspath, join, dirname, splitext, basename
+from os.path import abspath, join, dirname, splitext, basename, isfile
 
 from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
 
@@ -63,9 +63,16 @@ def getDatasetPath(example, extension):
 
 
 def getDatasetDescriptionPath(example):
-    """ Get the path to the html example descriptions """
+    """
+    Get the path to the html example descriptions
+    :param example:
+    :return: Path to description if file exists
+    """
     path = join(getPluginPath(), "resources/datasets/descriptions")
-    return abspath(join(path, example + ".html"))
+    absolutePath = abspath(join(path, example + ".html"))
+    if isfile(absolutePath):
+        return absolutePath
+    return None
 
 
 def tr(message, context="@default"):
