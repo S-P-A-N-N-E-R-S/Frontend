@@ -162,7 +162,7 @@ class ExtGraph(QObject):
         self.edgeDirection = "Directed"
         self.clusterNumber = 5
         self.nnAllowDoubleEdges = True
-        self.distance = 0
+        self.distance = (0, QgsUnitTypes.DistanceUnknownUnit)
         self.randomSeed = None
 
         self.kdTree = None
@@ -912,56 +912,55 @@ class ExtGraph(QObject):
                 '\t http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">\n',
                 '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
 
-        file.writelines(header)
-
-        if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
-            clusterKey = '\t<key id="cluster" for="node" attr.name="clusterid" attr.type="int"/>\n'
-            file.write(clusterKey)
-
-        if self.distanceStrategy == "Advanced":
-            advancedKeys = ''
-            for costIdx in range(self.amountOfEdgeCostFunctions()):
-                advancedKeys += '\t<key id="c_' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
-            file.write(advancedKeys)
-
-        edgeDefault = self.edgeDirection.lower()
-
-        graphString = '\t<graph id="G" '
-        graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
-        graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
-        graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
-        graphString += '" distanceunit="' + str(self.distance[1]) + (('" seed="' + str(self.randomSeed)) if self.randomSeed else '')
-        graphString += '" crs="' + self.crs.authid() + '">\n'
-        file.write(graphString)
-
-        for idx in range(self.mVertexCount):
-            vertex = self.vertex(idx)
-            nodeLine = '\t\t<node id="' + str(vertex.id()) + '"/>\n'
-            file.write(nodeLine)
-            file.write('\t\t\t<data key="d1">\n')
-            file.write('\t\t\t\t<y:ShapeNode>\n')
-            coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(vertex.point().x()) + '" y="' + str(vertex.point().y()) + '"/>\n'
-            file.write(coordinates)
-            file.write('\t\t\t\t</y:ShapeNode>\n')
-            file.write('\t\t\t</data>\n')
+            file.writelines(header)
 
             if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
-                file.write('\t\t\t<data key="cluster">' + str(vertex.clusterID()) + '</data>\n')
-
-        for idx in range(self.mEdgeCount):
-            edge = self.edge(idx)
-            edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'            
-            file.write(edgeLine)
+                clusterKey = '\t<key id="cluster" for="node" attr.name="clusterid" attr.type="int"/>\n'
+                file.write(clusterKey)
 
             if self.distanceStrategy == "Advanced":
-                edgeData = ''
+                advancedKeys = ''
                 for costIdx in range(self.amountOfEdgeCostFunctions()):
-                    edgeData += '\t\t\t<data key="c_' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
-                file.write(edgeData)
+                    advancedKeys += '\t<key id="c_' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
+                file.write(advancedKeys)
 
-        file.write("\t</graph>\n")
-        file.write("</graphml>")
-        file.close()
+            edgeDefault = self.edgeDirection.lower()
+
+            graphString = '\t<graph id="G" '
+            graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
+            graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
+            graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
+            graphString += '" distanceunit="' + str(self.distance[1]) + '"' + ((' seed="' + str(self.randomSeed)) if self.randomSeed else '')
+            graphString += (('" crs="' + self.crs.authid() + '"') if self.crs else '') + '>\n'
+            file.write(graphString)
+
+            for idx in range(self.mVertexCount):
+                vertex = self.vertex(idx)
+                nodeLine = '\t\t<node id="' + str(vertex.id()) + '"/>\n'
+                file.write(nodeLine)
+                file.write('\t\t\t<data key="d1">\n')
+                file.write('\t\t\t\t<y:ShapeNode>\n')
+                coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(vertex.point().x()) + '" y="' + str(vertex.point().y()) + '"/>\n'
+                file.write(coordinates)
+                file.write('\t\t\t\t</y:ShapeNode>\n')
+                file.write('\t\t\t</data>\n')
+
+                if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
+                    file.write('\t\t\t<data key="cluster">' + str(vertex.clusterID()) + '</data>\n')
+
+            for idx in range(self.mEdgeCount):
+                edge = self.edge(idx)
+                edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
+                file.write(edgeLine)
+
+                if self.distanceStrategy == "Advanced":
+                    edgeData = ''
+                    for costIdx in range(self.amountOfEdgeCostFunctions()):
+                        edgeData += '\t\t\t<data key="c_' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
+                    file.write(edgeData)
+
+            file.write("\t</graph>\n")
+            file.write("</graphml>")
 
     def readGraphML(self, path):
         """

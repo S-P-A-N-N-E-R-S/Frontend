@@ -34,7 +34,6 @@ class QgsOGDFParametersWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.fields = {}
         self.request = None
 
         # array of widget tuples (labelWidget, InputWidget)
@@ -56,7 +55,7 @@ class QgsOGDFParametersWidget(QWidget):
         self._createParameterWidgets()
 
     def getParameterFields(self):
-        return self.fields
+        return self.request.fields
 
     def getParameterFieldsData(self):
         """
