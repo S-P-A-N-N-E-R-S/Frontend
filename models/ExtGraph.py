@@ -793,6 +793,32 @@ class ExtGraph(QObject):
 
             del clusterKDTree
 
+        #== RANDOM =============================================================================
+        elif self.mConnectionType == "Random":
+            amountEdgesToBeAdded = math.ceil(self.mEdgeCount / self.mVertexCount)
+
+            pastRandomVertices = []
+            for j in range(amountEdgesToBeAdded):
+                # choose random vertex
+                randomVertex = randrange(self.mVertexCount)
+                while randomVertex == addedVertexID or randomVertex in pastRandomVertices:
+                    randomVertex = randrange(self.mVertexCount)
+                pastRandomVertices.append(randomVertex)
+
+                if not fromUndo:
+                    edgeIdx = self.addEdge(randomVertex, addedVertexID)
+                else:
+                    edgeIdx = self.edgeCount() + len(listOfEdges)
+                listOfEdges.append([edgeIdx, randomVertex, addedVertexID])
+
+                if self.nnAllowDoubleEdges:
+                    if not fromUndo:
+                        edgeIdx = self.addEdge(addedVertexID, randomVertex)
+                    else:
+                        edgeIdx = self.edgeCount() + len(listOfEdges)
+                    listOfEdges.append([edgeIdx, randomVertex, addedVertexID])
+
+            print(pastRandomVertices)
         return listOfEdges
 
     def edge(self, idx):
