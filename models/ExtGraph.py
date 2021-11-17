@@ -818,7 +818,6 @@ class ExtGraph(QObject):
                         edgeIdx = self.edgeCount() + len(listOfEdges)
                     listOfEdges.append([edgeIdx, randomVertex, addedVertexID])
 
-            print(pastRandomVertices)
         return listOfEdges
 
     def edge(self, idx):
