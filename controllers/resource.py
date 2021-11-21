@@ -33,30 +33,34 @@ class ResourceController(BaseController):
         """
         super().__init__(view)
 
-        # add vector examples to view
-        self.view.addExample(self.tr("airports"), ("airports", "vector"))
-        self.view.addExample(self.tr("berlin streets"), ("berlin streets", "vector"))
-        self.view.addExample(self.tr("brandenburg nature reserves"), ("brandenburg nature reserves", "vector"))
-        self.view.addExample(self.tr("brandenburg water conservation areas"),
+        # add vector resources to view
+        self.view.addResource(self.tr("airports"), ("airports", "vector"))
+        self.view.addResource(self.tr("berlin streets"), ("berlin streets", "vector"))
+        self.view.addResource(self.tr("brandenburg nature reserves"), ("brandenburg nature reserves", "vector"))
+        self.view.addResource(self.tr("brandenburg water conservation areas"),
                              ("brandenburg water conservation areas", "vector"))
-        self.view.addExample(self.tr("berlin environmental zone"), ("berlin environmental zone", "vector"))
+        self.view.addResource(self.tr("berlin environmental zone"), ("berlin environmental zone", "vector"))
 
-        # add raster examples to view
-        self.view.addExample(self.tr("berlin elevation"), ("berlin elevation", "raster"))
+        # add raster resources to view
+        self.view.addResource(self.tr("berlin elevation"), ("berlin elevation", "raster"))
 
-        # vector example first
-        self.view.setVectorFilter()
+        # initialize resource
+        self.changeResource()
 
-    def changeFilter(self):
-        _, type = self.view.getExample()[1]
-        if type == "vector":
+    def changeResource(self):
+        resource, resourceType = self.view.getResource()[1]
+        # set filter
+        if resourceType == "vector":
             self.view.setVectorFilter()
-        elif type == "raster":
+        elif resourceType == "raster":
             self.view.setRasterFilter()
 
+        # set description
+        self.view.setDescriptionSource(helper.getDatasetDescriptionPath(resource))
+
     def createData(self):
-        LayerName = self.view.getExample()[0]
-        example, type = self.view.getExample()[1]
+        LayerName = self.view.getResource()[0]
+        resource, resourceType = self.view.getResource()[1]
         path = self.view.getFilePath()
         extension = os.path.splitext(path)[1]
 
@@ -64,20 +68,20 @@ class ResourceController(BaseController):
             self.view.showError(self.tr("No file format is specified!"))
             return
 
-        if type == "vector":
-            exampleLayer = QgsVectorLayer(helper.getExamplePath("{}.shp".format(example)), example, "ogr")
-            if exampleLayer.isValid():
-                createdLayer = helper.saveLayer(exampleLayer, LayerName, "vector", path, extension)
+        if resourceType == "vector":
+            resourceLayer = QgsVectorLayer(helper.getDatasetPath(resource, ".shp"), resource, "ogr")
+            if resourceLayer.isValid():
+                createdLayer = helper.saveLayer(resourceLayer, LayerName, "vector", path, extension)
                 if createdLayer:
                     QgsProject.instance().addMapLayer(createdLayer)
                 else:
                     self.view.showError(self.tr("Layer or file format is invalid!"))
             else:
                 self.view.showError(self.tr("Layer is invalid!"))
-        elif type == "raster":
-            exampleLayer = QgsRasterLayer(helper.getExamplePath("{}.tif".format(example)), example)
-            if exampleLayer.isValid():
-                createdLayer = helper.saveLayer(exampleLayer, LayerName, "raster", path, extension)
+        elif resourceType == "raster":
+            resourceLayer = QgsRasterLayer(helper.getDatasetPath(resource, ".tif"), resource)
+            if resourceLayer.isValid():
+                createdLayer = helper.saveLayer(resourceLayer, LayerName, "raster", path, extension)
                 if createdLayer:
                     QgsProject.instance().addMapLayer(createdLayer)
                 else:

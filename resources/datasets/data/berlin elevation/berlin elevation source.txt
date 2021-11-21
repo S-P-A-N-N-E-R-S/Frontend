@@ -1,0 +1,5 @@
+Source notes for berlin elevation
+
+Contains information from Open Digital Elevation Model (OpenDEM) (see https://www.opendem.info/download_srtm.html),
+which is made available here under the Open Database License (ODbL). The license is available under
+https://opendatacommons.org/licenses/odbl/1-0/.
