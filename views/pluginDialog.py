@@ -22,8 +22,8 @@ from enum import Enum
 from qgis.PyQt import uic, QtWidgets
 from qgis.PyQt.QtCore import Qt
 
-from .exampleDataView import ExampleDataView
-from .createGraphView import CreateGraphView
+from .resourceView import ResourceView
+from .graphView import GraphView
 from .ogdfAnalysisView import OGDFAnalysisView
 from .jobsView import JobsView
 from .optionsView import OptionsView
@@ -39,8 +39,8 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
 
     class Views(Enum):
-        ExampleDataView = 0
-        CreateGraphView = 1
+        ResourceView = 0
+        GraphView = 1
         OGDFAnalysisView = 2
         BenchmarkView = 3
         JobsView = 4
@@ -63,8 +63,8 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setWindowFlags(Qt.Window)
 
         # setup each content view     
-        self.exampleView = ExampleDataView(self)
-        self.graphView = CreateGraphView(self)
+        self.resourceView = ResourceView(self)
+        self.graphView = GraphView(self)
         self.analysisView = OGDFAnalysisView(self)
         self.benchmarkView = BenchmarkView(self)
         self.jobsView = JobsView(self)

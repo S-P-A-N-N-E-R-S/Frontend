@@ -16,40 +16,40 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from .baseContentView import BaseContentView
-from ..controllers.example import ExampleController
+from .baseView import BaseView
+from ..controllers.resource import ResourceController
 from ..helperFunctions import getRasterFileFilter, getVectorFileFilter
 
 from qgis.gui import QgsFileWidget
 
 
-class ExampleDataView(BaseContentView):
+class ResourceView(BaseView):
 
     def __init__(self, dialog):
         super().__init__(dialog)
         self.name = "example data"
-        self.controller = ExampleController(self)
+        self.controller = ResourceController(self)
 
         # set up file upload widget
-        self.dialog.example_data_output.setStorageMode(QgsFileWidget.SaveFile)
-        self.dialog.example_data_output.lineEdit().setPlaceholderText("[Save to temporary layer]")
+        self.dialog.create_from_resource_output.setStorageMode(QgsFileWidget.SaveFile)
+        self.dialog.create_from_resource_output.lineEdit().setPlaceholderText("[Save to temporary layer]")
 
         # change example data
-        self.dialog.example_data_input.currentIndexChanged.connect(self.controller.changeFilter)
+        self.dialog.create_from_resource_input.currentIndexChanged.connect(self.controller.changeFilter)
 
         # create button
-        self.dialog.create_example_data_btn.clicked.connect(self.controller.createData)
+        self.dialog.create_from_resource_btn.clicked.connect(self.controller.createData)
 
     def getExample(self):
-        return self.dialog.example_data_input.currentText(), self.dialog.example_data_input.currentData()
+        return self.dialog.create_from_resource_input.currentText(), self.dialog.create_from_resource_input.currentData()
 
     def addExample(self, name, userData=None):
-        self.dialog.example_data_input.addItem(name, userData)
+        self.dialog.create_from_resource_input.addItem(name, userData)
 
     # destination output
 
     def setFilter(self, filter):
-        self.dialog.example_data_output.setFilter(filter)
+        self.dialog.create_from_resource_output.setFilter(filter)
 
     def setVectorFilter(self):
         self.setFilter(getVectorFileFilter())
@@ -58,4 +58,4 @@ class ExampleDataView(BaseContentView):
         self.setFilter(getRasterFileFilter())
 
     def getFilePath(self):
-        return self.dialog.example_data_output.filePath()
+        return self.dialog.create_from_resource_output.filePath()

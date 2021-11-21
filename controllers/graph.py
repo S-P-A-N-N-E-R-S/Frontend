@@ -28,7 +28,7 @@ from qgis.core import QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
 from qgis.utils import iface
 
 
-class CreateGraphController(BaseController):
+class GraphController(BaseController):
 
     # class variable contains list of taskTuples: (task, taskId)
     activeGraphTasks = []
@@ -38,7 +38,7 @@ class CreateGraphController(BaseController):
     def __init__(self, view):
         """
         Constructor
-        :type view: CreateGraphView
+        :type view: GraphView
         """
         super().__init__(view)                           
                 
@@ -68,21 +68,21 @@ class CreateGraphController(BaseController):
         self.view.addDistanceStrategy(self.tr("None"), "None")
 
         # load possibly available active tasks into table and reconnect slots
-        for taskTuple in CreateGraphController.activeGraphTasks:
+        for taskTuple in GraphController.activeGraphTasks:
             task, taskId = taskTuple
             task.statusChanged.connect(
                 lambda: self.view.updateTaskInTable(task, taskId)
             )
-        self.view.loadTasksTable(CreateGraphController.activeGraphTasks)
+        self.view.loadTasksTable(GraphController.activeGraphTasks)
 
     def createGraph(self):
         """
         Starts the graph creation process. This function is called from view.
         :return:
         """
-        if len(CreateGraphController.activeGraphTasks) >= CreateGraphController.maxNumberTasks:
+        if len(GraphController.activeGraphTasks) >= GraphController.maxNumberTasks:
             self.view.showWarning(self.tr("Can not building graph due to task limit of {}!").format(
-                CreateGraphController.maxNumberTasks))
+                GraphController.maxNumberTasks))
             return
 
         # no input and not random
@@ -211,7 +211,7 @@ class CreateGraphController(BaseController):
         graphTask = QgsTask.fromFunction("Building graph: {}".format(graphName), builder.makeGraphTask,
                                          graphLayer=graphLayer, graphName=graphName, on_finished=self.completed)
         taskId = QgsApplication.taskManager().addTask(graphTask)
-        CreateGraphController.activeGraphTasks.append((graphTask, taskId))
+        GraphController.activeGraphTasks.append((graphTask, taskId))
 
         # add task to table
         graphTask.statusChanged.connect(
@@ -232,9 +232,9 @@ class CreateGraphController(BaseController):
         QgsMessageLog.logMessage("Process make graph task results", level=Qgis.Info)
 
         # first remove all completed or canceled tasks from list
-        CreateGraphController.activeGraphTasks = [task for task in CreateGraphController.activeGraphTasks
-                                                  if task[0].isActive()]
-        QgsMessageLog.logMessage("Remaining tasks: {}".format(len(CreateGraphController.activeGraphTasks)),
+        GraphController.activeGraphTasks = [task for task in GraphController.activeGraphTasks
+                                            if task[0].isActive()]
+        QgsMessageLog.logMessage("Remaining tasks: {}".format(len(GraphController.activeGraphTasks)),
                                  level=Qgis.Info)
 
         if exception is None:
@@ -266,7 +266,7 @@ class CreateGraphController(BaseController):
                     self.view.insertLogText("Graph created!\n")
 
             self.view.insertLogText("Remaining graph creation processes : {}\n".format(
-                len(CreateGraphController.activeGraphTasks)))
+                len(GraphController.activeGraphTasks)))
         else:
             QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
             raise exception
@@ -278,7 +278,7 @@ class CreateGraphController(BaseController):
         """
         self.view.removeTaskInTable(taskId)
         # cancel active task if available
-        for activeTaskTuple in CreateGraphController.activeGraphTasks:
+        for activeTaskTuple in GraphController.activeGraphTasks:
             activeTask, activeTaskId = activeTaskTuple
             if activeTaskId == taskId:
                 activeTask.cancel()

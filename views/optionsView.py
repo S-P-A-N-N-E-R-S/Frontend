@@ -16,11 +16,11 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from .baseContentView import BaseContentView
+from .baseView import BaseView
 from ..controllers.options import OptionsController
 
 
-class OptionsView(BaseContentView):
+class OptionsView(BaseView):
 
     def __init__(self, dialog):
         super().__init__(dialog)
