@@ -739,7 +739,7 @@ class GraphBuilder:
                                             self.__options["distance"])
 
         if self.__options["createRandomGraph"] == True:
-            self.graph.crs = "EPSG:4326"
+            self.graph.crs = QgsCoordinateReferenceSystem("EPSG:4326")
             self.__createRandomVertices()
         else:     
             self.graph.crs = self.vLayer.crs()          

@@ -23,6 +23,8 @@ from qgis.PyQt.QtCore import Qt
 
 from ..views.widgets.QgsOgdfParametersWidget import QgsOGDFParametersWidget
 from ..network.protocol.build.available_handlers_pb2 import FieldInformation
+from ..network.requests.baseRequest import BaseRequest
+from ..network.fields import baseField, boolField, graphField, intField, choiceField, doubleField, stringField, edgeIDField, vertexIDField, edgeCostsField, vertexCostsField
 from ..exceptions import FieldRequiredError
 
 start_app()
@@ -34,69 +36,31 @@ class TestQgsOGDFParametersWidget(TestCase):
         """Runs before each test."""
         self.widget = QgsOGDFParametersWidget()
         self.widget.show()
+        self.request = BaseRequest()
 
     def tearDown(self):
         """Runs after each test."""
         del self.widget
 
     def test_fields(self):
-        self.widget.setParameterFields({
-            "key1": {
-                "type": FieldInformation.FieldType.GRAPH,
-                "label": "Graph",
-                "default": "",
-                "required": False,
-            },
-            "key2": {"type": FieldInformation.FieldType.VERTEX_ID,
-                "label": "Vertex",
-                "default": "",
-                "required": False,
-            },
-            "key3": {"type": FieldInformation.FieldType.EDGE_ID,
-                "label": "Edge",
-                "default": "",
-                "required": False,
-            },
-            "key4": {"type": FieldInformation.FieldType.BOOL,
-                "label": "Checkbox",
-                "default": False,
-                "required": False,
-            },
-            "key5": {"type": FieldInformation.FieldType.INT,
-                "label": "Integer",
-                "default": "",
-                "required": False,
-            },
-            "key6": {"type": FieldInformation.FieldType.DOUBLE,
-                "label": "Double",
-                "default": "",
-                "required": False,
-            },
-            "key7": {"type": FieldInformation.FieldType.STRING,
-                "label": "Text",
-                "default": "",
-                "required": False,
-            },
-            "key8": {"type": FieldInformation.FieldType.CHOICE,
-                "label": "Selection",
-                "default": "",
-                "choices": {
-                    "first choice": "first choice data",
-                    "second choice": "second choice data",
-                },
-                "required": False,
-            },
-            "key9": {"type": FieldInformation.FieldType.EDGE_COSTS,
-                "label": "Edge costs",
-                "default": "",
-                "required": False,
-            },
-            "key10": {"type": FieldInformation.FieldType.VERTEX_COSTS,
-                "label": "Vertex costs",
-                "default": "",
-                "required": False,
-            },
-        })
+        self.request.fields = {
+            "key1": graphField.GraphField("key1", "Graph", None, False),
+            "key2": vertexIDField.VertexIDField("key2", "Vertex", None, False),
+            "key3": edgeIDField.EdgeIDField("key3", "Edge", None, False),
+            "key4": boolField.BoolField("key4", "Checkbox", False, False),
+            "key5": intField.IntField("key5", "Integer", None, False),
+            "key6": doubleField.DoubleField("key6", "Double", None, False),
+            "key7": stringField.StringField("key7", "Text", "", False),
+            "key8": choiceField.ChoiceField("key8", "Selection", None, False),
+            "key9": edgeCostsField.EdgeCostsField("key9", "Edge costs", None, False),
+            "key10": vertexCostsField.VertexCostsField("key10", "Vertex costs", None, False),
+        }
+        self.request.fields["key8"].choices = {
+            "first choice": "first choice data",
+            "second choice": "second choice data",
+        }
+
+        self.widget.setParameterFields(self.request)
 
         QTest.mouseClick(self.widget.fieldWidgets["key4"]["inputWidget"], Qt.LeftButton)
         QTest.keyClicks(self.widget.fieldWidgets["key5"]["inputWidget"], "123")
@@ -112,64 +76,32 @@ class TestQgsOGDFParametersWidget(TestCase):
         self.assertEqual("second choice data", fieldsData["key8"])
 
     def test_required_fields(self):
-        self.widget.setParameterFields({
-            "key1": {
-                "type": FieldInformation.FieldType.STRING,
-                "label": "Text",
-                "default": "",
-                "required": True,
-            },
-        })
+        self.request.fields = {
+            "key1": stringField.StringField("key1", "Text", "", True),
+        }
+        self.widget.setParameterFields(self.request)
         self.assertRaises(FieldRequiredError, self.widget.getParameterFieldsData)
 
-        self.widget.setParameterFields({
-            "key1": {
-                "type": FieldInformation.FieldType.GRAPH,
-                "label": "Text",
-                "default": "",
-                "required": True,
-            },
-        })
+        self.request.fields = {
+            "key1": graphField.GraphField("key1", "Graph", None, True),
+        }
+        self.widget.setParameterFields(self.request)
         self.assertRaises(FieldRequiredError, self.widget.getParameterFieldsData)
 
     def test_default_values(self):
-        self.widget.setParameterFields({
-            "key1": {
-                "type": FieldInformation.FieldType.BOOL,
-                "label": "Checkbox",
-                "default": True,
-                "required": False,
-            },
-            "key2": {
-                "type": FieldInformation.FieldType.INT,
-                "label": "Integer",
-                "default": 123,
-                "required": False,
-            },
-            "key3": {
-                "type": FieldInformation.FieldType.DOUBLE,
-                "label": "Double",
-                "default": 1.23,
-                "required": False,
-            },
-            "key4": {
-                "type": FieldInformation.FieldType.STRING,
-                "label": "Text",
-                "default": "Test string",
-                "required": False,
-            },
-            "key5": {
-                "type": FieldInformation.FieldType.CHOICE,
-                "label": "Selection",
-                "default": "second choice",
-                "choices": {
-                    "first choice": "first choice data",
-                    "second choice": "second choice data",
-                    "third choice": "third choice data",
-                },
-                "required": False,
-            },
-        })
+        self.request.fields = {
+            "key1": boolField.BoolField("key1", "Checkbox", True, False),
+            "key2": intField.IntField("key2", "Integer", 123, False),
+            "key3": doubleField.DoubleField("key3", "Double", 1.23, False),
+            "key4": stringField.StringField("key4", "Text", "Test string", False),
+            "key5": choiceField.ChoiceField("key5", "Selection", "second choice", False),
+        }
+        self.request.fields["key5"].choices = {
+            "first choice": "first choice data",
+            "second choice": "second choice data",
+            "third choice": "third choice data",
+        }
+        self.widget.setParameterFields(self.request)
 
         fieldsData = self.widget.getParameterFieldsData()
         self.assertEqual(True, fieldsData["key1"])
