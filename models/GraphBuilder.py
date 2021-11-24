@@ -449,6 +449,11 @@ class GraphBuilder:
         vertexHash = {}
         lastVertexID = None
         for feature in self.vLayer.getFeatures():
+            if feature.id() == 0 and "cost_0" in feature.fields().names():
+                self.advancedImport = True
+                # except for edgeId, fromVertex, toVertex every field is a cost function
+                self.amountImportedCostFunctions = len(feature.fields().names()) - 3
+
             if self.task is not None:
                 if self.__options["distanceStrategy"] == "Advanced":
                     newProgress = self.task.progress() + 30/self.vLayer.featureCount()
@@ -528,6 +533,13 @@ class GraphBuilder:
                 
                 nearestPointID = self.kdTree.search_knn([self.graph.vertex(pointID).point().x(),self.graph.vertex(pointID).point().y(), counter],2)[1][0].data[2]
                 self.graph.addEdge(pointID, nearestPointID)
+
+    def __importAdvancedCosts(self):
+        self.graph.setDistanceStrategy("Advanced")
+        for feature in self.vLayer.getFeatures():
+            for i in range(self.amountImportedCostFunctions):
+                cost = feature.attribute(i + 3)
+                self.graph.setCostOfEdge(feature.id(), i, cost)
 
     def __removeIntersectingEdges(self):
         """
@@ -761,12 +773,16 @@ class GraphBuilder:
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:      
             self.__createGraphForLineGeometry()
 
+        # vector file was exported from a graph layer earlier -> import advanced costs, prevent AdvancedCostCalculations below
+        if hasattr(self, "advancedImport") and self.advancedImport:
+            self.__importAdvancedCosts()
+
         # remove edges that cross the polygons
         if self.__options["usePolygonsAsForbidden"] == True:
             self.__removeIntersectingEdges()
 
         # call AdvancedCostCalculations methods
-        if self.__options["distanceStrategy"] == "Advanced":
+        if self.__options["distanceStrategy"] == "Advanced" and not self.advancedImport:
             # create AdvancedCostCalculator object with the necessary parameters
             costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands, self.task, self.__options["createShortestPathView"])
 
