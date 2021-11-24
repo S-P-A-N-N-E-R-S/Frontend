@@ -370,6 +370,7 @@ class BenchmarkController(BaseController):
                             jobState = list(states.values())[-1]
                             jobId = jobState.jobId
                             job = statusManager.getJobState(jobId)
+                            
                             status = self.STATUS_TEXTS.get(job.status, "status not supported")
 
                     except (NetworkClientError, ParseError) as error:
@@ -379,7 +380,7 @@ class BenchmarkController(BaseController):
                         response = client.getJobResult(job.jobId)
                         benchmarkDO.addServerResponse(response)
                         benchmarkDO.setResponseGraph(response.getGraph())
-
+                        benchmarkDO.setRuntime(statusManager.getJobState(jobId).ogdfRuntime)
                 except (NetworkClientError, ParseError) as error:
                     return "Network Error: " + str(error)
 
