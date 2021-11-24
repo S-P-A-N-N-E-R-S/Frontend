@@ -832,6 +832,12 @@ class QgsGraphLayer(QgsPluginLayer):
     def changeRenderedCostFunction(self, idx):
         self.mRenderedCostFunction = idx
 
+    def nextRenderedCostFunction(self):
+        self.mRenderedCostFunction = (self.mRenderedCostFunction + 1) % self.mGraph.amountOfEdgeCostFunctions()
+
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
+
     def activateUniqueName(self):
         # sets the layers name to a combination of graph information
         if self.name() == "RandomGraphLayer" or self.name() == "NewGraphLayer":
@@ -949,6 +955,9 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
         # spinbox to choose which advanced values to render
         if layer.mGraph.distanceStrategy == "Advanced":
+            costFunctionBox = QGroupBox()
+            costFunctionLayout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+
             costFunctionLabel = QLabel(tr("Choose Cost Function"))
             costFunctionLabel.setVisible(True)
             costFunctionSpinBox = QSpinBox()
@@ -956,8 +965,17 @@ class QgsGraphLayerType(QgsPluginLayerType):
             costFunctionSpinBox.setMaximum(layer.mGraph.amountOfEdgeCostFunctions() - 1)
             costFunctionSpinBox.valueChanged.connect(layer.changeRenderedCostFunction)
             costFunctionSpinBox.setVisible(True)
-            layout.addWidget(costFunctionLabel)
-            layout.addWidget(costFunctionSpinBox)
+            costFunctionLayout.addWidget(costFunctionLabel)
+            costFunctionLayout.addWidget(costFunctionSpinBox)
+            
+            nextButton = QPushButton(tr("Next"))
+            nextButton.setMaximumWidth(50)
+            nextButton.clicked.connect(layer.nextRenderedCostFunction)
+            nextButton.clicked.connect(lambda: costFunctionSpinBox.setValue(layer.mRenderedCostFunction))
+            costFunctionLayout.addWidget(nextButton)
+            
+            costFunctionBox.setLayout(costFunctionLayout)
+            layout.addWidget(costFunctionBox)
 
 
         # button to toggle drawing of arrowHead to show edge direction
