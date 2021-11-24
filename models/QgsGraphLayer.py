@@ -834,7 +834,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def activateUniqueName(self):
         # sets the layers name to a combination of graph information
-        if self.name() == "RandomGraphLayer":
+        if self.name() == "RandomGraphLayer" or self.name() == "NewGraphLayer":
             constructName = self.mGraph.connectionType() if self.mGraph.connectionType() != "Nearest neighbor" else "NN"
             constructName += "_" + self.mGraph.distanceStrategy + "_" + self.mGraph.edgeDirection
 
