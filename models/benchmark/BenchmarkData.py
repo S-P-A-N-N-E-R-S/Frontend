@@ -23,6 +23,10 @@ class BenchmarkData():
         self.parameters["graph"] = self.graph
         # dict holds field labels as keys and the the field keys as keys
         self.parameterKeyHash = {}
+        self.runtimes = []
+
+    def setRuntime(self, runtime):
+        self.runtimes.append(runtime)
 
     def setParameterField(self, key, value):
         self.parameters[key] = value
@@ -45,18 +49,28 @@ class BenchmarkData():
     def getNumberOfEdgesRequest(self):
         return self.graph.edgeCount()
 
+    def getAvgRuntime(self):
+        values = []
+        for time in self.runtimes:
+            values.append(time)
+        return mean(values)
+        
+    def getAllRuntimes(self):
+        values = []
+        for time in self.runtimes:
+            values.append(time)
+        return values    
+
     def getAvgNumberOfEdgesResponse(self):
         values = []
         for i in range(len(self.responseGraphs)):
             values.append(self.responseGraphs[i].edgeCount())
-
         return mean(values)
 
     def getAllNumberOfEdgesResponse(self):
         values = []
         for i in range(len(self.responseGraphs)):
             values.append(self.responseGraphs[i].edgeCount())
-
         return values
 
     def getNumberOfVerticesRequest(self):

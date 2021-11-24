@@ -1,4 +1,4 @@
-from . import parserManager
+from . import parserManager, statusManager
 from .exceptions import ParseError, ServerError
 from .protocol.build import container_pb2, meta_pb2
 
@@ -49,6 +49,9 @@ def parseProtoBuf(protoBufString, responseType, handlerType=None):
     protoBuf.ParseFromString(protoBufString)
 
     if protoBuf.status == container_pb2.ResponseContainer.StatusCode.OK:
+
+        if protoBuf.HasField("statusData"):
+            statusManager.insertJobState(protoBuf.statusData)
 
         if responseType == meta_pb2.RequestType.GENERIC:
             if not handlerType:
