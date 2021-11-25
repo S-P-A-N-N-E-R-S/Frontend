@@ -43,22 +43,19 @@ class BenchmarkData():
     def setResponseGraph(self, graph):
         self.responseGraphs.append(graph)
 
-    def getRuntime(self):
-        return 0
-
     def getNumberOfEdgesRequest(self):
         return self.graph.edgeCount()
 
     def getAvgRuntime(self):
         values = []
         for time in self.runtimes:
-            values.append(time)
+            values.append(time/1000000)
         return mean(values)
         
     def getAllRuntimes(self):
         values = []
         for time in self.runtimes:
-            values.append(time)
+            values.append(time/1000000)
         return values    
 
     def getAvgNumberOfEdgesResponse(self):
