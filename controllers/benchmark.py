@@ -277,7 +277,6 @@ class BenchmarkController(BaseController):
                     f.write("Algorithm,Name of Graph")
                     allParameters = []
                     for benchmarkDO in self.benchmarkDOs:
-
                         for key in benchmarkDO.parameters.keys():
                             if not key in allParameters and key != "graph":
                                 allParameters.append(key)
@@ -291,11 +290,14 @@ class BenchmarkController(BaseController):
                         f.write(benchmarkDO.algorithm +  "," + benchmarkDO.graphName)
                         for paraKey in allParameters:
                             if paraKey in benchmarkDO.parameters.keys():
-                                f.write("," + str(benchmarkDO.parameters[paraKey]))
+                                paraString = str(benchmarkDO.parameters[paraKey])
+                                if "," in paraString and "(" in paraString:
+                                    paraString = paraString.split(",")[0].replace("(","").replace("'","")                            
+                                f.write("," + paraString)
                             else:
                                 f.write(",?")
                         allNumberOfEdgesResponse = benchmarkDO.getAllNumberOfEdgesResponse()
-                        f.write("," + str(benchmarkDO.getRuntime()))
+                        f.write("," + str(benchmarkDO.getAvgRuntime()))
                         f.write("," + str(allNumberOfEdgesResponse).replace("[","").replace("]","").replace(",","/").replace(" ",""))
                         f.write("," + str(benchmarkDO.getAllNumberOfVerticesResponse()).replace("[","").replace("]","").replace(",","/").replace(" ",""))
                         edgeCountDiff = []
