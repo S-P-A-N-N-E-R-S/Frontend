@@ -73,6 +73,11 @@ class QgsGraphMapTool(QgsMapTool):
 
         # move vertex
         else:
+            # prevent moving vertices if costs are advanced since they can't be adapted yet
+            if self.advancedCosts:
+                iface.messageBar().pushMessage("Error", self.tr("Moving vertices is disabled for advanced costs"), level=Qgis.Critical)
+                return
+            
             oldPos = self.mLayer.mGraph.vertex(self.firstFoundVertexIdx).point()
             
             vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), self.firstFoundVertexIdx, oldPos, "Move", point)
