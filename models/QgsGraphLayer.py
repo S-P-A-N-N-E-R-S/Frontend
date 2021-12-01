@@ -861,6 +861,17 @@ class QgsGraphLayerType(QgsPluginLayerType):
     """
     When loading a project containing a QgsGraphLayer, a factory class is needed.
     """
+    TOOLTIPTEXT = tr("List of Options") + ":"\
+                                +"\n " + tr("LeftClick: Add Vertex without Edges")\
+                                +"\n " + tr("CTRL+LeftClick: Add Vertex with Edges")\
+                                +"\n " + tr("RightClick: Select Vertex")\
+                                +"\n " + tr(" 1) Select Vertex")\
+                                +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
+                                +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
+                                +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
+                                +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
+                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection")
+
     def __init__(self):
         super().__init__(QgsGraphLayer.LAYER_TYPE)
 
@@ -1035,16 +1046,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         editButton = QPushButton(tr("Toggle Editing"))
         editButton.clicked.connect(layer.toggleEdit)
         editButton.setVisible(True)
-        editButton.setToolTip(tr("List of Options") + ":"\
-                                +"\n " + tr("LeftClick: Add Vertex without Edges")\
-                                +"\n " + tr("CTRL+LeftClick: Add Vertex with Edges")\
-                                +"\n " + tr("RightClick: Select Vertex")\
-                                +"\n " + tr(" 1) Select Vertex")\
-                                +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
-                                +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
-                                +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
-                                +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
-                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection"))
+        editButton.setToolTip(self.TOOLTIPTEXT)
         editBoxLayout.addWidget(editButton)
 
         def __toolTip():
@@ -1052,16 +1054,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
             toolTipWin = QDialog(iface.mainWindow())
             toolTipWin.setVisible(True)
             toolTipLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
-            toolTipLabel = QLabel(tr("List of Options") + ":"\
-                                +"\n " + tr("LeftClick: Add Vertex without Edges")\
-                                +"\n " + tr("CTRL+LeftClick: Add Vertex with Edges")\
-                                +"\n " + tr("RightClick: Select Vertex")\
-                                +"\n " + tr(" 1) Select Vertex")\
-                                +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
-                                +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
-                                +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
-                                +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
-                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection"))
+            toolTipLabel = QLabel(self.TOOLTIPTEXT)
             toolTipLayout.addWidget(toolTipLabel)
             toolTipWin.setLayout(toolTipLayout)
             toolTipWin.adjustSize()
