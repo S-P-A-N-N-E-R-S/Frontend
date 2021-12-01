@@ -1016,7 +1016,7 @@ class ExtGraph(QObject):
 
                 if not nodeCoordinatesGiven:
                     # add vertex with random coordinates and correct ID
-                    currNodeIdx = self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, currNodeID))
+                    currNodeIdx = self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884)), -1, currNodeID)
 
             elif 'x="' in line:
                 xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
