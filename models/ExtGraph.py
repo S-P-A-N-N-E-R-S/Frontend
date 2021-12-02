@@ -930,7 +930,7 @@ class ExtGraph(QObject):
             graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
             graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
             graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
-            graphString += '" distanceunit="' + str(self.distance[1]) + '"' + ((' seed="' + str(self.randomSeed)) if self.randomSeed else '')
+            graphString += '" distanceunit="' + str(self.distance[1]) + (('" seed="' + str(self.randomSeed)) if self.randomSeed else '')
             graphString += (('" crs="' + self.crs.authid() + '"') if self.crs else '') + '>\n'
             file.write(graphString)
 
