@@ -926,7 +926,6 @@ class ExtGraph(QObject):
                 '\t<key for="node" attr.name="nodefill" attr.type="int" id="nodefill" />\n',
                 '\t<key for="node" attr.name="nodefillbg" attr.type="string" id="nodefillbg" />\n',
                 '\t<key for="node" attr.name="nodetype" attr.type="int" id="nodetype" />\n',
-                '\t<key for="edge" attr.name="bends" attr.type="string" id="bends" />\n',
                 '\t<key for="edge" attr.name="edgetype" attr.type="string" id="edgetype" />\n',
                 '\t<key for="edge" attr.name="edgestroke" attr.type="string" id="edgestroke" />\n',
                 '\t<key for="edge" attr.name="edgestroketype" attr.type="int" id="edgestroketype" />\n',
