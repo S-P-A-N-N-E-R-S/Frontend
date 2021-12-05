@@ -910,18 +910,38 @@ class ExtGraph(QObject):
                 '\txmlns:y="http://www.yworks.com/xml/graphml"\n',
                 '\txsi:schemaLocation="http://graphml.graphdrawing.org/xmlns\n',
                 '\t http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">\n',
-                '\t<key for="node" id="d1" yfiles.type="nodegraphics"/>\n']
+                '\t<key for="node" attr.name="label" attr.type="string" id="label" />\n',
+                '\t<key for="node" attr.name="x" attr.type="double" id="x" />\n',
+                '\t<key for="node" attr.name="y" attr.type="double" id="y" />\n',
+                '\t<key for="node" attr.name="size" attr.type="double" id="size" />\n',
+                '\t<key for="node" attr.name="r" attr.type="int" id="r" />\n',
+                '\t<key for="node" attr.name="g" attr.type="int" id="g" />\n',
+                '\t<key for="node" attr.name="b" attr.type="int" id="b" />\n',
+                '\t<key for="node" attr.name="width" attr.type="double" id="width" />\n',
+                '\t<key for="node" attr.name="height" attr.type="double" id="height" />\n',
+                '\t<key for="node" attr.name="shape" attr.type="string" id="shape" />\n',
+                '\t<key for="node" attr.name="nodestroke" attr.type="string" id="nodestroke" />\n',
+                '\t<key for="node" attr.name="nodestroketype" attr.type="int" id="nodestroketype" />\n',
+                '\t<key for="node" attr.name="nodestrokewidth" attr.type="double" id="nodestrokewidth" />\n',
+                '\t<key for="node" attr.name="nodefill" attr.type="int" id="nodefill" />\n',
+                '\t<key for="node" attr.name="nodefillbg" attr.type="string" id="nodefillbg" />\n',
+                '\t<key for="node" attr.name="nodetype" attr.type="int" id="nodetype" />\n',
+                '\t<key for="edge" attr.name="bends" attr.type="string" id="bends" />\n',
+                '\t<key for="edge" attr.name="edgetype" attr.type="string" id="edgetype" />\n',
+                '\t<key for="edge" attr.name="edgestroke" attr.type="string" id="edgestroke" />\n',
+                '\t<key for="edge" attr.name="edgestroketype" attr.type="int" id="edgestroketype" />\n',
+                '\t<key for="edge" attr.name="edgestrokewidth" attr.type="double" id="edgestrokewidth" />\n']
 
             file.writelines(header)
 
             if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
-                clusterKey = '\t<key id="cluster" for="node" attr.name="clusterid" attr.type="int"/>\n'
+                clusterKey = '\t<key for="node" attr.name="clusterid" attr.type="int" id="clusterid" />\n'
                 file.write(clusterKey)
 
             if self.distanceStrategy == "Advanced":
                 advancedKeys = ''
                 for costIdx in range(self.amountOfEdgeCostFunctions()):
-                    advancedKeys += '\t<key id="c_' + str(costIdx) + '" for="edge" attr.name="weight' + str(costIdx) + '" attr.type="double"/>\n'
+                    advancedKeys += '\t<key for="edge" attr.name="weight_' + str(costIdx) + ' attr.type="double id="c_' + str(costIdx) + '" />\n'
                 file.write(advancedKeys)
 
             edgeDefault = self.edgeDirection.lower()
@@ -934,30 +954,52 @@ class ExtGraph(QObject):
             graphString += (('" crs="' + self.crs.authid() + '"') if self.crs else '') + '>\n'
             file.write(graphString)
 
+            vertexKeyAttributes = ['\t\t\t<data key="width">20</data>\n',
+                                  '\t\t\t<data key="height">20</data>\n',
+                                  '\t\t\t<data key="size">20</data>\n',
+                                  '\t\t\t<data key="shape">rect</data>\n',
+                                  '\t\t\t<data key="r">255</data>\n',
+                                  '\t\t\t<data key="g">255</data>\n',
+                                  '\t\t\t<data key="b">255</data>\n',
+                                  '\t\t\t<data key="nodefill">1</data>\n',
+                                  '\t\t\t<data key="nodefillbg">#000000</data>\n',
+                                  '\t\t\t<data key="nodestroke">#000000</data>\n',
+                                  '\t\t\t<data key="nodestroketype">1</data>\n',
+                                  '\t\t\t<data key="nodestrokewidth">1</data>\n',
+                                  '\t\t\t<data key="nodetype">0</data>\n']
+
             for idx in range(self.mVertexCount):
                 vertex = self.vertex(idx)
-                nodeLine = '\t\t<node id="' + str(vertex.id()) + '"/>\n'
+                nodeLine = '\t\t<node id="' + str(vertex.id()) + '" >\n'
                 file.write(nodeLine)
-                file.write('\t\t\t<data key="d1">\n')
-                file.write('\t\t\t\t<y:ShapeNode>\n')
-                coordinates = '\t\t\t\t\t<y:Geometry height="30.0" width="30.0" x="' + str(vertex.point().x()) + '" y="' + str(vertex.point().y()) + '"/>\n'
-                file.write(coordinates)
-                file.write('\t\t\t\t</y:ShapeNode>\n')
-                file.write('\t\t\t</data>\n')
+                file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
+                file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')
+                file.writelines(vertexKeyAttributes)
 
                 if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
-                    file.write('\t\t\t<data key="cluster">' + str(vertex.clusterID()) + '</data>\n')
+                    file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n')
+
+                file.write('\t\t</node>\n')
+
+            # TODO: 'bends'
+            edgeKeyAttributes = ['\t\t\t<data key="edgetype">association</data>\n',
+                                '\t\t\t<data key="edgestroke">#000000</data>\n',
+                                '\t\t\t<data key="edgestroketype">1</data>\n',
+                                '\t\t\t<data key="edgestrokewidth">1</data>\n']
 
             for idx in range(self.mEdgeCount):
                 edge = self.edge(idx)
-                edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '"/>\n'
+                edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '" >\n'
                 file.write(edgeLine)
+                file.writelines(edgeKeyAttributes)
 
                 if self.distanceStrategy == "Advanced":
                     edgeData = ''
                     for costIdx in range(self.amountOfEdgeCostFunctions()):
                         edgeData += '\t\t\t<data key="c_' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
                     file.write(edgeData)
+
+                file.write('\t\t</edge>\n')
 
             file.write("\t</graph>\n")
             file.write("</graphml>")
@@ -970,6 +1012,7 @@ class ExtGraph(QObject):
         """
         with open(path, "r") as file:
             lines = file.readlines()
+        
         nodeCoordinatesGiven = False
         edgeTypeDirection = "Directed"
         currNodeID = 0
