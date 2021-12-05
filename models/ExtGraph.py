@@ -970,7 +970,7 @@ class ExtGraph(QObject):
 
             for idx in range(self.mVertexCount):
                 vertex = self.vertex(idx)
-                nodeLine = '\t\t<node id="' + str(vertex.id()) + '" >\n'
+                nodeLine = '\t\t<node id="' + str(vertex.id()) + '">\n'
                 file.write(nodeLine)
                 file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
                 file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')
@@ -989,7 +989,7 @@ class ExtGraph(QObject):
 
             for idx in range(self.mEdgeCount):
                 edge = self.edge(idx)
-                edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '" >\n'
+                edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '">\n'
                 file.write(edgeLine)
                 file.writelines(edgeKeyAttributes)
 
@@ -1046,8 +1046,8 @@ class ExtGraph(QObject):
 
             if 'crs' in line:
                 self.crs = QgsCoordinateReferenceSystem(line.split('crs="')[1].split('"')[0])
-
-            if 'x="' in line and 'y="' in line:
+            
+            if 'key="x"' in line:
                 nodeCoordinatesGiven = True
                 break
 
@@ -1061,13 +1061,6 @@ class ExtGraph(QObject):
                     # add vertex with random coordinates and correct ID
                     currNodeIdx = self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884)), -1, currNodeID)
 
-            elif 'x="' in line:
-                xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])
-                yValue = float(line.split('y="')[1].split(' ')[0].split('"')[0])
-                
-                # add vertex with correct coordinates and ID
-                currNodeIdx = self.addVertex(QgsPointXY(xValue, yValue), -1, currNodeID)
-
             elif '<edge' in line:
                 fromVertex = int(line.split('source="')[1].split('"')[0])
                 toVertex = int(line.split('target="')[1].split('"')[0])
@@ -1076,7 +1069,16 @@ class ExtGraph(QObject):
                 currEdgeIdx = self.addEdge(fromVertex, toVertex)
 
             elif '<data' in line:
-                if 'key="cluster"' in line:
+                if 'key="x"' in line:
+                    xValue = float(line.split('<data key="x">')[1].split('<')[0])
+
+                elif 'key="y"' in line:
+                    yValue = float(line.split('<data key="y">')[1].split('<')[0])
+
+                    # add vertex with correct coordinates and ID
+                    self.addVertex(QgsPointXY(xValue, yValue), -1, currNodeID)
+
+                elif 'key="cluster"' in line:
                     self.vertex(currNodeIdx).setClusterID(int(line.split('<data key="cluster">')[1].split('<')[0]))
                 
                 elif 'key="c_' in line:
