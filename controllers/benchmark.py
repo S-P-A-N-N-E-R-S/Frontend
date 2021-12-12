@@ -283,7 +283,7 @@ class BenchmarkController(BaseController):
                     for paraKey in allParameters:
                         f.write("," + str(paraKey))
 
-                    f.write(",Runtime,Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness,Lightness\n")
+                    f.write(",Runtime(s),Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness,Lightness\n")
 
                     for benchmarkDO in self.benchmarkDOs:
                         # write all benchmark information into file

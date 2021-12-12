@@ -1,6 +1,12 @@
+import time
 from statistics import mean
 from collections import OrderedDict
-
+from ...network.client import Client
+from ...network import parserManager
+from ...network.exceptions import NetworkClientError, ParseError
+from ... import helperFunctions as helper
+from ...network import statusManager
+from ...network.protocol.build.status_pb2 import StatusType
 
 class BenchmarkDataObjWrapper():
     """
@@ -23,6 +29,15 @@ class BenchmarkDataObjWrapper():
         for label in self.parameterKeyHash:
             parameterKey = self.parameterKeyHash[label]
             self.labelHash[parameterKey] = label
+            
+        self.STATUS_TEXTS = {
+            StatusType.UNKNOWN_STATUS: "unknown",
+            StatusType.WAITING: "waiting",
+            StatusType.RUNNING: "running",
+            StatusType.SUCCESS: "success",
+            StatusType.FAILED: "failed",
+            StatusType.ABORTED: "aborted",
+        }    
 
     def getAnalysisValue(self, analysis, dataObjs, average):
         """
@@ -38,7 +53,7 @@ class BenchmarkDataObjWrapper():
         values = []
         for dataObj in dataObjs:
             originalGraph = dataObj.getGraph()
-            if analysis == "Runtime":
+            if analysis == "Runtime(s)":
                 if average:
                     values.append(dataObj.getAvgRuntime())
                 else:
@@ -84,16 +99,70 @@ class BenchmarkDataObjWrapper():
                 else:
                     allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
                     for edgeCount in allEdgeCounts:
-                        values.append(round(edgeCount / originalGraph.edgeCount(),3))
+                        values.append(round(edgeCount / originalGraph.edgeCount(), 3))
 
             elif analysis == "Lightness":
-                print("TODO")
-                values.append(0)
-
+                lightness = self._getLightness(originalGraph, dataObj.getParameters()['edgeCosts'])                      
+                if average:
+                    values.append(dataObj.getAvgNumberOfEdgesResponse() / lightness)
+                else:
+                    allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
+                    for edgeCount in allEdgeCounts:
+                        values.append(round(edgeCount / lightness, 3))              
         if average:
             return mean(values)
         else:
             return values
+
+    def _getLightness(self, graph, costFunction = 0):
+        request = parserManager.getRequestParser("other/mst")
+        parameterFieldsData = {}
+        parameterFieldsData['graph'] = graph
+        parameterFieldsData['edgeCosts'] = 0
+        parameterFieldsData['vertexCoordinates'] = '' 
+        for key in parameterFieldsData:
+            fieldData = parameterFieldsData[key]
+            request.setFieldData(key, fieldData) 
+        request.jobName = "mst_benchmark" 
+        try:
+            with Client(helper.getHost(), helper.getPort()) as client:
+                client.sendJobRequest(request)
+        except (NetworkClientError, ParseError) as error:
+            pass
+         
+        status = "waiting"
+        counter = 0
+        while status != "success":
+            if status == "failed":
+                return -1        
+            try:
+                with Client(helper.getHost(), helper.getPort()) as client:
+                    if counter == 0:
+                        time.sleep(0.25)
+                        counter+=1
+                    else:
+                        time.sleep(1)  
+                    states = client.getJobStatus()
+                    jobState = list(states.values())[-1]
+                    jobId = jobState.jobId
+                    job = statusManager.getJobState(jobId)                
+                    status = self.STATUS_TEXTS.get(job.status, "status not supported")
+
+            except (NetworkClientError, ParseError) as error:
+                return -1
+        
+        try:
+            with Client(helper.getHost(), helper.getPort()) as client:
+                response = client.getJobResult(job.jobId)             
+                mst = response.getGraph()
+                lightness = 0
+                for edgeID in range(mst.edgeCount()):
+                    lightness += mst.costOfEdge(edgeID)
+                return lightness    
+                
+        except (NetworkClientError, ParseError) as error:
+            return -1
+          
 
     def firstPartition(self, partitionType, parameterKey = None):
         """

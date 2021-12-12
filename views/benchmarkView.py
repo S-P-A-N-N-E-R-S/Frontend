@@ -107,7 +107,7 @@ class BenchmarkView(BaseView):
                 requests.append(request.getFieldInfo())
 
         # fill widget
-        item = QListWidgetItem("--------------------Parameters Selection 1--------------------")
+        item = QListWidgetItem("--------------------Colour Categorisation--------------------")
         listWidgetBenchmark.addItem(item)
 
         item = QListWidgetItem("Graphs")
@@ -132,7 +132,7 @@ class BenchmarkView(BaseView):
                     item.setCheckState(Qt.Unchecked)
                     listWidgetBenchmark.addItem(item)
 
-        item = QListWidgetItem("--------------------Parameters Selection 2--------------------")
+        item = QListWidgetItem("--------------------x-Axis Categorisation--------------------")
         listWidgetBenchmark.addItem(item)
 
         item = QListWidgetItem("Graphs")
@@ -174,7 +174,7 @@ class BenchmarkView(BaseView):
 
         item = QListWidgetItem()
         listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Runtime"))
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Runtime(s)"))
 
         item = QListWidgetItem()
         listWidgetBenchmark.addItem(item)
