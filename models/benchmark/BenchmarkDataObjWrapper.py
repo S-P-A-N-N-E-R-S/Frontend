@@ -104,9 +104,9 @@ class BenchmarkDataObjWrapper():
             elif analysis == "Lightness":
                 lightness = self._getLightness(originalGraph, dataObj.getParameters()['edgeCosts'])                      
                 if average:
-                    values.append(dataObj.getAvgNumberOfEdgesResponse() / lightness)
+                    values.append(dataObj.getAvgEdgeWeightResponse() / lightness)
                 else:
-                    allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
+                    allEdgeCounts = dataObj.getAllEdgeWeightResponse()
                     for edgeCount in allEdgeCounts:
                         values.append(round(edgeCount / lightness, 3))              
         if average:

@@ -350,7 +350,7 @@ class BenchmarkView(BaseView):
             benchmarkSelWidget = grid.itemAtPosition(c,0).widget()
             oneSelection = []
             for i in range(benchmarkSelWidget.count()):
-                if "Selection 2" in benchmarkSelWidget.item(i).text():
+                if "x-Axis" in benchmarkSelWidget.item(i).text():
                     break
                 if benchmarkSelWidget.item(i).checkState() == Qt.Checked:
                     oneSelection.append(benchmarkSelWidget.item(i).text())
@@ -375,7 +375,7 @@ class BenchmarkView(BaseView):
             for i in range(benchmarkSelWidget.count()):
                 if "Analysis" in benchmarkSelWidget.item(i).text():
                     break
-                if "Selection 2" in benchmarkSelWidget.item(i).text():
+                if "x-Axis" in benchmarkSelWidget.item(i).text():
                     sectionFound = True
                 if benchmarkSelWidget.item(i).checkState() == Qt.Checked and sectionFound:
                     oneSelection.append(benchmarkSelWidget.item(i).text())
