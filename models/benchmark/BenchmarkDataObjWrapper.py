@@ -115,7 +115,7 @@ class BenchmarkDataObjWrapper():
             return values
 
     def _getLightness(self, graph, costFunction = 0):
-        request = parserManager.getRequestParser("other/mst")
+        request = parserManager.getRequestParser("Minimum Spanning Trees/Kruskals Algorithm")
         parameterFieldsData = {}
         parameterFieldsData['graph'] = graph
         parameterFieldsData['edgeCosts'] = 0
