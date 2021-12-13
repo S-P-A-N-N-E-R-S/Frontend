@@ -42,7 +42,7 @@ class GraphBuilder:
     by setting options and layers before calling the makeGraph method.
 
     Options:
-        - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN, DistanceNN
+        - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN, DistanceNN, LineLayerBased
         - neighborNumber: int
         - distance: (float, QgsUnitTypes::DistanceUnit) (euclidean distance)
         - nnAllowDoubleEdges": True, False
@@ -65,6 +65,7 @@ class GraphBuilder:
         """
         self.graph = ExtGraph()
         self.vLayer = QgsVectorLayer()
+        self.connectionLineLayer = QgsVectorLayer()
         self.rLayers = []
         self.forbiddenAreas = QgsVectorLayer()       
         self.additionalPointLayer = QgsVectorLayer()
@@ -161,6 +162,12 @@ class GraphBuilder:
         self.rasterBands.append(band)
         self.rLayers.append(rasterLayer)
 
+    def setLineLayer(self, layer):
+        if layer.geometryType() != QgsWkbTypes.LineGeometry:
+            raise TypeError("Not a line layer")
+        
+        self.connectionLineLayer = layer
+
     def addCostFunction(self, function):
         """
         Set the cost function for an advanced distance strategy. Returns if the
@@ -250,7 +257,50 @@ class GraphBuilder:
             if self.__options["distanceStrategy"] == "Advanced":               
                 self.graph.pointsToFeatureHash[geom.asPoint().toString()] = feat
             self.graph.addVertex(geom.asPoint())
-            
+     
+    def __createLineBasedConnections(self):                            
+        if self.__options["distance"][0] == 0:        
+            result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": self.connectionLineLayer, "PREFIX": "new_", "OUTPUT": "memory:"})    
+        else:
+            result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": self.connectionLineLayer, "PREFIX": "new_", "MAX_DISTANCE": self.__options["distance"], "OUTPUT": "memory:"})
+        joinedLayer = result["OUTPUT"]      
+          
+        newFieldsAdded = []
+        for field in joinedLayer.fields():
+            if field.name().startswith("new_"):
+                newFieldsAdded.append(field.name())
+        
+        graphVertexCounter = -1
+        for currFeat in joinedLayer.getFeatures():
+            if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
+                graphVertexCounter+=1           
+            currVertexPoint = self.graph.vertex(graphVertexCounter).point()
+            verticesFound = []
+            graphVertexCounterMatch = -1                                       
+            for tryFeat in joinedLayer.getFeatures():
+                if tryFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
+                    graphVertexCounterMatch+=1              
+                if tryFeat.id() > currFeat.id() and self.__checkLinesMatch(currFeat, tryFeat, newFieldsAdded):
+                    verticesFound.append(graphVertexCounterMatch)
+                                          
+            # find nearest of the found vertices
+            minimum = sys.maxsize
+            nearestVertex = None
+            for vertexID in verticesFound:
+                foundVertexPoint = self.graph.vertex(vertexID).point()
+                euclDist = math.sqrt(pow(currVertexPoint.x()-foundVertexPoint.x(),2) + pow(currVertexPoint.y()-foundVertexPoint.y(),2))
+                if euclDist < minimum:
+                    nearestVertex = vertexID
+                    minimum = euclDist
+            if nearestVertex != None:
+                self.graph.addEdge(graphVertexCounter, nearestVertex)            
+    
+    def __checkLinesMatch(self, currFeat, tryFeat, newFieldsAdded):
+        for newFieldName in newFieldsAdded:
+            if currFeat[newFieldName] != tryFeat[newFieldName]:
+                return False
+        return True
+          
     def __createComplete(self):
         """
         Create an edge for every pair of vertices
@@ -756,7 +806,9 @@ class GraphBuilder:
                 self.__createCluster()
             elif self.__options["connectionType"] == "Random":
                 self.__createRandomConnections()     
-                          
+            elif self.__options["connectionType"] == "LineLayerBased":
+                self.__createLineBasedConnections()      
+                                           
         # user gives lines as input
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:      
             self.__createGraphForLineGeometry()

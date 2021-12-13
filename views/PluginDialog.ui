@@ -171,7 +171,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="create_from_resource">
              <property name="sizePolicy">
@@ -356,7 +356,7 @@ QListWidget::item::selected {
                          <x>0</x>
                          <y>0</y>
                          <width>846</width>
-                         <height>1136</height>
+                         <height>1190</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -773,6 +773,16 @@ QListWidget::item::selected {
                                   <number>5</number>
                                  </property>
                                 </widget>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="create_graph_line_layer_label">
+                                 <property name="text">
+                                  <string>Line layer for topology based connection</string>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QgsMapLayerComboBox" name="create_graph_line_layer_input"/>
                                </item>
                                <item>
                                 <widget class="QLabel" name="label">
@@ -1356,8 +1366,8 @@ QListWidget::item::selected {
                          <rect>
                           <x>0</x>
                           <y>0</y>
-                          <width>600</width>
-                          <height>776</height>
+                          <width>186</width>
+                          <height>153</height>
                          </rect>
                         </property>
                         <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0">
@@ -1621,7 +1631,7 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>884</width>
+                   <width>784</width>
                    <height>233</height>
                   </rect>
                  </property>
@@ -1828,8 +1838,8 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>494</width>
-                   <height>234</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>

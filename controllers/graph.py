@@ -56,9 +56,10 @@ class GraphController(BaseController):
         self.view.addConnectionType(self.tr("ClusterNN"), "ClusterNN")
         self.view.addConnectionType(self.tr("DistanceNN"), "DistanceNN")
         self.view.addConnectionType(self.tr("Random"), "Random")
+        self.view.addConnectionType(self.tr("LineLayerBased"), "LineLayerBased")
 
-        self.view.addEdgeDirection(self.tr("Directed"), "Directed")
         self.view.addEdgeDirection(self.tr("Undirected"), "Undirected")
+        self.view.addEdgeDirection(self.tr("Directed"), "Directed")
 
         self.view.addDistanceStrategy(self.tr("Euclidean"), "Euclidean")
         self.view.addDistanceStrategy(self.tr("Manhattan"), "Manhattan")
@@ -143,6 +144,8 @@ class GraphController(BaseController):
         builder.setOption("distanceStrategy", self.view.getDistanceStrategy()[1])
         builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
         builder.setOption("randomConnectionNumber", self.view.getRandomEdgesNumber())
+
+        builder.setLineLayer(self.view.getLineLayerForConnection())
 
         # set builder options for random graph
         if self.view.isRandom():
