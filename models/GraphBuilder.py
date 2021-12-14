@@ -93,7 +93,8 @@ class GraphBuilder:
             "usePolygonsInCostFunction": False,
             "useAdditionalPoints": False,
             "createShortestPathView": False,
-            "randomConnectionNumber": 100
+            "randomConnectionNumber": 100,
+            "onlyCheckConsecutive": False
         }
 
         self.__randomOptions = {
@@ -258,17 +259,25 @@ class GraphBuilder:
                 self.graph.pointsToFeatureHash[geom.asPoint().toString()] = feat
             self.graph.addVertex(geom.asPoint())
      
-    def __createLineBasedConnections(self):                            
+    def __createLineBasedConnections(self):                        
         if self.__options["distance"][0] == 0:        
             result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": self.connectionLineLayer, "PREFIX": "new_", "OUTPUT": "memory:"})    
         else:
-            result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": self.connectionLineLayer, "PREFIX": "new_", "MAX_DISTANCE": self.__options["distance"], "OUTPUT": "memory:"})
+            if self.__options["createRandomGraph"] == True:
+                crsUnitRead = QgsCoordinateReferenceSystem("EPSG:4326")                
+            else:
+                crsUnitRead = self.vLayer.crs()            
+            distConverted = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                     
+            result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": self.connectionLineLayer, "PREFIX": "new_", "MAX_DISTANCE": distConverted, "OUTPUT": "memory:"})
         joinedLayer = result["OUTPUT"]      
           
         newFieldsAdded = []
         for field in joinedLayer.fields():
             if field.name().startswith("new_"):
                 newFieldsAdded.append(field.name())
+        for feat in joinedLayer.getFeatures():
+            if feat["n"] == None:
+                return     
         
         graphVertexCounter = -1
         for currFeat in joinedLayer.getFeatures():
@@ -279,21 +288,47 @@ class GraphBuilder:
             graphVertexCounterMatch = -1                                       
             for tryFeat in joinedLayer.getFeatures():
                 if tryFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
-                    graphVertexCounterMatch+=1              
-                if tryFeat.id() > currFeat.id() and self.__checkLinesMatch(currFeat, tryFeat, newFieldsAdded):
-                    verticesFound.append(graphVertexCounterMatch)
-                                          
+                    graphVertexCounterMatch+=1                   
+                if self.__options["onlyCheckConsecutive"]:                         
+                    if tryFeat.id() > currFeat.id() and self.__checkLinesMatch(currFeat, tryFeat, newFieldsAdded):
+                        verticesFound.append(graphVertexCounterMatch)
+                else:
+                    if tryFeat.id() != currFeat.id() and self.__checkLinesMatch(currFeat, tryFeat, newFieldsAdded):
+                        verticesFound.append(graphVertexCounterMatch)                          
+            
             # find nearest of the found vertices
             minimum = sys.maxsize
             nearestVertex = None
+            totalNearestVertex = None
+            totalMinimum = sys.maxsize
             for vertexID in verticesFound:
                 foundVertexPoint = self.graph.vertex(vertexID).point()
                 euclDist = math.sqrt(pow(currVertexPoint.x()-foundVertexPoint.x(),2) + pow(currVertexPoint.y()-foundVertexPoint.y(),2))
-                if euclDist < minimum:
-                    nearestVertex = vertexID
-                    minimum = euclDist
-            if nearestVertex != None:
+                if self.graph.edgeDirection == "Undirected":
+                    if euclDist < minimum and self.graph.hasEdge(vertexID, graphVertexCounter) == -1:
+                        nearestVertex = vertexID
+                        minimum = euclDist
+                    if euclDist < totalMinimum:
+                        totalNearestVertex = vertexID
+                        totalMinimum = euclDist                          
+                else:
+                    if euclDist < minimum:
+                        nearestVertex = vertexID
+                        minimum = euclDist        
+            
+            if nearestVertex != None and self.graph.edgeDirection == "Directed":
                 self.graph.addEdge(graphVertexCounter, nearestVertex)            
+    
+            elif nearestVertex != None and self.graph.edgeDirection == "Undirected":
+                if totalNearestVertex != nearestVertex:
+                    if self.graph.hasEdge(graphVertexCounter, totalNearestVertex) == -1:
+                        self.graph.addEdge(graphVertexCounter, totalNearestVertex)  
+                    else:
+                        if self.graph.hasEdge(graphVertexCounter, nearestVertex) == -1 and self.graph.hasEdge(totalNearestVertex, nearestVertex) == -1:
+                            self.graph.addEdge(graphVertexCounter, nearestVertex)                  
+                else:
+                    if self.graph.hasEdge(graphVertexCounter, totalNearestVertex) == -1:
+                       self.graph.addEdge(graphVertexCounter, totalNearestVertex) 
     
     def __checkLinesMatch(self, currFeat, tryFeat, newFieldsAdded):
         for newFieldName in newFieldsAdded:

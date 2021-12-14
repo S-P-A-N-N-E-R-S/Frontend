@@ -144,7 +144,7 @@ class GraphController(BaseController):
         builder.setOption("distanceStrategy", self.view.getDistanceStrategy()[1])
         builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
         builder.setOption("randomConnectionNumber", self.view.getRandomEdgesNumber())
-
+        builder.setOption("onlyCheckConsecutive", self.view.getCheckConsecutive())
         builder.setLineLayer(self.view.getLineLayerForConnection())
 
         # set builder options for random graph
