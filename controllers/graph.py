@@ -147,8 +147,11 @@ class GraphController(BaseController):
         builder.setOption("doFeatureSorting", self.view.getDoFeatureSorting())
         
         if self.view.getConnectionType()[1] == "LineLayerBased":
-            # TODO: further check for valid line layer has to be added
-            builder.setLineLayer(self.view.getLineLayerForConnection())
+            lineLayer = self.view.getLineLayerForConnection()
+            if not lineLayer.isValid():
+                self.view.showWarning(self.tr("Line layer is invalid!"))
+                return     
+            builder.setLineLayer(lineLayer)
 
         # set builder options for random graph
         if self.view.isRandom():

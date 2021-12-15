@@ -45,6 +45,7 @@ class GraphView(BaseView):
         self.dialog.create_graph_polycost_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_forbiddenarea_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_additionalpoint_input.setFilters(QgsMapLayerProxyModel.PointLayer)
+        self.dialog.create_graph_line_layer_input.setFilters(QgsMapLayerProxyModel.LineLayer)
 
         # set null layer as default
         self.dialog.create_graph_raster_input.setCurrentIndex(0)
