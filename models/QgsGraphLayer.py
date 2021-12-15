@@ -199,7 +199,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
-        self.mGraph.updateCrs(self.crs())
 
         self.mShowEdgeText = False
         self.mShowDirection = False
