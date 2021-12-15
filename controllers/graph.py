@@ -145,7 +145,9 @@ class GraphController(BaseController):
         builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
         builder.setOption("randomConnectionNumber", self.view.getRandomEdgesNumber())
         builder.setOption("doFeatureSorting", self.view.getDoFeatureSorting())
-        if not self.view.isRandom():
+        
+        if self.view.getConnectionType()[1] == "LineLayerBased":
+            # TODO: further check for valid line layer has to be added
             builder.setLineLayer(self.view.getLineLayerForConnection())
 
         # set builder options for random graph
