@@ -797,26 +797,32 @@ class ExtGraph(QObject):
         elif self.mConnectionType == "Random":
             amountEdgesToBeAdded = math.ceil(self.mEdgeCount / self.mVertexCount)
 
+            # bound amountEdgesToBeAdded by vertex count
+            if amountEdgesToBeAdded > self.mVertexCount - 1:
+                amountEdgesToBeAdded = self.mVertexCount - 1
+
             pastRandomVertices = []
             for j in range(amountEdgesToBeAdded):
                 # choose random vertex
-                randomVertex = randrange(self.mVertexCount)
-                while randomVertex == addedVertexID or randomVertex in pastRandomVertices:
-                    randomVertex = randrange(self.mVertexCount)
-                pastRandomVertices.append(randomVertex)
+                randomVertexIdx = randrange(self.mVertexCount)
+                randomVertexID = self.vertex(randomVertexIdx).id()
+                while randomVertexID == addedVertexID or randomVertexID in pastRandomVertices:
+                    randomVertexIdx = randrange(self.mVertexCount)
+                    randomVertexID = self.vertex(randomVertexIdx).id()
+                pastRandomVertices.append(randomVertexID)
 
                 if not fromUndo:
-                    edgeIdx = self.addEdge(randomVertex, addedVertexID)
+                    edgeIdx = self.addEdge(randomVertexID, addedVertexID)
                 else:
                     edgeIdx = self.edgeCount() + len(listOfEdges)
-                listOfEdges.append([edgeIdx, randomVertex, addedVertexID])
+                listOfEdges.append([edgeIdx, randomVertexID, addedVertexID])
 
                 if self.nnAllowDoubleEdges:
                     if not fromUndo:
-                        edgeIdx = self.addEdge(addedVertexID, randomVertex)
+                        edgeIdx = self.addEdge(addedVertexID, randomVertexID)
                     else:
                         edgeIdx = self.edgeCount() + len(listOfEdges)
-                    listOfEdges.append([edgeIdx, randomVertex, addedVertexID])
+                    listOfEdges.append([edgeIdx, randomVertexID, addedVertexID])
 
         return listOfEdges
 
