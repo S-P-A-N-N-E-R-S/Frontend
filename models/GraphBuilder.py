@@ -276,9 +276,6 @@ class GraphBuilder:
         for field in joinedLayer.fields():
             if field.name().startswith("new_"):
                 newFieldsAdded.append(field.name())
-        for feat in joinedLayer.getFeatures():
-            if feat["n"] == None:
-                return     
         
         # create buckets: every bucket stands for one polyline and contains all assigned points
         buckets = {}
@@ -299,7 +296,10 @@ class GraphBuilder:
         graphVertexCounter = -1
         for currFeat in joinedLayer.getFeatures():
             if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
-                graphVertexCounter+=1           
+                graphVertexCounter+=1 
+                
+            if currFeat["n"] == None:
+                continue              
                                              
             uniqueFeatString = ""               
             for newFieldName in newFieldsAdded:
