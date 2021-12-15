@@ -234,7 +234,7 @@ class GraphBuilder:
                 rectangleExtent, _ = self.__randomOptions["area"]
                 self.graph.addVertex(QgsPointXY(random.uniform(rectangleExtent.xMinimum(), rectangleExtent.xMaximum()),
                                                 random.uniform(rectangleExtent.yMinimum(), rectangleExtent.yMaximum())))
-                
+
     def __createVerticesForPoints(self):
         """
         Method creates a new vertex in the graph for every point inside
@@ -741,7 +741,6 @@ class GraphBuilder:
         if self.__options["createRandomGraph"] == True:
             # self.graph.crs = QgsCoordinateReferenceSystem("EPSG:4326")
             self.__createRandomVertices()
-            self.graph.updateCrs(QgsCoordinateTransform("EPSG:4326"))
         else:     
             # self.graph.crs = self.vLayer.crs()
             if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
