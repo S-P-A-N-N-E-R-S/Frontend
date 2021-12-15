@@ -223,7 +223,7 @@ class OGDFPlugin:
 
         # delete unzipped directory
         if wasZipped:
-            os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
+            # os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
             os.rmdir(directory)
 

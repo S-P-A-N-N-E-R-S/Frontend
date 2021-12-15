@@ -46,10 +46,15 @@ class QgsGraphMapTool(QgsMapTool):
 
     def activate(self):
         self.advancedCosts = self.mLayer.mGraph.distanceStrategy == "Advanced"
+        iface.mapCanvas().grabKeyboard()
+        # iface.mapCanvas().releaseKeyboard()
         # emit self.activated()
         pass
 
     def deactivate(self):
+        if hasattr(self, "win") and self.win:
+            self.win.done(0)
+        iface.mapCanvas().releaseKeyboard()
         # emit self.deactivated()
         pass
 
@@ -68,6 +73,11 @@ class QgsGraphMapTool(QgsMapTool):
 
         # move vertex
         else:
+            # prevent moving vertices if costs are advanced since they can't be adapted yet
+            if self.advancedCosts:
+                iface.messageBar().pushMessage("Error", self.tr("Moving vertices is disabled for advanced costs"), level=Qgis.Critical)
+                return
+            
             oldPos = self.mLayer.mGraph.vertex(self.firstFoundVertexIdx).point()
             
             vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), self.firstFoundVertexIdx, oldPos, "Move", point)
@@ -131,8 +141,10 @@ class QgsGraphMapTool(QgsMapTool):
             self.mLayer.mUndoStack.push(edgeUndoCommand)
 
         # open edge window on found edge (possibility to set costs for newly added edges)
-        win = QDialog(iface.mainWindow())
-        win.setVisible(True)
+        if hasattr(self, "win"):
+            self.win.done(0)
+        self.win = QDialog(iface.mainWindow())
+        self.win.setVisible(True)
 
         # QBoxLayout to add widgets to
         layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
@@ -195,12 +207,12 @@ class QgsGraphMapTool(QgsMapTool):
 
         deleteEdgeButton = QPushButton(self.tr("Delete"))
         deleteEdgeButton.clicked.connect(lambda: self._deleteEdge(edgeIdx))
-        deleteEdgeButton.clicked.connect(win.done)
+        deleteEdgeButton.clicked.connect(self.win.done)
         deleteEdgeButton.setVisible(True)
         layout.addWidget(deleteEdgeButton)
 
-        win.setLayout(layout)
-        win.adjustSize()
+        self.win.setLayout(layout)
+        self.win.adjustSize()
 
     def _deleteVertex(self, idx, commandID=-1):
         """
@@ -332,8 +344,10 @@ class QgsGraphMapTool(QgsMapTool):
             if len(foundVertexIndices) > 0:
 
                 # open window for found vertices (possibility to delete vertices)
-                win = QDialog(iface.mainWindow())
-                win.setVisible(True)
+                if hasattr(self, "win"):
+                    self.win.done(0)
+                self.win = QDialog(iface.mainWindow())
+                self.win.setVisible(True)
 
                 # QBoxLayout to add widgets to
                 layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
@@ -382,7 +396,7 @@ class QgsGraphMapTool(QgsMapTool):
 
                 deleteVerticesButton = QPushButton(self.tr("Delete Vertices"))
                 deleteVerticesButton.clicked.connect(_deleteFoundVertices)
-                deleteVerticesButton.clicked.connect(win.done)
+                deleteVerticesButton.clicked.connect(self.win.done)
                 deleteVerticesButton.setVisible(True)
                 layout.addWidget(deleteVerticesButton)
 
@@ -408,12 +422,12 @@ class QgsGraphMapTool(QgsMapTool):
 
                 deleteEdgesButton = QPushButton(self.tr("Delete Attached Edges"))
                 deleteEdgesButton.clicked.connect(_deleteAttachedEdges)
-                deleteEdgesButton.clicked.connect(win.done)
+                deleteEdgesButton.clicked.connect(self.win.done)
                 deleteEdgesButton.setVisible(True)
                 layout.addWidget(deleteEdgesButton)
 
-                win.setLayout(layout)
-                win.adjustSize()            
+                self.win.setLayout(layout)
+                self.win.adjustSize()            
                 
                 def _closeVerticesWindow():
                     numberFound = len(foundVertexIndices)
@@ -421,7 +435,7 @@ class QgsGraphMapTool(QgsMapTool):
                         iface.mapCanvas().scene().removeItem(markers[i])
                         del markers[i]
 
-                win.rejected.connect(_closeVerticesWindow)
+                self.win.rejected.connect(_closeVerticesWindow)
 
             self.drawRect = False
             self.topLeft = None
