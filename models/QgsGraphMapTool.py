@@ -239,7 +239,6 @@ class QgsGraphMapTool(QgsMapTool):
         # used to convert canvas coordinates to map coordinates
         self.converter = iface.mapCanvas().getCoordinateTransform()
         clickPosition = self.converter.toMapCoordinates(clickPosition)
-        clickPosition = self.mLayer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
         if event.button() == Qt.LeftButton: # LeftClick
             self.leftPressed = True

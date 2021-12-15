@@ -722,7 +722,7 @@ class QgsGraphLayer(QgsPluginLayer):
         self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.mLayerType)
 
     def extent(self):
-        # TODO: maybe improve extent in add/deleteVertex
+        self._extent = QgsRectangle()
         for vertexIdx in range(self.mGraph.vertexCount()):
             self._extent.combineExtentWith(self.mGraph.vertex(vertexIdx).point())
 
