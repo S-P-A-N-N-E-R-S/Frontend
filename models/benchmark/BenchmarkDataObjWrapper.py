@@ -24,8 +24,6 @@ class BenchmarkDataObjWrapper():
             parameterKey = self.parameterKeyHash[label]
             self.labelHash[parameterKey] = label
 
-
-
     def getAnalysisValue(self, analysis, dataObjs, average):
         """
         Method gets called at the end of the partitioning process. Returns a value depending on the
@@ -41,8 +39,11 @@ class BenchmarkDataObjWrapper():
         for dataObj in dataObjs:
             originalGraph = dataObj.getGraph()
             if analysis == "Runtime":
-                print("TODO")
-                values.append(0)
+                if average:
+                    values.append(dataObj.getAvgRuntime())
+                else:
+                    for value in dataObj.getAllRuntimes():
+                        values.append(value)                          
             elif analysis == "Number of Edges":
                 if average:
                     values.append(dataObj.getAvgNumberOfEdgesResponse())

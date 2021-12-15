@@ -34,7 +34,7 @@ class BenchmarkVisualisation():
 
     def createTextFile(self, path, boxPlot):
         dateString = date.today().strftime("%b_%d_%Y_")
-        timeString = datetime.now().strftime("%H_%M_%S")
+        timeString = datetime.now().strftime("%H_%M_%S_%f")
         if path == "":
             f = open(path + "BenchmarkResult_" + dateString + timeString + ".csv","w")
         else:

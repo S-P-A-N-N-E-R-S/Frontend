@@ -23,7 +23,7 @@ class QgsOGDFBenchmarkWidget(QWidget):
         self.benchmarkObjectsHash = {}
 
         # contains functions to create a field widget based on field type
-        self.FIELD_WIDGETS = {
+        self.FIELD_WIDGETS = {           
             FieldInformation.FieldType.BOOL: self._createBoolWidget,
             FieldInformation.FieldType.INT: self._createIntWidget,
             FieldInformation.FieldType.DOUBLE: self._createDoubleWidget,
@@ -32,9 +32,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
             FieldInformation.FieldType.EDGE_COSTS: self._createEdgeCostsWidget,
             FieldInformation.FieldType.VERTEX_COSTS: self._createVertexCostWidget,
             FieldInformation.FieldType.EDGE_ID: self._createEdgeWidget,
-            FieldInformation.FieldType.VERTEX_ID: self._createVertexWidget,
+            FieldInformation.FieldType.VERTEX_ID: self._createVertexWidget,         
         }
-
         self.fieldsList = []
 
         self.layout = QGridLayout()
@@ -147,12 +146,24 @@ class QgsOGDFBenchmarkWidget(QWidget):
                             if widget.objectName() == field.get("label"):
                                 # get value
                                 if str(widget.currentText()) == "Both":
-                                    rangeValues = ["True", "False"]
+                                    rangeValues = [True, False]
                                     ranges[field.get("label")] = rangeValues
                                 else:
-                                    ranges[field.get("label")] = [str(widget.currentText())]
-
-
+                                    ranges[field.get("label")] = [eval(str(widget.currentText()))]
+                    
+                    elif field.get("type") == FieldInformation.FieldType.CHOICE:
+                        # find widget for this field
+                        for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
+                            widget = self.dialog.benchmark_ogdf_parameters.layout().itemAt(i).widget()
+                            if widget.objectName() == field.get("label"):
+                                if str(widget.currentText()) == "All":
+                                    rangesForChoice = []
+                                    for i in range(widget.count()):                                 
+                                        rangesForChoice.append(widget.itemData(i))
+                                    ranges[field.get("label")] = rangesForChoice   
+                                else:
+                                    ranges[field.get("label")] = [widget.currentData()]                                   
+                    
                     elif field.get("type") == FieldInformation.FieldType.EDGE_COSTS:
                         for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
                             widget = self.dialog.benchmark_ogdf_parameters.layout().itemAt(i).widget()
@@ -178,6 +189,12 @@ class QgsOGDFBenchmarkWidget(QWidget):
                                     else:
                                         ranges[field.get("label")] = [(str(widget.currentText()),0)]
 
+                    elif field.get("type") == FieldInformation.FieldType.STRING:
+                        for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
+                            widget = self.dialog.benchmark_ogdf_parameters.layout().itemAt(i).widget()
+                            if widget.objectName() == field.get("label"):
+                                ranges[field.get("label")] = [widget.text()]
+
                     # normal field
                     else:
                         for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
@@ -190,12 +207,11 @@ class QgsOGDFBenchmarkWidget(QWidget):
                 algCount+=1
 
         toDeleteFieldIndices = []
-        # create permutations
+        # create permutations for each algorithm
         for i in range(len(rangesForEachAlg)):
             allLists = []
             # go through each parameter dictionary
             for j in range(len(rangesForEachAlg[i])):
-
                 for v in rangesForEachAlg[i][j].values():
                     allLists.append(v)
 
@@ -205,16 +221,21 @@ class QgsOGDFBenchmarkWidget(QWidget):
             # permutation holds one parameter setting
             for permutation in permutationRes:
                 alreadyDoneMatches = {}
+                # there are types which occur multiple times (ones for each graph)
+                # if such a type is processed for a graph it has to be deleted to not
+                # load the same value for the graph in the next iteration
                 toDeleteFieldIndices = []
+                # loop over graphs
                 for g in range(len(listOfGraphs)):
+                    # counter because index changes after one field was deleted
                     counter = 0
                     for index in toDeleteFieldIndices:
                         permutation = permutation[0:index-counter] + permutation[index+1-counter:]
                         counter+=1
+                    # reset to not delete already deleted field
                     toDeleteFieldIndices = []
                     graph = listOfGraphs[g].text()
                     bo = BenchmarkData(graph, algName)
-
                     # go through fields for algorithm and read values from permutation
                     fieldLabels = list(rangesForEachAlg[i][g].keys())
 
@@ -228,18 +249,15 @@ class QgsOGDFBenchmarkWidget(QWidget):
                         else:
                             # get position in permutation tuple
                             for rangesKeyIndex in range(len(fieldLabels)):
-
                                 if field.get("label") == fieldLabels[rangesKeyIndex]:
                                     alreadyDoneMatches[field.get("label")] = rangesKeyIndex
                                     bo.setParameterField(key, permutation[rangesKeyIndex])
                                     bo.setParameterKeyHash(field.get("label"), key)
-
                                     if field.get("type") in diffForGraphs:
                                         toDeleteFieldIndices.append(rangesKeyIndex)
 
                     if not bo.toString() in self.benchmarkObjectsHash:
                         self.benchmarkObjectsHash[bo.toString()] = bo
-
 
     def _createParameterWidgets(self):
         """
@@ -252,10 +270,8 @@ class QgsOGDFBenchmarkWidget(QWidget):
         self.clearWidgets()
         # loop over algorithms
         for fields in self.fieldsList:
-
             for key in fields:
                 field = fields[key]
-
                 # look if widget for this field already exists from other algorithm
                 found = False
                 for i in range(self.layout.count()):
@@ -265,29 +281,23 @@ class QgsOGDFBenchmarkWidget(QWidget):
                         break
                 if found:
                     continue
-
                 # skip field if widget of corresponding field type is not implemented (possibly intended)
                 if field.get("type") not in self.FIELD_WIDGETS:
                     continue
-
                 widgetFunction = self.FIELD_WIDGETS.get(field.get("type"), None)
                 listOfGraphs = []
                 for i in range(self.dialog.benchmark_graph_selection.count()):
                     listOfGraphs.append(self.dialog.benchmark_graph_selection.item(i))
 
                 if field.get("type") in diffForGraphs:
-
                     for graphName in listOfGraphs:
                         labelWidget = QLabel(field.get("label") + ": " + (graphName.text().split("GraphLayer")[0]))
-
+                        # find the graph in the qgis project
                         for layer in QgsProject.instance().mapLayers().values():
                             if isinstance(layer, QgsPluginLayer) and layer.name() == graphName.text():
-
                                 inputWidgets = widgetFunction(field, layer.getGraph(), layer.name())
-
                                 if labelWidget is not None:
                                     self.layout.addWidget(labelWidget, *(posCounter, 0))
-
                                 if isinstance(inputWidgets, list):
                                     for i in range(0,len(inputWidgets),2):
                                         if i == 0:
@@ -303,13 +313,10 @@ class QgsOGDFBenchmarkWidget(QWidget):
                                     posCounter+=1
 
                 else:
-
                     labelWidget = QLabel(field.get("label"))
                     inputWidgets = widgetFunction(field)
-
                     if labelWidget is not None:
                         self.layout.addWidget(labelWidget, *(posCounter, 0))
-
                     if isinstance(inputWidgets, list):
                         for i in range(0,len(inputWidgets),2):
                             if i == 0:
@@ -329,7 +336,6 @@ class QgsOGDFBenchmarkWidget(QWidget):
             self.layout.addWidget(inputWidgets[0], *(posCounter,0))
             self.layout.addWidget(inputWidgets[1], *(posCounter,1))
             posCounter+=1
-
 
     def _createBoolWidget(self, field):
         comboBoxWidget = QComboBox()
@@ -406,7 +412,7 @@ class QgsOGDFBenchmarkWidget(QWidget):
             choiceData = choices[choice]
             comboBoxWidget.addItem(choice, choiceData)
 
-        comboBoxWidget.addItem("all")
+        comboBoxWidget.addItem("All")
         # select default item if exist
         comboBoxWidget.setCurrentIndex(comboBoxWidget.findText(str(field.get("default"))))
 
@@ -414,7 +420,6 @@ class QgsOGDFBenchmarkWidget(QWidget):
 
     def _createEdgeCostsWidget(self, field, graph, graphName):
         widgetList = []
-
         # create label
         labelWidget = QLabel()
         widgetList.append(labelWidget)

@@ -793,6 +793,37 @@ class ExtGraph(QObject):
 
             del clusterKDTree
 
+        #== RANDOM =============================================================================
+        elif self.mConnectionType == "Random":
+            amountEdgesToBeAdded = math.ceil(self.mEdgeCount / self.mVertexCount)
+
+            # bound amountEdgesToBeAdded by vertex count
+            if amountEdgesToBeAdded > self.mVertexCount - 1:
+                amountEdgesToBeAdded = self.mVertexCount - 1
+
+            pastRandomVertices = []
+            for j in range(amountEdgesToBeAdded):
+                # choose random vertex
+                randomVertexIdx = randrange(self.mVertexCount)
+                randomVertexID = self.vertex(randomVertexIdx).id()
+                while randomVertexID == addedVertexID or randomVertexID in pastRandomVertices:
+                    randomVertexIdx = randrange(self.mVertexCount)
+                    randomVertexID = self.vertex(randomVertexIdx).id()
+                pastRandomVertices.append(randomVertexID)
+
+                if not fromUndo:
+                    edgeIdx = self.addEdge(randomVertexID, addedVertexID)
+                else:
+                    edgeIdx = self.edgeCount() + len(listOfEdges)
+                listOfEdges.append([edgeIdx, randomVertexID, addedVertexID])
+
+                if self.nnAllowDoubleEdges:
+                    if not fromUndo:
+                        edgeIdx = self.addEdge(addedVertexID, randomVertexID)
+                    else:
+                        edgeIdx = self.edgeCount() + len(listOfEdges)
+                    listOfEdges.append([edgeIdx, randomVertexID, addedVertexID])
+
         return listOfEdges
 
     def edge(self, idx):
@@ -950,7 +981,7 @@ class ExtGraph(QObject):
             graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
             graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
             graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
-            graphString += '" distanceunit="' + str(self.distance[1]) + '"' + ((' seed="' + str(self.randomSeed)) if self.randomSeed else '')
+            graphString += '" distanceunit="' + str(self.distance[1]) + (('" seed="' + str(self.randomSeed)) if self.randomSeed else '')
             graphString += (('" crs="' + self.crs.authid() + '"') if self.crs else '') + '>\n'
             file.write(graphString)
 
@@ -1036,7 +1067,7 @@ class ExtGraph(QObject):
 
                 if not nodeCoordinatesGiven:
                     # add vertex with random coordinates and correct ID
-                    currNodeIdx = self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884), -1, currNodeID))
+                    currNodeIdx = self.addVertex(QgsPointXY(randrange(742723,1534455), randrange(6030995,7314884)), -1, currNodeID)
 
             elif 'x="' in line:
                 xValue = float(line.split('x="')[1].split(' ')[0].split('"')[0])

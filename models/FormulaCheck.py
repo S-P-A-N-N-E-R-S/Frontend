@@ -497,7 +497,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
     res = regex.findall(function)
     for matchString in res:     
         analysisType = re.split("<|>|,|\)|=|and|or", matchString.split("]:")[1])[0]
-        if not "sp" in analysisType and "(" in analysisType:
+        if not "sp" in analysisType and "(" in analysisType and not "percentOfValues" in analysisType:
             errorPos = __findConstructPosition(originalFunction, "raster", partCounter)               
             toReturn = ("Error in raster analysis: No heuristic index necessary", "", errorPos[0], errorPos[1])
             return toReturn

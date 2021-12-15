@@ -22,7 +22,6 @@ from qgis.PyQt.QtWidgets import QListWidgetItem
 from .baseView import BaseView
 from ..controllers.jobs import JobsController
 from ..network import statusManager
-from ..network.protocol.build.status_pb2 import StatusType
 from ..helperFunctions import getVectorFileFilter
 
 
@@ -32,15 +31,6 @@ class JobsView(BaseView):
         super().__init__(dialog)
         self.name = "jobs"
         self.controller = JobsController(self)
-
-        self.STATUS_TEXTS = {
-            StatusType.UNKNOWN_STATUS: self.tr("unknown"),
-            StatusType.WAITING: self.tr("waiting"),
-            StatusType.RUNNING: self.tr("running"),
-            StatusType.SUCCESS: self.tr("success"),
-            StatusType.FAILED: self.tr("failed"),
-            StatusType.ABORTED: self.tr("aborted"),
-        }
 
         # connect buttons to functions
         self.dialog.ogdf_jobs_fetch_result_btn.clicked.connect(self.controller.fetchResult)
@@ -62,10 +52,9 @@ class JobsView(BaseView):
         self.controller.refreshJobs()
 
     def _changeStatusText(self):
-        if self.getCurrentJob() is not None:
-            job = self.getCurrentJob()
-            status = self.STATUS_TEXTS.get(job.status, "status not supported")
-            self.setStatusText('job status is "{}"'.format(status))
+        job = self.getCurrentJob()
+        if job is not None:
+            self.setStatusText(job.getStatusText())
 
     def addJob(self, job):
         jobName = job.getJobName()

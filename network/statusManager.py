@@ -1,6 +1,17 @@
+from datetime import datetime
+
 from ..network.protocol.build.status_pb2 import StatusType
 from .exceptions import NetworkClientError
 from . import parserManager
+
+STATUS_TEXTS = {
+    StatusType.UNKNOWN_STATUS: "unknown",
+    StatusType.WAITING: "waiting",
+    StatusType.RUNNING: "running",
+    StatusType.SUCCESS: "success",
+    StatusType.FAILED: "failed",
+    StatusType.ABORTED: "aborted",
+}
 
 
 class JobState():
@@ -12,6 +23,16 @@ class JobState():
         self.handlerType = jobState.handlerType
         self.jobName = jobState.jobName
 
+        self.ogdfRuntime = jobState.ogdfRuntime
+        self.timeReceived = self.parseTimestamp(jobState.timeReceived)
+        self.startingTime = self.parseTimestamp(jobState.startingTime)
+        self.endTime = self.parseTimestamp(jobState.endTime)
+
+    def parseTimestamp(self, timestamp):
+        if timestamp.seconds > 0:
+            return datetime.fromtimestamp(timestamp.seconds + timestamp.nanos/1e9)
+        return None
+
     def getJobName(self):
         if self.jobName:
             return self.jobName
@@ -21,8 +42,31 @@ class JobState():
             return f"{handlerName} {self.jobId}"
         return str(self.jobId)
 
+    def isRunning(self):
+        return self.status == StatusType.RUNNING or self.status == StatusType.WAITING
+
     def isSuccessful(self):
         return self.status == StatusType.SUCCESS
+
+    def getStatusText(self):
+        status = STATUS_TEXTS.get(self.status, STATUS_TEXTS[StatusType.UNKNOWN_STATUS])
+        statusText = f"Status: {status}"
+
+        if self.timeReceived:
+            statusText = f"{statusText}\nReceived: {self.timeReceived}"
+        if self.startingTime:
+            statusText = f"{statusText}\nStarted: {self.startingTime}"
+        if not self.isRunning():
+            if self.ogdfRuntime > 0:
+                statusText = f"{statusText}\nOGDF Runtime: {self.ogdfRuntime} us"
+            if self.endTime:
+                statusText = f"{statusText}\nEnded: {self.endTime}"
+
+        if self.statusMessage:
+            statusText = f"{statusText}\nMessage: {self.statusMessage}"
+        elif not self.isRunning() and not self.isSuccessful():
+            statusText = f"{statusText}\nMessage: unknown"
+        return statusText
 
 
 jobStates = {}
@@ -46,6 +90,10 @@ def getJobStateDict():
             'status': state.status
         }
     return jobStatesDict
+
+
+def insertJobState(jobState):
+    jobStates[jobState.job_id] = JobState(jobState)
 
 
 def insertJobStates(states):

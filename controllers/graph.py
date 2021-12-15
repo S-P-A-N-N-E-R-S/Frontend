@@ -24,7 +24,7 @@ from ..models.GraphBuilder import GraphBuilder
 from ..models.QgsGraphLayer import QgsGraphLayer
 from .. import helperFunctions as helper
 
-from qgis.core import QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
+from qgis.core import *
 from qgis.utils import iface
 
 
@@ -41,7 +41,7 @@ class GraphController(BaseController):
         :type view: GraphView
         """
         super().__init__(view)                           
-                
+             
         self.view.addRandomArea(self.tr("Germany"), "Germany")
         self.view.addRandomArea(self.tr("France"), "France")
         self.view.addRandomArea(self.tr("Osnabrueck"), "Osnabrueck")
@@ -56,9 +56,10 @@ class GraphController(BaseController):
         self.view.addConnectionType(self.tr("ClusterNN"), "ClusterNN")
         self.view.addConnectionType(self.tr("DistanceNN"), "DistanceNN")
         self.view.addConnectionType(self.tr("Random"), "Random")
+        self.view.addConnectionType(self.tr("LineLayerBased"), "LineLayerBased")
 
-        self.view.addEdgeDirection(self.tr("Directed"), "Directed")
         self.view.addEdgeDirection(self.tr("Undirected"), "Undirected")
+        self.view.addEdgeDirection(self.tr("Directed"), "Directed")
 
         self.view.addDistanceStrategy(self.tr("Euclidean"), "Euclidean")
         self.view.addDistanceStrategy(self.tr("Manhattan"), "Manhattan")
@@ -143,6 +144,14 @@ class GraphController(BaseController):
         builder.setOption("distanceStrategy", self.view.getDistanceStrategy()[1])
         builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
         builder.setOption("randomConnectionNumber", self.view.getRandomEdgesNumber())
+        builder.setOption("doFeatureSorting", self.view.getDoFeatureSorting())
+        
+        if self.view.getConnectionType()[1] == "LineLayerBased":
+            lineLayer = self.view.getLineLayerForConnection()
+            if not lineLayer.isValid():
+                self.view.showWarning(self.tr("Line layer is invalid!"))
+                return     
+            builder.setLineLayer(lineLayer)
 
         # set builder options for random graph
         if self.view.isRandom():

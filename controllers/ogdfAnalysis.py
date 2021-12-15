@@ -16,7 +16,7 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.core import QgsSettings, QgsApplication
+from qgis.core import QgsSettings, QgsApplication, QgsTask
 
 from .base import BaseController
 from ..exceptions import FieldRequiredError
@@ -29,6 +29,8 @@ from ..network.exceptions import NetworkClientError, ParseError
 
 
 class OGDFAnalysisController(BaseController):
+
+    activeTask = None
 
     def __init__(self, view):
         """
@@ -48,6 +50,10 @@ class OGDFAnalysisController(BaseController):
             self.view.addAnalysis(request.name, requestKey)
 
     def runJob(self):
+        if OGDFAnalysisController.activeTask is not None:
+            self.view.showError(self.tr("Please wait until previous request is finished!"))
+            return
+
         # todo: pass authId to client
         _authId = self.settings.value("ogdfplugin/authId")
 
@@ -71,37 +77,44 @@ class OGDFAnalysisController(BaseController):
             request.setFieldData(key, fieldData)
         request.jobName = self.view.getJobName()
 
-        try:
-            with Client(helper.getHost(), helper.getPort()) as client:
-                client.sendJobRequest(request)
-                self.view.showSuccess("Job started!")
-        except (NetworkClientError, ParseError) as error:
-            self.view.showError(str(error), self.tr("Network Error"))  # show error
+        # create request in background task
+        task = QgsTask.fromFunction(
+            "Creating job request",
+            self.createRequestTask,
+            host=helper.getHost(),
+            port=helper.getPort(),
+            request=request,
+            on_finished=self.requestCompleted
+        )
+        QgsApplication.taskManager().addTask(task)
+        OGDFAnalysisController.activeTask = task
 
-    # def __getGraph(self):
-    #     """
-    #     Loads graph from input
-    #     :return:
-    #     """
-    #     if not self.view.hasInput():
-    #         self.view.showError(self.tr("Please select a graph!"))
-    #         return None
-    #
-    #     if self.view.isInputLayer():
-    #         # return graph from graph layer
-    #         graphLayer = self.view.getInputLayer()
-    #         if not isinstance(graphLayer, QgsGraphLayer):
-    #             self.view.showError(self.tr("The selected layer is not a graph layer!"))
-    #         if graphLayer.isValid():
-    #             return graphLayer.getGraph()
-    #         else:
-    #             self.view.showError(self.tr("The selected graph layer is invalid!"))
-    #     else:
-    #         # if file path as input
-    #         path = self.view.getInputPath()
-    #         fileName, extension = os.path.splitext(path)
-    #         if extension == ".graphml":
-    #             graph = ExtGraph()
-    #             graph.readGraphML(path)
-    #             return graph
-    #     return None
+    def createRequestTask(self, task, host, port, request):
+        """
+        Performs a job request in a task.
+        """
+        try:
+            with Client(host, port) as client:
+                client.sendJobRequest(request)
+                return {"success": self.tr("Job started!")}
+        except (NetworkClientError, ParseError) as error:
+            return {"error": str(error)}
+
+    def requestCompleted(self, exception, result=None):
+        """
+        Processes the results of the request task.
+        """
+        # first remove active task to allow a new request.
+        OGDFAnalysisController.activeTask = None
+
+        if exception is None:
+            if result is None:
+                # no result returned (probably manually canceled by the user)
+                return
+            else:
+                if "success" in result:
+                    self.view.showSuccess(result["success"])
+                elif "error" in result:
+                    self.view.showError(str(result["error"]), self.tr("Network Error"))
+        else:
+            raise exception
