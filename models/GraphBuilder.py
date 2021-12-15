@@ -34,6 +34,7 @@ from ..lib.kdtree import kdtree
 import time
 from contextlib import closing
 from google.protobuf.type_pb2 import Syntax
+from scipy.odr.models import unilinear
 
 
 class GraphBuilder:
@@ -94,7 +95,7 @@ class GraphBuilder:
             "useAdditionalPoints": False,
             "createShortestPathView": False,
             "randomConnectionNumber": 100,
-            "onlyCheckConsecutive": False
+            "doFeatureSorting": True
         }
 
         self.__randomOptions = {
@@ -279,62 +280,47 @@ class GraphBuilder:
             if feat["n"] == None:
                 return     
         
+        # create buckets: every bucket stands for one polyline and contains all assigned points
+        buckets = {}
+        lineStartPointMatching = {}
+        for lineFeat in self.connectionLineLayer.getFeatures():
+            uniqueLineFeatString = ""
+            for field in self.connectionLineLayer.fields():
+                uniqueLineFeatString += str(lineFeat[field.name()])
+            buckets[uniqueLineFeatString] = []
+            geom = lineFeat.geometry()
+            if QgsWkbTypes.isMultiType(geom.wkbType()):
+                for part in geom.asMultiPolyline():                                                                                                       
+                    lineStartPointMatching[uniqueLineFeatString] = part[0]
+                    break
+            else:
+                lineStartPointMatching[uniqueLineFeatString] = geom.asPolyline()[0] 
+                          
         graphVertexCounter = -1
         for currFeat in joinedLayer.getFeatures():
             if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
                 graphVertexCounter+=1           
+                                             
+            uniqueFeatString = ""               
+            for newFieldName in newFieldsAdded:
+                uniqueFeatString += str(currFeat[newFieldName])
+        
+            # get distance to start of line feature
             currVertexPoint = self.graph.vertex(graphVertexCounter).point()
-            verticesFound = []
-            graphVertexCounterMatch = -1                                       
-            for tryFeat in joinedLayer.getFeatures():
-                if tryFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
-                    graphVertexCounterMatch+=1                   
-                if self.__options["onlyCheckConsecutive"]:                         
-                    if tryFeat.id() > currFeat.id() and self.__checkLinesMatch(currFeat, tryFeat, newFieldsAdded):
-                        verticesFound.append(graphVertexCounterMatch)
-                else:
-                    if tryFeat.id() != currFeat.id() and self.__checkLinesMatch(currFeat, tryFeat, newFieldsAdded):
-                        verticesFound.append(graphVertexCounterMatch)                          
-            
-            # find nearest of the found vertices
-            minimum = sys.maxsize
-            nearestVertex = None
-            totalNearestVertex = None
-            totalMinimum = sys.maxsize
-            for vertexID in verticesFound:
-                foundVertexPoint = self.graph.vertex(vertexID).point()
-                euclDist = math.sqrt(pow(currVertexPoint.x()-foundVertexPoint.x(),2) + pow(currVertexPoint.y()-foundVertexPoint.y(),2))
-                if self.graph.edgeDirection == "Undirected":
-                    if euclDist < minimum and self.graph.hasEdge(vertexID, graphVertexCounter) == -1:
-                        nearestVertex = vertexID
-                        minimum = euclDist
-                    if euclDist < totalMinimum:
-                        totalNearestVertex = vertexID
-                        totalMinimum = euclDist                          
-                else:
-                    if euclDist < minimum:
-                        nearestVertex = vertexID
-                        minimum = euclDist        
-            
-            if nearestVertex != None and self.graph.edgeDirection == "Directed":
-                self.graph.addEdge(graphVertexCounter, nearestVertex)            
-    
-            elif nearestVertex != None and self.graph.edgeDirection == "Undirected":
-                if totalNearestVertex != nearestVertex:
-                    if self.graph.hasEdge(graphVertexCounter, totalNearestVertex) == -1:
-                        self.graph.addEdge(graphVertexCounter, totalNearestVertex)  
-                    else:
-                        if self.graph.hasEdge(graphVertexCounter, nearestVertex) == -1 and self.graph.hasEdge(totalNearestVertex, nearestVertex) == -1:
-                            self.graph.addEdge(graphVertexCounter, nearestVertex)                  
-                else:
-                    if self.graph.hasEdge(graphVertexCounter, totalNearestVertex) == -1:
-                       self.graph.addEdge(graphVertexCounter, totalNearestVertex) 
-    
-    def __checkLinesMatch(self, currFeat, tryFeat, newFieldsAdded):
-        for newFieldName in newFieldsAdded:
-            if currFeat[newFieldName] != tryFeat[newFieldName]:
-                return False
-        return True
+            lineStartPoint = lineStartPointMatching[uniqueFeatString]          
+            # create triple
+            distance = math.sqrt(pow(currVertexPoint.x()-lineStartPoint.x(),2) + pow(currVertexPoint.y()-lineStartPoint.y(),2)) 
+            buckets[uniqueFeatString].append((graphVertexCounter, distance, currFeat))
+                                      
+        # sort the buckets if wanted and create edges
+        for bucketKey in buckets.keys():
+            bucket = buckets[bucketKey]
+            if self.__options["doFeatureSorting"]:               
+                sortedList = sorted(bucket, key=lambda tri: tri[1])
+            else:
+                sortedList = bucket
+            for tripleIndex in range(len(sortedList)-1):
+                self.graph.addEdge(sortedList[tripleIndex][0], sortedList[tripleIndex+1][0])
           
     def __createComplete(self):
         """

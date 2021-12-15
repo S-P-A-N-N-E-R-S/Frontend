@@ -24,7 +24,7 @@ from ..models.GraphBuilder import GraphBuilder
 from ..models.QgsGraphLayer import QgsGraphLayer
 from .. import helperFunctions as helper
 
-from qgis.core import QgsProject, QgsTask, QgsApplication, QgsMessageLog, Qgis
+from qgis.core import *
 from qgis.utils import iface
 
 
@@ -41,7 +41,7 @@ class GraphController(BaseController):
         :type view: GraphView
         """
         super().__init__(view)                           
-                
+             
         self.view.addRandomArea(self.tr("Germany"), "Germany")
         self.view.addRandomArea(self.tr("France"), "France")
         self.view.addRandomArea(self.tr("Osnabrueck"), "Osnabrueck")
@@ -144,7 +144,7 @@ class GraphController(BaseController):
         builder.setOption("distanceStrategy", self.view.getDistanceStrategy()[1])
         builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
         builder.setOption("randomConnectionNumber", self.view.getRandomEdgesNumber())
-        builder.setOption("onlyCheckConsecutive", self.view.getCheckConsecutive())
+        builder.setOption("doFeatureSorting", self.view.getDoFeatureSorting())
         builder.setLineLayer(self.view.getLineLayerForConnection())
 
         # set builder options for random graph

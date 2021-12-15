@@ -555,8 +555,8 @@ class GraphView(BaseView):
     def getLineLayerForConnection(self):
         return self.dialog.create_graph_line_layer_input.currentLayer()
     
-    def getCheckConsecutive(self):
-        return self.dialog.create_graph_onlycheck_checkbox.isChecked()
+    def getDoFeatureSorting(self):
+        return self.dialog.create_graph_dofeaturesorting_checkbox.isChecked()
     
     def getForbiddenAreaLayer(self):
         return self.dialog.create_graph_forbiddenarea_input.currentLayer()
