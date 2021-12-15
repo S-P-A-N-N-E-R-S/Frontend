@@ -347,7 +347,7 @@ class GraphBuilder:
         notUsedVertexPairs = []
         for i in range(self.graph.vertexCount()-1):
             if self.__options["distanceStrategy"] == "Advanced":
-                    newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                newProgress = self.task.progress() + 20/self.graph.vertexCount()
             else:
                 newProgress = self.task.progress() + 90/self.graph.vertexCount()    
             if newProgress <= 100:               
