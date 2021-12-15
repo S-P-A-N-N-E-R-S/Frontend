@@ -224,6 +224,7 @@ class GraphView(BaseView):
         self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
         self.dialog.create_graph_randomnumber_input.setEnabled(connectionType == "Random")
         self.dialog.create_graph_line_layer_input.setEnabled(connectionType == "LineLayerBased")
+        self.dialog.create_graph_dofeaturesorting_checkbox.setEnabled(connectionType == "LineLayerBased")
 
     def _distanceStrategyChanged(self):
         """
