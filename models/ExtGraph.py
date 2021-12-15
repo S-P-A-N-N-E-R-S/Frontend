@@ -902,16 +902,17 @@ class ExtGraph(QObject):
         The containing coordinates will be updated if the given crs is a different one.
         """
         # update crs and coordinates if new crs is different and old crs is not None
-        if self.crs and not crs.authid() == self.crs.authid():
+        if not self.crs or not crs.authid() == self.crs.authid():
             newCrs = crs
 
-            transform = QgsCoordinateTransform(self.crs, newCrs, QgsProject.instance())
+            if self.crs:
+                transform = QgsCoordinateTransform(self.crs, newCrs, QgsProject.instance())
 
-            for vertex in self.mVertices:
-                coords = vertex.point()
-                newCoords = transform.transform(coords)
+                for vertex in self.mVertices:
+                    coords = vertex.point()
+                    newCoords = transform.transform(coords)
 
-                vertex.setNewPoint(newCoords)
+                    vertex.setNewPoint(newCoords)
 
             self.crs = newCrs
 
