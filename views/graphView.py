@@ -45,6 +45,7 @@ class GraphView(BaseView):
         self.dialog.create_graph_polycost_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_forbiddenarea_input.setFilters(QgsMapLayerProxyModel.PolygonLayer)
         self.dialog.create_graph_additionalpoint_input.setFilters(QgsMapLayerProxyModel.PointLayer)
+        self.dialog.create_graph_line_layer_input.setFilters(QgsMapLayerProxyModel.LineLayer)
 
         # set null layer as default
         self.dialog.create_graph_raster_input.setCurrentIndex(0)
@@ -220,9 +221,11 @@ class GraphView(BaseView):
         self.dialog.create_graph_nearest_neighbor_widget.setEnabled(connectionType in ["Nearest neighbor", "ClusterNN",
                                                                                        "DistanceNN"])
         self.dialog.create_graph_numberneighbor_input.setEnabled(connectionType != "DistanceNN")
-        self.dialog.create_graph_distance_widget.setEnabled(connectionType == "DistanceNN")
+        self.dialog.create_graph_distance_widget.setEnabled(connectionType == "DistanceNN" or connectionType == "LineLayerBased")
         self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
         self.dialog.create_graph_randomnumber_input.setEnabled(connectionType == "Random")
+        self.dialog.create_graph_line_layer_input.setEnabled(connectionType == "LineLayerBased")
+        self.dialog.create_graph_dofeaturesorting_checkbox.setEnabled(connectionType == "LineLayerBased")
 
     def _distanceStrategyChanged(self):
         """
@@ -551,6 +554,12 @@ class GraphView(BaseView):
                 polygonLayers.append(polygonLayer)
         return polygonLayers
 
+    def getLineLayerForConnection(self):
+        return self.dialog.create_graph_line_layer_input.currentLayer()
+    
+    def getDoFeatureSorting(self):
+        return self.dialog.create_graph_dofeaturesorting_checkbox.isChecked()
+    
     def getForbiddenAreaLayer(self):
         return self.dialog.create_graph_forbiddenarea_input.currentLayer()
 

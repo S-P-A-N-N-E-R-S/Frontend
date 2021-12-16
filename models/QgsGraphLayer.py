@@ -137,7 +137,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             if self.mShowText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
                                 edgeCost = self.mGraph.costOfEdge(edgeIdx, self.mRenderedCostFunction)
-                                if edgeCost % 1 == 0:
+                                if not edgeCost:
+                                    painter.drawText(midPoint, "None")
+                                elif edgeCost % 1 == 0:
                                     painter.drawText(midPoint, str(edgeCost))
                                 else:
                                     painter.drawText(midPoint, str("%.3f" % edgeCost))
@@ -234,6 +236,8 @@ class QgsGraphLayer(QgsPluginLayer):
         self.doRender = True
 
         self.mUndoStack = QUndoStack()
+
+        self.nameChanged.connect(self.activateUniqueName)
 
     def deleteLater(self, dummy):
         self.toggleEdit(True)
@@ -621,7 +625,8 @@ class QgsGraphLayer(QgsPluginLayer):
                 
                 if self.mGraph.distanceStrategy != "Advanced":
                     # TODO: is this necessary? this maybe even does not lead to anything
-                    self.mGraph.setCostOfEdge(addedIdx, 0, float(elem.attribute("edgeCost")))
+                    if not elem.attribute("edgeCost") == "None":
+                        self.mGraph.setCostOfEdge(addedIdx, 0, float(elem.attribute("edgeCost")))
                 else:
                     costNodes = edgeNodes.at(edgeIdx).childNodes()
                     for costIdx in range(costNodes.length()):
@@ -827,15 +832,46 @@ class QgsGraphLayer(QgsPluginLayer):
     def changeRenderedCostFunction(self, idx):
         self.mRenderedCostFunction = idx
 
+    def nextRenderedCostFunction(self):
+        self.mRenderedCostFunction = (self.mRenderedCostFunction + 1) % self.mGraph.amountOfEdgeCostFunctions()
+
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
+
     def activateUniqueName(self):
-        # sets the layers name to its id,  'unique but not nice'
-        if self.name() == "RandomGraphLayer":
-            self.setName(self.id())
+        # sets the layers name to a combination of graph information
+        if self.name() == "RandomGraphLayer" or self.name() == "NewGraphLayer":
+            constructName = self.mGraph.connectionType() if self.mGraph.connectionType() != "Nearest neighbor" else "NN"
+            constructName += "_" + self.mGraph.distanceStrategy + "_" + self.mGraph.edgeDirection
+
+            mapLayers = QgsProject.instance().mapLayers()
+            currHighestNr = 0
+            for layer in mapLayers.values():
+                if constructName == layer.name() and currHighestNr == 0:
+                    currHighestNr = 1
+                elif constructName in layer.name():
+                    nameNr = int(layer.name().split(constructName)[1])
+
+                    if currHighestNr <= nameNr:
+                        currHighestNr = nameNr + 1
+
+            self.setName(constructName + (str(currHighestNr) if currHighestNr > 0 else ""))
 
 class QgsGraphLayerType(QgsPluginLayerType):
     """
     When loading a project containing a QgsGraphLayer, a factory class is needed.
     """
+    TOOLTIPTEXT = tr("List of Options") + ":"\
+                                +"\n " + tr("LeftClick: Add Vertex without Edges")\
+                                +"\n " + tr("CTRL+LeftClick: Add Vertex with Edges")\
+                                +"\n " + tr("RightClick: Select Vertex")\
+                                +"\n " + tr(" 1) Select Vertex")\
+                                +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
+                                +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
+                                +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
+                                +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
+                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection")
+
     def __init__(self):
         super().__init__(QgsGraphLayer.LAYER_TYPE)
 
@@ -852,7 +888,6 @@ class QgsGraphLayerType(QgsPluginLayerType):
         :type layer: QgsGraphLayer
         :return Boolean
         """
-        layer.activateUniqueName()
         if hasattr(self, "win") and self.win and layer.id() == self.layerID:
             self.win.setVisible(True)
             return True
@@ -876,19 +911,27 @@ class QgsGraphLayerType(QgsPluginLayerType):
         informationLabel.setStyleSheet("border: 1px solid black;")
         layout.addWidget(informationLabel)
         
-        # QLabel with information about the layers fields
-        pointFieldsText = tr("PointFields") + ":"
-        for field in layer.fields(True):
-            pointFieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
-        lineFieldsText = tr("LineFields") + ":"
-        for field in layer.fields(False):
-            lineFieldsText += "\n " + field.displayName() + " (" + field.displayType() + ")"
-        fieldsText = pointFieldsText + "\n" + lineFieldsText
-        fieldsLabel = QLabel(fieldsText)
-        fieldsLabel.setWordWrap(True)
-        fieldsLabel.setVisible(True)
-        fieldsLabel.setStyleSheet("border: 1px solid black;")
-        layout.addWidget(fieldsLabel)
+        # QLabel with information about the graphs information
+        graphInformationText = tr("DistanceStrategy: ") + layer.mGraph.distanceStrategy + ("(" + str(layer.mGraph.amountOfEdgeCostFunctions()) + ")" if layer.mGraph.distanceStrategy == "Advanced" else "") +\
+                                "\n" + tr("Edge Direction: ") + layer.mGraph.edgeDirection +\
+                                "\n" + tr("Connection Type: ") + layer.mGraph.mConnectionType
+
+        if layer.mGraph.mConnectionType == "Nearest neighbor" or layer.mGraph.mConnectionType == "DistanceNN" or layer.mGraph.mConnectionType == "ClusterNN":
+            graphInformationText += "\n" + tr("Number Neighbors: ") + str(layer.mGraph.numberNeighbours)
+        
+        if layer.mGraph.mConnectionType == "DistanceNN":
+            graphInformationText += "\n" + tr("Distance: ") + str(layer.mGraph.distance[0])
+
+        if layer.mGraph.mConnectionType == "ClusterComplete" or layer.mGraph.mConnectionType == "ClusterNN":
+            graphInformationText += "\n" + tr("Number Clusters: ") + str(layer.mGraph.clusterNumber)
+
+        graphInformationText += "\n" + tr("Allow Double Edges: ") + str(layer.mGraph.nnAllowDoubleEdges)
+
+        graphLabel = QLabel(graphInformationText)
+        graphLabel.setWordWrap(True)
+        graphLabel.setVisible(True)
+        graphLabel.setStyleSheet("border: 1px solid black;")
+        layout.addWidget(graphLabel)
 
         # button to zoom to layers extent
         zoomExtentButton = QPushButton(tr("Zoom to Layer"))
@@ -923,6 +966,9 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
         # spinbox to choose which advanced values to render
         if layer.mGraph.distanceStrategy == "Advanced":
+            costFunctionBox = QGroupBox()
+            costFunctionLayout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+
             costFunctionLabel = QLabel(tr("Choose Cost Function"))
             costFunctionLabel.setVisible(True)
             costFunctionSpinBox = QSpinBox()
@@ -930,8 +976,17 @@ class QgsGraphLayerType(QgsPluginLayerType):
             costFunctionSpinBox.setMaximum(layer.mGraph.amountOfEdgeCostFunctions() - 1)
             costFunctionSpinBox.valueChanged.connect(layer.changeRenderedCostFunction)
             costFunctionSpinBox.setVisible(True)
-            layout.addWidget(costFunctionLabel)
-            layout.addWidget(costFunctionSpinBox)
+            costFunctionLayout.addWidget(costFunctionLabel)
+            costFunctionLayout.addWidget(costFunctionSpinBox)
+            
+            nextButton = QPushButton(tr("Next"))
+            nextButton.setMaximumWidth(50)
+            nextButton.clicked.connect(layer.nextRenderedCostFunction)
+            nextButton.clicked.connect(lambda: costFunctionSpinBox.setValue(layer.mRenderedCostFunction))
+            costFunctionLayout.addWidget(nextButton)
+            
+            costFunctionBox.setLayout(costFunctionLayout)
+            layout.addWidget(costFunctionBox)
 
 
         # button to toggle drawing of arrowHead to show edge direction
@@ -939,6 +994,12 @@ class QgsGraphLayerType(QgsPluginLayerType):
         toggleDirectionButton.setVisible(hasEdges and layer.mGraph.edgeDirection == "Directed")
         toggleDirectionButton.clicked.connect(layer.toggleDirection)
         layout.addWidget(toggleDirectionButton)
+
+        # button to randomize vertex color
+        randomColorButton = QPushButton(tr("Random Vertex Color"))
+        randomColorButton.clicked.connect(layer.newRandomColor)
+        randomColorButton.setVisible(True)
+        layout.addWidget(randomColorButton)
 
         fileSeparator = QFrame()
         fileSeparator.setFrameShape(QFrame.HLine | QFrame.Plain)
@@ -973,37 +1034,39 @@ class QgsGraphLayerType(QgsPluginLayerType):
         exportFButton.setVisible(True)
         layout.addWidget(exportFButton)
 
-        colorSeparator = QFrame()
-        colorSeparator.setFrameShape(QFrame.HLine | QFrame.Plain)
-        colorSeparator.setLineWidth(1)
-        layout.addWidget(colorSeparator)
-
-        # button to randomize vertex color
-        randomColorButton = QPushButton(tr("Random Vertex Color"))
-        randomColorButton.clicked.connect(layer.newRandomColor)
-        randomColorButton.setVisible(True)
-        layout.addWidget(randomColorButton)
-
         editSeparator = QFrame()
         editSeparator.setFrameShape(QFrame.HLine | QFrame.Plain)
         editSeparator.setLineWidth(1)
         layout.addWidget(editSeparator)
 
         # button to enable editing
+        editBox = QGroupBox()
+        editBoxLayout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+
         editButton = QPushButton(tr("Toggle Editing"))
         editButton.clicked.connect(layer.toggleEdit)
         editButton.setVisible(True)
-        editButton.setToolTip(tr("List of Options") + ":"\
-                                +"\n " + tr("LeftClick: Add Vertex without Edges")\
-                                +"\n " + tr("CTRL+LeftClick: Add Vertex with Edges")\
-                                +"\n " + tr("RightClick: Select Vertex")\
-                                +"\n " + tr(" 1) Select Vertex")\
-                                +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
-                                +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
-                                +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
-                                +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
-                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection"))
-        layout.addWidget(editButton)
+        editButton.setToolTip(self.TOOLTIPTEXT)
+        editBoxLayout.addWidget(editButton)
+
+        def __toolTip():
+            print("Debug")
+            toolTipWin = QDialog(iface.mainWindow())
+            toolTipWin.setVisible(True)
+            toolTipLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+            toolTipLabel = QLabel(self.TOOLTIPTEXT)
+            toolTipLayout.addWidget(toolTipLabel)
+            toolTipWin.setLayout(toolTipLayout)
+            toolTipWin.adjustSize()
+
+        # add button for tool tip window
+        toolTipButton = QPushButton("?")
+        toolTipButton.setMaximumWidth(25)
+        toolTipButton.clicked.connect(__toolTip)
+        editBoxLayout.addWidget(toolTipButton)
+
+        editBox.setLayout(editBoxLayout)
+        layout.addWidget(editBox)
 
         # undo button
         undoButton = QToolButton()
