@@ -319,7 +319,7 @@ class GraphBuilder:
             else:
                 sortedList = bucket
             for tripleIndex in range(len(sortedList)-1):
-                self.graph.addEdge(sortedList[tripleIndex][0], sortedList[tripleIndex+1][0])
+                self.graph.addEdge(sortedList[tripleIndex][0], sortedList[tripleIndex+1][0], feat=sortedList[tripleIndex+1][2])
           
     def __createComplete(self):
         """
@@ -530,24 +530,24 @@ class GraphBuilder:
             if self.task is not None and self.task.isCanceled():
                 return
             geom = feature.geometry()
-            if QgsWkbTypes.isMultiType(geom.wkbType()):
+            if QgsWkbTypes.isMultiType(geom.wkbType()):             
                 for part in geom.asMultiPolyline():
                     for i in range(len(part)):                   
                         if part[i].toString() in vertexHash:                            
                             searchVertex = vertexHash[part[i].toString()]
-                            if i!=0:                               
-                                self.graph.addEdge(lastVertexID, searchVertex)
+                            if i!=0:                       
+                                self.graph.addEdge(lastVertexID, searchVertex, feat=feature)                              
                                 if self.__options["distanceStrategy"] == "Advanced":
                                     self.graph.featureMatchings.append(feature)
                             lastVertexID = searchVertex                                                       
-                        else:                                                          
+                        else:                                                    
                             addedID = self.graph.addVertex(part[i])   
                             vertexHash[part[i].toString()] = addedID                                                                                         
                             if i!=0:                               
-                                self.graph.addEdge(lastVertexID, addedID)
+                                self.graph.addEdge(lastVertexID, addedID, feat=feature)
                                 self.graph.featureMatchings.append(feature)
-                            lastVertexID = addedID    
-            else:                        
+                            lastVertexID = addedID  
+            else:
                 vertices = geom.asPolyline()                       
                 for i in range(len(vertices)-1):
                     startVertex = vertices[i]
@@ -555,26 +555,26 @@ class GraphBuilder:
                     if startVertex.toString() in vertexHash and endVertex.toString() in vertexHash:
                         searchVertex1 = vertexHash[startVertex.toString()]
                         searchVertex2 = vertexHash[endVertex.toString()]
-                        self.graph.addEdge(searchVertex1, searchVertex2)
+                        self.graph.addEdge(searchVertex1, searchVertex2, feat=feature)
                     
                     elif startVertex.toString() in vertexHash:
                         searchVertex = vertexHash[startVertex.toString()]
                         id2 = self.graph.addVertex(endVertex) 
                         vertexHash[endVertex.toString()] = id2
-                        self.graph.addEdge(searchVertex, id2)
+                        self.graph.addEdge(searchVertex, id2, feat=feature)
                     
                     elif endVertex.toString() in vertexHash:
                         searchVertex = vertexHash[endVertex.toString()]
                         id1 = self.graph.addVertex(startVertex)
                         vertexHash[startVertex.toString()] = id1
-                        self.graph.addEdge(id1, searchVertex)
+                        self.graph.addEdge(id1, searchVertex, feat=feature)
                     
                     else:                                          
                         id1 = self.graph.addVertex(startVertex)
                         id2 = self.graph.addVertex(endVertex)  
                         vertexHash[startVertex.toString()] = id1
                         vertexHash[endVertex.toString()] = id2                  
-                        self.graph.addEdge(id1, id2)
+                        self.graph.addEdge(id1, id2, feat=feature)
                         if self.__options["distanceStrategy"] == "Advanced":
                             self.graph.featureMatchings.append(feature) 
 
@@ -800,6 +800,11 @@ class GraphBuilder:
         :return ExtGraph
         """
         self.graph = ExtGraph()
+        if not self.__options["createRandomGraph"]:
+            self.graph.setVectorLayer(self.vLayer)
+            
+        if self.__options["connectionType"] == "LineLayerBased":   
+            self.graph.setLineLayerForConnection(self.connectionLineLayer)
         
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])

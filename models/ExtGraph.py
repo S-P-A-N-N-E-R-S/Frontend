@@ -97,6 +97,7 @@ class ExtGraph(QObject):
             self.mFromID = fromVertexID
             self.mToID = toVertexID
             self.mID = id
+            self.feature = None
 
             # highlights used for marked edges by a server response
             self.isHighlighted = highlighted
@@ -140,6 +141,9 @@ class ExtGraph(QObject):
 
         self.mVertices = []
         self.mEdges = []
+
+        self.lineLayerForConnection = None
+        self.vLayer = None
 
         # Set to true while building the graph to indicate that the arrays are
         # sorted by id, so binary search is possible
@@ -228,6 +232,12 @@ class ExtGraph(QObject):
         file.write(sizeString)
 
         file.close()
+
+    def setVectorLayer(self, layer):
+        self.vLayer = layer
+        
+    def setLineLayerForConnection(self, layer):
+        self.lineLayerForConnection = layer   
 
     def setJobID(self, jobId):
         self.mJobId = jobId
@@ -519,7 +529,7 @@ class ExtGraph(QObject):
     def nextEdgeID(self):
         return self.mMaxEdgeID
 
-    def addEdge(self, vertex1ID, vertex2ID, idx=-1, ID=-1, highlighted=False):
+    def addEdge(self, vertex1ID, vertex2ID, idx=-1, ID=-1, highlighted=False, feat=None):
         """
         Adds an edge with fromVertex vertex1 and toVertex2 to the ExtGraph
 
@@ -544,6 +554,8 @@ class ExtGraph(QObject):
             self.mMaxEdgeID = addedEdgeID + 1
         
         addedEdge = self.ExtEdge(vertex1ID, vertex2ID, addedEdgeID, highlighted)
+        if feat != None:
+            addedEdge.feature = feat
 
         self.mEdges.insert(addIndex, addedEdge)
 
@@ -559,6 +571,8 @@ class ExtGraph(QObject):
         for functionIdx in range(len(self.edgeWeights)):
             # add default value 0
             self.edgeWeights[functionIdx].insert(addIndex, 0)
+        
+        
         
         # register edge on from- and toVertices
         self.mVertices[self.findVertexByID(vertex1ID)].mOutgoingEdges.append(addedEdge.id())
@@ -998,36 +1012,54 @@ class ExtGraph(QObject):
                                   '\t\t\t<data key="nodestrokewidth">1</data>\n',
                                   '\t\t\t<data key="nodetype">0</data>\n']
 
-            for idx in range(self.mVertexCount):
-                vertex = self.vertex(idx)
-                nodeLine = '\t\t<node id="' + str(vertex.id()) + '">\n'
-                file.write(nodeLine)
-                file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
-                file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')
-                file.writelines(vertexKeyAttributes)
-
-                if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
-                    file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n')
-
-                file.write('\t\t</node>\n')
+            if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
+                for idx, feat in enumerate(self.vLayer.getFeatures()):
+                    vertex = self.vertex(idx)
+                    nodeLine = '\t\t<node id="' + str(vertex.id()) + '">\n'
+                    file.write(nodeLine)
+                    file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
+                    file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')                                                                                  
+                    if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
+                        file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n')
+                    file.writelines(vertexKeyAttributes)     
+                    for field in self.vLayer.fields():                       
+                        file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(feat[field.name()]) + '</data>\n')                                       
+                    file.write('\t\t</node>\n')    
+            else:
+                for idx in range(self.mVertexCount):
+                    vertex = self.vertex(idx)
+                    nodeLine = '\t\t<node id="' + str(vertex.id()) + '">\n'
+                    file.write(nodeLine)
+                    file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
+                    file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')
+                    file.writelines(vertexKeyAttributes)            
+                    if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
+                        file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n') 
+                    file.write('\t\t</node>\n')
 
             # TODO: 'bends'
             edgeKeyAttributes = ['\t\t\t<data key="edgetype">association</data>\n',
                                 '\t\t\t<data key="edgestroke">#000000</data>\n',
                                 '\t\t\t<data key="edgestroketype">1</data>\n',
-                                '\t\t\t<data key="edgestrokewidth">1</data>\n']
+                                '\t\t\t<data key="edgestrokewidth">1</data>\n']                       
 
             for idx in range(self.mEdgeCount):
                 edge = self.edge(idx)
                 edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '">\n'
                 file.write(edgeLine)
                 file.writelines(edgeKeyAttributes)
-
                 if self.distanceStrategy == "Advanced":
                     edgeData = ''
                     for costIdx in range(self.amountOfEdgeCostFunctions()):
                         edgeData += '\t\t\t<data key="c_' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
                     file.write(edgeData)
+                if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:
+                    for field in self.vLayer.fields():
+                        file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[field.name()]) + '</data>\n')
+                
+                if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.connectionType() == "LineLayerBased":
+                    for field in self.lineLayerForConnection.fields():
+                        file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[field.name()]) + '</data>\n')
 
                 file.write('\t\t</edge>\n')
 
