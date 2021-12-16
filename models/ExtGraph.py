@@ -1054,7 +1054,8 @@ class ExtGraph(QObject):
                     file.write(edgeData)
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:
                     for field in self.vLayer.fields():
-                        file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[field.name()]) + '</data>\n')
+                        if edge.feature != None:
+                            file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[field.name()]) + '</data>\n')
                 
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.connectionType() == "LineLayerBased":
                     # in this case the edge feature contains a dictionary
