@@ -142,7 +142,6 @@ class ExtGraph(QObject):
         self.mVertices = []
         self.mEdges = []
 
-        self.lineLayerForConnection = None
         self.vLayer = None
 
         # Set to true while building the graph to indicate that the arrays are
@@ -1058,8 +1057,9 @@ class ExtGraph(QObject):
                         file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[field.name()]) + '</data>\n')
                 
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.connectionType() == "LineLayerBased":
-                    for field in self.lineLayerForConnection.fields():
-                        file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[field.name()]) + '</data>\n')
+                    # in this case the edge feature contains a dictionary
+                    for key in edge.feature.keys():                   
+                        file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[key]) + '</data>\n')
 
                 file.write('\t\t</edge>\n')
 

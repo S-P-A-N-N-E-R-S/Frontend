@@ -308,8 +308,12 @@ class GraphBuilder:
             currVertexPoint = self.graph.vertex(graphVertexCounter).point()
             lineStartPoint = lineStartPointMatching[uniqueFeatString]          
             # create triple
-            distance = math.sqrt(pow(currVertexPoint.x()-lineStartPoint.x(),2) + pow(currVertexPoint.y()-lineStartPoint.y(),2)) 
-            buckets[uniqueFeatString].append((graphVertexCounter, distance, currFeat))
+            distance = math.sqrt(pow(currVertexPoint.x()-lineStartPoint.x(),2) + pow(currVertexPoint.y()-lineStartPoint.y(),2))
+            featureFieldDict = {}
+            for field in joinedLayer.fields():
+                if field.name().startswith("new_"):
+                    featureFieldDict[field.name()] = currFeat[field.name()]
+            buckets[uniqueFeatString].append((graphVertexCounter, distance, currFeat, featureFieldDict))
                                       
         # sort the buckets if wanted and create edges
         for bucketKey in buckets.keys():
@@ -319,7 +323,7 @@ class GraphBuilder:
             else:
                 sortedList = bucket
             for tripleIndex in range(len(sortedList)-1):
-                self.graph.addEdge(sortedList[tripleIndex][0], sortedList[tripleIndex+1][0], feat=sortedList[tripleIndex+1][2])
+                self.graph.addEdge(sortedList[tripleIndex][0], sortedList[tripleIndex+1][0], feat=sortedList[tripleIndex+1][3])
           
     def __createComplete(self):
         """
@@ -802,9 +806,6 @@ class GraphBuilder:
         self.graph = ExtGraph()
         if not self.__options["createRandomGraph"]:
             self.graph.setVectorLayer(self.vLayer)
-            
-        if self.__options["connectionType"] == "LineLayerBased":   
-            self.graph.setLineLayerForConnection(self.connectionLineLayer)
         
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
