@@ -1058,31 +1058,21 @@ class ExtGraph(QObject):
                                   '\t\t\t<data key="nodestroketype">1</data>\n',
                                   '\t\t\t<data key="nodestrokewidth">1</data>\n',
                                   '\t\t\t<data key="nodetype">0</data>\n']
-
-            if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
-                for idx, feat in enumerate(self.vLayer.getFeatures()):
-                    vertex = self.vertex(idx)
-                    nodeLine = '\t\t<node id="' + str(vertex.id()) + '">\n'
-                    file.write(nodeLine)
-                    file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
-                    file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')                                                                                  
-                    if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
-                        file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n')
-                    file.writelines(vertexKeyAttributes)     
-                    for field in self.vLayer.fields():                       
-                        file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(feat[field.name()]) + '</data>\n')                                       
-                    file.write('\t\t</node>\n')    
-            else:
-                for idx in range(self.mVertexCount):
-                    vertex = self.vertex(idx)
-                    nodeLine = '\t\t<node id="' + str(vertex.id()) + '">\n'
-                    file.write(nodeLine)
-                    file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
-                    file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')
-                    file.writelines(vertexKeyAttributes)            
-                    if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
-                        file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n') 
-                    file.write('\t\t</node>\n')
+           
+            for idx in range(self.mVertexCount):
+                vertex = self.vertex(idx)
+                nodeLine = '\t\t<node id="' + str(vertex.id()) + '">\n'
+                file.write(nodeLine)
+                file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
+                file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')
+                file.writelines(vertexKeyAttributes)            
+                if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
+                    file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n')
+                if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
+                    if self.vLayer.getFeature(idx) != None:                                            
+                        for field in self.vLayer.fields():
+                            file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(self.vLayer.getFeature(idx)[field.name()]) + '</data>\n')                  
+                file.write('\t\t</node>\n')
 
             # TODO: 'bends'
             edgeKeyAttributes = ['\t\t\t<data key="edgetype">association</data>\n',
@@ -1107,8 +1097,9 @@ class ExtGraph(QObject):
                 
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.connectionType() == "LineLayerBased":
                     # in this case the edge feature contains a dictionary
-                    for key in edge.feature.keys():                   
-                        file.write('\t\t\t<data key="field_' + str(key) + '">' + str(edge.feature[key]) + '</data>\n')
+                    if edge.feature != None:
+                        for key in edge.feature.keys():                   
+                            file.write('\t\t\t<data key="field_' + str(key) + '">' + str(edge.feature[key]) + '</data>\n')
 
                 file.write('\t\t</edge>\n')
 
