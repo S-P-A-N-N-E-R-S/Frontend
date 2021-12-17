@@ -280,6 +280,8 @@ class GraphBuilder:
         buckets = {}
         lineStartPointMatching = {}
         for lineFeat in self.connectionLineLayer.getFeatures():
+            if self.task is not None and self.task.isCanceled():
+                break
             uniqueLineFeatString = ""
             for field in self.connectionLineLayer.fields():
                 uniqueLineFeatString += str(lineFeat[field.name()])
@@ -294,6 +296,8 @@ class GraphBuilder:
                           
         graphVertexCounter = -1
         for currFeat in joinedLayer.getFeatures():
+            if self.task is not None and self.task.isCanceled():
+                break
             if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
                 graphVertexCounter+=1 
                 
@@ -317,6 +321,8 @@ class GraphBuilder:
                                       
         # sort the buckets if wanted and create edges
         for bucketKey in buckets.keys():
+            if self.task is not None and self.task.isCanceled():
+                break
             bucket = buckets[bucketKey]
             if self.__options["doFeatureSorting"]:               
                 sortedList = sorted(bucket, key=lambda tri: tri[1])
