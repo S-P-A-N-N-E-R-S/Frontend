@@ -1069,9 +1069,10 @@ class ExtGraph(QObject):
                 if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
                     file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n')
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
-                    if self.vLayer.getFeature(idx) != None:                                            
-                        for field in self.vLayer.fields():
-                            file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(self.vLayer.getFeature(idx)[field.name()]) + '</data>\n')                  
+                    feat = self.vLayer.getFeature(vertex.id())
+                    if feat != None:
+                        for field in feat.fields():
+                            file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(feat[field.name()]) + '</data>\n')
                 file.write('\t\t</node>\n')
 
             # TODO: 'bends'
