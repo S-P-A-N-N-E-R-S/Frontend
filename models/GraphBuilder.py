@@ -32,7 +32,6 @@ import re
 import sys
 from ..lib.kdtree import kdtree
 import time
-from contextlib import closing
 from google.protobuf.type_pb2 import Syntax
 
 
