@@ -31,7 +31,7 @@ class EdgeIDField(BaseField):
 
     def createWidget(self, parent):
         edgePickerWidget = QgsGraphEdgePickerWidget(parent)
-        edgePickerWidget.toggleDialogVisibility.connect(lambda visible: parent.toggleDialogVisibility.emit(visible))
+        edgePickerWidget.toggleDialogVisibility.connect(parent.toggleDialogVisibility.emit)
         return edgePickerWidget
 
     def getWidgetData(self, widget):
@@ -48,3 +48,9 @@ class EdgeIDResult(BaseResult):
         else:
             protoField = self.getProtoField(response)
             data[self.key] = protoField
+
+    def getResultString(self, data):
+        result = data.get(self.key, None)
+        if result:
+            return f"{self.label}: {result}"
+        return ""
