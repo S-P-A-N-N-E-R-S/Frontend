@@ -143,7 +143,8 @@ class ExtGraph(QObject):
         self.mEdges = []
 
         self.vLayer = None
-
+        self.lineLayerForConnection = None
+        
         # Set to true while building the graph to indicate that the arrays are
         # sorted by id, so binary search is possible
         self.verticesSorted = True
@@ -969,11 +970,58 @@ class ExtGraph(QObject):
                 '\t<key for="node" attr.name="nodestrokewidth" attr.type="double" id="nodestrokewidth" />\n',
                 '\t<key for="node" attr.name="nodefill" attr.type="int" id="nodefill" />\n',
                 '\t<key for="node" attr.name="nodefillbg" attr.type="string" id="nodefillbg" />\n',
-                '\t<key for="node" attr.name="nodetype" attr.type="int" id="nodetype" />\n',
-                '\t<key for="edge" attr.name="edgetype" attr.type="string" id="edgetype" />\n',
-                '\t<key for="edge" attr.name="edgestroke" attr.type="string" id="edgestroke" />\n',
-                '\t<key for="edge" attr.name="edgestroketype" attr.type="int" id="edgestroketype" />\n',
-                '\t<key for="edge" attr.name="edgestrokewidth" attr.type="double" id="edgestrokewidth" />\n']
+                '\t<key for="node" attr.name="nodetype" attr.type="int" id="nodetype" />\n']
+                
+            if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
+                for field in self.vLayer.fields():
+                    type = field.typeName()
+                    typeNameConv = ""
+                    if type == "String":
+                        typeNameConv = "string"
+                    elif type == "Real":
+                        typeNameConv = "double"
+                    elif type == "Integer":
+                        typeNameConv = "int"     
+                    else:
+                        typeNameConv = "string"
+                    string = '\t<key for="node" attr.name="' + 'field_' + field.name() + '" attr.type="' + typeNameConv + '" id = "' + field.name() + '" />\n'
+                    header.append(string)
+
+            header.extend(['\t<key for="edge" attr.name="edgetype" attr.type="string" id="edgetype" />\n',
+                           '\t<key for="edge" attr.name="edgestroke" attr.type="string" id="edgestroke" />\n',
+                           '\t<key for="edge" attr.name="edgestroketype" attr.type="int" id="edgestroketype" />\n',
+                           '\t<key for="edge" attr.name="edgestrokewidth" attr.type="double" id="edgestrokewidth" />\n'])
+
+            if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:
+                for field in self.vLayer.fields():
+                    type = field.typeName()
+                    typeNameConv = ""
+                    if type == "String":
+                        typeNameConv = "string"
+                    elif type == "Real":
+                        typeNameConv = "double"
+                    elif type == "Integer":
+                        typeNameConv = "int"     
+                    else:
+                        typeNameConv = "string"
+                    string = '\t<key for="edge" attr.name="' + 'field_' + field.name() + '" attr.type="' + typeNameConv + '" id = "' + field.name() + '" />\n'
+                    header.append(string)
+
+            if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.connectionType() == "LineLayerBased":
+                # in this case the edge feature contains a dictionary
+                for field in self.lineLayerForConnection.fields():
+                    type = field.typeName()
+                    typeNameConv = ""
+                    if type == "String":
+                        typeNameConv = "string"
+                    elif type == "Real":
+                        typeNameConv = "double"
+                    elif type == "Integer":
+                        typeNameConv = "int"     
+                    else:
+                        typeNameConv = "string"                 
+                    string = '\t<key for="edge" attr.name="' + 'field_' + field.name() + '" attr.type="' + typeNameConv + '" id = "' + field.name() + '" />\n'
+                    header.append(string)        
 
             file.writelines(header)
 
@@ -1060,7 +1108,7 @@ class ExtGraph(QObject):
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.connectionType() == "LineLayerBased":
                     # in this case the edge feature contains a dictionary
                     for key in edge.feature.keys():                   
-                        file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[key]) + '</data>\n')
+                        file.write('\t\t\t<data key="field_' + str(key) + '">' + str(edge.feature[key]) + '</data>\n')
 
                 file.write('\t\t</edge>\n')
 

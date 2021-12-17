@@ -315,7 +315,7 @@ class GraphBuilder:
             featureFieldDict = {}
             for field in joinedLayer.fields():
                 if field.name().startswith("new_"):
-                    featureFieldDict[field.name()] = currFeat[field.name()]
+                    featureFieldDict[field.name().split("new_")[1]] = currFeat[field.name()]
             buckets[uniqueFeatString].append((graphVertexCounter, distance, currFeat, featureFieldDict))
                                       
         # sort the buckets if wanted and create edges
@@ -811,7 +811,9 @@ class GraphBuilder:
         self.graph = ExtGraph()
         if not self.__options["createRandomGraph"]:
             self.graph.setVectorLayer(self.vLayer)
-        
+        if self.__options["connectionType"] == "LineLayerBased":
+            self.graph.setLineLayerForConnection(self.connectionLineLayer)
+                   
         # set distance strategy
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
         self.graph.setConnectionType(self.__options["connectionType"])
