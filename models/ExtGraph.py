@@ -87,6 +87,9 @@ class ExtGraph(QObject):
 
         def setNewPoint(self, point):
             self.mCoordinates = point
+            
+        def degree(self):
+            return len(self.mIncomingEdges) + len(self.mOutgoingEdges)
 
     #==ExtEdge=======================================================================
     class ExtEdge:
@@ -129,6 +132,12 @@ class ExtGraph(QObject):
 
         def toggleHighlight(self):
             self.isHighlighted = not self.isHighlighted
+            
+        def opposite(self, vertexID):
+            if self.mFromID == vertexID:
+                return self.mToID    
+            else:
+                return self.mFromID
 
     #==ExtGraph Methods===============================================================
     def __init__(self):
@@ -892,7 +901,7 @@ class ExtGraph(QObject):
                         break
 
             del self.mEdges[idx]
-            
+                                 
             # also remove entries from edgeWeights
             for functionIdx in range(len(self.edgeWeights)):
                 del self.edgeWeights[functionIdx][idx]

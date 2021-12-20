@@ -805,22 +805,6 @@ QListWidget::item::selected {
                                    </property>
                                   </widget>
                                  </item>
-                                 <item>
-                                  <widget class="QCheckBox" name="create_graph_dofeaturesorting_checkbox">
-                                   <property name="sizePolicy">
-                                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                                     <horstretch>0</horstretch>
-                                     <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                   </property>
-                                   <property name="text">
-                                    <string>Do feature sorting</string>
-                                   </property>
-                                   <property name="checked">
-                                    <bool>true</bool>
-                                   </property>
-                                  </widget>
-                                 </item>
                                 </layout>
                                </item>
                                <item>

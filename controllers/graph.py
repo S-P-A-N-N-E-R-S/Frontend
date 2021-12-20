@@ -144,7 +144,6 @@ class GraphController(BaseController):
         builder.setOption("distanceStrategy", self.view.getDistanceStrategy()[1])
         builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
         builder.setOption("randomConnectionNumber", self.view.getRandomEdgesNumber())
-        builder.setOption("doFeatureSorting", self.view.getDoFeatureSorting())
         
         if self.view.getConnectionType()[1] == "LineLayerBased":
             lineLayer = self.view.getLineLayerForConnection()
