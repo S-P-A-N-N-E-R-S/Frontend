@@ -805,6 +805,13 @@ QListWidget::item::selected {
                                    </property>
                                   </widget>
                                  </item>
+                                 <item>
+                                  <widget class="QCheckBox" name="create_graph_createinfos_checkbox">
+                                   <property name="text">
+                                    <string>Create feature infos (can be costly)</string>
+                                   </property>
+                                  </widget>
+                                 </item>
                                 </layout>
                                </item>
                                <item>
@@ -1861,8 +1868,8 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>53</width>
+                   <height>16</height>
                   </rect>
                  </property>
                 </widget>

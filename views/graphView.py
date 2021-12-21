@@ -225,6 +225,7 @@ class GraphView(BaseView):
         self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
         self.dialog.create_graph_randomnumber_input.setEnabled(connectionType == "Random")
         self.dialog.create_graph_line_layer_input.setEnabled(connectionType == "LineLayerBased")
+        self.dialog.create_graph_createinfos_checkbox.setEnabled(connectionType == "LineLayerBased")
 
     def _distanceStrategyChanged(self):
         """
@@ -500,6 +501,9 @@ class GraphView(BaseView):
 
     def isDoubleEdgesAllowed(self):
         return self.dialog.create_graph_allowdoubleedges_checkbox.isChecked()
+    
+    def getCreateInfos(self):
+        return self.dialog.create_graph_createinfos_checkbox.isChecked()
 
     def getDistance(self):
         """
@@ -560,7 +564,7 @@ class GraphView(BaseView):
         return self.dialog.create_graph_forbiddenarea_input.currentLayer()
 
     def getAdditionalPointLayer(self):
-        return self.dialog.create_graph_additionalpoint_input.currentLayer()
+        return self.dialog.create_graph_additionalpoint_input.currentLayer()        
 
     def getCostFunctions(self):
         """

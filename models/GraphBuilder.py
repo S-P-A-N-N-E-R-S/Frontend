@@ -92,7 +92,8 @@ class GraphBuilder:
             "usePolygonsInCostFunction": False,
             "useAdditionalPoints": False,
             "createShortestPathView": False,
-            "randomConnectionNumber": 100
+            "randomConnectionNumber": 100,
+            "createFeatureInfos": False
         }
 
         self.__randomOptions = {
@@ -257,9 +258,12 @@ class GraphBuilder:
                 self.graph.pointsToFeatureHash[geom.asPoint().toString()] = feat
             self.graph.addVertex(geom.asPoint())
      
-    def __createLineBasedConnections(self):                              
+    def __createLineBasedConnections(self):
         # initialize buckets: every bucket stands for one line and contains all assigned points
-        buckets = {}    
+        buckets = {}
+        # dictionary for the graph vertices containing a list of dictionaries
+        attributeDictsForVertices = {}
+        dictsForOrigVertices = {}
         result = processing.run("native:explodelines", {"INPUT": self.connectionLineLayer, "OUTPUT": "memory:"})
         explodedLines = result["OUTPUT"] 
         
@@ -295,6 +299,7 @@ class GraphBuilder:
         joinedLayer = result["OUTPUT"]
         if self.task is not None:
             self.task.setProgress(self.task.progress() + 5)          
+        
         # fill buckets                  
         graphVertexCounter = -1
         for currFeat in joinedLayer.getFeatures():
@@ -303,22 +308,37 @@ class GraphBuilder:
             if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
                 graphVertexCounter+=1                
             if currFeat["n"] == None:
-                continue  
-            featureFieldDict = {}                  
-            # uniqueID gives matching to line segment
-            for fieldName in originalLineLayerFields:
-                key = "new_" + fieldName
-                featureFieldDict[fieldName] = currFeat[key]
-            buckets[currFeat["new_newUniqueID"]].append((graphVertexCounter, currFeat, featureFieldDict))
-                
+                continue                   
+            # uniqueID gives matching to line segment          
+            buckets[currFeat["new_newUniqueID"]].append((graphVertexCounter, currFeat))
+            
+            # assume that every point just has one nearest edge found by the joinbynearest operation
+            if self.__options["createFeatureInfos"]:
+                dict = {}
+                for field in originalLineLayerFields:
+                    dict[field] = explodedLines.getFeature(currFeat["new_newUniqueID"])[field]
+                attributeDictsForVertices[graphVertexCounter] = [dict]
+                dictsForOrigVertices[graphVertexCounter] = [dict]  
         # create edges between the vertices in one bucket
         for key in buckets.keys():
             bucket = buckets[key]
             if len(buckets) > 1:
                 for i in range(len(bucket)-1):
-                    self.graph.addEdge(bucket[i][0], bucket[i+1][0], feat=bucket[i+1][2])
+                    if self.__options["createFeatureInfos"]:
+                        feat1 = attributeDictsForVertices[bucket[i][0]][0]
+                        feat2 = attributeDictsForVertices[bucket[i+1][0]][0]
+                        if feat1 == feat2:
+                            toAdd = [feat1]
+                        else:
+                            toAdd = [feat1, feat2]
+                    else:
+                        toAdd = None                                      
+                    self.graph.addEdge(bucket[i][0], bucket[i+1][0], feat=toAdd)
         if self.task is not None:
-            self.task.setProgress(self.task.progress() + 5)                   
+            self.task.setProgress(self.task.progress() + 5)  
+            
+        originalNumberOfVertices = self.graph.vertexCount()    
+                             
         # build help graph for the exploded line layer
         gbHelp = GraphBuilder()
         gbHelp.setVectorLayer(explodedLines)
@@ -333,21 +353,25 @@ class GraphBuilder:
                 vFrom = helpGraph.vertex(edge.fromVertex())
                 vTo = helpGraph.vertex(edge.toVertex())
                 newID = self.graph.vertex(self.graph.addVertex(QgsPointXY((vFrom.point().x() + vTo.point().x())/2, (vFrom.point().y() + vTo.point().y())/2))).id()
-                buckets[edge.feature.id()].append((newID, None, None))
+                buckets[edge.feature.id()].append((newID, None))
                 newlyAddedVertexIds.append(newID)
+                if self.__options["createFeatureInfos"]:
+                    dict = {}
+                    for field in originalLineLayerFields:
+                        dict[field] = explodedLines.getFeature(edge.feature.id())[field]              
+                    attributeDictsForVertices[newID] = [dict]
 
         visited = [False] * helpGraph.vertexCount()
         for vertexIndex in range(helpGraph.vertexCount()):
             if self.task is not None:
                 self.task.setProgress(self.task.progress() + 15/helpGraph.vertexCount())
             if not visited[vertexIndex]:
-                self.__dfs(vertexIndex, helpGraph, visited, buckets)
+                self.__dfs(vertexIndex, helpGraph, visited, buckets, attributeDictsForVertices)
  
         # DELETE NODES AND INSERT CORRECT EDGES
         for vertexID in reversed(newlyAddedVertexIds):            
             if self.task is not None:
-                self.task.setProgress(self.task.progress() + 60/len(newlyAddedVertexIds))
-            
+                self.task.setProgress(self.task.progress() + 60/len(newlyAddedVertexIds))            
             if self.task is not None and self.task.isCanceled():
                 break        
             v = self.graph.vertex(vertexID)
@@ -362,13 +386,26 @@ class GraphBuilder:
                 for i in range(len(connectedVertices)-1):             
                     for j in range(i+1, len(connectedVertices)):
                         if self.task is not None and self.task.isCanceled():
-                            break       
-                        self.graph.addEdge(connectedVertices[i], connectedVertices[j])                              
-            self.graph.deleteVertex(vertexID)
- 
-        # TODO: FIX THE GRAPHML OR SET THE CORRECT FEATURE WHEN CREATING AN EDGE
+                            break 
+                        if self.__options["createFeatureInfos"]:
+                            for dict in attributeDictsForVertices[vertexID]:
+                                attributeDictsForVertices[connectedVertices[i]].append(dict)
+                                attributeDictsForVertices[connectedVertices[j]].append(dict)                           
+                            combined = attributeDictsForVertices[connectedVertices[i]] + attributeDictsForVertices[connectedVertices[j]]
+                            # remove duplicates                        
+                            toAdd = {frozenset(item.items()) : item for item in combined}.values()                       
+                        else:
+                            toAdd = None
+                        self.graph.addEdge(connectedVertices[i], connectedVertices[j], feat=toAdd)                      
+                        # reset attribute information if both neighbors are original graph nodes
+                        # smaller because vertexIds start at 0
+                        if self.__options["createFeatureInfos"]:
+                            if connectedVertices[i] < originalNumberOfVertices and connectedVertices[j] < originalNumberOfVertices:
+                                attributeDictsForVertices[connectedVertices[i]] = dictsForOrigVertices[connectedVertices[i]]
+                                attributeDictsForVertices[connectedVertices[j]] = dictsForOrigVertices[connectedVertices[j]]                                                                                                                                            
+            self.graph.deleteVertex(vertexID)                   
      
-    def __dfs(self, vertexIndex, graph, visited, buckets):
+    def __dfs(self, vertexIndex, graph, visited, buckets, attributeDictsForVertices):
         stack = []
         stack.append(vertexIndex)
         usedEdges = {}
@@ -398,6 +435,8 @@ class GraphBuilder:
                         featureDict = {}
                         # CONNECT TO NEAREST
                         for entry in buckets[graph.edge(neighborEdge).feature.id()]:
+                            if self.task is not None and self.task.isCanceled():
+                                break
                             thePoint = self.graph.vertex(entry[0]).point()
                             for entry2 in buckets[graph.edge(usedEdges[v]).feature.id()]:
                                 thePoint2 = self.graph.vertex(entry2[0]).point()
@@ -406,11 +445,18 @@ class GraphBuilder:
                                     minDist = dist
                                     nearestV1 = entry[0]
                                     nearestV2 = entry2[0]
-                                    featureDict = entry2[2]
-                        if nearestV1 != nearestV2:
-                            self.graph.addEdge(nearestV1, nearestV2, feat=featureDict)
-                    
-        
+                        if nearestV1 != nearestV2:                          
+                            if self.__options["createFeatureInfos"]:
+                                feat1 = attributeDictsForVertices[nearestV1][0]
+                                feat2 = attributeDictsForVertices[nearestV2][0]
+                                if feat1 == feat2:
+                                    toAdd = [feat1]
+                                else:
+                                    toAdd = [feat1, feat2]
+                            else:
+                                toAdd = None
+                            self.graph.addEdge(nearestV1, nearestV2, feat=toAdd)
+                        
     def __createComplete(self):
         """
         Create an edge for every pair of vertices
