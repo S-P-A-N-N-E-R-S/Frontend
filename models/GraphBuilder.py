@@ -93,7 +93,8 @@ class GraphBuilder:
             "useAdditionalPoints": False,
             "createShortestPathView": False,
             "randomConnectionNumber": 100,
-            "createFeatureInfos": False
+            "createFeatureInfos": False,
+            "degreeThreshold": 3
         }
 
         self.__randomOptions = {
@@ -259,11 +260,13 @@ class GraphBuilder:
             self.graph.addVertex(geom.asPoint())
      
     def __createLineBasedConnections(self):
-        # initialize buckets: every bucket stands for one line and contains all assigned points
+        # initialize buckets: every bucket stands for one line segment and contains all assigned points
         buckets = {}
         # dictionary for the graph vertices containing a list of dictionaries
         attributeDictsForVertices = {}
         dictsForOrigVertices = {}
+        
+        # split up the polylines into individual line segments 
         result = processing.run("native:explodelines", {"INPUT": self.connectionLineLayer, "OUTPUT": "memory:"})
         explodedLines = result["OUTPUT"] 
         
@@ -271,13 +274,14 @@ class GraphBuilder:
         for field in self.connectionLineLayer.fields():
             originalLineLayerFields.append(field.name())
         
+        # add an id field to the exploded line layer for later identification
         dp = explodedLines.dataProvider()
         dp.addAttributes([QgsField("newUniqueID", QVariant.Int)])
         explodedLines.updateFields()
         placeOfID = len(explodedLines.fields())-1   
         explodedLines.startEditing()
-        lineCounter = 0
         for feat in explodedLines.getFeatures():
+            # bucket init
             buckets[feat.id()] = []
             theID = feat.id()
             attrValue = {placeOfID:theID}
@@ -287,6 +291,7 @@ class GraphBuilder:
         if self.task is not None:
             self.task.setProgress(self.task.progress() + 5)
         
+        # find for each point the line segment or segments the point is closest to
         if self.__options["distance"][0] == 0:        
             result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": explodedLines, "PREFIX": "new_", "OUTPUT": "memory:"})    
         else:
@@ -297,6 +302,7 @@ class GraphBuilder:
             distConverted = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                     
             result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": explodedLines, "PREFIX": "new_", "MAX_DISTANCE": distConverted, "OUTPUT": "memory:"})
         joinedLayer = result["OUTPUT"]
+        
         if self.task is not None:
             self.task.setProgress(self.task.progress() + 5)          
         
@@ -306,19 +312,21 @@ class GraphBuilder:
             if self.task is not None and self.task.isCanceled():
                 break
             if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
+                # it is possible that there are multiple matches for one vertex
                 graphVertexCounter+=1                
             if currFeat["n"] == None:
                 continue                   
             # uniqueID gives matching to line segment          
             buckets[currFeat["new_newUniqueID"]].append((graphVertexCounter, currFeat))
-            
-            # assume that every point just has one nearest edge found by the joinbynearest operation
+                       
             if self.__options["createFeatureInfos"]:
+                # assume that every point just has one nearest edge found by the joinbynearest operation
                 dict = {}
                 for field in originalLineLayerFields:
                     dict[field] = explodedLines.getFeature(currFeat["new_newUniqueID"])[field]
                 attributeDictsForVertices[graphVertexCounter] = [dict]
                 dictsForOrigVertices[graphVertexCounter] = [dict]  
+        
         # create edges between the vertices in one bucket
         for key in buckets.keys():
             bucket = buckets[key]
@@ -334,6 +342,7 @@ class GraphBuilder:
                     else:
                         toAdd = None                                      
                     self.graph.addEdge(bucket[i][0], bucket[i+1][0], feat=toAdd)
+        
         if self.task is not None:
             self.task.setProgress(self.task.progress() + 5)  
             
@@ -346,6 +355,8 @@ class GraphBuilder:
         gbHelp.setOption("edgeDirection", "Undirected")
         gbHelp.makeGraph()
         helpGraph = gbHelp.getGraph()
+        
+        # add additional points for each line segment which does not have a point associated
         newlyAddedVertexIds = []
         for edgeID in range(helpGraph.edgeCount()):
             edge = helpGraph.edge(edgeID)
@@ -360,20 +371,34 @@ class GraphBuilder:
                     for field in originalLineLayerFields:
                         dict[field] = explodedLines.getFeature(edge.feature.id())[field]              
                     attributeDictsForVertices[newID] = [dict]
-
+        
+        # do deep first searches until every vertex in the help graph is visited
         visited = [False] * helpGraph.vertexCount()
+        visitedCounter = 0
         for vertexIndex in range(helpGraph.vertexCount()):
             if self.task is not None:
                 self.task.setProgress(self.task.progress() + 15/helpGraph.vertexCount())
-            if not visited[vertexIndex]:
-                self.__dfs(vertexIndex, helpGraph, visited, buckets, attributeDictsForVertices)
- 
-        # DELETE NODES AND INSERT CORRECT EDGES
+            # start at a degree 1 node because otherwise some connections might not be made
+            if not visited[vertexIndex] and helpGraph.vertex(vertexIndex).degree() == 1:
+                visitedCounter += self.__dfs(vertexIndex, helpGraph, visited, buckets, attributeDictsForVertices)
+        
+        # control loops in case there are circles
+        if visitedCounter != helpGraph.vertexCount():
+            for vertexIndex in range(helpGraph.vertexCount()):
+                if self.task is not None:
+                    self.task.setProgress(self.task.progress() + 15/helpGraph.vertexCount())
+                # start at a degree 1 node because otherwise some connections might not be made
+                # assume that there are no circles inside the layer
+                if not visited[vertexIndex]:
+                    self.__dfs(vertexIndex, helpGraph, visited, buckets, attributeDictsForVertices)
+        
+        # delete help nodes and insert correct edges
         for vertexID in reversed(newlyAddedVertexIds):            
             if self.task is not None:
                 self.task.setProgress(self.task.progress() + 60/len(newlyAddedVertexIds))            
             if self.task is not None and self.task.isCanceled():
                 break        
+            
             v = self.graph.vertex(vertexID)
             connectedVertices = []
             for edgeIndex in v.incomingEdges():
@@ -381,8 +406,9 @@ class GraphBuilder:
                 connectedVertices.append(neighbor)           
             for edgeIndex in v.outgoingEdges():    
                 neighbor = self.graph.edge(self.graph.findEdgeByID(edgeIndex)).opposite(vertexID)
-                connectedVertices.append(neighbor)             
-            if len(connectedVertices) <= 2:                                 
+                connectedVertices.append(neighbor)
+            # in some sets the amount of neighbors can be very high so exclude this cases
+            if len(connectedVertices) <= self.__options["degreeThreshold"]:                                 
                 for i in range(len(connectedVertices)-1):             
                     for j in range(i+1, len(connectedVertices)):
                         if self.task is not None and self.task.isCanceled():
@@ -404,15 +430,18 @@ class GraphBuilder:
                                 attributeDictsForVertices[connectedVertices[i]] = dictsForOrigVertices[connectedVertices[i]]
                                 attributeDictsForVertices[connectedVertices[j]] = dictsForOrigVertices[connectedVertices[j]]                                                                                                                                            
             self.graph.deleteVertex(vertexID)                   
-     
+        
     def __dfs(self, vertexIndex, graph, visited, buckets, attributeDictsForVertices):
         stack = []
+        visitedCounter = 0
         stack.append(vertexIndex)
+        # this dictionary stores for a vertex the edge it was last visited by
         usedEdges = {}
         while len(stack) != 0:
             v = stack.pop()
             if not visited[v]:
                 visited[v] = True
+                visitedCounter+=1
                 neighborEdges = []
                 neighbors = []
                 for edgeIndex in graph.vertex(v).incomingEdges():
@@ -428,12 +457,13 @@ class GraphBuilder:
                 if self.task is not None and self.task.isCanceled():
                     break
                 for neighborEdge in neighborEdges:
+                    # feature contains a line segment from the exploded line layer
                     if v in usedEdges and graph.edge(neighborEdge).feature.id() != graph.edge(usedEdges[v]).feature.id():   
                         nearestV1 = None
                         nearestV2 = None
                         minDist = sys.maxsize
                         featureDict = {}
-                        # CONNECT TO NEAREST
+                        # connect to nearest
                         for entry in buckets[graph.edge(neighborEdge).feature.id()]:
                             if self.task is not None and self.task.isCanceled():
                                 break
@@ -456,6 +486,8 @@ class GraphBuilder:
                             else:
                                 toAdd = None
                             self.graph.addEdge(nearestV1, nearestV2, feat=toAdd)
+         
+        return visitedCounter 
                         
     def __createComplete(self):
         """

@@ -806,6 +806,23 @@ QListWidget::item::selected {
                                   </widget>
                                  </item>
                                  <item>
+                                  <widget class="QLabel" name="label_6">
+                                   <property name="text">
+                                    <string>Exclude if degree &gt;</string>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                 <item>
+                                  <widget class="QSpinBox" name="create_graph_excludethreshold_input">
+                                   <property name="suffix">
+                                    <string/>
+                                   </property>
+                                   <property name="value">
+                                    <number>3</number>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                 <item>
                                   <widget class="QCheckBox" name="create_graph_createinfos_checkbox">
                                    <property name="text">
                                     <string>Create feature infos (can be costly)</string>
@@ -1868,8 +1885,8 @@ QListWidget::item::selected {
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>53</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>

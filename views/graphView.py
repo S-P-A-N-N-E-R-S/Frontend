@@ -226,6 +226,7 @@ class GraphView(BaseView):
         self.dialog.create_graph_randomnumber_input.setEnabled(connectionType == "Random")
         self.dialog.create_graph_line_layer_input.setEnabled(connectionType == "LineLayerBased")
         self.dialog.create_graph_createinfos_checkbox.setEnabled(connectionType == "LineLayerBased")
+        self.dialog.create_graph_excludethreshold_input.setEnabled(connectionType == "LineLayerBased")
 
     def _distanceStrategyChanged(self):
         """
@@ -504,6 +505,9 @@ class GraphView(BaseView):
     
     def getCreateInfos(self):
         return self.dialog.create_graph_createinfos_checkbox.isChecked()
+
+    def getDegreeThreshold(self):
+        return self.dialog.create_graph_excludethreshold_input.value()
 
     def getDistance(self):
         """

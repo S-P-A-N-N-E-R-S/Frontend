@@ -145,6 +145,7 @@ class GraphController(BaseController):
         builder.setOption("createShortestPathView", self.view.isShortPathViewChecked())
         builder.setOption("randomConnectionNumber", self.view.getRandomEdgesNumber())
         builder.setOption("createFeatureInfos", self.view.getCreateInfos())
+        builder.setOption("degreeThreshold", self.view.getDegreeThreshold())
         
         if self.view.getConnectionType()[1] == "LineLayerBased":
             lineLayer = self.view.getLineLayerForConnection()
