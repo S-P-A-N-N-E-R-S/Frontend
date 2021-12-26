@@ -34,7 +34,7 @@ class VertexIDField(BaseField):
 
     def createWidget(self, parent):
         vertexPickerWidget = QgsGraphVertexPickerWidget(parent)
-        vertexPickerWidget.toggleDialogVisibility.connect(lambda visible: parent.toggleDialogVisibility.emit(visible))
+        vertexPickerWidget.toggleDialogVisibility.connect(parent.toggleDialogVisibility.emit)
         return vertexPickerWidget
 
     def getWidgetData(self, widget):
@@ -51,3 +51,9 @@ class VertexIDResult(BaseResult):
         else:
             protoField = self.getProtoField(response)
             data[self.key] = protoField
+
+    def getResultString(self, data):
+        result = data.get(self.key, None)
+        if result:
+            return f"{self.label}: {result}"
+        return ""

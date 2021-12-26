@@ -43,6 +43,16 @@ class BaseResponse():
     def addResult(self, result):
         self.results[result.key] = result
 
+    def getResultString(self):
+        resultString = ""
+        for result in self.results.values():
+            try:
+                resultString += result.getResultString(self.data)
+            except AttributeError:
+                pass
+            resultString += "\n"
+        return resultString
+
     def parseProtoBuf(self, protoBuf):
         response = self.protoResponse()
         protoBuf.response.Unpack(response)

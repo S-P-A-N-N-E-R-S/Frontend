@@ -42,7 +42,7 @@ class GraphBuilder:
     by setting options and layers before calling the makeGraph method.
 
     Options:
-        - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN, DistanceNN
+        - connectionType: None, Complete, Nearest neighbor, ClusterComplete, ClusterNN, DistanceNN, LineLayerBased
         - neighborNumber: int
         - distance: (float, QgsUnitTypes::DistanceUnit) (euclidean distance)
         - nnAllowDoubleEdges": True, False
@@ -65,6 +65,7 @@ class GraphBuilder:
         """
         self.graph = ExtGraph()
         self.vLayer = QgsVectorLayer()
+        self.connectionLineLayer = QgsVectorLayer()
         self.rLayers = []
         self.forbiddenAreas = QgsVectorLayer()       
         self.additionalPointLayer = QgsVectorLayer()
@@ -92,7 +93,8 @@ class GraphBuilder:
             "usePolygonsInCostFunction": False,
             "useAdditionalPoints": False,
             "createShortestPathView": False,
-            "randomConnectionNumber": 100
+            "randomConnectionNumber": 100,
+            "doFeatureSorting": True
         }
 
         self.__randomOptions = {
@@ -160,6 +162,12 @@ class GraphBuilder:
         self.__options["useRasterData"] = True
         self.rasterBands.append(band)
         self.rLayers.append(rasterLayer)
+
+    def setLineLayer(self, layer):
+        if layer.geometryType() != QgsWkbTypes.LineGeometry:
+            raise TypeError("Not a line layer")
+        
+        self.connectionLineLayer = layer
 
     def addCostFunction(self, function):
         """
@@ -250,7 +258,69 @@ class GraphBuilder:
             if self.__options["distanceStrategy"] == "Advanced":               
                 self.graph.pointsToFeatureHash[geom.asPoint().toString()] = feat
             self.graph.addVertex(geom.asPoint())
-            
+     
+    def __createLineBasedConnections(self):                        
+        if self.__options["distance"][0] == 0:        
+            result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": self.connectionLineLayer, "PREFIX": "new_", "OUTPUT": "memory:"})    
+        else:
+            if self.__options["createRandomGraph"] == True:
+                crsUnitRead = QgsCoordinateReferenceSystem("EPSG:4326")                
+            else:
+                crsUnitRead = self.vLayer.crs()            
+            distConverted = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())                     
+            result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": self.connectionLineLayer, "PREFIX": "new_", "MAX_DISTANCE": distConverted, "OUTPUT": "memory:"})
+        joinedLayer = result["OUTPUT"]      
+          
+        newFieldsAdded = []
+        for field in joinedLayer.fields():
+            if field.name().startswith("new_"):
+                newFieldsAdded.append(field.name())
+        
+        # create buckets: every bucket stands for one polyline and contains all assigned points
+        buckets = {}
+        lineStartPointMatching = {}
+        for lineFeat in self.connectionLineLayer.getFeatures():
+            uniqueLineFeatString = ""
+            for field in self.connectionLineLayer.fields():
+                uniqueLineFeatString += str(lineFeat[field.name()])
+            buckets[uniqueLineFeatString] = []
+            geom = lineFeat.geometry()
+            if QgsWkbTypes.isMultiType(geom.wkbType()):
+                for part in geom.asMultiPolyline():                                                                                                       
+                    lineStartPointMatching[uniqueLineFeatString] = part[0]
+                    break
+            else:
+                lineStartPointMatching[uniqueLineFeatString] = geom.asPolyline()[0] 
+                          
+        graphVertexCounter = -1
+        for currFeat in joinedLayer.getFeatures():
+            if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
+                graphVertexCounter+=1 
+                
+            if currFeat["n"] == None:
+                continue              
+                                             
+            uniqueFeatString = ""               
+            for newFieldName in newFieldsAdded:
+                uniqueFeatString += str(currFeat[newFieldName])
+        
+            # get distance to start of line feature
+            currVertexPoint = self.graph.vertex(graphVertexCounter).point()
+            lineStartPoint = lineStartPointMatching[uniqueFeatString]          
+            # create triple
+            distance = math.sqrt(pow(currVertexPoint.x()-lineStartPoint.x(),2) + pow(currVertexPoint.y()-lineStartPoint.y(),2)) 
+            buckets[uniqueFeatString].append((graphVertexCounter, distance, currFeat))
+                                      
+        # sort the buckets if wanted and create edges
+        for bucketKey in buckets.keys():
+            bucket = buckets[bucketKey]
+            if self.__options["doFeatureSorting"]:               
+                sortedList = sorted(bucket, key=lambda tri: tri[1])
+            else:
+                sortedList = bucket
+            for tripleIndex in range(len(sortedList)-1):
+                self.graph.addEdge(sortedList[tripleIndex][0], sortedList[tripleIndex+1][0])
+          
     def __createComplete(self):
         """
         Create an edge for every pair of vertices
@@ -276,7 +346,7 @@ class GraphBuilder:
         notUsedVertexPairs = []
         for i in range(self.graph.vertexCount()-1):
             if self.__options["distanceStrategy"] == "Advanced":
-                    newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                newProgress = self.task.progress() + 20/self.graph.vertexCount()
             else:
                 newProgress = self.task.progress() + 90/self.graph.vertexCount()    
             if newProgress <= 100:               
@@ -756,7 +826,9 @@ class GraphBuilder:
                 self.__createCluster()
             elif self.__options["connectionType"] == "Random":
                 self.__createRandomConnections()     
-                          
+            elif self.__options["connectionType"] == "LineLayerBased":
+                self.__createLineBasedConnections()      
+                                           
         # user gives lines as input
         elif self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:      
             self.__createGraphForLineGeometry()

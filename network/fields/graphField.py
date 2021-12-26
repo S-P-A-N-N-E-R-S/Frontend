@@ -58,3 +58,6 @@ class GraphResult(BaseResult):
             inVertexId = protoField.vertexList[edge.inVertexIndex].uid
             outVertexId = protoField.vertexList[edge.outVertexIndex].uid
             data[self.key].addEdge(inVertexId, outVertexId, -1, edge.uid)
+
+    def getResultString(self, _data):
+        return "Result contains a graph, which will be displayed in a new layer."

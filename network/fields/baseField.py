@@ -55,6 +55,9 @@ class BaseResult:
         except AttributeError as error:
             raise ParseError(f"Invalid field name: {fieldName}") from error
 
+    def getResultString(self, _data):
+        return ""
+
 
 class GraphDependencyMixin():
     graphKey = ""

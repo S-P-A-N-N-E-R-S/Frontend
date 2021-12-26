@@ -57,22 +57,27 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
 
         # left navigation
-        self.menu_list.currentRowChanged.connect(self.stacked_content_views.setCurrentIndex)
+        self.menu_list.currentRowChanged.connect(self.changeViewIndex)
 
         # display dialog as window with minimize and maximize buttons
         self.setWindowFlags(Qt.Window)
 
-        # setup each content view     
+        # setup each content view
         self.resourceView = ResourceView(self)
         self.graphView = GraphView(self)
         self.analysisView = OGDFAnalysisView(self)
         self.benchmarkView = BenchmarkView(self)
         self.jobsView = JobsView(self)
         self.optionsView = OptionsView(self)
-        
+
         # create example data as default
         self.menu_list.setCurrentRow(0)
 
     def setView(self, View):
         self.menu_list.setCurrentRow(View.value)
         self.activateWindow()
+
+    def changeViewIndex(self, index):
+        if index == self.Views.JobsView.value:
+            self.jobsView.controller.refreshJobs()
+        self.stacked_content_views.setCurrentIndex(index)
