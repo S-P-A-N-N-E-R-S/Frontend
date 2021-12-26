@@ -102,7 +102,7 @@ class BenchmarkDataObjWrapper():
                         values.append(round(edgeCount / originalGraph.edgeCount(), 3))
 
             elif analysis == "Lightness":
-                lightness = self._getLightness(originalGraph, dataObj.getParameters()['edgeCosts'])                      
+                lightness = float(self._getLightness(originalGraph, dataObj.getParameters()['edgeCosts']))           
                 if average:
                     values.append(dataObj.getAvgEdgeWeightResponse() / lightness)
                 else:
@@ -126,10 +126,9 @@ class BenchmarkDataObjWrapper():
         request.jobName = "mst_benchmark" 
         try:
             with Client(helper.getHost(), helper.getPort()) as client:
-                client.sendJobRequest(request)
+                executionID = client.sendJobRequest(request)
         except (NetworkClientError, ParseError) as error:
-            pass
-         
+            pass 
         status = "waiting"
         counter = 0
         while status != "success":
@@ -141,24 +140,21 @@ class BenchmarkDataObjWrapper():
                         time.sleep(0.25)
                         counter+=1
                     else:
-                        time.sleep(1)  
-                    states = client.getJobStatus()
-                    jobState = list(states.values())[-1]
-                    jobId = jobState.jobId
-                    job = statusManager.getJobState(jobId)                
+                        time.sleep(1)       
+                    jobStatus = client.getJobStatus()
+                                  
+                    jobId = executionID
+                    job = jobStatus[jobId]                 
                     status = self.STATUS_TEXTS.get(job.status, "status not supported")
 
             except (NetworkClientError, ParseError) as error:
                 return -1
-        
         try:
             with Client(helper.getHost(), helper.getPort()) as client:
-                response = client.getJobResult(job.jobId)             
-                mst = response.getGraph()
-                lightness = 0
-                for edgeID in range(mst.edgeCount()):
-                    lightness += mst.costOfEdge(edgeID)
-                return lightness    
+                # there seems to be an error in the getJobResult method
+                # so this does not work with the new kruskal handler
+                response = client.getJobResult(job.jobId)                          
+                return response.data["totalWeight"] 
                 
         except (NetworkClientError, ParseError) as error:
             return -1

@@ -337,7 +337,6 @@ class BenchmarkController(BaseController):
     def runJob(self, _task):
         # todo: pass authId to client
         #authId = self.settings.value("ogdfplugin/authId")
-
         for benchmarkDO in self.benchmarkDOs:
             requestKey = benchmarkDO.algorithm
             request = parserManager.getRequestParser(requestKey)
@@ -347,10 +346,11 @@ class BenchmarkController(BaseController):
                 fieldData = benchmarkDO.parameters[key]
                 request.setFieldData(key, fieldData)
 
-            for _ in range(self.view.getExecutions(benchmarkDO.algorithm)):
+            for i in range(self.view.getExecutions(benchmarkDO.algorithm)):
+                
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:
-                        client.sendJobRequest(request)
+                        executionID = client.sendJobRequest(request)
                 except (NetworkClientError, ParseError) as error:
                     return "Network Error: " + str(error)
 
@@ -367,12 +367,11 @@ class BenchmarkController(BaseController):
                                 time.sleep(0.5)
                                 counter+=1
                             else:
-                                time.sleep(1)
-                            states = client.getJobStatus()
-                            jobState = list(states.values())[-1]
-                            jobId = jobState.jobId
-                            job = statusManager.getJobState(jobId)
-                            
+                                time.sleep(1)   
+                            jobStatus = client.getJobStatus()
+                                  
+                            jobId = executionID
+                            job = jobStatus[jobId]                           
                             status = self.STATUS_TEXTS.get(job.status, "status not supported")
 
                     except (NetworkClientError, ParseError) as error:
