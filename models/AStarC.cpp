@@ -60,9 +60,9 @@ struct Point{
 	}
 };
 
-class AStarC {
+class AStar {
 	public:
-		AStarC(const std::vector<std::vector<int>> matrix, int heuristicIndex, double minValue, double meanValue, bool createShortestPathMatrix) : matrix(matrix), heuristicIndex(heuristicIndex), minValue(minValue), meanValue(meanValue),createShortestPathMatrix(createShortestPathMatrix) {
+		AStar(const std::vector<std::vector<int>> matrix, int heuristicIndex, double minValue, double meanValue, bool createShortestPathMatrix) : matrix(matrix), heuristicIndex(heuristicIndex), minValue(minValue), meanValue(meanValue),createShortestPathMatrix(createShortestPathMatrix) {
 			if(createShortestPathMatrix){
 				shortestPathMatrix1.resize(matrix.size());
 				shortestPathMatrix2.resize(matrix.size());
@@ -110,8 +110,8 @@ class AStarC {
 					while(currPathPoint != startPoint){
 						if(createShortestPathMatrix){
 							shortestPathMatrix1[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomRed) / 2;
-							shortestPathMatrix2[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomGreen) / 2;
-							shortestPathMatrix3[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomBlue) / 2;
+							shortestPathMatrix2[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix2[currPathPoint.x][currPathPoint.y] + randomGreen) / 2;
+							shortestPathMatrix3[currPathPoint.x][currPathPoint.y] = (shortestPathMatrix3[currPathPoint.x][currPathPoint.y] + randomBlue) / 2;
 						}
 						shortestPathWeights.push_back(matrix[std::get<0>(u)][std::get<1>(u)]);
 						int prevX = std::get<0>(u);
@@ -126,8 +126,8 @@ class AStarC {
 					shortestPathWeights.push_back(matrix[startPoint.x][startPoint.y]);	
 					if(createShortestPathMatrix){
 						shortestPathMatrix1[startPoint.x][startPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomRed) / 2;
-						shortestPathMatrix2[startPoint.x][startPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomGreen) / 2;
-						shortestPathMatrix3[startPoint.x][startPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomBlue) / 2;
+						shortestPathMatrix2[startPoint.x][startPoint.y] = (shortestPathMatrix2[currPathPoint.x][currPathPoint.y] + randomGreen) / 2;
+						shortestPathMatrix3[startPoint.x][startPoint.y] = (shortestPathMatrix3[currPathPoint.x][currPathPoint.y] + randomBlue) / 2;
 					}	
 								
 					return shortestPathWeights;
@@ -245,11 +245,11 @@ class AStarC {
 };
 
 PYBIND11_MODULE(AStarC,m) {
-	py::class_<AStarC>(m, "AStarC")
+	py::class_<AStar>(m, "AStar")
 	.def(py::init<const std::vector<std::vector<int>>, int, double, double, bool>())
-	.def("shortestPath", &AStarC::shortestPath)
-	.def("getShortestPathMatrix1", &AStarC::getShortestPathMatrix1)
-	.def("getShortestPathMatrix2", &AStarC::getShortestPathMatrix2)
-	.def("getShortestPathMatrix3", &AStarC::getShortestPathMatrix3)
-	.def("getNumberOfDiagonals", &AStarC::getNumberOfDiagonals);
+	.def("shortestPath", &AStar::shortestPath)
+	.def("getShortestPathMatrix1", &AStar::getShortestPathMatrix1)
+	.def("getShortestPathMatrix2", &AStar::getShortestPathMatrix2)
+	.def("getShortestPathMatrix3", &AStar::getShortestPathMatrix3)
+	.def("getNumberOfDiagonals", &AStar::getNumberOfDiagonals);
 }

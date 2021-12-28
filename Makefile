@@ -121,9 +121,9 @@ pybind_build:
 	echo "Script to build shared object with pybind"
 	echo "Start build"
 	echo "Execute setup.py"
-	python3 scripts/setup.py build_ext --build-lib models/
+	python3 scripts/setup.py build_ext --build-temp build_tmp/ --build-lib lib/
 	echo "Remove build folder"
-	rm -rf build
+	rm -rf build_tmp
 	echo "End pybind build"
 
 zip:
