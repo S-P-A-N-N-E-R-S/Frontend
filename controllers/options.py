@@ -57,8 +57,6 @@ class OptionsController(BaseController):
         # save settings
         self.settings.setValue("ogdfplugin/host", host)
         self.settings.setValue("ogdfplugin/port", port)
-        # fetch available handlers
-        mainPlugin.OGDFPlugin.fetchHandlers()
         # only save username if not empty
         if username:
             self.settings.setValue("ogdfplugin/username", username)
@@ -91,8 +89,11 @@ class OptionsController(BaseController):
             self.authManager.updateAuthenticationConfig(config)
 
         if password and not username or not username and hasAuth:
-            self.view.showWarning(self.tr("Please enter an username!"))
+            self.view.showWarning(self.tr("Please enter a username!"))
         elif not password and username and not hasAuth:
             self.view.showWarning(self.tr("Please enter a password!"))
         else:
             self.view.showSuccess(self.tr("Settings saved!"))
+
+        # fetch available handlers
+        mainPlugin.OGDFPlugin.fetchHandlers()

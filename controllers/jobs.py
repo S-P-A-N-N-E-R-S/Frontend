@@ -24,7 +24,7 @@ from .. import helperFunctions as helper
 
 # client imports
 from ..network.client import Client
-from ..network.exceptions import NetworkClientError, ParseError
+from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
 class JobsController(BaseController):
@@ -59,7 +59,7 @@ class JobsController(BaseController):
         try:
             with Client(helper.getHost(), helper.getPort()) as client:
                 response = client.getJobResult(job.jobId)
-        except (NetworkClientError, ParseError) as error:
+        except (NetworkClientError, ParseError, ServerError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
             return
 
@@ -101,7 +101,7 @@ class JobsController(BaseController):
                 for job in states.values():
                     self.view.addJob(job)
                 self.view.refreshStatusText()
-        except (NetworkClientError, ParseError) as error:
+        except (NetworkClientError, ParseError, ServerError) as error:
             self.view.resetStatusText()
             self.view.showError(str(error), self.tr("Network Error"))
 

@@ -16,6 +16,9 @@ class EdgeCostsField(BaseField, GraphDependencyMixin):
                 raise ParseError(f"Invalid data object: Field {self.label} missing but required") from error
             return
 
+        if not data[self.graphKey].costOfEdge(0, data[self.key]):
+            raise ParseError("Algortihm requires a weighted graph")
+
         if "." in self.key:
             fieldName, mapKey = self.key.split(".")
             try:

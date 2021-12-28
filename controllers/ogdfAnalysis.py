@@ -25,7 +25,7 @@ from .. import helperFunctions as helper
 # client imports
 from ..network.client import Client
 from ..network import parserManager
-from ..network.exceptions import NetworkClientError, ParseError
+from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
 class OGDFAnalysisController(BaseController):
@@ -97,7 +97,7 @@ class OGDFAnalysisController(BaseController):
             with Client(host, port) as client:
                 client.sendJobRequest(request)
                 return {"success": self.tr("Job started!")}
-        except (NetworkClientError, ParseError) as error:
+        except (NetworkClientError, ParseError, ServerError) as error:
             return {"error": str(error)}
 
     def requestCompleted(self, exception, result=None):

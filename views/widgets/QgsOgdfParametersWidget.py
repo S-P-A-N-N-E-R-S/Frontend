@@ -106,7 +106,7 @@ class QgsOGDFParametersWidget(QWidget):
             labelWidget = field.createLabel()
             try:
                 inputWidget = field.createWidget(self)
-            except NameError:
+            except AttributeError:
                 continue
 
             # add widgets to layout
