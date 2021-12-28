@@ -29,7 +29,7 @@ from qgis.utils import *
 from .views.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath, getPluginPath, getPort, getHost
 from .network.client import Client
-from .network.exceptions import NetworkClientError, ParseError
+from .network.exceptions import NetworkClientError, ParseError, ServerError
 
 from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
 
@@ -80,7 +80,7 @@ class OGDFPlugin:
         try:
             with Client(getHost(), getPort()) as client:
                 client.getAvailableHandlers()
-        except (NetworkClientError, ParseError) as error:
+        except (NetworkClientError, ParseError, ServerError) as error:
             iface.messageBar().pushMessage("OGDF Plugin Error", str(error), level=Qgis.Critical)
 
     def tr(self, message):

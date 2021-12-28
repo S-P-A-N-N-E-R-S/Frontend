@@ -74,6 +74,9 @@ class JobsView(BaseView):
         self._changeStatusText()
 
     def _changeStatusText(self):
+        self.setResultHtml("")
+        self.setResultVisible(False)
+
         job = self.getCurrentJob()
         if job is None:
             self.resetStatusText()

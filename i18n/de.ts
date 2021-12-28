@@ -288,7 +288,7 @@
     </message>
     <message>
         <location filename="../controllers/options.py" line="74"/>
-        <source>Please enter an username!</source>
+        <source>Please enter a username!</source>
         <translation>Bitte gebe einen Nutzernamen ein!</translation>
     </message>
     <message>

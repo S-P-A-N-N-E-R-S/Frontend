@@ -13,7 +13,7 @@ from ..models.benchmark.BenchmarkVisualisation import BenchmarkVisualisation
 
 # client imports
 from ..network.client import Client
-from ..network.exceptions import NetworkClientError, ParseError
+from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
 class BenchmarkController(BaseController):
@@ -292,7 +292,7 @@ class BenchmarkController(BaseController):
                             if paraKey in benchmarkDO.parameters.keys():
                                 paraString = str(benchmarkDO.parameters[paraKey])
                                 if "," in paraString and "(" in paraString:
-                                    paraString = paraString.split(",")[0].replace("(","").replace("'","")                            
+                                    paraString = paraString.split(",")[0].replace("(","").replace("'","")
                                 f.write("," + paraString)
                             else:
                                 f.write(",?")
@@ -351,7 +351,7 @@ class BenchmarkController(BaseController):
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:
                         client.sendJobRequest(request)
-                except (NetworkClientError, ParseError) as error:
+                except (NetworkClientError, ParseError, ServerError) as error:
                     return "Network Error: " + str(error)
 
                 status = "waiting"
@@ -372,10 +372,10 @@ class BenchmarkController(BaseController):
                             jobState = list(states.values())[-1]
                             jobId = jobState.jobId
                             job = statusManager.getJobState(jobId)
-                            
+
                             status = self.STATUS_TEXTS.get(job.status, "status not supported")
 
-                    except (NetworkClientError, ParseError) as error:
+                    except (NetworkClientError, ParseError, ServerError) as error:
                         return "Network Error: " + str(error)
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:
@@ -383,7 +383,7 @@ class BenchmarkController(BaseController):
                         benchmarkDO.addServerResponse(response)
                         benchmarkDO.setResponseGraph(response.getGraph())
                         benchmarkDO.setRuntime(statusManager.getJobState(jobId).ogdfRuntime)
-                except (NetworkClientError, ParseError) as error:
+                except (NetworkClientError, ParseError, ServerError) as error:
                     return "Network Error: " + str(error)
 
             self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs))
