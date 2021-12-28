@@ -53,7 +53,7 @@ class BenchmarkDataObjWrapper():
         values = []
         for dataObj in dataObjs:
             originalGraph = dataObj.getGraph()
-            if analysis == "Runtime(s)":
+            if analysis == "Runtime (seconds)":
                 if average:
                     values = [dataObj.getAvgRuntime()]
                 else:
@@ -161,7 +161,7 @@ class BenchmarkDataObjWrapper():
     def _serverCall(self, graph, algoString, costFunction, addInfos = None):
         # TODO: set costFunction correctly if this is fixed in the network
         # Currently the returned graph has advanced costs with one cost function
-        # so its works to set the edge costs to 0 for the analysis calls (except lightness)
+        # so its works to set the edge costs to 0 for the analysis calls (except lightness call)
         
         request = parserManager.getRequestParser(algoString)
         parameterFieldsData = {}
@@ -191,7 +191,7 @@ class BenchmarkDataObjWrapper():
                         time.sleep(0.25)
                         counter+=1
                     else:
-                        time.sleep(1)       
+                        time.sleep(0.25)       
                     jobStatus = client.getJobStatus()
                                   
                     jobId = executionID
@@ -223,6 +223,7 @@ class BenchmarkDataObjWrapper():
                 allGraphs = self._getAllGraphs(doList)
                 for i in range(len(allGraphs)):
                     graphName = allGraphs[i][0]
+                    # get all data objects which use the graph
                     dataObjsForPartition = []
                     for j in range(len(doList)):
                         dataObj = doList[j]
@@ -234,18 +235,114 @@ class BenchmarkDataObjWrapper():
                     if graphAnalysis is None:
                         axisEntry = graphName
                     else:
-                        if graphAnalysis == "Edges":
-                            axisEntry = allGraphs[i][1].edgeCount()
-                        elif graphAnalysis == "Vertices":
-                            axisEntry = allGraphs[i][1].vertexCount()
-                        elif graphAnalysis == "Densities":
-                            if allGraphs[i][1].edgeDirection == "Directed":
-                                axisEntry = allGraphs[i][1].edgeCount() / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
+                        if graphAnalysis == "Edges" or graphAnalysis == "Vertices" or graphAnalysis == "Densities" or graphAnalysis == "Reciprocity":
+                            if graphAnalysis == "Edges":
+                                axisEntry = allGraphs[i][1].edgeCount()
+                            elif graphAnalysis == "Vertices":
+                                axisEntry = allGraphs[i][1].vertexCount()
+                            elif graphAnalysis == "Densities":
+                                if allGraphs[i][1].edgeDirection == "Directed":
+                                    axisEntry = allGraphs[i][1].edgeCount() / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
+                                else:
+                                    axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
+                            elif graphAnalysis == "Reciprocity":
+                                count = 0
+                                for edgeID in range(allGraphs[i][1].edgeCount()):
+                                    edge = allGraphs[i][1].edge(edgeID)
+                                    if allGraphs[i][1].hasEdge(edge.toVertex(), edge.fromVertex()) != -1:
+                                        count+=1
+                                axisEntry = count / allGraphs[i][1].edgeCount()
+                            # order the data objects into the correct dictionary entry
+                            axisEntry = round(axisEntry,3)
+                            if axisEntry in partitionToSort:
+                                partitionToSort[axisEntry].extend(dataObjsForPartition)
                             else:
-                                axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
-                        axisEntry = round(axisEntry,3)
-                        partitionToSort[axisEntry] = dataObjsForPartition
-
+                                partitionToSort[axisEntry] = dataObjsForPartition
+                        else:
+                            # special cases where the axis entry value is not the same for every data object due to different cost functions                        
+                            if graphAnalysis == "Min Fragility":
+                                for dataObj in dataObjsForPartition:
+                                    costFunction = dataObj.getParameters()['edgeCosts']  
+                                    axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Fragility", costFunction).data["minFragility"])  
+                                    if axisEntry in partitionToSort:
+                                        partitionToSort[axisEntry].append(dataObj)
+                                    else:
+                                        partitionToSort[axisEntry] = [dataObj]
+                            elif graphAnalysis == "Max Fragility":
+                                for dataObj in dataObjsForPartition:
+                                    costFunction = dataObj.getParameters()['edgeCosts']  
+                                    axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Fragility", costFunction).data["maxFragility"])  
+                                    if axisEntry in partitionToSort:
+                                        partitionToSort[axisEntry].append(dataObj)
+                                    else:
+                                        partitionToSort[axisEntry] = [dataObj]             
+                            elif graphAnalysis == "Avg Fragility":
+                                for dataObj in dataObjsForPartition:
+                                    costFunction = dataObj.getParameters()['edgeCosts']  
+                                    axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Fragility", costFunction).data["avgFragility"])  
+                                    if axisEntry in partitionToSort:
+                                        partitionToSort[axisEntry].append(dataObj)
+                                    else:
+                                        partitionToSort[axisEntry] = [dataObj]                        
+                            elif graphAnalysis == "Diameter":
+                                for dataObj in dataObjsForPartition:
+                                   costFunction = dataObj.getParameters()['edgeCosts']  
+                                   axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Diameter", costFunction).data["diameter"])  
+                                   if axisEntry in partitionToSort:
+                                       partitionToSort[axisEntry].append(dataObj)
+                                   else:
+                                       partitionToSort[axisEntry] = [dataObj] 
+                            elif graphAnalysis == "Radius":
+                                for dataObj in dataObjsForPartition:
+                                   costFunction = dataObj.getParameters()['edgeCosts']  
+                                   axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Radius", costFunction).data["radius"])  
+                                   if axisEntry in partitionToSort:
+                                       partitionToSort[axisEntry].append(dataObj)
+                                   else:
+                                       partitionToSort[axisEntry] = [dataObj]  
+                            elif graphAnalysis == "Girth (unit weights)":
+                                for dataObj in dataObjsForPartition:
+                                   costFunction = dataObj.getParameters()['edgeCosts']
+                                   addInfos = {"graphAttributes.unitWeights": 1} 
+                                   axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Girth", costFunction, addInfos).data["girth"])  
+                                   if axisEntry in partitionToSort:
+                                       partitionToSort[axisEntry].append(dataObj)
+                                   else:
+                                       partitionToSort[axisEntry] = [dataObj] 
+                            elif graphAnalysis == "Girth":
+                                for dataObj in dataObjsForPartition:
+                                   costFunction = dataObj.getParameters()['edgeCosts']
+                                   addInfos = {"graphAttributes.unitWeights": 0} 
+                                   axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Girth", costFunction, addInfos).data["girth"])  
+                                   if axisEntry in partitionToSort:
+                                       partitionToSort[axisEntry].append(dataObj)
+                                   else:
+                                       partitionToSort[axisEntry] = [dataObj] 
+                            elif graphAnalysis == "Node Connectivity":
+                                if allGraphs[i][1].edgeDirection == "Directed":
+                                    directed = 1
+                                else:
+                                    directed = 0
+                                costFunction = dataObj.getParameters()['edgeCosts']
+                                addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
+                                axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Connectivity", costFunction, addInfos).data["connectivity"])  
+                                if axisEntry in partitionToSort:
+                                    partitionToSort[axisEntry].append(dataObj)
+                                else:
+                                    partitionToSort[axisEntry] = [dataObj] 
+                            elif graphAnalysis == "Edge Connectivity":
+                                if allGraphs[i][1].edgeDirection == "Directed":
+                                    directed = 1
+                                else:
+                                    directed = 0
+                                costFunction = dataObj.getParameters()['edgeCosts'] 
+                                addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
+                                axisEntry = float(self._serverCall(allGraphs[i][1], "utils/Connectivity", costFunction, addInfos).data["connectivity"])  
+                                if axisEntry in partitionToSort:
+                                    partitionToSort[axisEntry].append(dataObj)
+                                else:
+                                    partitionToSort[axisEntry] = [dataObj]                                    
+                    
                     if graphAnalysis is None:
                         if isinstance(keyTuple, tuple):
                             listConv = list(keyTuple)
@@ -268,7 +365,7 @@ class BenchmarkDataObjWrapper():
                             keyTuple = (key, str(sortedKey))
 
                         partition[keyTuple] = partitionToSort[sortedKey]
-
+                
             elif partitionType == "Algorithms":
                 allAlgs = self._getAllAlgs(doList)
                 for i in range(len(allAlgs)):

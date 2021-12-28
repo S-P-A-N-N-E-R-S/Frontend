@@ -125,6 +125,46 @@ class BenchmarkView(BaseView):
         item = QListWidgetItem("Graph Densities")
         item.setCheckState(Qt.Unchecked)
         listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Min Fragility")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Max Fragility")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Avg Fragility")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Diameter")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Radius")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Girth (unit weights)")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Girth")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Node Connectivity")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Edge Connectivity")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Reciprocity")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
 
         item = QListWidgetItem("Algorithms")
         item.setCheckState(Qt.Unchecked)
@@ -163,6 +203,46 @@ class BenchmarkView(BaseView):
         item.setCheckState(Qt.Unchecked)
         listWidgetBenchmark.addItem(item)
 
+        item = QListWidgetItem("Graph Min Fragility")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Max Fragility")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Avg Fragility")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Diameter")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Radius")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Girth (unit weights)")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Girth")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Node Connectivity")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Edge Connectivity")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Reciprocity")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+
         item = QListWidgetItem("Algorithms")
         item.setCheckState(Qt.Unchecked)
         listWidgetBenchmark.addItem(item)
@@ -186,7 +266,7 @@ class BenchmarkView(BaseView):
 
         item = QListWidgetItem()
         listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Runtime(s)"))
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Runtime (seconds)"))
 
         item = QListWidgetItem()
         listWidgetBenchmark.addItem(item)

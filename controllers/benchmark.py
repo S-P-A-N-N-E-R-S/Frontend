@@ -64,6 +64,9 @@ class BenchmarkController(BaseController):
         logSelections = self.view.getLogAxisSelection()
         tightSelections = self.view.getTightLayoutSelection()
 
+        allGraphAnalyses = ["Graph Vertices", "Graph Edges", "Graph Densities", "Graph Min Fragility", "Graph Max Fragility", "Graph Avg Fragility",
+                            "Graph Diameter", "Graph Radius", "Graph Girth (unit weights)", "Graph Girth", "Graph Node Connectivity",
+                            "Graph Edge Connectivity", "Graph Reciprocity"]
         # go through all the benchmark requests created
         for sIndex in range(len(self.view.getSelection1())):
             benchVis = BenchmarkVisualisation(analysisSelections[sIndex], legendSelections[sIndex], logSelections[sIndex], tightSelections[sIndex])
@@ -75,14 +78,14 @@ class BenchmarkController(BaseController):
                 if i > 0:
                     if selection == "Graphs" or selection == "Algorithms":
                         partition = self.doWrapper.partition(selection, partition)
-                    elif selection == "Graph Vertices" or selection == "Graph Edges" or selection == "Graph Densities":
+                    elif selection in allGraphAnalyses:
                         partition = self.doWrapper.partition("Graphs", partition, graphAnalysis = selection.split(" ")[1])
                     else:
                         partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.parameterKeyHash[selection])  
                 else:
                     if selection == "Graphs" or selection == "Algorithms":
                         firstPartition = self.doWrapper.partition(selection, firstPartition)
-                    elif selection == "Graph Vertices" or selection == "Graph Edges" or selection == "Graph Densities":
+                    elif selection in allGraphAnalyses:
                         firstPartition = self.doWrapper.partition("Graphs", firstPartition, graphAnalysis = selection.split(" ")[1])             
                     else:
                         firstPartition = self.doWrapper.partition("Parameter", firstPartition, self.doWrapper.parameterKeyHash[selection])    
@@ -112,8 +115,8 @@ class BenchmarkController(BaseController):
                 for selection in selectionList2:
                     if selection == "Algorithms" or selection == "Graphs":
                         dictHelp = self.doWrapper.partition(selection, dictHelp)
-                    elif selection == "Graph Vertices" or selection == "Graph Edges" or selection == "Graph Densities":
-                        dictHelp = self.doWrapper.partition("Graphs", dictHelp, graphAnalysis = selection.split(" ")[1])
+                    elif selection in allGraphAnalyses:
+                        dictHelp = self.doWrapper.partition("Graphs", dictHelp, graphAnalysis = selection.split("Graph ")[1])
                     else:
                         dictHelp = self.doWrapper.partition("Parameter", dictHelp, self.doWrapper.parameterKeyHash[selection])
 
