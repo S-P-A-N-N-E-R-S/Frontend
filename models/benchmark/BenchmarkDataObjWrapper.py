@@ -55,75 +55,126 @@ class BenchmarkDataObjWrapper():
             originalGraph = dataObj.getGraph()
             if analysis == "Runtime(s)":
                 if average:
-                    values.append(dataObj.getAvgRuntime())
+                    values = [dataObj.getAvgRuntime()]
                 else:
-                    for value in dataObj.getAllRuntimes():
-                        values.append(value)                          
+                    values = dataObj.getAllRuntimes()                       
             elif analysis == "Number of Edges":
                 if average:
-                    values.append(dataObj.getAvgNumberOfEdgesResponse())
+                    values = [dataObj.getAvgNumberOfEdgesResponse()]
                 else:
-                    for value in dataObj.getAllNumberOfEdgesResponse():
-                        values.append(value)
+                    values = dataObj.getAllNumberOfEdgesResponse()
             elif analysis == "Number of Vertices":
                 if average:
-                    values.append(dataObj.getAvgNumberOfVerticesResponse())
+                    values = [dataObj.getAvgNumberOfVerticesResponse()]
                 else:
-                    for value in dataObj.getAllNumberOfVerticesResponse():
-                        values.append(value)
+                    values = dataObj.getAllNumberOfVerticesResponse()
             elif analysis == "Edges Difference":
                 if average:
-                    values.append(abs(originalGraph.edgeCount() - dataObj.getAvgNumberOfEdgesResponse()))
+                    values = [abs(originalGraph.edgeCount() - dataObj.getAvgNumberOfEdgesResponse())]
                 else:
                     for edgeCount in dataObj.getAllNumberOfEdgesResponse():
                         values.append(abs(originalGraph.edgeCount() - edgeCount))
             elif analysis == "Vertices Difference":
                 if average:
-                    values.append(abs(dataObj.getAvgNumberOfVerticesResponse() - originalGraph.vertexCount()))
+                    values = [abs(dataObj.getAvgNumberOfVerticesResponse() - originalGraph.vertexCount())]
                 else:
                     for vertexCount in dataObj.getAllNumberOfVerticesResponse():
                         values.append(abs(originalGraph.vertexCount() - vertexCount))
-
             elif analysis == "Average Degree":
                 if average:
-                    values.append(dataObj.getAvgNumberOfEdgesResponse() / dataObj.getAvgNumberOfVerticesResponse())
+                    values = [dataObj.getAvgNumberOfEdgesResponse() / dataObj.getAvgNumberOfVerticesResponse()]
                 else:
                     allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
                     allVertexCounts = dataObj.getAllNumberOfVerticesResponse()
                     for i in range(len(allEdgeCounts)):
                         values.append(round(allEdgeCounts[i] / allVertexCounts[i],3))
-
             elif analysis == "Sparseness":
                 if average:
-                    values.append(dataObj.getAvgNumberOfEdgesResponse() / originalGraph.edgeCount())
+                    values = [dataObj.getAvgNumberOfEdgesResponse() / originalGraph.edgeCount()]
                 else:
                     allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
                     for edgeCount in allEdgeCounts:
                         values.append(round(edgeCount / originalGraph.edgeCount(), 3))
-
-            elif analysis == "Lightness":
-                lightness = float(self._getLightness(originalGraph, dataObj.getParameters()['edgeCosts']))           
+            elif analysis == "Lightness":           
+                costFunction = dataObj.getParameters()['edgeCosts']    
+                mstWeight = float(self._serverCall(originalGraph, "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])  
                 if average:
-                    values.append(dataObj.getAvgEdgeWeightResponse() / lightness)
+                    values = [dataObj.getAvgEdgeWeightResponse() / mstWeight]
                 else:
                     allEdgeCounts = dataObj.getAllEdgeWeightResponse()
                     for edgeCount in allEdgeCounts:
-                        values.append(round(edgeCount / lightness, 3))              
+                        values.append(round(edgeCount / mstWeight, 3))                       
+            elif analysis == "Min Fragility":
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Fragility", 0).data["minFragility"]))     
+            elif analysis == "Max Fragility":
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Fragility", 0).data["maxFragility"]))
+            elif analysis == "Avg Fragility":
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Fragility", 0).data["avgFragility"]))
+            elif analysis == "Diameter":
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Diameter", 0).data["diameter"]))
+            elif analysis == "Radius":
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Radius", 0).data["radius"]))
+            elif analysis == "Girth (unit weights)":
+                addInfos = {"graphAttributes.unitWeights": 1}
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))                      
+            elif analysis == "Girth":
+                addInfos = {"graphAttributes.unitWeights": 0}
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))           
+            elif analysis == "Node Connectivity":
+                if originalGraph.edgeDirection == "Directed":
+                    directed = 1
+                else:
+                    directed = 0  
+                addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
+            elif analysis == "Edge Connectivity":
+                if originalGraph.edgeDirection == "Directed":
+                    directed = 1
+                else:
+                    directed = 0   
+                addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
+                for graph in dataObj.getResponseGraphs():              
+                    values.append(float(self._serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
+            elif analysis == "Reciprocity":
+                if average:
+                    values = [dataObj.getAvgNumberOfReciprocalEdges() / dataObj.getAvgNumberOfEdgesResponse()]                      
+                else:
+                    counts = dataObj.getAllNumberOfReciprocalEdges()
+                    allResponseGraphs = dataObj.getResponseGraphs()
+                    for index, count  in enumerate(counts):
+                        values.append(count / allResponseGraphs[index].edgeCount())
+                                                                    
+        # redundant in most cases because values has only one value
         if average:
             return mean(values)
         else:
             return values
 
-    def _getLightness(self, graph, costFunction = 0):
-        request = parserManager.getRequestParser("Minimum Spanning Trees/Kruskals Algorithm")
+    def _serverCall(self, graph, algoString, costFunction, addInfos = None):
+        # TODO: set costFunction correctly if this is fixed in the network
+        # Currently the returned graph has advanced costs with one cost function
+        # so its works to set the edge costs to 0 for the analysis calls (except lightness)
+        
+        request = parserManager.getRequestParser(algoString)
         parameterFieldsData = {}
         parameterFieldsData['graph'] = graph
-        parameterFieldsData['edgeCosts'] = 0
-        parameterFieldsData['vertexCoordinates'] = '' 
+        parameterFieldsData['edgeCosts'] = costFunction
+        parameterFieldsData['vertexCoordinates'] = ''
+        if addInfos is not None:
+            for key in addInfos:
+                parameterFieldsData[key] = addInfos[key]
         for key in parameterFieldsData:
             fieldData = parameterFieldsData[key]
             request.setFieldData(key, fieldData) 
-        request.jobName = "mst_benchmark" 
+        request.jobName = algoString + "benchmark" 
         try:
             with Client(helper.getHost(), helper.getPort()) as client:
                 executionID = client.sendJobRequest(request)
@@ -146,68 +197,15 @@ class BenchmarkDataObjWrapper():
                     jobId = executionID
                     job = jobStatus[jobId]                 
                     status = self.STATUS_TEXTS.get(job.status, "status not supported")
-
             except (NetworkClientError, ParseError) as error:
                 return -1
         try:
-            with Client(helper.getHost(), helper.getPort()) as client:
-                # there seems to be an error in the getJobResult method
-                # so this does not work with the new kruskal handler
+            with Client(helper.getHost(), helper.getPort()) as client:         
                 response = client.getJobResult(job.jobId)                          
-                return response.data["totalWeight"] 
+                return response
                 
         except (NetworkClientError, ParseError) as error:
             return -1
-          
-
-    def firstPartition(self, partitionType, parameterKey = None):
-        """
-        Creates the first partitioning of all data objects into a dictionary.
-
-        :type partitionType: String
-        :type parameterKey: String (only set if type is "Parameters")
-        :returns dictionary
-        """
-        partition = {}
-
-        if partitionType == "Graphs":
-            allGraphs = self._getAllGraphs(self.benchmarkDOs)
-            for i in range(len(allGraphs)):
-                graphName = allGraphs[i][0]
-                dataObjsForPartition = []
-                for j in range(len(self.benchmarkDOs)):
-                    dataObj = self.benchmarkDOs[j]
-                    if dataObj.getGraphName() == graphName:
-                        dataObjsForPartition.append(dataObj)
-                partition[graphName] = dataObjsForPartition
-
-        elif partitionType == "Algorithms":
-            allAlgs = self._getAllAlgs(self.benchmarkDOs)
-            for i in range(len(allAlgs)):
-                algName = allAlgs[i]
-                dataObjsForPartition = []
-                for j in range(len(self.benchmarkDOs)):
-                    dataObj = self.benchmarkDOs[j]
-                    if dataObj.getAlgorithm() == algName:
-                        dataObjsForPartition.append(dataObj)
-                partition[algName] = dataObjsForPartition
-
-        elif partitionType == "Parameter":
-            # there should be one list for every range value
-            allValues = self._getAllParameterValues(parameterKey, self.benchmarkDOs)
-
-            for value in allValues:
-                dataObjsForPartition = []
-                for i in range(len(self.benchmarkDOs)):
-                    dataObj = self.benchmarkDOs[i]
-                    parameters = dataObj.getParameters()
-                    for param in parameters.keys():
-                        if param == parameterKey and parameters[param] == value:
-                            dataObjsForPartition.append(dataObj)
-
-                partition[parameterKey + "#" + str(value)] = dataObjsForPartition
-
-        return partition
 
     def partition(self, partitionType, partitionDict, parameterKey = None, graphAnalysis = None):
         """

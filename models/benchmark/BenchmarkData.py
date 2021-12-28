@@ -106,6 +106,32 @@ class BenchmarkData():
             values.append(totalWeight)    
             
         return values
+    
+    def getAllNumberOfReciprocalEdges(self):
+        values = []
+        for i in range(len(self.responseGraphs)):
+            count = 0
+            graph = self.responseGraphs[i]
+            for edgeID in range(graph.edgeCount()):
+                edge = graph.edge(edgeID)
+                if graph.hasEdge(edge.toVertex(), edge.fromVertex()) != -1:
+                    count+=1
+            values.append(count)
+        
+        return values    
+    
+    def getAvgNumberOfReciprocalEdges(self):
+        values = []
+        for i in range(len(self.responseGraphs)):
+            count = 0
+            graph = self.responseGraphs[i]
+            for edgeID in range(graph.edgeCount()):
+                edge = graph.edge(edgeID)
+                if graph.hasEdge(edge.toVertex(), edge.fromVertex()) != -1:
+                    count+=1      
+            values.append(count)
+        
+        return mean(values)                    
             
     def getServerResponses(self):
         return self.serverResponses

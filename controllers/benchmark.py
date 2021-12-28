@@ -67,30 +67,36 @@ class BenchmarkController(BaseController):
         # go through all the benchmark requests created
         for sIndex in range(len(self.view.getSelection1())):
             benchVis = BenchmarkVisualisation(analysisSelections[sIndex], legendSelections[sIndex], logSelections[sIndex], tightSelections[sIndex])
-
-            selectionList = self.view.getSelection1()[sIndex]
-            if len(selectionList) > 0:
-                selection = selectionList[0]
-                partition = None
-                if selection == "Graphs" or selection == "Algorithms":
-                    partition = self.doWrapper.firstPartition(selection)
-                else:
-                    partition = self.doWrapper.firstPartition("Parameter", self.doWrapper.parameterKeyHash[selection])
-
-                for i in range(1,len(selectionList)):
-                    selection = selectionList[i]
+            selectionList = self.view.getSelection1()[sIndex]                     
+            firstPartition = {"":self.doWrapper.benchmarkDOs}
+            partition = {}            
+            for i in range(0,len(selectionList)):
+                selection = selectionList[i]
+                if i > 0:
                     if selection == "Graphs" or selection == "Algorithms":
                         partition = self.doWrapper.partition(selection, partition)
+                    elif selection == "Graph Vertices" or selection == "Graph Edges" or selection == "Graph Densities":
+                        partition = self.doWrapper.partition("Graphs", partition, graphAnalysis = selection.split(" ")[1])
                     else:
-                        partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.parameterKeyHash[selection])
-            else:
+                        partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.parameterKeyHash[selection])  
+                else:
+                    if selection == "Graphs" or selection == "Algorithms":
+                        firstPartition = self.doWrapper.partition(selection, firstPartition)
+                    elif selection == "Graph Vertices" or selection == "Graph Edges" or selection == "Graph Densities":
+                        firstPartition = self.doWrapper.partition("Graphs", firstPartition, graphAnalysis = selection.split(" ")[1])             
+                    else:
+                        firstPartition = self.doWrapper.partition("Parameter", firstPartition, self.doWrapper.parameterKeyHash[selection])    
+                     
+                    for key in firstPartition:
+                        if isinstance(key, tuple):
+                            partition[key[1]] = firstPartition[key]                        
+            # color categorization done
+            if len(selectionList) == 0:
                 partition = {"":self.doWrapper.benchmarkDOs}
-
+            
             # split the partition into individual dictionary entries
             for dictKey in partition.keys():
-
                 dictValue = partition[dictKey]
-
                 if isinstance(dictKey, tuple):
                     zParameter = ""
                     for key in dictKey:
@@ -106,10 +112,8 @@ class BenchmarkController(BaseController):
                 for selection in selectionList2:
                     if selection == "Algorithms" or selection == "Graphs":
                         dictHelp = self.doWrapper.partition(selection, dictHelp)
-
                     elif selection == "Graph Vertices" or selection == "Graph Edges" or selection == "Graph Densities":
                         dictHelp = self.doWrapper.partition("Graphs", dictHelp, graphAnalysis = selection.split(" ")[1])
-
                     else:
                         dictHelp = self.doWrapper.partition("Parameter", dictHelp, self.doWrapper.parameterKeyHash[selection])
 
@@ -139,6 +143,7 @@ class BenchmarkController(BaseController):
 
                     if boxPlotSel:
                         xValuesBox.append(self.doWrapper.getAnalysisValue(self.view.getAnalysis()[sIndex], dictHelp[dictKey2], False))
+                    
                     xValues.append(self.doWrapper.getAnalysisValue(self.view.getAnalysis()[sIndex], dictHelp[dictKey2], True))
 
                 xLabel = ""
@@ -250,14 +255,19 @@ class BenchmarkController(BaseController):
 
     def runTask(self):
         # create and get BenchmarkData objects
-        if self.task is None:
-            self.benchmarkDOs = self.view.getOGDFBenchmarkWidget().getBenchmarkDataObjects()
-            if not self._checkSelections():
-                return
+        debugMode = True
+        self.benchmarkDOs = self.view.getOGDFBenchmarkWidget().getBenchmarkDataObjects()
+        if not self._checkSelections():
+            return
+        if not debugMode and self.task is None:           
             task = QgsTask.fromFunction("Start benchmark process", self.runJob, on_finished=self.completed)
             self.task = task
             QgsApplication.taskManager().addTask(task)
-
+        else:
+            self.runJob(None)
+            self.task = None
+            self._visualisationControl()
+            
     def completed(self, _exception, result=None):
         if not result is None:
             QgsMessageLog.logMessage("Exception: {}".format(result), "TaskFromFunction", Qgis.Critical)
@@ -265,6 +275,8 @@ class BenchmarkController(BaseController):
         elif self.task is not None and not self.task.isCanceled():
             try:
                 if self.view.getCsvCreationSelection():
+                    # the csv for the individual benchmarks is created in the BenchmarkVisualisation
+                    # and called by self._visualisationControl()
                     path = self.view.getTextFilePath()
                     dateString = date.today().strftime("%b_%d_%Y_")
                     timeString = datetime.now().strftime("%H_%M_%S")
@@ -300,24 +312,24 @@ class BenchmarkController(BaseController):
                         f.write("," + str(benchmarkDO.getAvgRuntime()))
                         f.write("," + str(allNumberOfEdgesResponse).replace("[","").replace("]","").replace(",","/").replace(" ",""))
                         f.write("," + str(benchmarkDO.getAllNumberOfVerticesResponse()).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        
                         edgeCountDiff = []
-
                         for edgeCount in allNumberOfEdgesResponse:
                             edgeCountDiff.append(abs(benchmarkDO.getGraph().edgeCount() - edgeCount))
                         f.write("," + str(edgeCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        
                         vertexCountDiff = []
-
                         for vertexCount in benchmarkDO.getAllNumberOfVerticesResponse():
                             vertexCountDiff.append(abs(benchmarkDO.getGraph().vertexCount() - vertexCount))
                         f.write("," + str(vertexCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
                         allVertexCounts = benchmarkDO.getAllNumberOfVerticesResponse()
+                        
                         avgDegrees = []
-
                         for i in range(len(allNumberOfEdgesResponse)):
                             avgDegrees.append(round(allNumberOfEdgesResponse[i] / allVertexCounts[i],3))
                         f.write("," + str(avgDegrees).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        
                         sparseness = []
-
                         for edgeCount in allNumberOfEdgesResponse:
                             sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(),3))
                         f.write("," + str(sparseness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
@@ -342,12 +354,11 @@ class BenchmarkController(BaseController):
             request = parserManager.getRequestParser(requestKey)
             request.resetData()
 
-            for key in benchmarkDO.parameters:
+            for key in benchmarkDO.parameters:               
                 fieldData = benchmarkDO.parameters[key]
                 request.setFieldData(key, fieldData)
 
-            for i in range(self.view.getExecutions(benchmarkDO.algorithm)):
-                
+            for i in range(self.view.getExecutions(benchmarkDO.algorithm)):             
                 try:
                     with Client(helper.getHost(), helper.getPort()) as client:
                         executionID = client.sendJobRequest(request)
@@ -384,7 +395,7 @@ class BenchmarkController(BaseController):
                         benchmarkDO.setRuntime(statusManager.getJobState(jobId).ogdfRuntime)
                 except (NetworkClientError, ParseError) as error:
                     return "Network Error: " + str(error)
-
-            self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs))
+            if self.task is not None:
+                self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs))
 
         self.doWrapper = BenchmarkDataObjWrapper(self.benchmarkDOs)

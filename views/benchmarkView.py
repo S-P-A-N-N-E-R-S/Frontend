@@ -114,10 +114,22 @@ class BenchmarkView(BaseView):
         item.setCheckState(Qt.Unchecked)
         listWidgetBenchmark.addItem(item)
 
-        item = QListWidgetItem("Algorithms")
+        item = QListWidgetItem("Graph Edges")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Vertices")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
+        item = QListWidgetItem("Graph Densities")
         item.setCheckState(Qt.Unchecked)
         listWidgetBenchmark.addItem(item)
 
+        item = QListWidgetItem("Algorithms")
+        item.setCheckState(Qt.Unchecked)
+        listWidgetBenchmark.addItem(item)
+        
         # add field of selected algorithms
         alreadyAddedLabels = []
 
@@ -203,7 +215,48 @@ class BenchmarkView(BaseView):
         item = QListWidgetItem()
         listWidgetBenchmark.addItem(item)
         listWidgetBenchmark.setItemWidget(item, QRadioButton("Lightness"))
-
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Min Fragility"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Max Fragility"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Avg Fragility"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Diameter"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Radius"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Girth (unit weights)"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Girth"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Node Connectivity"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Edge Connectivity"))
+        
+        item = QListWidgetItem()
+        listWidgetBenchmark.addItem(item)
+        listWidgetBenchmark.setItemWidget(item, QRadioButton("Reciprocity"))
+        
+        
         listWidgetVisualisation = QListWidget()
         listWidgetVisualisation.setMinimumSize(380,192)
         listWidgetVisualisation.setObjectName("visualisation_"+ str(self.benchmarkAnalysisCounter))
