@@ -47,6 +47,8 @@ class BenchmarkView(BaseView):
         # get controller (this calls the addOGDFAlg method)
         self.controller = BenchmarkController(self)
 
+        self.dialog.benchmark_add_all_graphs.setIcon(QgsApplication.getThemeIcon("mIconModelOutput.svg"))
+
         self.dialog.benchmark_refresh_all_graphs.clicked.connect(self._updateAllGraphs)
         self.dialog.benchmark_clear_graph_selection.clicked.connect(self._clearGraphSelection)
         self.dialog.benchmark_start_benchmark.clicked.connect(self.controller.runTask)
