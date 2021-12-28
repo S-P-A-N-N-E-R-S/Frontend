@@ -298,7 +298,10 @@ class BenchmarkController(BaseController):
                     for paraKey in allParameters:
                         f.write("," + str(paraKey))
 
-                    f.write(",Runtime(s),Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness,Lightness\n")
+                    f.write(",Runtime(s),Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness")
+                    if self.view.getCompleteAnalysisSelection():
+                        f.write(",Lightness,Min Fragility,Max Fragility,Avg Fragility,Diameter,Radius,Girth(unit weights),Girth,Node Connectivity,Edge Connectivity,InDegree,OutDegree,Reciprocity")
+                        
 
                     for benchmarkDO in self.benchmarkDOs:
                         # write all benchmark information into file
@@ -337,7 +340,7 @@ class BenchmarkController(BaseController):
                             sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(),3))
                         f.write("," + str(sparseness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
                         f.write("," + "0" + "\n")
-
+                        
             except Exception as inst:
                 print(type(inst))
                 print(inst)

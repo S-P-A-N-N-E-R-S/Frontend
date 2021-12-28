@@ -622,5 +622,8 @@ class BenchmarkView(BaseView):
     def getCsvCreationSelection(self):
         return self.dialog.benchmark_create_as_txt.checkState() == Qt.Checked
 
+    def getCompleteAnalysisSelection(self):
+        return self.dialog.benchmark_complete_analysis.checkState() == Qt.Checked
+
     def getNumberOfSelectedGraphs(self):
         return self.dialog.benchmark_graph_selection.count()
