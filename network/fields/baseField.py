@@ -23,7 +23,7 @@ class BaseField:
         return QLabel(self.label)
 
     def createWidget(self, parent):
-        raise NameError("Not implemented!")
+        raise AttributeError("Not implemented!")
 
     def getWidgetData(self, _widget):
         return self.default

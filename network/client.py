@@ -39,6 +39,28 @@ class Client():
     def disconnect(self):
         self.socket.close()
 
+    def checkAuthenticationData(self):
+        metaString = protoParser.getMetaStringFromType(meta_pb2.RequestType.AUTH)
+        self._sendProtoBufString(metaString, bytearray())
+
+        # Get meta message length
+        rawMsgLength = self._recvAll(LENGTH_FIELD_SIZE)
+        if not rawMsgLength:
+            raise NetworkClientError("No ProtoBuf length received")
+        msgLength = struct.unpack('!Q', rawMsgLength)[0]
+
+        # Get meta message
+        metaString = self._recvAll(msgLength)
+        metaData = protoParser.parseMetaData(metaString)
+
+        # Get errorMessage
+        if metaData.containerSize and metaData.type == meta_pb2.RequestType.ERROR:
+            compressedProtoBufString = self._recvAll(metaData.containerSize)
+            if not compressedProtoBufString:
+                raise NetworkClientError("No ProtoBuf received")
+            protoParser.parseError(gzip.decompress(compressedProtoBufString))
+        return True
+
     def getAvailableHandlers(self):
         # Send request of type AVAILABLE_HANDLERS with empty container to receive handlers
         metaString = protoParser.getMetaStringFromType(meta_pb2.RequestType.AVAILABLE_HANDLERS)
@@ -114,10 +136,7 @@ class Client():
 
         # Get meta message
         metaString = self._recvAll(msgLength)
-        metaData = meta_pb2.MetaData()
-        metaData.ParseFromString(metaString)
-        if metaData.containerSize <= 0:
-            raise NetworkClientError("Empty Message")
+        metaData = protoParser.parseMetaData(metaString)
 
         if handlerType or metaData.handlerType:
             if not handlerType or not metaData.handlerType or handlerType != metaData.handlerType:
