@@ -258,7 +258,7 @@ class BenchmarkController(BaseController):
 
     def runTask(self):
         # create and get BenchmarkData objects
-        debugMode = True
+        debugMode = False
         self.benchmarkDOs = self.view.getOGDFBenchmarkWidget().getBenchmarkDataObjects()
         if not self._checkSelections():
             return
@@ -300,8 +300,9 @@ class BenchmarkController(BaseController):
 
                     f.write(",Runtime(s),Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness")
                     if self.view.getCompleteAnalysisSelection():
-                        f.write(",Lightness,Min Fragility,Max Fragility,Avg Fragility,Diameter,Radius,Girth(unit weights),Girth,Node Connectivity,Edge Connectivity,InDegree,OutDegree,Reciprocity")
-                        
+                        f.write(",Lightness,Min Fragility,Max Fragility,Avg Fragility,Diameter,Radius,Girth(unit weights),Girth,Node Connectivity,Edge Connectivity,Reciprocity\n")
+                    else:
+                        f.write("\n")    
 
                     for benchmarkDO in self.benchmarkDOs:
                         # write all benchmark information into file
@@ -339,8 +340,72 @@ class BenchmarkController(BaseController):
                         for edgeCount in allNumberOfEdgesResponse:
                             sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(),3))
                         f.write("," + str(sparseness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        f.write("," + "0" + "\n")
                         
+                        if self.view.getCompleteAnalysisSelection():
+                            costFunction = benchmarkDO.getParameters()['edgeCosts']   
+                            mstWeight = float(self.doWrapper.serverCall(benchmarkDO.getGraph(), "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])
+                            lightness = []
+                            allEdgeCounts = benchmarkDO.getAllNumberOfEdgesResponse()                        
+                            for edgeCount in allEdgeCounts:
+                                lightness.append(round(edgeCount / mstWeight, 3))                 
+                            f.write("," + str(lightness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            
+                            fragilities = [[] for i in range(3)]
+                            for graph in benchmarkDO.getResponseGraphs():
+                                result = self.doWrapper.serverCall(graph, "utils/Fragility", 0)
+                                fragilities[0].append(float(result.data["minFragility"]))
+                                fragilities[1].append(float(result.data["maxFragility"]))
+                                fragilities[2].append(float(result.data["avgFragility"]))                               
+                            f.write("," + str(fragilities[0]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            f.write("," + str(fragilities[1]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            f.write("," + str(fragilities[2]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            
+                            diameter = []
+                            for graph in benchmarkDO.getResponseGraphs():
+                                diameter.append(float(self.doWrapper.serverCall(graph, "utils/Diameter", 0).data["diameter"]))
+                            f.write("," + str(diameter).replace("[","").replace("]","").replace(",","/").replace(" ",""))    
+                        
+                            radius = []
+                            for graph in benchmarkDO.getResponseGraphs():
+                                radius.append(float(self.doWrapper.serverCall(graph, "utils/Radius", 0).data["radius"]))
+                            f.write("," + str(radius).replace("[","").replace("]","").replace(",","/").replace(" ","")) 
+                        
+                            girth = []
+                            addInfos = {"graphAttributes.unitWeights": 1}
+                            for graph in benchmarkDO.getResponseGraphs():
+                                girth.append(float(self.doWrapper.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))
+                            f.write("," + str(girth).replace("[","").replace("]","").replace(",","/").replace(" ","")) 
+                        
+                            girth = []
+                            addInfos = {"graphAttributes.unitWeights": 0}
+                            for graph in benchmarkDO.getResponseGraphs():
+                                girth.append(float(self.doWrapper.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))
+                            f.write("," + str(girth).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            
+                            connectivity = []
+                            if benchmarkDO.getGraph().edgeDirection == "Directed":
+                                directed = 1
+                            else:
+                                directed = 0
+                            addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
+                            for graph in benchmarkDO.getResponseGraphs():
+                                connectivity.append(float(self.doWrapper.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
+                            f.write("," + str(connectivity).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            
+                            connectivity = []
+                            addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
+                            for graph in benchmarkDO.getResponseGraphs():
+                                connectivity.append(float(self.doWrapper.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
+                            f.write("," + str(connectivity).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            
+                            reci = []
+                            counts = benchmarkDO.getAllNumberOfReciprocalEdges()
+                            allResponseGraphs = benchmarkDO.getResponseGraphs()
+                            for index, count  in enumerate(counts):
+                                reci.append(count / allResponseGraphs[index].edgeCount())
+                            f.write("," + str(reci).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                                                   
+                        f.write("\n")
             except Exception as inst:
                 print(type(inst))
                 print(inst)
@@ -387,7 +452,7 @@ class BenchmarkController(BaseController):
                                 time.sleep(1)   
                             jobStatus = client.getJobStatus()                               
                             jobId = executionID
-                            job = jobStatus[jobId]                           
+                            job = jobStatus[jobId]
                             status = self.STATUS_TEXTS.get(job.status, "status not supported")
 
                     except (NetworkClientError, ParseError, ServerError) as error:
