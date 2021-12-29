@@ -36,7 +36,7 @@ struct Point{
 	int y;
 	int weight;
 	
-	Point(int xPos, int yPos, double weight) : x(xPos), y(yPos), weight(weight){
+	Point(int xPos, int yPos, int weight) : x(xPos), y(yPos), weight(weight){
 	}
 	
 	bool operator<(const struct Point& other) const {
@@ -62,7 +62,7 @@ struct Point{
 
 class AStar {
 	public:
-		AStar(const std::vector<std::vector<int>> matrix, int heuristicIndex, double minValue, double meanValue, bool createShortestPathMatrix) : matrix(matrix), heuristicIndex(heuristicIndex), minValue(minValue), meanValue(meanValue),createShortestPathMatrix(createShortestPathMatrix) {
+		AStar(const std::vector<std::vector<int>> matrix, int heuristicIndex, int minValue, int meanValue, bool createShortestPathMatrix) : matrix(matrix), heuristicIndex(heuristicIndex), minValue(minValue), meanValue(meanValue),createShortestPathMatrix(createShortestPathMatrix) {
 			if(createShortestPathMatrix){
 				shortestPathMatrix1.resize(matrix.size());
 				shortestPathMatrix2.resize(matrix.size());
@@ -72,8 +72,7 @@ class AStar {
 					shortestPathMatrix2[i].resize(matrix[0].size());
 					shortestPathMatrix3[i].resize(matrix[0].size());
 				}
-			}	
-			
+			}				
 			srand(time(NULL));		
 		}
 		
@@ -128,8 +127,7 @@ class AStar {
 						shortestPathMatrix1[startPoint.x][startPoint.y] = (shortestPathMatrix1[currPathPoint.x][currPathPoint.y] + randomRed) / 2;
 						shortestPathMatrix2[startPoint.x][startPoint.y] = (shortestPathMatrix2[currPathPoint.x][currPathPoint.y] + randomGreen) / 2;
 						shortestPathMatrix3[startPoint.x][startPoint.y] = (shortestPathMatrix3[currPathPoint.x][currPathPoint.y] + randomBlue) / 2;
-					}	
-								
+					}									
 					return shortestPathWeights;
 				}
 				
@@ -139,7 +137,6 @@ class AStar {
 				
 				std::vector<std::tuple<int,int>> neighbors = getNeighborIndices(current.x, current.y);
 				
-				int nIndexCounter = 0;
 				for(std::tuple<int,int> neighbor : neighbors){
 					int neighborX = std::get<0>(neighbor);
 					int neighborY = std::get<1>(neighbor);
@@ -156,20 +153,16 @@ class AStar {
 									shortestPathMatrix1[current.x][current.y] = 255;
 									shortestPathMatrix2[current.x][current.y] = 255;
 									shortestPathMatrix3[current.x][current.y] = 255;
-								}						
-												
-							}							
-							double heuristicWeight = pixelWeights[neighborX][neighborY] + heuristic(neighborX, neighborY, endPoint.x, endPoint.y);						
+								}																	
+							}
+							int heuristicWeight = pixelWeights[neighborX][neighborY] + heuristic(neighborX, neighborY, endPoint.x, endPoint.y);						
 							pq.push(Point(neighborX, neighborY, heuristicWeight));
 						}				
 					}
-					nIndexCounter++;
-				}
-				
+				}				
 			}		
 			return {INT_MAX};
 		} 
-		
 		
 		std::vector<std::vector<short>> &getShortestPathMatrix1(){
 			return shortestPathMatrix1;
@@ -183,15 +176,12 @@ class AStar {
 		int &getNumberOfDiagonals(){
 			return diagonals;
 		}
-		
-		
-		
-		
+				
 	private:
 		std::vector<std::vector<int>> matrix;
 		int heuristicIndex;
-		double minValue;
-		double meanValue;
+		int minValue;
+		int meanValue;
 		bool createShortestPathMatrix;
 		std::vector<std::vector<short>> shortestPathMatrix1;
 		std::vector<std::vector<short>> shortestPathMatrix2;
@@ -212,41 +202,41 @@ class AStar {
 			std::tuple<int,int> tr = std::make_tuple(i+1,j+1);	
 			
 			std::vector<std::tuple<int,int>> toReturn = {bm,ml,mr,tm,bl,br,tl,tr};
-			
+
 			return toReturn;
 			
 		}
 		
-		double heuristic(int point1X, int point1Y, int point2X, int point2Y){
-			double factor = 0.0;
+		int heuristic(int point1X, int point1Y, int point2X, int point2Y){
+			int factor = 0;
 			if(heuristicIndex == 0){
 				factor = minValue;			
 			}			
 			else{
 				if(heuristicIndex == 1){
-					factor = meanValue/4;
+					factor = int(meanValue/4);
 				}
 				else if(heuristicIndex == 2){
-					factor = meanValue/2;
+					factor = int(meanValue/2);
 				}
 				else if(heuristicIndex == 3){
-					factor = meanValue/1.5;
+					factor = int(meanValue/1.5);
 				}
 				else if(heuristicIndex == 4){
-					factor = meanValue/1.25;
+					factor = int(meanValue/1.25);
 				}
 				else if(heuristicIndex == 5){
-					factor = meanValue;
+					factor = int(meanValue);
 				}
 			}									
-			double heurValue = std::max(std::abs(point2X-point1X), std::abs(point2Y-point1Y)) * factor;
+			int heurValue = std::max(std::abs(point2X-point1X), std::abs(point2Y-point1Y)) * factor;
 			return heurValue;		
 		}
 };
 
 PYBIND11_MODULE(AStarC,m) {
 	py::class_<AStar>(m, "AStar")
-	.def(py::init<const std::vector<std::vector<int>>, int, double, double, bool>())
+	.def(py::init<const std::vector<std::vector<int>>, int, int, int, bool>())
 	.def("shortestPath", &AStar::shortestPath)
 	.def("getShortestPathMatrix1", &AStar::getShortestPathMatrix1)
 	.def("getShortestPathMatrix2", &AStar::getShortestPathMatrix2)

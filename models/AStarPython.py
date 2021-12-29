@@ -66,7 +66,7 @@ class AStar:
             popResult = heapq.heappop(pq)
             currentWeight = popResult[0]
             current = popResult[1]
-
+                
             if current == endPoint:
                 shortestPathWeights = []
                 u = (endPoint[0], endPoint[1])
@@ -89,12 +89,11 @@ class AStar:
                     self.shortestPathMatrix1[startPoint[0]][startPoint[1]] = (self.shortestPathMatrix1[currPathPoint[0]][currPathPoint[1]] + randomRed) / 2
                     self.shortestPathMatrix2[startPoint[0]][startPoint[1]] = (self.shortestPathMatrix2[currPathPoint[0]][currPathPoint[1]] + randomGreen) / 2
                     self.shortestPathMatrix3[startPoint[0]][startPoint[1]] = (self.shortestPathMatrix3[currPathPoint[0]][currPathPoint[1]] + randomBlue) / 2
-
                 return shortestPathWeights
-
+            
             if currentWeight - self._heuristic(current, endPoint) > pixelWeights[current[0]][current[1]]:
                 continue
-
+            
             # check the neighbor pixels of current
             nIndexCounter = 0
             for neighbor in self._getNeighborIndices(current[0], current[1]):
@@ -110,7 +109,7 @@ class AStar:
                                 self.shortestPathMatrix1[current[0]][current[1]] = 255
                                 self.shortestPathMatrix2[current[0]][current[1]] = 255
                                 self.shortestPathMatrix3[current[0]][current[1]] = 255
-
+                        
                         heapq.heappush(pq, (pixelWeights[neighbor[0]][neighbor[1]] + self._heuristic(neighbor, endPoint), neighbor))
                 nIndexCounter = nIndexCounter + 1
 
@@ -144,21 +143,21 @@ class AStar:
         return [bm, ml, mr, tm, bl, br, tl, tr]
 
     def _heuristic(self, point1, point2):
-        factor = 0.0
+        factor = 0
         if self.heuristicIndex == 0:
             factor = self.minValue
         else:
             if self.heuristicIndex == 1:
-                factor = self.meanValue/4
+                factor = int(self.meanValue/4)
             elif self.heuristicIndex == 2:
-                factor = self.meanValue/2
+                factor = int(self.meanValue/2)
             elif self.heuristicIndex == 3:
-                factor = self.meanValue/1.5
+                factor = int(self.meanValue/1.5)
             elif self.heuristicIndex == 4:
-                factor = self.meanValue/1.25
+                factor = int(self.meanValue/1.25)
             elif self.heuristicIndex == 5:
-                factor = self.meanValue
-
+                factor = int(self.meanValue)
+        print(factor)        
         return max(abs(point2[0]-point1[0]), abs(point2[1]-point1[1])) * factor
 
 

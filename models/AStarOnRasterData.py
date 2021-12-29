@@ -25,7 +25,8 @@ import numpy as np
 import sys
 
 try:
-    from ..lib.AStarC import AStar
+    #from ..lib.AStarC import AStar
+    raise ImportError("TEST")
 except ImportError:
     # use non-performant pure Python implementation
     from .AStarPython import AStar
@@ -60,8 +61,8 @@ class AStarOnRasterData:
         self.predMatrix = None
 
         self.pixelWeights = None
-        minRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).minimumValue
-        meanRasterValue = (self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean
+        minRasterValue = int((self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).minimumValue)
+        meanRasterValue = int((self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean)
 
         #----------------------------------
 
