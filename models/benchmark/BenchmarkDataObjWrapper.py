@@ -37,7 +37,15 @@ class BenchmarkDataObjWrapper():
             StatusType.SUCCESS: "success",
             StatusType.FAILED: "failed",
             StatusType.ABORTED: "aborted",
-        }    
+        }
+        
+        self.serverCallMatchings = {"Min Fragility": ("utils/Fragility", "minFragility", None),
+                                    "Max Fragility": ("utils/Fragility", "maxFragility", None),
+                                    "Avg Fragility": ("utils/Fragility", "avgFragility", None),
+                                    "Diameter": ("utils/Diameter", "diameter", None),
+                                    "Radius": ("utils/Radius", "radius", None),
+                                    "Girth (unit weights)": ("utils/Girth", "girth", {"graphAttributes.unitWeights": 1}),
+                                    "Girth": ("utils/Girth", "girth", {"graphAttributes.unitWeights": 0})}
 
     def getAnalysisValue(self, analysis, dataObjs, average):
         """
@@ -104,29 +112,10 @@ class BenchmarkDataObjWrapper():
                     allEdgeCounts = dataObj.getAllEdgeWeightResponse()
                     for edgeCount in allEdgeCounts:
                         values.append(round(edgeCount / mstWeight, 3))                       
-            elif analysis == "Min Fragility":
-                for graph in dataObj.getResponseGraphs():              
-                    values.append(float(self.serverCall(graph, "utils/Fragility", 0).data["minFragility"]))     
-            elif analysis == "Max Fragility":
-                for graph in dataObj.getResponseGraphs():              
-                    values.append(float(self.serverCall(graph, "utils/Fragility", 0).data["maxFragility"]))
-            elif analysis == "Avg Fragility":
-                for graph in dataObj.getResponseGraphs():              
-                    values.append(float(self.serverCall(graph, "utils/Fragility", 0).data["avgFragility"]))
-            elif analysis == "Diameter":
-                for graph in dataObj.getResponseGraphs():              
-                    values.append(float(self.serverCall(graph, "utils/Diameter", 0).data["diameter"]))
-            elif analysis == "Radius":
-                for graph in dataObj.getResponseGraphs():              
-                    values.append(float(self.serverCall(graph, "utils/Radius", 0).data["radius"]))
-            elif analysis == "Girth (unit weights)":
-                addInfos = {"graphAttributes.unitWeights": 1}
-                for graph in dataObj.getResponseGraphs():              
-                    values.append(float(self.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))                      
-            elif analysis == "Girth":
-                addInfos = {"graphAttributes.unitWeights": 0}
-                for graph in dataObj.getResponseGraphs():              
-                    values.append(float(self.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))           
+            
+            if analysis in self.serverCallMatchings:
+                values = self._getAnalysisValuesFromServer(dataObj, analysis)
+                      
             elif analysis == "Node Connectivity":
                 if originalGraph.edgeDirection == "Directed":
                     directed = 1
@@ -157,55 +146,6 @@ class BenchmarkDataObjWrapper():
             return mean(values)
         else:
             return values
-
-    def serverCall(self, graph, algoString, costFunction, addInfos = None):
-        # TODO: set costFunction correctly if this is fixed in the network
-        # Currently the returned graph has advanced costs with one cost function
-        # so its works to set the edge costs to 0 for the analysis calls (except lightness call)
-        
-        request = parserManager.getRequestParser(algoString)
-        parameterFieldsData = {}
-        parameterFieldsData['graph'] = graph
-        parameterFieldsData['edgeCosts'] = costFunction
-        parameterFieldsData['vertexCoordinates'] = ''
-        if addInfos is not None:
-            for key in addInfos:
-                parameterFieldsData[key] = addInfos[key]
-        for key in parameterFieldsData:
-            fieldData = parameterFieldsData[key]
-            request.setFieldData(key, fieldData) 
-        request.jobName = algoString + "benchmark" 
-        try:
-            with Client(helper.getHost(), helper.getPort()) as client:
-                executionID = client.sendJobRequest(request)
-        except (NetworkClientError, ParseError) as error:
-            pass 
-        status = "waiting"
-        counter = 0
-        while status != "success":
-            if status == "failed":
-                return -1        
-            try:
-                with Client(helper.getHost(), helper.getPort()) as client:
-                    if counter == 0:
-                        time.sleep(0.25)
-                        counter+=1
-                    else:
-                        time.sleep(0.25)       
-                    jobStatus = client.getJobStatus()
-                                  
-                    jobId = executionID
-                    job = jobStatus[jobId]                 
-                    status = self.STATUS_TEXTS.get(job.status, "status not supported")
-            except (NetworkClientError, ParseError) as error:
-                return -1
-        try:
-            with Client(helper.getHost(), helper.getPort()) as client:         
-                response = client.getJobResult(job.jobId)                          
-                return response
-                
-        except (NetworkClientError, ParseError) as error:
-            return -1
 
     def partition(self, partitionType, partitionDict, parameterKey = None, graphAnalysis = None):
         """
@@ -258,66 +198,15 @@ class BenchmarkDataObjWrapper():
                                 partitionToSort[axisEntry].extend(dataObjsForPartition)
                             else:
                                 partitionToSort[axisEntry] = dataObjsForPartition
-                        else:
-                            # special cases where the axis entry value is not the same for every data object due to different cost functions                        
-                            if graphAnalysis == "Min Fragility":
+                        else:                          
+                            if graphAnalysis in self.serverCallMatchings:
                                 for dataObj in dataObjsForPartition:
-                                    costFunction = dataObj.getParameters()['edgeCosts']  
-                                    axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Fragility", costFunction).data["minFragility"])  
+                                    axisEntry = self._getAxisEntryFromServer(dataObj, graphAnalysis, allGraphs, i)
                                     if axisEntry in partitionToSort:
                                         partitionToSort[axisEntry].append(dataObj)
                                     else:
-                                        partitionToSort[axisEntry] = [dataObj]
-                            elif graphAnalysis == "Max Fragility":
-                                for dataObj in dataObjsForPartition:
-                                    costFunction = dataObj.getParameters()['edgeCosts']  
-                                    axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Fragility", costFunction).data["maxFragility"])  
-                                    if axisEntry in partitionToSort:
-                                        partitionToSort[axisEntry].append(dataObj)
-                                    else:
-                                        partitionToSort[axisEntry] = [dataObj]             
-                            elif graphAnalysis == "Avg Fragility":
-                                for dataObj in dataObjsForPartition:
-                                    costFunction = dataObj.getParameters()['edgeCosts']  
-                                    axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Fragility", costFunction).data["avgFragility"])  
-                                    if axisEntry in partitionToSort:
-                                        partitionToSort[axisEntry].append(dataObj)
-                                    else:
-                                        partitionToSort[axisEntry] = [dataObj]                        
-                            elif graphAnalysis == "Diameter":
-                                for dataObj in dataObjsForPartition:
-                                   costFunction = dataObj.getParameters()['edgeCosts']  
-                                   axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Diameter", costFunction).data["diameter"])  
-                                   if axisEntry in partitionToSort:
-                                       partitionToSort[axisEntry].append(dataObj)
-                                   else:
-                                       partitionToSort[axisEntry] = [dataObj] 
-                            elif graphAnalysis == "Radius":
-                                for dataObj in dataObjsForPartition:
-                                   costFunction = dataObj.getParameters()['edgeCosts']  
-                                   axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Radius", costFunction).data["radius"])  
-                                   if axisEntry in partitionToSort:
-                                       partitionToSort[axisEntry].append(dataObj)
-                                   else:
-                                       partitionToSort[axisEntry] = [dataObj]  
-                            elif graphAnalysis == "Girth (unit weights)":
-                                for dataObj in dataObjsForPartition:
-                                   costFunction = dataObj.getParameters()['edgeCosts']
-                                   addInfos = {"graphAttributes.unitWeights": 1} 
-                                   axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Girth", costFunction, addInfos).data["girth"])  
-                                   if axisEntry in partitionToSort:
-                                       partitionToSort[axisEntry].append(dataObj)
-                                   else:
-                                       partitionToSort[axisEntry] = [dataObj] 
-                            elif graphAnalysis == "Girth":
-                                for dataObj in dataObjsForPartition:
-                                   costFunction = dataObj.getParameters()['edgeCosts']
-                                   addInfos = {"graphAttributes.unitWeights": 0} 
-                                   axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Girth", costFunction, addInfos).data["girth"])  
-                                   if axisEntry in partitionToSort:
-                                       partitionToSort[axisEntry].append(dataObj)
-                                   else:
-                                       partitionToSort[axisEntry] = [dataObj] 
+                                        partitionToSort[axisEntry] = [dataObj] 
+                                        
                             elif graphAnalysis == "Node Connectivity":
                                 if allGraphs[i][1].edgeDirection == "Directed":
                                     directed = 1
@@ -409,6 +298,66 @@ class BenchmarkDataObjWrapper():
                     partition[keyTuple] = dataObjsForPartition
 
         return partition
+
+    def _getAxisEntryFromServer(self, dataObj, analysis, allGraphs, i):
+        costFunction = dataObj.getParameters()['edgeCosts']  
+        result = self.serverCall(allGraphs[i][1], self.serverCallMatchings[analysis][0], costFunction, self.serverCallMatchings[analysis][2]).data[self.serverCallMatchings[analysis][1]]
+        return float(result)
+
+    def _getAnalysisValuesFromServer(self, dataObj, analysis):
+        values = []
+        for graph in dataObj.getResponseGraphs():
+            values.append(float(self.serverCall(graph, self.serverCallMatchings[analysis][0], 0, self.serverCallMatchings[analysis][2]).data[self.serverCallMatchings[analysis][1]]))
+        return values
+
+    def serverCall(self, graph, algoString, costFunction, addInfos = None):
+        # TODO: set costFunction correctly if this is fixed in the network
+        # Currently the returned graph has advanced costs with one cost function
+        # so its works to set the edge costs to 0 for the analysis calls (except lightness call)
+        
+        request = parserManager.getRequestParser(algoString)
+        parameterFieldsData = {}
+        parameterFieldsData['graph'] = graph
+        parameterFieldsData['edgeCosts'] = costFunction
+        parameterFieldsData['vertexCoordinates'] = ''
+        if addInfos is not None:
+            for key in addInfos:
+                parameterFieldsData[key] = addInfos[key]
+        for key in parameterFieldsData:
+            fieldData = parameterFieldsData[key]
+            request.setFieldData(key, fieldData) 
+        request.jobName = algoString + "benchmark" 
+        try:
+            with Client(helper.getHost(), helper.getPort()) as client:
+                executionID = client.sendJobRequest(request)
+        except (NetworkClientError, ParseError) as error:
+            pass 
+        status = "waiting"
+        counter = 0
+        while status != "success":
+            if status == "failed":
+                return -1        
+            try:
+                with Client(helper.getHost(), helper.getPort()) as client:
+                    if counter == 0:
+                        time.sleep(0.25)
+                        counter+=1
+                    else:
+                        time.sleep(0.25)       
+                    jobStatus = client.getJobStatus()
+                                  
+                    jobId = executionID
+                    job = jobStatus[jobId]                 
+                    status = self.STATUS_TEXTS.get(job.status, "status not supported")
+            except (NetworkClientError, ParseError) as error:
+                return -1
+        try:
+            with Client(helper.getHost(), helper.getPort()) as client:         
+                response = client.getJobResult(job.jobId)                          
+                return response
+                
+        except (NetworkClientError, ParseError) as error:
+            return -1
 
     def _getAllParameterValues(self, parameterKey, dataObjects):
         valueList = []

@@ -258,7 +258,7 @@ class BenchmarkController(BaseController):
 
     def runTask(self):
         # create and get BenchmarkData objects
-        debugMode = False
+        debugMode = True
         self.benchmarkDOs = self.view.getOGDFBenchmarkWidget().getBenchmarkDataObjects()
         if not self._checkSelections():
             return
