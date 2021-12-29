@@ -21,10 +21,11 @@
 from enum import Enum
 
 from qgis.PyQt.QtCore import QCoreApplication
+from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
 
 from os.path import abspath, join, dirname, splitext, basename, isfile
-
-from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
+import os
+import re
 
 
 class TlsOption(Enum):
@@ -261,3 +262,16 @@ def getRasterFileFilter():
     for filterAndFormat in QgsRasterFileWriter.supportedFiltersAndFormats():
         filters.append(filterAndFormat.filterString)
     return ";;".join(filters)
+
+
+def hasAStarC():
+    """
+    Checks if performant A* c++ implementation is available
+    :return: true if cpp library available
+    """
+    pattern = re.compile("AStarC")
+    dir = join(getPluginPath(), "lib")
+    for filepath in os.listdir(dir):
+        if pattern.search(filepath):
+            return True
+    return False
