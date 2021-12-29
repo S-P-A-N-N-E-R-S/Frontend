@@ -25,8 +25,7 @@ import numpy as np
 import sys
 
 try:
-    #from ..lib.AStarC import AStar
-    raise ImportError("TEST")
+    from ..lib.AStarC import AStar
 except ImportError:
     # use non-performant pure Python implementation
     from .AStarPython import AStar
