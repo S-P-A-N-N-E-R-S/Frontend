@@ -193,7 +193,6 @@ class BenchmarkController(BaseController):
                 if self.view.getCsvCreationSelection():
                     benchVis.createTextFile(self.view.getTextFilePath(), vis == "Box plot")
 
-
     def _checkSelections(self):
         """
         Checks if the selections made in the view are correct and no selection is missing.
