@@ -41,10 +41,8 @@ SOURCES = \
 PLUGINNAME = ogdf_plugin
 
 PY_FILES = __init__.py mainPlugin.py helperFunctions.py exceptions.py
-DIRECTORIES = controllers lib models resources views network i18n
-EXTRAS = metadata.txt
-
-# COMPILED_RESOURCE_FILES = resources.py
+DIRECTORIES = controllers lib models resources views network i18n scripts
+EXTRAS = metadata.txt Makefile
 
 PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 
@@ -126,7 +124,7 @@ pybind_build:
 	rm -rf build_tmp
 	echo "End pybind build"
 
-zip:
+zip: transcompile proto # not compile pybind sources due to system and architecture incompatibility
 	@echo
 	@echo "---------------------------"
 	@echo "Creating plugin zip bundle."
