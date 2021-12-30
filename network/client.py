@@ -1,4 +1,5 @@
 import socket
+import ssl
 import struct
 import gzip
 
@@ -7,6 +8,7 @@ from .exceptions import NetworkClientError, ParseError
 from .protocol.build import meta_pb2
 from .requests.statusRequest import StatusRequest
 from .requests.resultRequest import ResultRequest
+from ..helperFunctions import TlsOption
 
 
 LENGTH_FIELD_SIZE = 8
@@ -14,11 +16,33 @@ LENGTH_FIELD_SIZE = 8
 
 class Client():
 
-    def __init__(self, host, port, maxRetryAttempts=1):
+    def __init__(self, host, port, tlsOption=TlsOption.ENABLED_NO_CHECK, maxRetryAttempts=1):
+        if not isinstance(tlsOption, TlsOption):
+            raise TypeError("Parameter tlsOption is not of Type TlsOption")
+
         self.host = host
         self.port = port
         self.maxRetryAttempts = maxRetryAttempts
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Create the socket depending on the encryption/tls setting
+        if tlsOption == TlsOption.ENABLED:
+            self.context = ssl.SSLContext()
+            self.context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+            self.context.check_hostname = False
+            self.context.verify_mode = ssl.CERT_REQUIRED
+
+            self.unwrappedSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket = self.context.wrap_socket(self.unwrappedSocket)
+        elif tlsOption == TlsOption.ENABLED_NO_CHECK:
+            self.context = ssl.SSLContext()
+            self.context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+            self.context.check_hostname = False
+            self.context.verify_mode = ssl.CERT_NONE
+
+            self.unwrappedSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket = self.context.wrap_socket(self.unwrappedSocket)
+        else:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def __enter__(self):
         self.connect()

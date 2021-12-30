@@ -14,6 +14,7 @@ from ..models.benchmark.BenchmarkVisualisation import BenchmarkVisualisation
 # client imports
 from ..network.client import Client
 from ..network.exceptions import NetworkClientError, ParseError, ServerError
+from .. import helperFunctions as helper
 
 
 class BenchmarkController(BaseController):
@@ -349,7 +350,7 @@ class BenchmarkController(BaseController):
 
             for _ in range(self.view.getExecutions(benchmarkDO.algorithm)):
                 try:
-                    with Client(helper.getHost(), helper.getPort()) as client:
+                    with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                         client.sendJobRequest(request)
                 except (NetworkClientError, ParseError, ServerError) as error:
                     return "Network Error: " + str(error)
@@ -362,7 +363,7 @@ class BenchmarkController(BaseController):
                     if self.task is not None and self.task.isCanceled():
                         return
                     try:
-                        with Client(helper.getHost(), helper.getPort()) as client:
+                        with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                             if counter == 0:
                                 time.sleep(0.5)
                                 counter+=1
@@ -378,7 +379,7 @@ class BenchmarkController(BaseController):
                     except (NetworkClientError, ParseError, ServerError) as error:
                         return "Network Error: " + str(error)
                 try:
-                    with Client(helper.getHost(), helper.getPort()) as client:
+                    with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                         response = client.getJobResult(job.jobId)
                         benchmarkDO.addServerResponse(response)
                         benchmarkDO.setResponseGraph(response.getGraph())
