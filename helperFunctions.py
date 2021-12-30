@@ -18,11 +18,19 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+from enum import Enum
+
 from qgis.PyQt.QtCore import QCoreApplication
 
 from os.path import abspath, join, dirname, splitext, basename, isfile
 
 from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
+
+
+class TlsOption(Enum):
+    DISABLED = 1
+    ENABLED_NO_CHECK = 2
+    ENABLED = 3
 
 
 def getHost():
@@ -33,6 +41,36 @@ def getHost():
 def getPort():
     """ Get the server port address"""
     return int(QgsSettings().value("ogdfplugin/port", 4711))
+
+
+def getEncryptionOption():
+    """ Get the use ssl value"""
+    val = QgsSettings().value("ogdfplugin/ssl", True)
+    if isinstance(val, bool):
+        return val
+    else:
+        return val != "false"
+
+
+def getEncryptionCertCheckOption():
+    """ Get the ssl check certificates value"""
+    if not getEncryptionOption():
+        return False
+
+    val = QgsSettings().value("ogdfplugin/sslCheck", True)
+    if isinstance(val, bool):
+        return val
+    else:
+        return val != "false"
+
+def getTlsOption():
+    """ Get the TlsOption depending on the encryption options """
+    if getEncryptionCertCheckOption():
+        return TlsOption.ENABLED
+    elif getEncryptionOption():
+        return TlsOption.ENABLED_NO_CHECK
+    else:
+        return TlsOption.DISABLED
 
 
 def getPluginPath():
@@ -223,4 +261,3 @@ def getRasterFileFilter():
     for filterAndFormat in QgsRasterFileWriter.supportedFiltersAndFormats():
         filters.append(filterAndFormat.filterString)
     return ";;".join(filters)
-

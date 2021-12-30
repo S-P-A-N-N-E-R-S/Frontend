@@ -57,7 +57,7 @@ class JobsController(BaseController):
 
         # Get result from finished job
         try:
-            with Client(helper.getHost(), helper.getPort()) as client:
+            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                 response = client.getJobResult(job.jobId)
         except (NetworkClientError, ParseError, ServerError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
@@ -95,7 +95,7 @@ class JobsController(BaseController):
 
         # get response
         try:
-            with Client(helper.getHost(), helper.getPort()) as client:
+            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                 states = client.getJobStatus()
                 # add jobs
                 for job in states.values():
