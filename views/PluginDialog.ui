@@ -2232,6 +2232,39 @@ QListWidget::item::selected {
                        </property>
                       </widget>
                      </item>
+                     <item row="4" column="0" colspan="2">
+                      <widget class="QLabel" name="options_server_security_label">
+                       <property name="text">
+                        <string>Security</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="5" column="0" colspan="1">
+                      <widget class="QCheckBox" name="options_ssl_input">
+                       <property name="text">
+                        <string>Enable TLS</string>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                       <property name="toolTip">
+                        <string>Check if the connection to the server is TLS encrypted. This requires the server to be configured to establish a TLS encrypted connection.</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="5" column="1" colspan="1">
+                      <widget class="QCheckBox" name="options_ssl_check_input">
+                       <property name="text">
+                        <string>Validate server certificates</string>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                       <property name="toolTip">
+                        <string>Check if the TLS certificate used by the server should be validated. This requires the server certificate to be validated by a valid Certificate Authority.</string>
+                       </property>
+                      </widget>
+                     </item>
                     </layout>
                    </item>
                    <item row="1" column="0" colspan="2">

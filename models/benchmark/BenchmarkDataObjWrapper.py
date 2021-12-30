@@ -328,7 +328,7 @@ class BenchmarkDataObjWrapper():
             request.setFieldData(key, fieldData) 
         request.jobName = algoString + "benchmark" 
         try:
-            with Client(helper.getHost(), helper.getPort()) as client:
+            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                 executionID = client.sendJobRequest(request)
         except (NetworkClientError, ParseError) as error:
             pass 
@@ -338,7 +338,7 @@ class BenchmarkDataObjWrapper():
             if status == "failed":
                 return -1        
             try:
-                with Client(helper.getHost(), helper.getPort()) as client:
+                with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                     if counter == 0:
                         time.sleep(0.25)
                         counter+=1
@@ -352,7 +352,7 @@ class BenchmarkDataObjWrapper():
             except (NetworkClientError, ParseError) as error:
                 return -1
         try:
-            with Client(helper.getHost(), helper.getPort()) as client:         
+            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:       
                 response = client.getJobResult(job.jobId)                          
                 return response
                 

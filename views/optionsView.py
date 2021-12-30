@@ -29,6 +29,8 @@ class OptionsView(BaseView):
 
         self.dialog.options_save_btn.clicked.connect(self.controller.saveOptions)
 
+        self.dialog.options_ssl_input.stateChanged.connect(self.updateSslCheckVisibility)
+
     def getHost(self):
         return self.dialog.options_server_host_input.text()
 
@@ -40,6 +42,24 @@ class OptionsView(BaseView):
 
     def setPort(self, port):
         self.dialog.options_server_port_input.setValue(port)
+
+    def getSsl(self):
+        return self.dialog.options_ssl_input.isChecked()
+
+    def setSsl(self, checked):
+        self.dialog.options_ssl_input.setChecked(checked)
+
+    def getSslCheck(self):
+        return self.dialog.options_ssl_check_input.isChecked()
+
+    def setSslCheck(self, checked):
+        self.dialog.options_ssl_check_input.setChecked(checked)
+
+    def updateSslCheckVisibility(self):
+        self.dialog.options_ssl_check_input.setVisible(self.getSsl())
+
+    def setSslCheckVisibility(self, visible):
+        self.dialog.options_ssl_check_input.setVisible(visible)
 
     # authentication
 

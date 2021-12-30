@@ -4,16 +4,16 @@ from datetime import date, datetime
 from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog, Qgis
 
 from .base import BaseController
-from .. import helperFunctions as helper
-from ..network import parserManager
-from ..network import statusManager
-from ..network.protocol.build.status_pb2 import StatusType
 from ..models.benchmark.BenchmarkDataObjWrapper import BenchmarkDataObjWrapper
 from ..models.benchmark.BenchmarkVisualisation import BenchmarkVisualisation
 
 # client imports
 from ..network.client import Client
 from ..network.exceptions import NetworkClientError, ParseError, ServerError
+from .. import helperFunctions as helper
+from ..network import parserManager
+from ..network import statusManager
+from ..network.protocol.build.status_pb2 import StatusType
 
 
 class BenchmarkController(BaseController):
@@ -430,7 +430,7 @@ class BenchmarkController(BaseController):
 
             for i in range(self.view.getExecutions(benchmarkDO.algorithm)):             
                 try:
-                    with Client(helper.getHost(), helper.getPort()) as client:
+                    with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                         executionID = client.sendJobRequest(request)
                 except (NetworkClientError, ParseError, ServerError) as error:
                     return "Network Error: " + str(error)
@@ -443,7 +443,7 @@ class BenchmarkController(BaseController):
                     if self.task is not None and self.task.isCanceled():
                         return
                     try:
-                        with Client(helper.getHost(), helper.getPort()) as client:
+                        with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                             if counter == 0:
                                 time.sleep(0.5)
                                 counter+=1
@@ -457,7 +457,7 @@ class BenchmarkController(BaseController):
                     except (NetworkClientError, ParseError, ServerError) as error:
                         return "Network Error: " + str(error)
                 try:
-                    with Client(helper.getHost(), helper.getPort()) as client:
+                    with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                         response = client.getJobResult(job.jobId)
                         benchmarkDO.addServerResponse(response)
                         benchmarkDO.setResponseGraph(response.getGraph())

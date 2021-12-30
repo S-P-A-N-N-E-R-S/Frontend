@@ -27,7 +27,7 @@ from qgis.analysis import *
 from qgis.utils import *
 
 from .views.pluginDialog import PluginDialog
-from .helperFunctions import getImagePath, getPluginPath, getPort, getHost
+from .helperFunctions import getImagePath, getPluginPath, getPort, getHost, getTlsOption
 from .network.client import Client
 from .network.exceptions import NetworkClientError, ParseError, ServerError
 
@@ -78,7 +78,7 @@ class OGDFPlugin:
         :return:
         """
         try:
-            with Client(getHost(), getPort()) as client:
+            with Client(getHost(), getPort(), tlsOption=getTlsOption()) as client:
                 client.getAvailableHandlers()
         except (NetworkClientError, ParseError, ServerError) as error:
             iface.messageBar().pushMessage("OGDF Plugin Error", str(error), level=Qgis.Critical)
