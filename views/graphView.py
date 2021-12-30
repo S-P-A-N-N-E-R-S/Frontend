@@ -19,7 +19,7 @@
 from .baseView import BaseView
 from .widgets.QgsCostFunctionDialog import QgsCostFunctionDialog
 from ..controllers.graph import GraphController
-from ..helperFunctions import getImagePath, getRasterFileFilter, getVectorFileFilter
+from ..helperFunctions import getVectorFileFilter, hasAStarC
 from ..models.ExtGraph import ExtGraph
 
 from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes, QgsVectorLayer, QgsWkbTypes, QgsApplication
@@ -56,7 +56,7 @@ class GraphView(BaseView):
         # enable and disable inputs when input is changed
         self.dialog.create_graph_input.currentIndexChanged.connect(self._inputChanged)
         self.dialog.random_graph_checkbox.stateChanged.connect(self._inputChanged)
-        self.dialog.create_graph_costfunction_input.textChanged.connect(self._showShortPathViewCheckbox)
+        self.dialog.create_graph_costfunction_input.textChanged.connect(self._costFunctionChanged)
 
         # set up file upload
         self.dialog.create_graph_input_tools.clicked.connect(
@@ -139,7 +139,7 @@ class GraphView(BaseView):
         self.dialog.create_graph_create_btn.clicked.connect(self._disableButton)
 
         self._inputChanged()
-        self._showShortPathViewCheckbox()
+        self._costFunctionChanged()
 
     def _inputChanged(self):
         """
@@ -175,7 +175,7 @@ class GraphView(BaseView):
 
         self.dialog.create_graph_connection_parameters.setVisible(layer is not None or self.isRandom())
         self.dialog.create_graph_connectiontype_input.setEnabled(isPointLayer or self.isRandom())
-        
+
 
         if isLineLayer:
             # disable all parameters associated with connection type
@@ -236,9 +236,10 @@ class GraphView(BaseView):
         self.dialog.create_graph_costfunction_parameters.setVisible(distanceStrategy == "Advanced")
         self.dialog.create_graph_costfunction_parameters.setEnabled(distanceStrategy == "Advanced")
 
-    def _showShortPathViewCheckbox(self):
+    def _costFunctionChanged(self):
         """
-        Enables and disables the short path view checkbox when regex matches
+        Enables and disables the short path view checkbox when regex matches. Informs user if pure python A*
+        implementation is used.
         :return:
         """
         shortPathFound = False
@@ -248,6 +249,10 @@ class GraphView(BaseView):
                 shortPathFound = True
                 break
         self.dialog.create_graph_shortPathView_checkbox.setVisible(shortPathFound)
+        # Inform users that non-performant code is used for A*
+        if shortPathFound and not hasAStarC():
+            self.showInfo(self.tr("The calculation could be slow due to the shortest path analysis. For better "
+                                  "performance, see installation section of the manual."))
 
     def _toRemoveButton(self, button, tooltip):
         button.setText("➖")
@@ -340,7 +345,7 @@ class GraphView(BaseView):
         costLineEdit = QLineEdit()
         costLineEdit.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
         costLineEdit.setToolTip(self.tr("Define advanced cost function"))
-        costLineEdit.textChanged.connect(self._showShortPathViewCheckbox)
+        costLineEdit.textChanged.connect(self._costFunctionChanged)
 
         costWidgetDialogButton = QToolButton()
         costWidgetDialogButton.setText("...")
@@ -556,10 +561,10 @@ class GraphView(BaseView):
 
     def getLineLayerForConnection(self):
         return self.dialog.create_graph_line_layer_input.currentLayer()
-    
+
     def getDoFeatureSorting(self):
         return self.dialog.create_graph_dofeaturesorting_checkbox.isChecked()
-    
+
     def getForbiddenAreaLayer(self):
         return self.dialog.create_graph_forbiddenarea_input.currentLayer()
 
