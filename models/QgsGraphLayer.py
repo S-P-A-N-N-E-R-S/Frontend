@@ -48,16 +48,18 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                 self.mLayer = layer
 
         self.rendererContext = rendererContext
-        
+
         self.mGraph = self.mLayer.getGraph()
 
         self.mRandomColor = self.mLayer.mRandomColor
 
-        self.mShowText = self.mLayer.mShowEdgeText
+        self.mShowEdgeText = self.mLayer.mShowEdgeText
+        self.mShowVertexText = self.mLayer.mShowVertexText
         self.mShowDirection = self.mLayer.mShowDirection
         self.mShowLines = self.mLayer.mShowLines
 
-        self.mRenderedCostFunction = self.mLayer.mRenderedCostFunction
+        self.mRenderedEdgeCostFunction = self.mLayer.mRenderedEdgeCostFunction
+        self.mRenderedVertexCostFunction = self.mLayer.mRenderedVertexCostFunction
 
     def __del__(self):
         del self.rendererContext
@@ -74,17 +76,17 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setPen(QColor('black'))
         painter.setBrush(self.mRandomColor)
         painter.setFont(QFont("arial", 10))
-        
+
         mTransform = self.renderContext().coordinateTransform()
 
         if isinstance(self.mGraph, ExtGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
                 converter = self.renderContext().mapToPixel()
-                
+
                 for idx in range(self.mGraph.vertexCount()):
                     vertex = self.mGraph.vertex(idx)
-                    
+
                     # draw vertex
                     point = vertex.point()
 
@@ -92,12 +94,23 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                         point = mTransform.transform(point)
 
                     point = converter.transform(point).toQPointF()
-                    
+
                     painter.setPen(QColor('black'))
                     # don't draw border of vertices if graph has edges
                     if self.mGraph.edgeCount() != 0:
                         painter.setPen(self.mRandomColor)
                     painter.drawEllipse(point, 3.0, 3.0)
+
+                    # draw vertex costs
+                    if self.mShowVertexText:
+                        painter.setPen(QColor('black'))
+                        vertexCost = self.mGraph.costOfVertex(idx, self.mRenderedVertexCostFunction)
+                        if not vertexCost and not vertexCost == 0:
+                            painter.drawText(point, "None")
+                        elif vertexCost % 1 == 0:
+                            painter.drawText(point, str(vertexCost))
+                        else:
+                            painter.drawTest(point, str("%.f" % vertexCost))
 
                     # draw outgoing edges
                     if self.mGraph.edgeCount() != 0 and self.mShowLines:
@@ -132,11 +145,11 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                                 painter.setPen(QColor('red'))
                                 painter.drawPath(arrowHead)
                                 painter.setPen(QColor('black'))
-                            
+
                             # add text with edgeCost at line mid point
-                            if self.mShowText:
+                            if self.mShowEdgeText:
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() + 0.5 * fromPoint.y())
-                                edgeCost = self.mGraph.costOfEdge(edgeIdx, self.mRenderedCostFunction)
+                                edgeCost = self.mGraph.costOfEdge(edgeIdx, self.mRenderedEdgeCostFunction)
                                 if not edgeCost:
                                     painter.drawText(midPoint, "None")
                                 elif edgeCost % 1 == 0:
@@ -164,11 +177,11 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         if length == 0:
             return arrowHead
         angle = math.radians(math.degrees(math.acos(dx / length)) + 45)
-        
+
         if dy < 0:
             angle = -angle
             angle = math.radians(math.degrees(angle) + 90)
-            
+
         # rotate first arrowHeadHalf (-10, 0)
         firstX = math.cos(angle) * (-10)
         firstY = math.sin(angle) * (-10)
@@ -194,9 +207,9 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def __init__(self, name="QgsGraphLayer"):
         super().__init__(QgsGraphLayer.LAYER_TYPE, name)
-        
+
         self.setValid(True)
-        
+
         self.mGraph = ExtGraph()
 
         self.hasEdges = False
@@ -213,6 +226,7 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mGraph.crs = self.crs()
 
         self.mShowEdgeText = False
+        self.mShowVertexText = False
         self.mShowDirection = False
         self.mShowLines = True
 
@@ -221,7 +235,8 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.mRandomColor = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-        self.mRenderedCostFunction = 0
+        self.mRenderedEdgeCostFunction = 0
+        self.mRenderedVertexCostFunction = 0
 
         self.crsChanged.connect(self.updateCrs)
 
@@ -241,9 +256,9 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def deleteLater(self, dummy):
         self.toggleEdit(True)
-        
+
         del self.mDataProvider
-        
+
         del self.mTransform
         del self._extent
 
@@ -259,7 +274,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def __del__(self):
         pass
-        
+
     def dataProvider(self):
         # TODO: issue with DB Manager plugin
         return self.mDataProvider
@@ -276,12 +291,12 @@ class QgsGraphLayer(QgsPluginLayer):
         return QgsGraphLayerRenderer(self.id(), rendererContext)
 
     def setTransformContext(self, ct):
-        pass 
+        pass
 
     def setGraph(self, graph):
         """
         Set the graph of the QgsGraphLayer and prepare the QgsGraphDataProvider.
-        
+
         :type graph: ExtGraph
         """
         if isinstance(graph, ExtGraph):
@@ -294,7 +309,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
             if graph.edgeCount() != 0:
                 self.hasEdges = True
-                
+
                 self.mDataProvider.setGeometryToPoint(False)
             else:
                 self.hasEdges = False
@@ -309,7 +324,7 @@ class QgsGraphLayer(QgsPluginLayer):
             yField = QgsField("y", QVariant.Double, "double")
 
             self.mDataProvider.addAttributes([vertexIdField, xField, yField], True)
-            
+
             # update point fields
             self.mPointFields.append(vertexIdField)
             self.mPointFields.append(xField)
@@ -319,16 +334,21 @@ class QgsGraphLayer(QgsPluginLayer):
             edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
             fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
             toVertexField = QgsField("toVertex", QVariant.Double, "double")
-            
+
             self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField], False)
-                
+
             # update line fields
             self.mLineFields.append(edgeIdField)
             self.mLineFields.append(fromVertexField)
             self.mLineFields.append(toVertexField)
 
             # self.mGraph.calculateSize()
-        
+
+            # testing purposes only
+            for vertexIdx in range(self.mGraph.vertexCount()):
+                self.mGraph.setCostOfVertex(vertexIdx, 0, vertexIdx)
+                self.mGraph.setCostOfVertex(vertexIdx, 1, 2*vertexIdx)
+
     def getGraph(self):
         return self.mGraph
 
@@ -353,9 +373,9 @@ class QgsGraphLayer(QgsPluginLayer):
                     costField = QgsField(fieldName, QVariant.Double, "double")
 
                     self.mDataProvider.addAttributes([costField], False)
-                    
+
                     self.mLineFields.append(costField)
-            
+
             # only use one field for one cost function
             else:
                 costField = QgsField("edgeCost", QVariant.Double, "double")
@@ -390,7 +410,7 @@ class QgsGraphLayer(QgsPluginLayer):
             # destroy point features (to maybe save space)
             for vertexIdx in range(self.mGraph.vertexCount()):
                 self.mDataProvider.deleteFeature(vertexIdx, True)
-            
+
         if self.exportLines:
             # destroy line features (to maybe save space)
             for edgeIdx in range(self.mGraph.edgeCount()):
@@ -408,7 +428,7 @@ class QgsGraphLayer(QgsPluginLayer):
         saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;Geopackage (*.gpkg);;CSV (*.csv);; GraphML (*.graphml);;GeoJSON (*.geojson)")
         pointFileName = saveFileName[0]
         lineFileName = saveFileName[0]
-        
+
         driver = ""
 
         if saveFileName[1] == "Shapefile (*.shp)": # Shapefile
@@ -425,7 +445,7 @@ class QgsGraphLayer(QgsPluginLayer):
             pointFileName += "Points.csv" if not "Points.csv" in pointFileName else ""
             lineFileName += "Lines.csv"if not "Lines.csv" in lineFileName else ""
             driver = "CSV"
-        
+
         elif saveFileName[1] == "GraphML (*.graphml)":
             # GraphML can store both points and lines
             pointFileName += ".graphml" if not ".graphml" in pointFileName else ""
@@ -463,10 +483,10 @@ class QgsGraphLayer(QgsPluginLayer):
             if lineWriter.hasError() != QgsVectorFileWriter.NoError:
                 print("ERROR QgsVectorFileWriter", lineWriter.errorMessage())
                 return False
-            
+
             for feat in self.mDataProvider.getFeatures(False):
                     lineWriter.addFeature(feat)
-            
+
             del lineWriter
 
         self.__destroyFeatures()
@@ -511,7 +531,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def exportToVectorLayer(self):
         [vPointLayer, vLineLayer] = self.createVectorLayer()
-        
+
         QgsProject.instance().addMapLayer(vPointLayer)
         QgsProject.instance().addMapLayer(vLineLayer)
 
@@ -536,8 +556,9 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode = srsNode
         while graphNode.nodeName() != "graphData":
             graphNode = graphNode.nextSibling()
-            
+
         graphElem = graphNode.toElement()
+        vertexCostFunctions = 0
         if graphElem.hasAttribute("connectionType"):
             self.mGraph.setConnectionType(graphElem.attribute("connectionType"))
             self.mGraph.numberNeighbours = int(graphElem.attribute("numberNeighbours"))
@@ -546,10 +567,13 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph.nnAllowDoubleEdges = graphElem.attribute("nnAllowDoubleEdges") == "True"
             self.mGraph.distance = float(graphElem.attribute("distance")), int(graphElem.attribute("distanceUnit"))
             self.mGraph.setDistanceStrategy(graphElem.attribute("distanceStrategy"))
-            
+
             # random seed only found in randomly created graphs
             if graphElem.hasAttribute("randomSeed"):
                 self.mGraph.setRandomSeed(int(graphElem.attribute("randomSeed")))
+
+            if graphElem.hasAttribute("vertexCostFunctions"):
+                vertexCostFunctions = int(graphElem.attribute("vertexCostFunctions"))
 
         verticesNode = graphNode.firstChild()
         vertexNodes = verticesNode.childNodes()
@@ -558,13 +582,13 @@ class QgsGraphLayer(QgsPluginLayer):
         edgeNodes = edgesNode.childNodes()
 
         self.hasEdges = edgeNodes.length() != 0
-        
+
         # prepare fields
         if self.hasEdges:
             self.mDataProvider.setGeometryToPoint(False)
         else:
             self.mDataProvider.setGeometryToPoint(True)
-        
+
         self.mDataProvider.setDataSourceUri("Point?" + self.__crsUri, True)
         self.mDataProvider.setDataSourceUri("LineString?" + self.__crsUri, False)
 
@@ -574,7 +598,7 @@ class QgsGraphLayer(QgsPluginLayer):
         yField = QgsField("y", QVariant.Double, "double")
 
         self.mDataProvider.addAttributes([vertexIdField, xField, yField], True)
-        
+
         # update point fields
         self.mPointFields.append(vertexIdField)
         self.mPointFields.append(xField)
@@ -584,10 +608,10 @@ class QgsGraphLayer(QgsPluginLayer):
         edgeIdField = QgsField("edgeId", QVariant.Int, "integer")
         fromVertexField = QgsField("fromVertex", QVariant.Double, "double")
         toVertexField = QgsField("toVertex", QVariant.Double, "double")
-        
+
         # self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField])
         self.mDataProvider.addAttributes([edgeIdField, fromVertexField, toVertexField], False)
-        
+
         # update line fields
         self.mLineFields.append(edgeIdField)
         self.mLineFields.append(fromVertexField)
@@ -608,6 +632,14 @@ class QgsGraphLayer(QgsPluginLayer):
                     if self.mGraph.nextClusterID() <= int(elem.attribute("clusterID")):
                         self.mGraph.setNextClusterID(int(elem.attribute("clusterID")) + 1)
 
+                if vertexCostFunctions >= 0:
+                    costNodes = vertexNodes.at(vertexIdx).childNodes()
+                    for costIdx in range(costNodes.length()):
+                        costElem = costNodes.at(costIdx).toElement()
+                        functionIndex = int(costElem.attribute("functionIndex"))
+                        costValue = float(costElem.attribute("value"))
+                        self.mGraph.setCostOfVertex(addedVertexIdx, functionIndex, costValue)
+
         # get edge information and add them to graph
         for edgeIdx in range(edgeNodes.length()):
             if edgeNodes.at(edgeIdx).isElement():
@@ -617,12 +649,12 @@ class QgsGraphLayer(QgsPluginLayer):
                 eID = int(elem.attribute("id"))
 
                 highlighted = elem.attribute("highlighted") == "True"
-                
+
                 addedIdx = self.mGraph.addEdge(fromVertexID, toVertexID, -1, eID)
-                
+
                 if highlighted:
                     self.mGraph.edge(addedIdx).toggleHighlight()
-                
+
                 if self.mGraph.distanceStrategy != "Advanced":
                     # TODO: is this necessary? this maybe even does not lead to anything
                     if not elem.attribute("edgeCost") == "None":
@@ -647,11 +679,11 @@ class QgsGraphLayer(QgsPluginLayer):
         srsNode = node.firstChild()
         while srsNode.nodeName() != "srs":
             srsNode = srsNode.nextSibling()
-        
+
         # store crs information in xml
         srsNode.removeChild(srsNode.firstChild())
         self.crs().writeXml(srsNode, doc)
-        
+
         # graphNode saves all graphData
         graphNode = doc.createElement("graphData")
         graphNode.setAttribute("connectionType", self.mGraph.connectionType())
@@ -664,7 +696,9 @@ class QgsGraphLayer(QgsPluginLayer):
         graphNode.setAttribute("distanceStrategy", self.mGraph.distanceStrategy)
         if self.mGraph.distanceStrategy == "Advanced":
             graphNode.setAttribute("edgeCostFunctions", self.mGraph.amountOfEdgeCostFunctions())
-        
+        if hasattr(self.mGraph, "advancedVertexWeights") and self.mGraph.advancedVertexWeights:
+            graphNode.setAttribute("vertexCostFunctions", len(self.mGraph.vertexWeights))
+
         # don't add 'None' as randomSeed for not randomly created graphs
         if self.mGraph.randomSeed:
             graphNode.setAttribute("randomSeed", str(self.mGraph.randomSeed))
@@ -685,14 +719,23 @@ class QgsGraphLayer(QgsPluginLayer):
             point = vertex.point()
 
             # store vertex information (coordinates have to be string to avoid implicit conversion to int)
-            self.__writeVertexXML(doc, verticesNode, vertex.id(), point.x(), point.y(), vertex.clusterID() if vertex.clusterID() >= 0 else -1)
+            vertexNode = self.__writeVertexXML(doc, vertex.id(), point.x(), point.y(), vertex.clusterID() if vertex.clusterID() >= 0 else -1)
+
+            if hasattr(self.mGraph, "advancedVertexWeights") and self.mGraph.advancedVertexWeights:
+                for functionIndex in range(len(self.mGraph.vertexWeights)):
+                    costNode = doc.createElement("cost")
+                    costNode.setAttribute("functionIndex", functionIndex)
+                    costNode.setAttribute("value", str(self.mGraph.costOfVertex(vertexIdx, functionIndex)))
+                    vertexNode.appendChild(costNode)
+
+            verticesNode.appendChild(vertexNode)
 
         if self.mGraph.edgeCount() != 0:
             # store only edges if available
-            
+
             for edgeIdx in range(self.mGraph.edgeCount()):
                 edge = self.mGraph.edge(edgeIdx)
-                
+
                 fromVertex = edge.fromVertex()
                 toVertex = edge.toVertex()
 
@@ -702,7 +745,7 @@ class QgsGraphLayer(QgsPluginLayer):
                 edgeNode.setAttribute("toVertex", toVertex)
                 edgeNode.setAttribute("fromVertex", fromVertex)
                 edgeNode.setAttribute("highlighted", str(edge.highlighted()))
-                
+
                 # store edge costs
                 if self.mGraph.distanceStrategy != "Advanced":
                     edgeNode.setAttribute("edgeCost", str(self.mGraph.costOfEdge(edgeIdx)))
@@ -714,10 +757,10 @@ class QgsGraphLayer(QgsPluginLayer):
                         edgeNode.appendChild(costNode)
 
                 edgesNode.appendChild(edgeNode)
-                    
+
         return True
 
-    def __writeVertexXML(self, doc, node, vertexID, x, y, clusterID=-1):
+    def __writeVertexXML(self, doc, vertexID, x, y, clusterID=-1):
         """Writes given vertex information to XML.
 
         :type doc: QDomDocument
@@ -733,7 +776,7 @@ class QgsGraphLayer(QgsPluginLayer):
         vertexNode.setAttribute("y", str(y))
         if clusterID >= 0:
             vertexNode.setAttribute("clusterID", str(clusterID))
-        node.appendChild(vertexNode)
+        return vertexNode
 
     def setLayerType(self, layerType):
         self.mLayerType = layerType
@@ -756,9 +799,15 @@ class QgsGraphLayer(QgsPluginLayer):
         canvas.setExtent(extent)
         canvas.refresh()
 
-    def toggleText(self):
+    def toggleEdgeText(self):
         self.mShowEdgeText = not self.mShowEdgeText
-        
+
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
+
+    def toggleVertexText(self):
+        self.mShowVertexText = not self.mShowVertexText
+
         self.triggerRepaint()
         iface.mapCanvas().refresh()
 
@@ -802,7 +851,7 @@ class QgsGraphLayer(QgsPluginLayer):
         elif not self.isEditing:
             QApplication.restoreOverrideCursor()
             iface.mapCanvas().setMapTool(self.oldMapTool)
-            
+
             del self.mMapTool
 
     def isEditable(self):
@@ -829,11 +878,20 @@ class QgsGraphLayer(QgsPluginLayer):
         self.triggerRepaint()
         iface.mapCanvas().refresh()
 
-    def changeRenderedCostFunction(self, idx):
-        self.mRenderedCostFunction = idx
+    def changeRenderedEdgeCostFunction(self, idx):
+        self.mRenderedEdgeCostFunction = idx
 
-    def nextRenderedCostFunction(self):
-        self.mRenderedCostFunction = (self.mRenderedCostFunction + 1) % self.mGraph.amountOfEdgeCostFunctions()
+    def nextRenderedEdgeCostFunction(self):
+        self.mRenderedEdgeCostFunction = (self.mRenderedEdgeCostFunction + 1) % self.mGraph.amountOfEdgeCostFunctions()
+
+        self.triggerRepaint()
+        iface.mapCanvas().refresh()
+
+    def changeRenderedVertexCostFunction(self, idx):
+        self.mRenderedVertexCostFunction = idx
+
+    def nextRenderedVertexCostFunction(self):
+        self.mRenderedVertexCostFunction = (self.mRenderedVertexCostFunction + 1) % len(self.mGraph.vertexWeights)
 
         self.triggerRepaint()
         iface.mapCanvas().refresh()
@@ -910,7 +968,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         informationLabel.setVisible(True)
         informationLabel.setStyleSheet("border: 1px solid black;")
         layout.addWidget(informationLabel)
-        
+
         # QLabel with information about the graphs information
         graphInformationText = tr("DistanceStrategy: ") + layer.mGraph.distanceStrategy + ("(" + str(layer.mGraph.amountOfEdgeCostFunctions()) + ")" if layer.mGraph.distanceStrategy == "Advanced" else "") +\
                                 "\n" + tr("Edge Direction: ") + layer.mGraph.edgeDirection +\
@@ -918,7 +976,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
 
         if layer.mGraph.mConnectionType == "Nearest neighbor" or layer.mGraph.mConnectionType == "DistanceNN" or layer.mGraph.mConnectionType == "ClusterNN":
             graphInformationText += "\n" + tr("Number Neighbors: ") + str(layer.mGraph.numberNeighbours)
-        
+
         if layer.mGraph.mConnectionType == "DistanceNN":
             graphInformationText += "\n" + tr("Distance: ") + str(layer.mGraph.distance[0])
 
@@ -926,6 +984,11 @@ class QgsGraphLayerType(QgsPluginLayerType):
             graphInformationText += "\n" + tr("Number Clusters: ") + str(layer.mGraph.clusterNumber)
 
         graphInformationText += "\n" + tr("Allow Double Edges: ") + str(layer.mGraph.nnAllowDoubleEdges)
+
+        amountVertexWeightFunctions = 0
+        if hasattr(layer.mGraph, "advancedVertexWeights") and layer.mGraph.advancedVertexWeights:
+            amountVertexWeightFunctions = len(layer.mGraph.vertexWeights)
+            graphInformationText += "\n" + tr("Vertex Cost Functions: ") + str(amountVertexWeightFunctions)
 
         graphLabel = QLabel(graphInformationText)
         graphLabel.setWordWrap(True)
@@ -958,36 +1021,77 @@ class QgsGraphLayerType(QgsPluginLayerType):
         toggleLinesButton.clicked.connect(layer.toggleLines)
         layout.addWidget(toggleLinesButton)
 
-        # button to toggle rendered text (mainly edge costs)
-        toggleTextButton = QPushButton(tr("Toggle Edge Text"))
-        toggleTextButton.setVisible(hasEdges) # don't show this button when graph has no edges
-        toggleTextButton.clicked.connect(layer.toggleText)
-        layout.addWidget(toggleTextButton)
+        toggleBox = QGroupBox()
+        toggleLayout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
 
-        # spinbox to choose which advanced values to render
-        if layer.mGraph.distanceStrategy == "Advanced":
+        # button to toggle rendered edge text
+        toggleEdgeTextButton = QPushButton(tr("Toggle Edge Text"))
+        toggleEdgeTextButton.setVisible(hasEdges) # don't show this button when graph has no edges
+        toggleEdgeTextButton.clicked.connect(layer.toggleEdgeText)
+        toggleLayout.addWidget(toggleEdgeTextButton)
+
+        # button to toggle rendered vertex text
+        toggleVertexTextButton = QPushButton(tr("Toggle Vertex Text"))
+        toggleVertexTextButton.setVisible(hasEdges) # don't show this button when graph has no edges
+        toggleVertexTextButton.clicked.connect(layer.toggleVertexText)
+        toggleLayout.addWidget(toggleVertexTextButton)
+
+        toggleBox.setLayout(toggleLayout)
+        layout.addWidget(toggleBox)
+
+        # spinbox to choose which advanced values to render for edges
+        if layer.mGraph.distanceStrategy == "Advanced" and layer.mGraph.amountOfEdgeCostFunctions() <= 1:
+            layer.changeRenderedEdgeCostFunction(0)
+
+        elif layer.mGraph.distanceStrategy == "Advanced":
             costFunctionBox = QGroupBox()
             costFunctionLayout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
 
-            costFunctionLabel = QLabel(tr("Choose Cost Function"))
+            costFunctionLabel = QLabel(tr("Choose Edge Cost Function"))
             costFunctionLabel.setVisible(True)
             costFunctionSpinBox = QSpinBox()
             costFunctionSpinBox.setMinimum(0)
             costFunctionSpinBox.setMaximum(layer.mGraph.amountOfEdgeCostFunctions() - 1)
-            costFunctionSpinBox.valueChanged.connect(layer.changeRenderedCostFunction)
+            costFunctionSpinBox.valueChanged.connect(layer.changeRenderedEdgeCostFunction)
             costFunctionSpinBox.setVisible(True)
             costFunctionLayout.addWidget(costFunctionLabel)
             costFunctionLayout.addWidget(costFunctionSpinBox)
-            
+
             nextButton = QPushButton(tr("Next"))
             nextButton.setMaximumWidth(50)
-            nextButton.clicked.connect(layer.nextRenderedCostFunction)
-            nextButton.clicked.connect(lambda: costFunctionSpinBox.setValue(layer.mRenderedCostFunction))
+            nextButton.clicked.connect(layer.nextRenderedEdgeCostFunction)
+            nextButton.clicked.connect(lambda: costFunctionSpinBox.setValue(layer.mRenderedEdgeCostFunction))
             costFunctionLayout.addWidget(nextButton)
-            
+
             costFunctionBox.setLayout(costFunctionLayout)
             layout.addWidget(costFunctionBox)
 
+        # spinbox to choose which advanced values to render for vertices
+        if amountVertexWeightFunctions == 1:
+            layer.changeRenderedVertexCostFunction(0)
+
+        elif amountVertexWeightFunctions >= 2:
+            vertexCostFunctionBox = QGroupBox()
+            vertexCostFunctionLayout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+
+            vertexCostFunctionLabel = QLabel(tr("Choose Vertex Cost Function"))
+            vertexCostFunctionLabel.setVisible(True)
+            vertexCostFunctionSpinBox = QSpinBox()
+            vertexCostFunctionSpinBox.setMinimum(0)
+            vertexCostFunctionSpinBox.setMaximum(amountVertexWeightFunctions - 1)
+            vertexCostFunctionSpinBox.valueChanged.connect(layer.changeRenderedVertexCostFunction)
+            vertexCostFunctionSpinBox.setVisible(True)
+            vertexCostFunctionLayout.addWidget(vertexCostFunctionLabel)
+            vertexCostFunctionLayout.addWidget(vertexCostFunctionSpinBox)
+
+            nextVButton = QPushButton(tr("Next"))
+            nextVButton.setMaximumWidth(50)
+            nextVButton.clicked.connect(layer.nextRenderedVertexCostFunction)
+            nextVButton.clicked.connect(lambda: vertexCostFunctionSpinBox.setValue(layer.mRenderedVertexCostFunction))
+            vertexCostFunctionLayout.addWidget(nextVButton)
+
+            vertexCostFunctionBox.setLayout(vertexCostFunctionLayout)
+            layout.addWidget(vertexCostFunctionBox)
 
         # button to toggle drawing of arrowHead to show edge direction
         toggleDirectionButton = QPushButton(tr("Toggle Direction"))
@@ -1014,7 +1118,7 @@ class QgsGraphLayerType(QgsPluginLayerType):
         bothRadio = QRadioButton(tr("Both"))
         bothRadio.toggled.connect(lambda:layer.toggleExportType(bothRadio))
         bothRadio.setChecked(True)
-        
+
         radioLayout = QHBoxLayout()
         radioLayout.addWidget(onlyPointsRadio)
         radioLayout.addWidget(onlyLinesRadio)
