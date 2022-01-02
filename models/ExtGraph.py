@@ -87,7 +87,7 @@ class ExtGraph(QObject):
 
         def setNewPoint(self, point):
             self.mCoordinates = point
-            
+
         def degree(self):
             return len(self.mIncomingEdges) + len(self.mOutgoingEdges)
 
@@ -117,7 +117,7 @@ class ExtGraph(QObject):
             size += sys.getsizeof(self.isHighlighted)
 
             return size
-        
+
         def id(self):
             return self.mID
 
@@ -132,10 +132,10 @@ class ExtGraph(QObject):
 
         def toggleHighlight(self):
             self.isHighlighted = not self.isHighlighted
-            
+
         def opposite(self, vertexID):
             if self.mFromID == vertexID:
-                return self.mToID    
+                return self.mToID
             else:
                 return self.mFromID
 
@@ -153,7 +153,7 @@ class ExtGraph(QObject):
 
         self.vLayer = None
         self.lineLayerForConnection = None
-        
+
         # Set to true while building the graph to indicate that the arrays are
         # sorted by id, so binary search is possible
         self.verticesSorted = True
@@ -244,9 +244,9 @@ class ExtGraph(QObject):
 
     def setVectorLayer(self, layer):
         self.vLayer = layer
-        
+
     def setLineLayerForConnection(self, layer):
-        self.lineLayerForConnection = layer   
+        self.lineLayerForConnection = layer
 
     def setJobID(self, jobId):
         self.mJobId = jobId
@@ -341,6 +341,28 @@ class ExtGraph(QObject):
             print("DistanceStrategy: ", self.distanceStrategy)
             raise NameError("Unknown distance strategy")
 
+    def setCostOfVertex(self, vertexIdx, functionIndex, cost):
+        """
+        Set cost of a specific vertex.
+
+        :type vertexIdx: Integer
+        :type functionIndex: Integer
+        :type cost: Integer
+        """
+        while len(self.vertexWeights) <= functionIndex:
+            self.vertexWeights.append([])
+
+        while len(self.vertexWeights[functionIndex]) <= vertexIdx:
+            self.vertexWeights[functionIndex].append(-1)
+
+        self.vertexWeights[functionIndex][vertexIdx] = cost
+
+    def costOfVertex(self, vertexIdx, functionIndex = 0):
+        if len(self.vertexWeights) <= functionIndex or len(self.vertexWeights[functionIndex]) <= vertexIdx:
+            return None
+        # important for e.g. rendering and writeGraphML
+        self.advancedVertexWeights = True
+        return self.vertexWeights[functionIndex][vertexIdx]
 
     def ellipsoidalDist(self, edgeIdx):
         edgeFromIdx = self.edge(edgeIdx)
@@ -393,7 +415,6 @@ class ExtGraph(QObject):
         toPoint = self.vertex(vertex2Idx).point()
         return math.sqrt(pow(fromPoint.x()-toPoint.x(),2) + pow(fromPoint.y()-toPoint.y(),2))
 
-
     def hasEdge(self, vertex1Idx, vertex2Idx):
         """
         Method searches for the edge between to vertices
@@ -431,12 +452,12 @@ class ExtGraph(QObject):
         if id < self.mVertexCount and self.mVertices[id].id() == id:
             # without much editing, this should be the case
             return id
-        
+
         if self.verticesSorted:
             return self.__binaryVertexByID(id, 0, self.mVertexCount - 1)
         else:
             return self.__linearVertexByID(id)
-    
+
     def __linearVertexByID(self, id):
         for idx, vertex in enumerate(self.mVertices):
             if vertex.id() == id:
@@ -446,7 +467,7 @@ class ExtGraph(QObject):
     def __binaryVertexByID(self, id, left, right):
         if left > right:
             return -1
-        
+
         mid = math.floor((left + right) / 2)
 
         midID = self.mVertices[mid].id()
@@ -472,7 +493,7 @@ class ExtGraph(QObject):
             return self.__binaryEdgeByID(id, 0, self.mEdgeCount - 1)
         else:
             return self.__linearEdgeByID(id)
-    
+
     def __linearEdgeByID(self, id):
         for idx, edge in enumerate(self.mEdges):
             if edge.id() == id:
@@ -482,7 +503,7 @@ class ExtGraph(QObject):
     def __binaryEdgeByID(self, id, left, right):
         if left > right:
             return -1
-        
+
         mid = math.floor((left + right) / 2)
 
         midID = self.mEdges[mid].id()
@@ -513,7 +534,7 @@ class ExtGraph(QObject):
                 return idx
 
         return -1
-    
+
     def findVertices(self, topLeftPoint, bottomRightPoint):
         """
         Select multiple vertices in a rectangle defined by topLeftPoint and bottomRightPoint
@@ -524,7 +545,7 @@ class ExtGraph(QObject):
         """
         foundVertexIndices = []
         rect = QgsRectangle(topLeftPoint, bottomRightPoint)
-        
+
         # TODO: here kdtree useable instead of linear search?
         for vertexIdx in range(self.mVertexCount):
             vertex = self.mVertices[vertexIdx]
@@ -561,7 +582,7 @@ class ExtGraph(QObject):
 
         if addedEdgeID >= self.mMaxEdgeID:
             self.mMaxEdgeID = addedEdgeID + 1
-        
+
         addedEdge = self.ExtEdge(vertex1ID, vertex2ID, addedEdgeID, highlighted)
         if feat != None:
             addedEdge.feature = feat
@@ -580,13 +601,13 @@ class ExtGraph(QObject):
         for functionIdx in range(len(self.edgeWeights)):
             # add default value 0
             self.edgeWeights[functionIdx].insert(addIndex, 0)
-        
-        
-        
+
+
+
         # register edge on from- and toVertices
         self.mVertices[self.findVertexByID(vertex1ID)].mOutgoingEdges.append(addedEdge.id())
         self.mVertices[self.findVertexByID(vertex2ID)].mIncomingEdges.append(addedEdge.id())
-        
+
         self.mEdgeCount += 1
 
         return addIndex
@@ -632,6 +653,14 @@ class ExtGraph(QObject):
         if self.kdTree:
             self.kdTree.add([point.x(), point.y()])
 
+        # NOTE: this is commented since the plugin is mainly used for spanners atm
+        # so vertexWeights are not always used
+
+        # add entries for vertexWeights at the correct idx
+        # for functionIdx in range(len(self.vertexWeights)):
+        #     # add default value 0
+        #     self.vertexWeights[functionIdx].insert(addIndex, 0)
+
         self.mVertexCount += 1
 
         return addIndex
@@ -664,7 +693,7 @@ class ExtGraph(QObject):
         index = self.addVertex(QgsPointXY(vertexCoordinates[0], vertexCoordinates[1]))
         addedVertexID = self.vertex(index).id()
         point = self.vertex(index).point()
-        
+
         #== COMPLETE ==============================================================================
         if self.mConnectionType == "Complete":
             for vertexIdx in range(self.mVertexCount - 1):
@@ -733,7 +762,7 @@ class ExtGraph(QObject):
             # add an edge to all the neighbors of the found nearest point
             for edgeID in neighborVertex.incomingEdges():
                 edge = self.edge(self.findEdgeByID(edgeID))
-                
+
                 if not fromUndo:
                     addedEdgeIdx = self.addEdge(edge.fromVertex(), addedVertexID)
                 else:
@@ -746,7 +775,7 @@ class ExtGraph(QObject):
                     else:
                         addedEdgeIdx = self.edgeCount() + len(listOfEdges)
                     listOfEdges.append([addedEdgeIdx, addedVertexID, edge.fromVertex()])
-            
+
             for edgeID in neighborVertex.outgoingEdges():
                 edge = self.edge(self.findEdgeByID(edgeID))
 
@@ -793,7 +822,7 @@ class ExtGraph(QObject):
                     points.append([vertex.point().x(), vertex.point().y(), vertexIdx])
 
             clusterKDTree = kdtree.create(points)
-        
+
             self.vertex(index).setClusterID(neighborClusterID)
 
             listOfNeighbors = clusterKDTree.search_knn([point.x(),point.y(), index], self.numberNeighbours)
@@ -806,7 +835,7 @@ class ExtGraph(QObject):
                 else:
                     edgeIdx = self.edgeCount() + len(listOfEdges)
                 listOfEdges.append([edgeIdx, addedVertexID, neighborVertexID])
-                
+
                 if self.nnAllowDoubleEdges:
                     if not fromUndo:
                         edgeIdx = self.addEdge(addedVertexID, neighborVertexID)
@@ -890,7 +919,7 @@ class ExtGraph(QObject):
                     if toVertex.mIncomingEdges[edgeIdx] == edgeID:
                         toVertex.mIncomingEdges.pop(edgeIdx)
                         break
-            
+
             # remove edge from fromVertex outgoingEdges
             fromVertexIdx = self.findVertexByID(edge.fromVertex())
             if not fromVertexIdx == -1:
@@ -901,7 +930,7 @@ class ExtGraph(QObject):
                         break
 
             del self.mEdges[idx]
-                                 
+
             # also remove entries from edgeWeights
             for functionIdx in range(len(self.edgeWeights)):
                 del self.edgeWeights[functionIdx][idx]
@@ -928,7 +957,7 @@ class ExtGraph(QObject):
                 edgeID = vertex.incomingEdges().pop(0)
                 deletedEdgeIDs.append(edgeID)
             vertex.mIncomingEdges = []
-            
+
             # delete all outgoing edges vertex is connected with
             for outgoingIdx in range(len(vertex.outgoingEdges())):
                 edgeID = vertex.outgoingEdges().pop(0)
@@ -939,6 +968,11 @@ class ExtGraph(QObject):
                 self.kdTree.remove([vertex.point().x(), vertex.point().y()])
 
             del self.mVertices[idx]
+
+            # also remove entries from vertexWeights
+            for functionIdx in range(len(self.vertexWeights)):
+                del self.vertexWeights[functionIdx][idx]
+
             self.mVertexCount -= 1
 
             # TODO: remove entries from vertexWeights if used later
@@ -980,7 +1014,8 @@ class ExtGraph(QObject):
                 '\t<key for="node" attr.name="nodefill" attr.type="int" id="nodefill" />\n',
                 '\t<key for="node" attr.name="nodefillbg" attr.type="string" id="nodefillbg" />\n',
                 '\t<key for="node" attr.name="nodetype" attr.type="int" id="nodetype" />\n']
-                
+
+            # add keys for fields in pointLayer
             if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
                 for field in self.vLayer.fields():
                     type = field.typeName()
@@ -990,7 +1025,7 @@ class ExtGraph(QObject):
                     elif type == "Real":
                         typeNameConv = "double"
                     elif type == "Integer":
-                        typeNameConv = "int"     
+                        typeNameConv = "int"
                     else:
                         typeNameConv = "string"
                     string = '\t<key for="node" attr.name="' + 'field_' + field.name() + '" attr.type="' + typeNameConv + '" id = "' + field.name() + '" />\n'
@@ -1001,6 +1036,7 @@ class ExtGraph(QObject):
                            '\t<key for="edge" attr.name="edgestroketype" attr.type="int" id="edgestroketype" />\n',
                            '\t<key for="edge" attr.name="edgestrokewidth" attr.type="double" id="edgestrokewidth" />\n'])
 
+            # add keys for fields in lineLayer
             if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:
                 for field in self.vLayer.fields():
                     type = field.typeName()
@@ -1010,12 +1046,13 @@ class ExtGraph(QObject):
                     elif type == "Real":
                         typeNameConv = "double"
                     elif type == "Integer":
-                        typeNameConv = "int"     
+                        typeNameConv = "int"
                     else:
                         typeNameConv = "string"
                     string = '\t<key for="edge" attr.name="' + 'field_' + field.name() + '" attr.type="' + typeNameConv + '" id = "' + field.name() + '" />\n'
                     header.append(string)
 
+            # add keys for fields in lineLayer (and pointLayer)
             if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.connectionType() == "LineLayerBased":
                 # in this case the edge feature contains a dictionary
                 for field in self.lineLayerForConnection.fields():
@@ -1026,11 +1063,11 @@ class ExtGraph(QObject):
                     elif type == "Real":
                         typeNameConv = "double"
                     elif type == "Integer":
-                        typeNameConv = "int"     
+                        typeNameConv = "int"
                     else:
-                        typeNameConv = "string"                 
+                        typeNameConv = "string"
                     string = '\t<key for="edge" attr.name="' + 'field_' + field.name() + '" attr.type="' + typeNameConv + '" id = "' + field.name() + '" />\n'
-                    header.append(string)        
+                    header.append(string)
 
             file.writelines(header)
 
@@ -1039,10 +1076,17 @@ class ExtGraph(QObject):
                 file.write(clusterKey)
 
             if self.distanceStrategy == "Advanced":
-                advancedKeys = ''
+                advancedEdgeKeys = ''
                 for costIdx in range(self.amountOfEdgeCostFunctions()):
-                    advancedKeys += '\t<key for="edge" attr.name="weight_' + str(costIdx) + ' attr.type="double id="c_' + str(costIdx) + '" />\n'
-                file.write(advancedKeys)
+                    advancedEdgeKeys += '\t<key for="edge" attr.name="weight_' + str(costIdx) + ' attr.type="double id="c_' + str(costIdx) + '" />\n'
+                file.write(advancedEdgeKeys)
+
+            # if setCostOfVertex was used to add specific cost to a vertex
+            if hasattr(self, "advancedVertexWeights") and self.advancedVertexWeights:
+                advancedVertexKeys = ''
+                for costIdx in range(len(self.vertexWeights)):
+                    advancedVertexKeys += '\t<key for="node" attr.name="weight_' + str(costIdx) + ' attr.type="double id="c_' + str(costIdx) + '" />\n'
+                file.write(advancedVertexKeys)
 
             edgeDefault = self.edgeDirection.lower()
 
@@ -1067,14 +1111,14 @@ class ExtGraph(QObject):
                                   '\t\t\t<data key="nodestroketype">1</data>\n',
                                   '\t\t\t<data key="nodestrokewidth">1</data>\n',
                                   '\t\t\t<data key="nodetype">0</data>\n']
-           
+
             for idx in range(self.mVertexCount):
                 vertex = self.vertex(idx)
                 nodeLine = '\t\t<node id="' + str(vertex.id()) + '">\n'
                 file.write(nodeLine)
                 file.write('\t\t\t<data key="x">' + str(vertex.point().x()) + '</data>\n')
                 file.write('\t\t\t<data key="y">' + str(vertex.point().y()) + '</data>\n')
-                file.writelines(vertexKeyAttributes)            
+                file.writelines(vertexKeyAttributes)
                 if self.mConnectionType == "ClusterComplete" or self.mConnectionType == "ClusterNN":
                     file.write('\t\t\t<data key="clusterid">' + str(vertex.clusterID()) + '</data>\n')
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
@@ -1082,13 +1126,21 @@ class ExtGraph(QObject):
                     if feat != None:
                         for field in feat.fields():
                             file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(feat[field.name()]) + '</data>\n')
+
+                # if setCostOfVertex was used to add specific cost to a vertex
+                if hasattr(self, "advancedVertexWeights") and self.advancedVertexWeights:
+                    vertexData = ''
+                    for costIdx in range(len(self.vertexWeights)):
+                        vertexData += '\t\t\t<data key="c_' + str(costIdx) + '">' + str(self.costOfVertex(idx, costIdx)) + '</data>\n'
+                    file.write(vertexData)
+
                 file.write('\t\t</node>\n')
 
             # TODO: 'bends'
             edgeKeyAttributes = ['\t\t\t<data key="edgetype">association</data>\n',
                                 '\t\t\t<data key="edgestroke">#000000</data>\n',
                                 '\t\t\t<data key="edgestroketype">1</data>\n',
-                                '\t\t\t<data key="edgestrokewidth">1</data>\n']                       
+                                '\t\t\t<data key="edgestrokewidth">1</data>\n']
 
             for idx in range(self.mEdgeCount):
                 edge = self.edge(idx)
@@ -1104,12 +1156,12 @@ class ExtGraph(QObject):
                     for field in self.vLayer.fields():
                         if edge.feature != None:
                             file.write('\t\t\t<data key="field_' + str(field.name()) + '">' + str(edge.feature[field.name()]) + '</data>\n')
-                
+
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.PointGeometry and self.connectionType() == "LineLayerBased":
                     # in this case the edge feature contains a dictionary
                     if edge.feature != None:
                         for dict in edge.feature:
-                            for key in dict.keys():                   
+                            for key in dict.keys():
                                 file.write('\t\t\t<data key="field_' + str(key) + '">' + str(dict[key]) + '</data>\n')
 
                 file.write('\t\t</edge>\n')
@@ -1125,17 +1177,18 @@ class ExtGraph(QObject):
         """
         with open(path, "r") as file:
             lines = file.readlines()
-        
+
         nodeCoordinatesGiven = False
         edgeTypeDirection = "Directed"
         currNodeID = 0
         currNodeIdx = 0
         currEdgeIdx = 0
+        parseNode = True
 
         for line in lines:
             if 'edgedefault="undirected"' in line:
                 edgeTypeDirection = "Undirected"
-            
+
             if 'distancestrategy' in line:
                 self.distanceStrategy = line.split('distancestrategy="')[1].split('"')[0]
 
@@ -1159,7 +1212,7 @@ class ExtGraph(QObject):
 
             if 'crs' in line:
                 self.crs = QgsCoordinateReferenceSystem(line.split('crs="')[1].split('"')[0])
-            
+
             if 'key="x"' in line:
                 nodeCoordinatesGiven = True
                 break
@@ -1169,6 +1222,7 @@ class ExtGraph(QObject):
         for line in lines:
             if '<node' in line:
                 currNodeID = int(line.split('id="')[1].split('"')[0])
+                parseNode = True
 
                 if not nodeCoordinatesGiven:
                     # add vertex with random coordinates and correct ID
@@ -1180,6 +1234,7 @@ class ExtGraph(QObject):
 
                 # add edge (no need to give ID here)
                 currEdgeIdx = self.addEdge(fromVertex, toVertex)
+                parseNode = False
 
             elif '<data' in line:
                 if 'key="x"' in line:
@@ -1193,9 +1248,12 @@ class ExtGraph(QObject):
 
                 elif 'key="cluster"' in line:
                     self.vertex(currNodeIdx).setClusterID(int(line.split('<data key="cluster">')[1].split('<')[0]))
-                
+
                 elif 'key="c_' in line:
                     costIdx = int(line.split('key="c_')[1].split('"')[0])
                     cost = float(line.split('<data key="c_' + str(costIdx) + '">')[1].split('<')[0])
-                    
-                    self.setCostOfEdge(currEdgeIdx, costIdx, cost)
+
+                    if parseNode:
+                        self.setCostOfVertex(currNodeIdx, costIdx, cost)
+                    else:
+                        self.setCostOfEdge(currEdgeIdx, costIdx, cost)
