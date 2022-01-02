@@ -449,10 +449,13 @@ class GraphBuilder:
         vertexHash = {}
         lastVertexID = None
         for feature in self.vLayer.getFeatures():
-            if feature.id() == 0 and "cost_0" in feature.fields().names():
+            if feature.id() == 1 and "cost_0" in feature.fields().names():
                 self.advancedImport = True
-                # except for edgeId, fromVertex, toVertex every field is a cost function
-                self.amountImportedCostFunctions = len(feature.fields().names()) - 3
+                self.importedCostFunctions = []
+                for name in feature.fields().names():
+                    # get all cost functions to be parsed
+                    if "cost_" in name:
+                        self.importedCostFunctions.append(name)
 
             if self.task is not None:
                 if self.__options["distanceStrategy"] == "Advanced":
@@ -537,9 +540,10 @@ class GraphBuilder:
     def __importAdvancedCosts(self):
         self.graph.setDistanceStrategy("Advanced")
         for feature in self.vLayer.getFeatures():
-            for i in range(self.amountImportedCostFunctions):
-                cost = feature.attribute(i + 3)
-                self.graph.setCostOfEdge(feature.id(), i, cost)
+            for name in self.importedCostFunctions:
+                cost = feature.attribute(name)
+                # feature.id() - 1 since feature.id() starts at 1
+                self.graph.setCostOfEdge(feature.id() - 1, int(name.split("_")[1]), cost)
 
     def __removeIntersectingEdges(self):
         """
