@@ -542,8 +542,10 @@ class GraphBuilder:
         for feature in self.vLayer.getFeatures():
             for name in self.importedCostFunctions:
                 cost = feature.attribute(name)
-                # feature.id() - 1 since feature.id() starts at 1
-                self.graph.setCostOfEdge(feature.id() - 1, int(name.split("_")[1]), cost)
+                functionIndex = name.split("_")[1]
+                if functionIndex.isnumeric() and isinstance(cost, float):
+                    # feature.id() - 1 since feature.id() starts at 1
+                    self.graph.setCostOfEdge(feature.id() - 1, int(functionIndex), cost)
 
     def __removeIntersectingEdges(self):
         """
