@@ -782,7 +782,7 @@ class GraphBuilder:
             self.__removeIntersectingEdges()
 
         # call AdvancedCostCalculations methods
-        if self.__options["distanceStrategy"] == "Advanced" and (hasattr(self, "advancedImport") and not self.advancedImport):
+        if self.__options["distanceStrategy"] == "Advanced" and not (hasattr(self, "advancedImport") and not self.advancedImport):
             # create AdvancedCostCalculator object with the necessary parameters
             costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction, self.__options["usePolygonsAsForbidden"], self.rasterBands, self.task, self.__options["createShortestPathView"])
 
