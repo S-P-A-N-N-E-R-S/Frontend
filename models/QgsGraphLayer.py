@@ -345,9 +345,9 @@ class QgsGraphLayer(QgsPluginLayer):
             # self.mGraph.calculateSize()
 
             # testing purposes only
-            for vertexIdx in range(self.mGraph.vertexCount()):
-                self.mGraph.setCostOfVertex(vertexIdx, 0, vertexIdx)
-                self.mGraph.setCostOfVertex(vertexIdx, 1, 2*vertexIdx)
+            # for vertexIdx in range(self.mGraph.vertexCount()):
+            #     self.mGraph.setCostOfVertex(vertexIdx, 0, vertexIdx)
+            #     self.mGraph.setCostOfVertex(vertexIdx, 1, 2*vertexIdx)
 
     def getGraph(self):
         return self.mGraph
