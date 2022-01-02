@@ -355,13 +355,13 @@ class ExtGraph(QObject):
         while len(self.vertexWeights[functionIndex]) <= vertexIdx:
             self.vertexWeights[functionIndex].append(-1)
 
+        # important for e.g. rendering and writeGraphML
+        self.advancedVertexWeights = True
         self.vertexWeights[functionIndex][vertexIdx] = cost
 
     def costOfVertex(self, vertexIdx, functionIndex = 0):
         if len(self.vertexWeights) <= functionIndex or len(self.vertexWeights[functionIndex]) <= vertexIdx:
             return None
-        # important for e.g. rendering and writeGraphML
-        self.advancedVertexWeights = True
         return self.vertexWeights[functionIndex][vertexIdx]
 
     def ellipsoidalDist(self, edgeIdx):
