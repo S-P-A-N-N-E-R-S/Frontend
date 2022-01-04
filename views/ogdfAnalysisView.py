@@ -57,9 +57,10 @@ class OGDFAnalysisView(BaseView):
 
         # change analysis parameters
         self.analysisTreeView.analysisSelected.connect(self._analysisChanged)
-        self.analysisTreeView.analysisDeselected.connect(lambda: self.dialog.ogdf_analysis_parameters_box.hide())
+        self.analysisTreeView.analysisDeselected.connect(self.dialog.ogdf_analysis_parameters_box.hide)
 
         self.controller = OGDFAnalysisController(self)
+        self.dialog.ogdf_analysis_refresh_btn.clicked.connect(self.controller.refreshAnalysisList)
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
 
     def _analysisChanged(self):
@@ -81,6 +82,10 @@ class OGDFAnalysisView(BaseView):
 
     def addAnalysis(self, analysis, userData=None):
         self.analysisTreeView.addAnalysis(analysis, userData)
+
+    def clearAnalysisList(self):
+        self.dialog.ogdf_analysis_parameters_box.hide()
+        self.analysisTreeView.removeAllAnalysis()
 
     # analysis parameters
 

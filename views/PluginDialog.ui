@@ -1514,6 +1514,16 @@ QListWidget::item::selected {
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_11">
                   <item>
+                   <widget class="QPushButton" name="ogdf_analysis_refresh_btn">
+                    <property name="toolTip">
+                     <string>Refresh analysis list</string>
+                    </property>
+                    <property name="text">
+                     <string>Refresh</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <spacer name="horizontalSpacer_2">
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
