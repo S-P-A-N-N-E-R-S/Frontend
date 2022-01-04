@@ -19,6 +19,7 @@
 from qgis.core import QgsSettings, QgsApplication, QgsTask
 
 from .base import BaseController
+from .. import mainPlugin
 from ..exceptions import FieldRequiredError
 from .. import helperFunctions as helper
 
@@ -120,3 +121,10 @@ class OGDFAnalysisController(BaseController):
                     self.view.showError(str(result["error"]), self.tr("Network Error"))
         else:
             raise exception
+
+    def refreshAnalysisList(self):
+        parserManager.resetParsers()
+        self.view.clearAnalysisList()
+        mainPlugin.OGDFPlugin.fetchHandlers()
+        for requestKey, request in parserManager.getRequestParsers().items():
+            self.view.addAnalysis(request.name, requestKey)
