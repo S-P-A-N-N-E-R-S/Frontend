@@ -219,7 +219,8 @@ class TestExtGraph(TestCase):
 
         edgeIndex = self.graph.addEdge(firstVertex.id(), secondVertex.id())
         edge = self.graph.edge(edgeIndex)
-        self.graph.crs = QgsCoordinateReferenceSystem("EPSG:4326")
+        # self.graph.crs = QgsCoordinateReferenceSystem("EPSG:4326")
+        self.graph.updateCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         self.graph.setDistanceStrategy("Euclidean")
         self.assertEqual(math.sqrt(2), self.graph.costOfEdge(edgeIndex))

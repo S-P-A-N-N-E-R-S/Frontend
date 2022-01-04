@@ -927,6 +927,26 @@ class ExtGraph(QObject):
 
         return deletedEdgeIDs
 
+    def updateCrs(self, crs=QgsCoordinateReferenceSystem("EPSG:4326")):
+        """
+        Update the graphs coordinate reference system.
+        The containing coordinates will be updated if the given crs is a different one.
+        """
+        # update crs and coordinates if new crs is different and old crs is not None
+        if not self.crs or not crs.authid() == self.crs.authid():
+            newCrs = crs
+
+            if self.crs:
+                transform = QgsCoordinateTransform(self.crs, newCrs, QgsProject.instance())
+
+                for vertex in self.mVertices:
+                    coords = vertex.point()
+                    newCoords = transform.transform(coords)
+
+                    vertex.setNewPoint(newCoords)
+
+            self.crs = newCrs
+
 
     def writeGraphML(self, path):
         """

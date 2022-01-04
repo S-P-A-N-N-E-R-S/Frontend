@@ -827,12 +827,12 @@ class GraphBuilder:
                                             self.__options["distance"])
 
         if self.__options["createRandomGraph"] == True:
-            self.graph.crs = QgsCoordinateReferenceSystem("EPSG:4326")
             self.__createRandomVertices()
         else:
-            self.graph.crs = self.vLayer.crs()
+            # self.graph.crs = self.vLayer.crs()
             if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry:
                 self.__createVerticesForPoints()
+            self.graph.updateCrs(self.vLayer.crs())
 
         # create vertices and edges
         if self.vLayer.geometryType() == QgsWkbTypes.PointGeometry or self.__options["createRandomGraph"] == True:

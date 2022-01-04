@@ -74,8 +74,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setPen(QColor('black'))
         painter.setBrush(self.mRandomColor)
         painter.setFont(QFont("arial", 10))
-        
-        mTransform = self.renderContext().coordinateTransform()
 
         if isinstance(self.mGraph, ExtGraph):
             try:
@@ -87,9 +85,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                     
                     # draw vertex
                     point = vertex.point()
-
-                    if mTransform.isValid():
-                        point = mTransform.transform(point)
 
                     point = converter.transform(point).toQPointF()
                     
@@ -111,10 +106,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
                             toPoint = self.mGraph.vertex(self.mGraph.findVertexByID(edge.toVertex())).point()
                             fromPoint = vertex.point()
-
-                            if mTransform.isValid():
-                                toPoint = mTransform.transform(toPoint)
-                                fromPoint = mTransform.transform(fromPoint)
 
                             toPoint = converter.transform(toPoint).toQPointF()
                             fromPoint = converter.transform(fromPoint).toQPointF()
@@ -210,7 +201,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
-        self.mGraph.crs = self.crs()
 
         self.mShowEdgeText = False
         self.mShowDirection = False
@@ -224,8 +214,6 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mRenderedCostFunction = 0
 
         self.crsChanged.connect(self.updateCrs)
-
-        self.mTransform = QgsCoordinateTransform() # default is invalid
 
         self.isEditing = False
 
@@ -243,8 +231,7 @@ class QgsGraphLayer(QgsPluginLayer):
         self.toggleEdit(True)
         
         del self.mDataProvider
-        
-        del self.mTransform
+
         del self._extent
 
         del self.mPointFields
@@ -272,7 +259,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def createMapRenderer(self, rendererContext):
         # print("CreateRenderer")
-        self.mTransform = rendererContext.coordinateTransform()
         return QgsGraphLayerRenderer(self.id(), rendererContext)
 
     def setTransformContext(self, ct):
@@ -290,7 +276,7 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph = graph
 
             if not self.mGraph.crs:
-                self.mGraph.crs = self.crs()
+                self.mGraph.updateCrs(self.crs())
 
             if graph.edgeCount() != 0:
                 self.hasEdges = True
@@ -530,6 +516,7 @@ class QgsGraphLayer(QgsPluginLayer):
             srsNode = srsNode.nextSibling()
 
         self.crs().readXml(srsNode)
+        # here no updateCrs since coordinates and crs are read from XML and therefore need no coordinate projection
         self.mGraph.crs = self.crs()
 
         # find graph node in xml
@@ -740,7 +727,7 @@ class QgsGraphLayer(QgsPluginLayer):
         self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.mLayerType)
 
     def extent(self):
-        # TODO: maybe improve extent in add/deleteVertex
+        self._extent = QgsRectangle()
         for vertexIdx in range(self.mGraph.vertexCount()):
             self._extent.combineExtentWith(self.mGraph.vertex(vertexIdx).point())
 
@@ -749,9 +736,6 @@ class QgsGraphLayer(QgsPluginLayer):
     def zoomToExtent(self):
         canvas = iface.mapCanvas()
         extent = self.extent()
-
-        if self.mTransform.isValid():
-            extent = self.mTransform.transform(extent)
 
         canvas.setExtent(extent)
         canvas.refresh()
@@ -765,7 +749,9 @@ class QgsGraphLayer(QgsPluginLayer):
     def updateCrs(self):
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
-        self.mGraph.crs = self.crs()
+        
+        # update crs and project coordinates in graph accordingly
+        self.mGraph.updateCrs(self.crs())
 
         self.triggerRepaint()
         iface.mapCanvas().refresh()
