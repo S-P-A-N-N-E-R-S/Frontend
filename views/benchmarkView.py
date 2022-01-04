@@ -19,7 +19,7 @@
 from qgis.core import QgsApplication, QgsProject, QgsPluginLayer
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QToolButton, QListWidget, QListWidgetItem, QRadioButton, QTreeWidgetItem, QSizePolicy
+from PyQt5.QtWidgets import QToolButton, QListWidget, QListWidgetItem, QRadioButton, QTreeWidgetItem, QSizePolicy, QTabWidget
 
 from .baseView import BaseView
 from .widgets.QgsOgdfBenchmarkWidget import QgsOGDFBenchmarkWidget
@@ -94,10 +94,10 @@ class BenchmarkView(BaseView):
 
     def _newBenchmarkSelection(self):
         self.benchmarkAnalysisCounter+=1
-        listWidgetBenchmark = QListWidget()
-        listWidgetBenchmark.setMinimumSize(380, 192)
-        listWidgetBenchmark.setObjectName("benchmark_selection_" + str(self.benchmarkAnalysisCounter))
-        self.dialog.analysis_visualisation.layout().addWidget(listWidgetBenchmark,*(self.benchmarkAnalysisCounter,0))
+        tabBenchmarkWidget = QTabWidget()
+        
+        
+        self.dialog.analysis_visualisation.layout().addWidget(tabBenchmarkWidget,*(self.benchmarkAnalysisCounter,0))
 
         ogdfAlgs = self.getSelectedAlgs()
         requests = []
@@ -108,138 +108,57 @@ class BenchmarkView(BaseView):
             if request:
                 requests.append(request.getFieldInfo())
 
-        # fill widget
-        item = QListWidgetItem("--------------------Parameters Selection 1--------------------")
-        listWidgetBenchmark.addItem(item)
+        itemsToAdd = ["Graphs", "Graph Edges", "Graph Vertices", "Graph Densities", "Graph Min Fragility",
+                     "Graph Max Fragility", "Graph Avg Fragility", "Graph Diameter", "Graph Radius",
+                     "Graph Girth (unit weights)", "Graph Girth", "Graph Node Connectivity",
+                     "Graph Edge Connectivity", "Graph Reciprocity", "Algorithms"]
 
-        item = QListWidgetItem("Graphs")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem("Algorithms")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetBenchmark.addItem(item)
-
+        
+        colorCat = QListWidget()
+        colorCat.setMinimumSize(380, 192)
+        colorCat.setObjectName("colour_selection_" + str(self.benchmarkAnalysisCounter))
+        for item in itemsToAdd:
+            self._addItemToWidget(colorCat, item)        
         # add field of selected algorithms
-        alreadyAddedLabels = []
+        self._addParameterFields(colorCat, requests)
+        tabBenchmarkWidget.addTab(colorCat, "Colour Cat")
 
-        for fields in requests:
-            for key in fields:
-                field = fields[key]
-                if field.get("type") not in self.FIELD_TYPES:
-                    continue
-                if not field.get("label") in alreadyAddedLabels:
-                    alreadyAddedLabels.append(field.get("label"))
-                    item = QListWidgetItem(field.get("label"))
-                    item.setCheckState(Qt.Unchecked)
-                    listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem("--------------------Parameters Selection 2--------------------")
-        listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem("Graphs")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem("Graph Edges")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem("Graph Vertices")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem("Graph Densities")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem("Algorithms")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetBenchmark.addItem(item)
-
+        xAxisCat = QListWidget()
+        xAxisCat.setMinimumSize(380, 192)
+        xAxisCat.setObjectName("xAxis_selection_" + str(self.benchmarkAnalysisCounter))
+        for item in itemsToAdd:
+            self._addItemToWidget(xAxisCat, item)
         # add field of selected algorithms
-        alreadyAddedLabels = []
+        self._addParameterFields(xAxisCat, requests)
+        tabBenchmarkWidget.addTab(xAxisCat, "x-axis Cat")
 
-        for fields in requests:
-            for key in fields:
-                field = fields[key]
-                if field.get("type") not in self.FIELD_TYPES:
-                    continue
-                if not field.get("label") in alreadyAddedLabels:
-                    alreadyAddedLabels.append(field.get("label"))
-                    item = QListWidgetItem(field.get("label"))
-                    item.setCheckState(Qt.Unchecked)
-                    listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem("-------------------------------Analysis--------------------------------")
-        listWidgetBenchmark.addItem(item)
-
-        item = QListWidgetItem()
-        listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Runtime"))
-
-        item = QListWidgetItem()
-        listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Number of Edges"))
-
-        item = QListWidgetItem()
-        listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Number of Vertices"))
-
-        item = QListWidgetItem()
-        listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Edges Difference"))
-
-        item = QListWidgetItem()
-        listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Vertices Difference"))
-
-        item = QListWidgetItem()
-        listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Average Degree"))
-
-        item = QListWidgetItem()
-        listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Sparseness"))
-
-        item = QListWidgetItem()
-        listWidgetBenchmark.addItem(item)
-        listWidgetBenchmark.setItemWidget(item, QRadioButton("Lightness"))
-
+        analysisSel = QListWidget()
+        analysisSel.setMinimumSize(380, 192)
+        analysisSel.setObjectName("analysis_selection_" + str(self.benchmarkAnalysisCounter))
+        itemsToAdd = ["Runtime (seconds)", "Number of Edges", "Number of Vertices", "Edges Difference",
+                      "Vertices Difference", "Average Degree", "Sparseness", "Lightness",
+                      "Min Fragility", "Max Fragility", "Avg Fragility", "Diameter", "Radius",
+                      "Girth (unit weights)", "Girth", "Node Connectivity", "Edge Connectivity", "Reciprocity"]
+        for item in itemsToAdd:
+            self._addRadioButtonToWidget(analysisSel, item)
+        tabBenchmarkWidget.addTab(analysisSel, "Analysis")
+        
+        # visualization widget
         listWidgetVisualisation = QListWidget()
         listWidgetVisualisation.setMinimumSize(380,192)
         listWidgetVisualisation.setObjectName("visualisation_"+ str(self.benchmarkAnalysisCounter))
         self.dialog.analysis_visualisation.layout().addWidget(listWidgetVisualisation,*(self.benchmarkAnalysisCounter,1))
 
-        # fill widget
-        item = QListWidgetItem("Points without connection")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetVisualisation.addItem(item)
-        item = QListWidgetItem("Points with connection")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetVisualisation.addItem(item)
-        item = QListWidgetItem("Bar chart")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetVisualisation.addItem(item)
-        item = QListWidgetItem("Lines")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetVisualisation.addItem(item)
-        item = QListWidgetItem("Box plot")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetVisualisation.addItem(item)
-
+        # fill widget   
+        itemsToAdd = ["Points without connection", "Points with connection", "Bar chart", "Lines", "Box plot"]       
+        for item in itemsToAdd:
+            self._addItemToWidget(listWidgetVisualisation, item)
+        
         item = QListWidgetItem("------------------------------Additional Options------------------------------")
         listWidgetVisualisation.addItem(item)
-
-        item = QListWidgetItem("Logarithmic y-axis")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetVisualisation.addItem(item)
-        item = QListWidgetItem("Create legend")
-        item.setCheckState(Qt.Checked)
-        listWidgetVisualisation.addItem(item)
-        item = QListWidgetItem("Tight layout")
-        item.setCheckState(Qt.Unchecked)
-        listWidgetVisualisation.addItem(item)
+        itemsToAdd = ["Logarithmic y-axis", "Create legend", "Tight layout"]       
+        for item in itemsToAdd:
+            self._addItemToWidget(listWidgetVisualisation, item)
 
         removeButton = QToolButton()
         removeButton.setText("➖")
@@ -248,6 +167,29 @@ class BenchmarkView(BaseView):
         removeButton.setIcon(QgsApplication.getThemeIcon("symbologyRemove.svg"))
         removeButton.clicked.connect(lambda: self._clearOneBenchmarkSelection(self.benchmarkAnalysisCounter))
         self.dialog.analysis_visualisation.layout().addWidget(removeButton, *(self.benchmarkAnalysisCounter,2))
+
+    def _addParameterFields(self, widget, requests):
+        alreadyAddedLabels = []
+        for fields in requests:
+            for key in fields:
+                field = fields[key]
+                if field.get("type") not in self.FIELD_TYPES:
+                    continue
+                if not field.get("label") in alreadyAddedLabels:
+                    alreadyAddedLabels.append(field.get("label"))
+                    item = QListWidgetItem(field.get("label"))
+                    item.setCheckState(Qt.Unchecked)
+                    widget.addItem(item)
+
+    def _addItemToWidget(self, widget, itemName):
+        item = QListWidgetItem(itemName)
+        item.setCheckState(Qt.Unchecked)
+        widget.addItem(item)
+        
+    def _addRadioButtonToWidget(self, widget, itemName):
+        item = QListWidgetItem()
+        widget.addItem(item)
+        widget.setItemWidget(item, QRadioButton(itemName))
 
     def _clearOneBenchmarkSelection(self, row, initial = False):
         self.benchmarkAnalysisCounter-=1
@@ -349,11 +291,9 @@ class BenchmarkView(BaseView):
         grid = self.dialog.analysis_visualisation.layout()
         selection1 = []
         for c in range(1,self.benchmarkAnalysisCounter+1):
-            benchmarkSelWidget = grid.itemAtPosition(c,0).widget()
+            benchmarkSelWidget = grid.itemAtPosition(c,0).widget().widget(0)
             oneSelection = []
             for i in range(benchmarkSelWidget.count()):
-                if "Selection 2" in benchmarkSelWidget.item(i).text():
-                    break
                 if benchmarkSelWidget.item(i).checkState() == Qt.Checked:
                     oneSelection.append(benchmarkSelWidget.item(i).text())
             selection1.append(oneSelection)
@@ -371,15 +311,11 @@ class BenchmarkView(BaseView):
         selection2 = []
 
         for c in range(1,self.benchmarkAnalysisCounter+1):
-            benchmarkSelWidget = grid.itemAtPosition(c,0).widget()
+            benchmarkSelWidget = grid.itemAtPosition(c,0).widget().widget(1)
             oneSelection = []
             sectionFound = False
             for i in range(benchmarkSelWidget.count()):
-                if "Analysis" in benchmarkSelWidget.item(i).text():
-                    break
-                if "Selection 2" in benchmarkSelWidget.item(i).text():
-                    sectionFound = True
-                if benchmarkSelWidget.item(i).checkState() == Qt.Checked and sectionFound:
+                if benchmarkSelWidget.item(i).checkState() == Qt.Checked:
                     oneSelection.append(benchmarkSelWidget.item(i).text())
             selection2.append(oneSelection)
 
@@ -396,16 +332,12 @@ class BenchmarkView(BaseView):
         analysis = []
 
         for c in range(1,self.benchmarkAnalysisCounter+1):
-            benchmarkSelWidget = grid.itemAtPosition(c,0).widget()
+            benchmarkSelWidget = grid.itemAtPosition(c,0).widget().widget(2)
             sectionFound = False
-            for i in range(benchmarkSelWidget.count()):
-                if "Analysis" in benchmarkSelWidget.item(i).text():
-                    sectionFound = True
-                    continue
-                if sectionFound:
-                    radioB = benchmarkSelWidget.itemWidget(benchmarkSelWidget.item(i))
-                    if radioB.isChecked():
-                        analysis.append(radioB.text())
+            for i in range(benchmarkSelWidget.count()):             
+                radioB = benchmarkSelWidget.itemWidget(benchmarkSelWidget.item(i))
+                if radioB.isChecked():
+                    analysis.append(radioB.text())
         return analysis
 
     def getVisualisation(self):
@@ -488,6 +420,9 @@ class BenchmarkView(BaseView):
 
     def getCsvCreationSelection(self):
         return self.dialog.benchmark_create_as_txt.checkState() == Qt.Checked
+
+    def getCompleteAnalysisSelection(self):
+        return self.dialog.benchmark_complete_analysis.checkState() == Qt.Checked
 
     def getNumberOfSelectedGraphs(self):
         return self.dialog.benchmark_graph_selection.count()

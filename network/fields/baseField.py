@@ -42,8 +42,10 @@ class BaseResult:
             "label": self.label,
         }
 
-    def getProtoField(self, response):
+    def getProtoField(self, response):   
         try:
+            if not self.key in dir(response):
+                return response.graphAttributes[self.key]
             return getattr(response, self.key)
         except AttributeError as error:
             raise ParseError(f"Invalid key: {self.key}") from error
