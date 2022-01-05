@@ -19,7 +19,7 @@
 from qgis.core import *
 from qgis.utils import iface
 
-from qgis.PyQt.QtCore import QVariant, QPointF, Qt
+from qgis.PyQt.QtCore import QVariant, QPointF, Qt, QLineF
 from qgis.PyQt.QtGui import QColor, QFont, QPainterPath, QPen
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import (QDialog, QPushButton, QBoxLayout, QLabel,
@@ -75,6 +75,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setBrush(self.mRandomColor)
         painter.setFont(QFont("arial", 10))
 
+        # lines and points to render
+        lines = []
+        highlightedLines = []
         if isinstance(self.mGraph, ExtGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
@@ -110,12 +113,10 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             toPoint = converter.transform(toPoint).toQPointF()
                             fromPoint = converter.transform(fromPoint).toQPointF()
 
-                            painter.setPen(QColor('black'))
                             if edge.highlighted():
-                                highlightPen = QPen(QColor('red'))
-                                highlightPen.setWidth(2)
-                                painter.setPen(highlightPen)
-                            painter.drawLine(toPoint, fromPoint)
+                                highlightedLines.append(QLineF(toPoint.x(), toPoint.y(), fromPoint.x(), fromPoint.y()))
+                            else:
+                                lines.append(QLineF(toPoint.x(), toPoint.y(), fromPoint.x(), fromPoint.y()))
 
                             painter.setPen(QColor('black'))
                             if self.mShowDirection:
@@ -134,6 +135,16 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                                     painter.drawText(midPoint, str(edgeCost))
                                 else:
                                     painter.drawText(midPoint, str("%.3f" % edgeCost))
+
+                if not len(lines) == 0:
+                    painter.setPen(QColor('black'))
+                    painter.drawLines(lines)
+
+                if not len(highlightedLines) == 0:
+                    highlightPen = QPen(QColor('red'))
+                    highlightPen.setWidth(2)
+                    painter.setPen(highlightPen)
+                    painter.drawLines(highlightedLines)
 
             except Exception as err:
                 print(err)
