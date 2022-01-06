@@ -55,7 +55,7 @@ PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 #	* Windows:
 #	  AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins
 
-QGISDIR=.local/share/QGIS/QGIS3/profiles/default/python/plugins/
+QGISDIR=.local/share/QGIS/QGIS3/profiles/default/python/plugins
 
 #################################################
 # Normally you would not need to edit below here
@@ -207,5 +207,5 @@ test:
 	@echo "----------------------"
 	@echo "Tests"
 	@echo "----------------------"
-	@-export PYTHONPATH=`pwd`:$(PYTHONPATH); export QGIS_DEBUG=0; export QGIS_LOG_FILE=/dev/null; \
-		python -m unittest discover -s tests -t .. -v || true
+	@export PYTHONPATH=`pwd`:$(PYTHONPATH); export QGIS_DEBUG=0; export QGIS_LOG_FILE=/dev/null; \
+		python3 -m unittest discover -s tests -t .. -v || true

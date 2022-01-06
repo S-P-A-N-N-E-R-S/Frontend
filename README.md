@@ -20,7 +20,7 @@ Alternatively, the submodules can be loaded with the `git submodule update --ini
 - protobuf(>=3.17)
 - pybind(>=2.7.1)
 
-The requirements except QGIS can be installed with the `pip -r requirements.txt` command.
+The required python packages can be installed with the `pip install -r requirements.txt` command.
 
 ### Deploy plugin to QGIS3
 
@@ -49,6 +49,6 @@ The plugin can be installed in QGIS under Plugins -> Manage and Install Plugins.
 
 ## Usage
 The Plugin provides several User-Interfaces for easily create, visualize, analyse and modify graphs. 
-Detailed usage information can be found in the [handbook]().
+Detailed usage information can be found in the [handbook](https://project2.informatik.uni-osnabrueck.de/spanners/).
 
 
