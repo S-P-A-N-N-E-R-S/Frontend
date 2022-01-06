@@ -17,7 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 from qgis.testing import unittest, start_app, TestCase
-from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem, QgsUnitTypes
+from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem
 
 from ..models.ExtGraph import ExtGraph
 from ..models.GraphBuilder import GraphBuilder
