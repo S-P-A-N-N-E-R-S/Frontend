@@ -17,7 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 from qgis.testing import unittest, start_app, TestCase
-from qgis.core import QgsApplication, QgsProviderRegistry, QgsProviderMetadata, QgsProject, QgsPointXY, QgsRenderChecker, QgsMapSettings, QgsRectangle, QgsVectorLayer, QgsCoordinateReferenceSystem
+from qgis.core import QgsApplication, QgsProviderRegistry, QgsProviderMetadata, QgsProject, QgsPointXY, QgsRenderChecker, QgsMapSettings, QgsRectangle, QgsVectorLayer, QgsCoordinateReferenceSystem, Qgis
 from qgis.utils import iface
 
 from qgis.PyQt.QtGui import QColor
@@ -60,6 +60,7 @@ class TestQgsGraphLayer(TestCase):
         shutil.rmtree(cls.tempDir, True)
         QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
 
+    @unittest.skipIf(Qgis.QGIS_VERSION_INT < 31800, "setControlImagePath available from QGIS 3.18")
     def test_graph_rendering(self):
         graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")
         self.graph.readGraphML(graphmlFile)
@@ -68,7 +69,7 @@ class TestQgsGraphLayer(TestCase):
         QgsProject.instance().addMapLayer(self.graphLayer)
 
         renderChecker = QgsRenderChecker()
-        renderChecker.setControlImagePath(os.path.join(getPluginPath(), "tests/testdata"))
+        renderChecker.setControlImagePath(os.path.join(getPluginPath(), "tests/testdata")) # setControlImagePath from QGIS 3.18
         renderChecker.setControlName("simple_graph_graphlayer")
         renderChecker.setColorTolerance(20)
         renderChecker.setSizeTolerance(20, 20)

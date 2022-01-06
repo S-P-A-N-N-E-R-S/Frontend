@@ -1,0 +1,31 @@
+image: $CI_REGISTRY/spanners/frontend/qgis:latest_21.04
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  CONF_MASTER_FOLDER: "/root/.local/share/QGIS/QGIS3/profiles/default/QGIS/"
+  CONF_MASTER_FILE: "${CONF_MASTER_FOLDER}/QGIS3.ini"
+  QT_QPA_PLATFORM: offscreen
+
+stages:
+  - install
+  - test
+
+install:
+  stage: install
+  script:
+    - pip install -r requirements.txt
+    - make deploy
+    - mkdir -p $CONF_MASTER_FOLDER
+    - rm -f $CONF_MASTER_FILE
+    - touch $CONF_MASTER_FILE
+    - printf '[PythonPlugins]\n' >> $CONF_MASTER_FILE
+    - printf "ogdf_plugin=true\n\n" >> $CONF_MASTER_FILE
+  artifacts:
+    paths:
+      - lib/*.so
+      - network/protocol/build/
+
+test:
+  stage: test
+  script:
+    - make test
