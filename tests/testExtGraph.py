@@ -17,7 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 from qgis.testing import unittest, start_app, TestCase
-from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem
+from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem, QgsUnitTypes
 
 from ..models.ExtGraph import ExtGraph
 from ..models.GraphBuilder import GraphBuilder
@@ -285,6 +285,7 @@ class TestExtGraph(TestCase):
         graphBuilder.setRandomOption("numberOfVertices", 10)
         graphBuilder.setOption("connectionType", "DistanceNN")
         graph = graphBuilder.makeGraph()
+        graph.updateCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         graph.addVertexWithEdges([-1.0, 1.0])
 
