@@ -208,4 +208,4 @@ test:
 	@echo "Tests"
 	@echo "----------------------"
 	@export PYTHONPATH=`pwd`:$(PYTHONPATH); export QGIS_DEBUG=0; export QGIS_LOG_FILE=/dev/null; \
-		python3 -m unittest discover -s tests -t .. -v || true
+		python3 -m unittest discover -s tests -t .. -v

@@ -285,6 +285,7 @@ class TestExtGraph(TestCase):
         graphBuilder.setRandomOption("numberOfVertices", 10)
         graphBuilder.setOption("connectionType", "DistanceNN")
         graph = graphBuilder.makeGraph()
+        graph.updateCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         graph.addVertexWithEdges([-1.0, 1.0])
 
