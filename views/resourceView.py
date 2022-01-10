@@ -52,7 +52,7 @@ class ResourceView(BaseView):
         if source is None:
             self.dialog.create_from_resource_description_textbrowser.setPlainText(self.tr("No description available"))
         else:
-            self.dialog.create_from_resource_description_textbrowser.setSource(QUrl(source))
+            self.dialog.create_from_resource_description_textbrowser.setSource(QUrl.fromLocalFile(source))
 
     # destination output
 
