@@ -807,6 +807,9 @@ QListWidget::item::selected {
                                  </item>
                                  <item>
                                   <widget class="QLabel" name="label_6">
+                                   <property name="toolTip">
+                                    <string>Higher values lead to more detailed graphs</string>
+                                   </property>
                                    <property name="text">
                                     <string>Exclude if degree &gt;</string>
                                    </property>
@@ -824,8 +827,11 @@ QListWidget::item::selected {
                                  </item>
                                  <item>
                                   <widget class="QCheckBox" name="create_graph_createinfos_checkbox">
+                                   <property name="toolTip">
+                                    <string>Creates information which can be used for the export to .graphml</string>
+                                   </property>
                                    <property name="text">
-                                    <string>Create feature infos (can be costly)</string>
+                                    <string>Create feature infos</string>
                                    </property>
                                   </widget>
                                  </item>

@@ -70,6 +70,8 @@ class GraphView(BaseView):
 
         # enable and disable inputs when connection type is changed
         self.dialog.create_graph_connectiontype_input.currentIndexChanged.connect(self._connectionTypeChanged)
+        
+        self.dialog.create_graph_createinfos_checkbox.stateChanged.connect(self._createFeatureInfosChecked)
 
         # standard units
         self.standardDistanceUnits = [
@@ -232,6 +234,14 @@ class GraphView(BaseView):
         self.dialog.create_graph_line_layer_input.setEnabled(connectionType == "LineLayerBased")
         self.dialog.create_graph_createinfos_checkbox.setEnabled(connectionType == "LineLayerBased")
         self.dialog.create_graph_excludethreshold_input.setEnabled(connectionType == "LineLayerBased")
+
+    def _createFeatureInfosChecked(self):
+        """
+        Shows warning if checked
+        :return:
+        """
+        if self.dialog.create_graph_createinfos_checkbox.isChecked():
+            self.showWarning(self.tr("If this option is enabled the time and memory consumption can be very high"))
 
     def _distanceStrategyChanged(self):
         """
