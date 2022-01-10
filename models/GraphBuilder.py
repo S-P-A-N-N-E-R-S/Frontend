@@ -438,7 +438,7 @@ class GraphBuilder:
             self.graph.deleteVertex(vertexID)
             # remove dicts to safe memory
             if self.__options["createFeatureInfos"]:
-                del attributeDictsForVertices[vertexID]                   
+                del attributeDictsForVertices[vertexID]
                         
     def __dfs(self, vertexIndex, graph, visited, buckets, attributeDictsForVertices):
         stack = []

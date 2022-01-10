@@ -176,7 +176,12 @@ class GraphView(BaseView):
         self.dialog.create_graph_connection_parameters.setVisible(layer is not None or self.isRandom())
         self.dialog.create_graph_connectiontype_input.setEnabled(isPointLayer or self.isRandom())
         
-
+        index = self.dialog.create_graph_connectiontype_input.findText("LineLayerBased")
+        if self.isRandom() and index != -1:
+            self.dialog.create_graph_connectiontype_input.removeItem(index)
+        elif self.dialog.create_graph_connectiontype_input.findText("LineLayerBased") == -1:
+            self.dialog.create_graph_connectiontype_input.addItem(self.tr("LineLayerBased"), "LineLayerBased")
+        
         if isLineLayer:
             # disable all parameters associated with connection type
             self.dialog.create_graph_connectiontype_input.setCurrentIndex(
