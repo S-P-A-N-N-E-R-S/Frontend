@@ -280,12 +280,12 @@ class GraphBuilder:
         explodedLines.updateFields()
         placeOfID = len(explodedLines.fields())-1   
         explodedLines.startEditing()
-        for feat in explodedLines.getFeatures():
-            # bucket init
-            buckets[feat.id()] = []
+        for feat in explodedLines.getFeatures():         
             theID = feat.id()
+            # bucket init
+            buckets[theID] = []          
             attrValue = {placeOfID:theID}
-            dp.changeAttributeValues({feat.id():attrValue})        
+            dp.changeAttributeValues({theID:attrValue})
         explodedLines.commitChanges()
         
         if self.task is not None:
@@ -313,7 +313,7 @@ class GraphBuilder:
                 break
             if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
                 # it is possible that there are multiple matches for one vertex
-                graphVertexCounter+=1                
+                graphVertexCounter+=1
             if currFeat["n"] == None:
                 continue                   
             # uniqueID gives matching to line segment          
@@ -321,11 +321,11 @@ class GraphBuilder:
                        
             if self.__options["createFeatureInfos"]:
                 # assume that every point just has one nearest edge found by the joinbynearest operation
-                dict = {}
+                lineLayerInfos = {}
                 for field in originalLineLayerFields:
-                    dict[field] = explodedLines.getFeature(currFeat["new_newUniqueID"])[field]
-                attributeDictsForVertices[graphVertexCounter] = [dict]
-                dictsForOrigVertices[graphVertexCounter] = [dict]  
+                    lineLayerInfos[field] = explodedLines.getFeature(currFeat["new_newUniqueID"])[field]
+                attributeDictsForVertices[graphVertexCounter] = [lineLayerInfos]
+                dictsForOrigVertices[graphVertexCounter] = [lineLayerInfos]
         
         # create edges between the vertices in one bucket
         for key in buckets.keys():
@@ -340,13 +340,13 @@ class GraphBuilder:
                         else:
                             toAdd = [feat1, feat2]
                     else:
-                        toAdd = None                                      
+                        toAdd = None                          
                     self.graph.addEdge(bucket[i][0], bucket[i+1][0], feat=toAdd)
         
         if self.task is not None:
             self.task.setProgress(self.task.progress() + 5)  
             
-        originalNumberOfVertices = self.graph.vertexCount()    
+        originalNumberOfVertices = self.graph.vertexCount()
                              
         # build help graph for the exploded line layer
         gbHelp = GraphBuilder()
@@ -367,10 +367,11 @@ class GraphBuilder:
                 buckets[edge.feature.id()].append((newID, None))
                 newlyAddedVertexIds.append(newID)
                 if self.__options["createFeatureInfos"]:
-                    dict = {}
+                    # get field information of the polylines for the new points too
+                    lineLayerInfos = {}
                     for field in originalLineLayerFields:
-                        dict[field] = explodedLines.getFeature(edge.feature.id())[field]              
-                    attributeDictsForVertices[newID] = [dict]
+                        lineLayerInfos[field] = explodedLines.getFeature(edge.feature.id())[field]              
+                    attributeDictsForVertices[newID] = [lineLayerInfos]
         
         # do deep first searches until every vertex in the help graph is visited
         visited = [False] * helpGraph.vertexCount()
@@ -382,13 +383,11 @@ class GraphBuilder:
             if not visited[vertexIndex] and helpGraph.vertex(vertexIndex).degree() == 1:
                 visitedCounter += self.__dfs(vertexIndex, helpGraph, visited, buckets, attributeDictsForVertices)
         
-        # control loops in case there are circles
+        # control loops in case there are cycles
         if visitedCounter != helpGraph.vertexCount():
             for vertexIndex in range(helpGraph.vertexCount()):
                 if self.task is not None:
                     self.task.setProgress(self.task.progress() + 15/helpGraph.vertexCount())
-                # start at a degree 1 node because otherwise some connections might not be made
-                # assume that there are no circles inside the layer
                 if not visited[vertexIndex]:
                     self.__dfs(vertexIndex, helpGraph, visited, buckets, attributeDictsForVertices)
         
@@ -400,6 +399,7 @@ class GraphBuilder:
                 break        
             
             v = self.graph.vertex(vertexID)
+            # get all neighbors of v
             connectedVertices = []
             for edgeIndex in v.incomingEdges():
                 neighbor = self.graph.edge(self.graph.findEdgeByID(edgeIndex)).opposite(vertexID)
@@ -408,29 +408,38 @@ class GraphBuilder:
                 neighbor = self.graph.edge(self.graph.findEdgeByID(edgeIndex)).opposite(vertexID)
                 connectedVertices.append(neighbor)
             # in some sets the amount of neighbors can be very high so exclude this cases
-            if len(connectedVertices) <= self.__options["degreeThreshold"]:                                 
+            if len(connectedVertices) <= self.__options["degreeThreshold"]:
+                # add edges between all neighbor pairs        
                 for i in range(len(connectedVertices)-1):             
                     for j in range(i+1, len(connectedVertices)):
                         if self.task is not None and self.task.isCanceled():
                             break 
-                        if self.__options["createFeatureInfos"]:
-                            for dict in attributeDictsForVertices[vertexID]:
-                                attributeDictsForVertices[connectedVertices[i]].append(dict)
-                                attributeDictsForVertices[connectedVertices[j]].append(dict)                           
-                            combined = attributeDictsForVertices[connectedVertices[i]] + attributeDictsForVertices[connectedVertices[j]]
-                            # remove duplicates                        
-                            toAdd = {frozenset(item.items()) : item for item in combined}.values()                       
-                        else:
-                            toAdd = None
-                        self.graph.addEdge(connectedVertices[i], connectedVertices[j], feat=toAdd)                      
-                        # reset attribute information if both neighbors are original graph nodes
-                        # smaller because vertexIds start at 0
-                        if self.__options["createFeatureInfos"]:
-                            if connectedVertices[i] < originalNumberOfVertices and connectedVertices[j] < originalNumberOfVertices:
-                                attributeDictsForVertices[connectedVertices[i]] = dictsForOrigVertices[connectedVertices[i]]
-                                attributeDictsForVertices[connectedVertices[j]] = dictsForOrigVertices[connectedVertices[j]]                                                                                                                                            
-            self.graph.deleteVertex(vertexID)                   
-        
+                        if connectedVertices[i] != connectedVertices[j] and self.graph.hasEdge(connectedVertices[i], connectedVertices[j]) == -1:
+                            if self.__options["createFeatureInfos"]:
+                                for lineInfos in attributeDictsForVertices[vertexID]:
+                                    attributeDictsForVertices[connectedVertices[i]].append(lineInfos)
+                                    attributeDictsForVertices[connectedVertices[j]].append(lineInfos)                   
+                                combined = attributeDictsForVertices[connectedVertices[i]] + attributeDictsForVertices[connectedVertices[j]]
+                                # remove duplicates                        
+                                toAdd = {frozenset(item.items()) : item for item in combined}.values()                       
+                            else:
+                                toAdd = None
+
+                            self.graph.addEdge(connectedVertices[i], connectedVertices[j], feat=toAdd)
+              
+                            # reset attribute information if both neighbors are original graph nodes so the infos are not
+                            # propagated to the actual graph nodes
+                            if self.__options["createFeatureInfos"]:
+                                # smaller because vertexIds start at 0
+                                if connectedVertices[i] < originalNumberOfVertices and connectedVertices[j] < originalNumberOfVertices:
+                                    attributeDictsForVertices[connectedVertices[i]] = dictsForOrigVertices[connectedVertices[i]]
+                                    attributeDictsForVertices[connectedVertices[j]] = dictsForOrigVertices[connectedVertices[j]]       
+                                    
+            self.graph.deleteVertex(vertexID)
+            # remove dicts to safe memory
+            if self.__options["createFeatureInfos"]:
+                del attributeDictsForVertices[vertexID]                   
+                        
     def __dfs(self, vertexIndex, graph, visited, buckets, attributeDictsForVertices):
         stack = []
         visitedCounter = 0
@@ -449,20 +458,21 @@ class GraphBuilder:
                     neighborEdges.append(edgeIndex)
                     neighbors.append(graph.edge(edgeIndex).opposite(v))
                 for edgeIndex in graph.vertex(v).outgoingEdges():
-                    neighborEdges.append(edgeIndex)
                     usedEdges[graph.edge(edgeIndex).opposite(v)] = edgeIndex
+                    neighborEdges.append(edgeIndex)                   
                     neighbors.append(graph.edge(edgeIndex).opposite(v))       
                 for neighbor in neighbors:
                     stack.append(neighbor)
                 if self.task is not None and self.task.isCanceled():
                     break
+                # make necessary connections
                 for neighborEdge in neighborEdges:
-                    # feature contains a line segment from the exploded line layer
+                    # the first start node is not in usedEdges
                     if v in usedEdges and graph.edge(neighborEdge).feature.id() != graph.edge(usedEdges[v]).feature.id():   
+                        # since multiple points can be associated with the neighbor lines, find and connect only the nearest paints 
                         nearestV1 = None
                         nearestV2 = None
                         minDist = sys.maxsize
-                        featureDict = {}
                         # connect to nearest
                         for entry in buckets[graph.edge(neighborEdge).feature.id()]:
                             if self.task is not None and self.task.isCanceled():
@@ -484,8 +494,11 @@ class GraphBuilder:
                                 else:
                                     toAdd = [feat1, feat2]
                             else:
-                                toAdd = None
-                            self.graph.addEdge(nearestV1, nearestV2, feat=toAdd)
+                                toAdd = None 
+                            
+                            if self.graph.hasEdge(nearestV1, nearestV2) == -1:                            
+                                self.graph.addEdge(nearestV1, nearestV2, feat=toAdd)
+                            
          
         return visitedCounter 
                         
