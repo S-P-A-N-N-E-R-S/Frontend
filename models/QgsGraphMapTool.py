@@ -41,6 +41,7 @@ class QgsGraphMapTool(QgsMapTool):
         self.ctrlPressed = False
         self.shiftPressed = False
         self.leftPressed = False
+        self.rightPressed = False
 
         self.rubberBand = None
 
@@ -230,7 +231,7 @@ class QgsGraphMapTool(QgsMapTool):
         self.mLayer.mUndoStack.push(vertexUndoCommand)
 
     def _showRect(self):
-        if hasattr(self, "rubberBand") and self.rubberBand and self.leftPressed and self.shiftPressed:
+        if hasattr(self, "rubberBand") and self.rubberBand and (self.leftPressed or self.rightPressed) and self.shiftPressed:
 
             self.rubberBand.setToGeometry(QgsGeometry.fromRect(QgsRectangle(self.topLeft, self.bottomRight)), None)
 
@@ -243,6 +244,8 @@ class QgsGraphMapTool(QgsMapTool):
         CTRL + LeftClick: AddVertex with Edges (according to GraphBuilder options) on clicked position
         RightClick: 1) Mark Vertex, 2) Move Vertex (with edges) on LeftClick OR Add Edge to Vertex on RightClick
         CTRL + RightClick: deleteVertex if found on clicked position
+        SHIFT + LeftClick + Drag: select multiple vertices at once
+        SHIFT + RightClick + Drag: zoom to selected area
 
         :type event: QgsMapMouseEvent
         """
@@ -288,10 +291,16 @@ class QgsGraphMapTool(QgsMapTool):
                     iface.messageBar().pushMessage("Error", self.tr("Add Vertex with Edges is disabled for advanced costs"), level=Qgis.Critical)
 
         elif event.button() == Qt.RightButton: # RightClick
+            self.rightPressed = True
 
             vertexIdx = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 8)
 
-            if vertexIdx >= 0 and not self.firstFound and not self.ctrlPressed: # first RightClick
+            if self.shiftPressed: # select area to zoom in by rectangle
+                self.topLeft = clickPosition
+                self.bottomRight = clickPosition
+                self.drawRect = True
+
+            elif vertexIdx >= 0 and not self.firstFound and not self.ctrlPressed: # first RightClick
                 # mark first found vertex
                 self.firstFound = True
                 self.firstFoundVertexIdx = vertexIdx
@@ -317,7 +326,6 @@ class QgsGraphMapTool(QgsMapTool):
                 self.__removeFirstFound()
 
         self.mLayer.triggerRepaint()
-        # self.mCanvas.refresh()
 
     def canvasMoveEvent(self, event):
         if hasattr(self, "drawRect") and self.drawRect:
@@ -439,6 +447,19 @@ class QgsGraphMapTool(QgsMapTool):
             self.topLeft = None
             self.bottomRight = None
             self.leftPressed = False
+
+        elif self.shiftPressed and event.button() == Qt.RightButton:
+            iface.mapCanvas().setExtent(QgsRectangle(self.topLeft, self.bottomRight))
+
+            self.rubberBand.reset()
+            del self.rubberBand
+
+            self.drawRect = False
+            self.topLeft = None
+            self.bottomRight = None
+            self.rightPressed = False
+
+            self.mLayer.triggerRepaint()
 
     def keyPressEvent(self, event):
         """
