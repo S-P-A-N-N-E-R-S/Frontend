@@ -406,13 +406,14 @@ class GraphBuilder:
             for edgeIndex in v.outgoingEdges():    
                 neighbor = self.graph.edge(self.graph.findEdgeByID(edgeIndex)).opposite(vertexID)
                 connectedVertices.append(neighbor)
-                
-            for neighbor in connectedVertices:
-                if neighbor < originalNumberOfVertices:
-                    attributeDictsForVertices[neighbor] = dictsForOrigVertices[neighbor]
-                else:
-                    for lineInfos in attributeDictsForVertices[vertexID]:
-                        attributeDictsForVertices[neighbor].append(lineInfos) 
+            
+            if self.__options["createFeatureInfos"]: 
+                for neighbor in connectedVertices:
+                    if neighbor < originalNumberOfVertices:
+                        attributeDictsForVertices[neighbor] = dictsForOrigVertices[neighbor]
+                    else:
+                        for lineInfos in attributeDictsForVertices[vertexID]:
+                            attributeDictsForVertices[neighbor].append(lineInfos) 
                 
             # in some sets the amount of neighbors can be very high so exclude this cases
             if len(connectedVertices) <= self.__options["degreeThreshold"]:
@@ -430,16 +431,7 @@ class GraphBuilder:
                                 toAdd = None
 
                             self.graph.addEdge(connectedVertices[i], connectedVertices[j], feat=toAdd)
-              
-                            # reset attribute information if both neighbors are original graph nodes so the infos are not
-                            # propagated to the actual graph nodes
-                            """
-                            if self.__options["createFeatureInfos"]:
-                                # smaller because vertexIds start at 0
-                                if connectedVertices[i] < originalNumberOfVertices and connectedVertices[j] < originalNumberOfVertices:
-                                    attributeDictsForVertices[connectedVertices[i]] = dictsForOrigVertices[connectedVertices[i]]
-                                    attributeDictsForVertices[connectedVertices[j]] = dictsForOrigVertices[connectedVertices[j]]
-                            """        
+                                    
             self.graph.deleteVertex(vertexID)
             # remove dicts to safe memory
             if self.__options["createFeatureInfos"]:
