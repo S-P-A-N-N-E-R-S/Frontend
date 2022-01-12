@@ -123,6 +123,40 @@ class TestGraphBuilder(TestCase):
         graph = self.graphBuilder.makeGraph()
         self.assertEqual(10, graph.vertexCount())
 
+    def test_lineBasedConnection(self):
+        # first test
+        self.graphBuilder.setOption("connectionType", "LineLayerBased")
+        self.graphBuilder.setOption("distance", (0.0, QgsUnitTypes.DistanceDegrees))
+        self.graphBuilder.setOption("degreeThreshold", 5)
+        self.graphBuilder.setOption("edgeDirection", "Undirected")
+        self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/lineBased_connection_test_layer/lineBased_connection_points_1.shp")))
+        self.graphBuilder.setLineLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/lineBased_connection_test_layer/lineBased_connection_lines_1.shp")))
+        
+        graph = self.graphBuilder.makeGraph()
+        
+        self.assertEqual(graph.edgeCount(), 5)
+        self.assertNotEqual(graph.hasEdge(0,3), -1)
+        self.assertNotEqual(graph.hasEdge(3,1), -1)
+        self.assertNotEqual(graph.hasEdge(1,2), -1)
+        self.assertNotEqual(graph.hasEdge(2,5), -1)
+        self.assertNotEqual(graph.hasEdge(5,4), -1)
+        
+        # second test
+        self.graphBuilder.setOption("degreeThreshold", 3)
+        self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/lineBased_connection_test_layer/lineBased_connection_points_2.shp")))
+        self.graphBuilder.setLineLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/lineBased_connection_test_layer/lineBased_connection_lines_2.shp")))
+        
+        graph = self.graphBuilder.makeGraph()
+        
+        self.assertEqual(graph.edgeCount(), 2)
+        self.assertNotEqual(graph.hasEdge(1,2), -1)
+        self.assertNotEqual(graph.hasEdge(2,0), -1)
+        
+        #third test
+        self.graphBuilder.setOption("degreeThreshold", 5)
+        graph = self.graphBuilder.makeGraph()
+        self.assertEqual(graph.edgeCount(), 12)
+
     def test_cluster_number(self):
         self.graphBuilder.setRandomOption("numberOfVertices", 10)
         self.graphBuilder.setOption("connectionType", "ClusterComplete")

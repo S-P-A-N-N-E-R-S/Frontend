@@ -176,6 +176,11 @@ class GraphView(BaseView):
         self.dialog.create_graph_connection_parameters.setVisible(layer is not None or self.isRandom())
         self.dialog.create_graph_connectiontype_input.setEnabled(isPointLayer or self.isRandom())
 
+        index = self.dialog.create_graph_connectiontype_input.findText("LineLayerBased")
+        if self.isRandom() and index != -1:
+            self.dialog.create_graph_connectiontype_input.removeItem(index)
+        elif self.dialog.create_graph_connectiontype_input.findText("LineLayerBased") == -1:
+            self.dialog.create_graph_connectiontype_input.addItem(self.tr("LineLayerBased"), "LineLayerBased")
 
         if isLineLayer:
             # disable all parameters associated with connection type
@@ -225,7 +230,8 @@ class GraphView(BaseView):
         self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
         self.dialog.create_graph_randomnumber_input.setEnabled(connectionType == "Random")
         self.dialog.create_graph_line_layer_input.setEnabled(connectionType == "LineLayerBased")
-        self.dialog.create_graph_dofeaturesorting_checkbox.setEnabled(connectionType == "LineLayerBased")
+        self.dialog.create_graph_createinfos_checkbox.setEnabled(connectionType == "LineLayerBased")
+        self.dialog.create_graph_excludethreshold_input.setEnabled(connectionType == "LineLayerBased")
 
     def _distanceStrategyChanged(self):
         """
@@ -506,6 +512,12 @@ class GraphView(BaseView):
 
     def isDoubleEdgesAllowed(self):
         return self.dialog.create_graph_allowdoubleedges_checkbox.isChecked()
+
+    def getCreateInfos(self):
+        return self.dialog.create_graph_createinfos_checkbox.isChecked()
+
+    def getDegreeThreshold(self):
+        return self.dialog.create_graph_excludethreshold_input.value()
 
     def getDistance(self):
         """
