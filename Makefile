@@ -96,7 +96,7 @@ deploy: transcompile proto pybind_build
 	#cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
 	# Copy extra directories if any
 	#(foreach EXTRA_DIR,(EXTRA_DIRS), cp -R (EXTRA_DIR) (HOME)/(QGISDIR)/python/plugins/(PLUGINNAME)/;)
-	unzip resources/Graph_Collection.zip -d resources/
+	unzip resources/Graph_Collection/Graph_Collection.zip -d resources/
 
 
 derase:
