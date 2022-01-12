@@ -4,82 +4,286 @@
 	xmlns:y="http://www.yworks.com/xml/graphml"
 	xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
 	 http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
-	<key for="node" id="d1" yfiles.type="nodegraphics"/>
-	<graph id="G" edgedefault="directed">
-		<node id="0"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="0.0" y="0.0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="1"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="-1.0" y="-1.0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="2"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="0" y="1.0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="3"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="0" y="-1.0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="4"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="1.0" y="1.0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="5"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="2.0" y="0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="6"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="1.0" y="0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="7"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="-1.0" y="0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="8"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="2.0" y="2.0"/>
-				</y:ShapeNode>
-			</data>
-		<node id="9"/>
-			<data key="d1">
-				<y:ShapeNode>
-					<y:Geometry height="30.0" width="30.0" x="1.0" y="-1.0"/>
-				</y:ShapeNode>
-			</data>
-		<edge source="0" target="1"/>
-		<edge source="2" target="7"/>
-		<edge source="4" target="5"/>
-		<edge source="6" target="0"/>
-		<edge source="8" target="4"/>
-		<edge source="4" target="0"/>
-		<edge source="1" target="0"/>
-		<edge source="0" target="6"/>
-		<edge source="3" target="1"/>
-		<edge source="4" target="3"/>
-		<edge source="2" target="0"/>
-		<edge source="0" target="7"/>
-		<edge source="7" target="0"/>
-		<edge source="1" target="7"/>
-		<edge source="5" target="4"/>
+	<key for="node" attr.name="label" attr.type="string" id="label" />
+	<key for="node" attr.name="x" attr.type="double" id="x" />
+	<key for="node" attr.name="y" attr.type="double" id="y" />
+	<key for="node" attr.name="size" attr.type="double" id="size" />
+	<key for="node" attr.name="r" attr.type="int" id="r" />
+	<key for="node" attr.name="g" attr.type="int" id="g" />
+	<key for="node" attr.name="b" attr.type="int" id="b" />
+	<key for="node" attr.name="width" attr.type="double" id="width" />
+	<key for="node" attr.name="height" attr.type="double" id="height" />
+	<key for="node" attr.name="shape" attr.type="string" id="shape" />
+	<key for="node" attr.name="nodestroke" attr.type="string" id="nodestroke" />
+	<key for="node" attr.name="nodestroketype" attr.type="int" id="nodestroketype" />
+	<key for="node" attr.name="nodestrokewidth" attr.type="double" id="nodestrokewidth" />
+	<key for="node" attr.name="nodefill" attr.type="int" id="nodefill" />
+	<key for="node" attr.name="nodefillbg" attr.type="string" id="nodefillbg" />
+	<key for="node" attr.name="nodetype" attr.type="int" id="nodetype" />
+	<key for="edge" attr.name="edgetype" attr.type="string" id="edgetype" />
+	<key for="edge" attr.name="edgestroke" attr.type="string" id="edgestroke" />
+	<key for="edge" attr.name="edgestroketype" attr.type="int" id="edgestroketype" />
+	<key for="edge" attr.name="edgestrokewidth" attr.type="double" id="edgestrokewidth" />
+	<graph id="G" edgedefault="directed" distancestrategy="Euclidean" connectiontype="None" numberneighbors="20" nnallowdoubleedges="True" distance="0" distanceunit="9">
+		<node id="0">
+			<data key="x">0.0</data>
+			<data key="y">0.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="1">
+			<data key="x">-1.0</data>
+			<data key="y">-1.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="2">
+			<data key="x">0.0</data>
+			<data key="y">1.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="3">
+			<data key="x">0.0</data>
+			<data key="y">-1.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="4">
+			<data key="x">1.0</data>
+			<data key="y">1.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="5">
+			<data key="x">2.0</data>
+			<data key="y">0.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="6">
+			<data key="x">1.0</data>
+			<data key="y">0.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="7">
+			<data key="x">-1.0</data>
+			<data key="y">0.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="8">
+			<data key="x">2.0</data>
+			<data key="y">2.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<node id="9">
+			<data key="x">1.0</data>
+			<data key="y">-1.0</data>
+			<data key="width">20</data>
+			<data key="height">20</data>
+			<data key="size">20</data>
+			<data key="shape">rect</data>
+			<data key="r">255</data>
+			<data key="g">255</data>
+			<data key="b">255</data>
+			<data key="nodefill">1</data>
+			<data key="nodefillbg">#000000</data>
+			<data key="nodestroke">#000000</data>
+			<data key="nodestroketype">1</data>
+			<data key="nodestrokewidth">1</data>
+			<data key="nodetype">0</data>
+		</node>
+		<edge id="0" source="0" target="1">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="1" source="2" target="7">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="2" source="4" target="5">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="3" source="6" target="0">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="4" source="8" target="4">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="5" source="4" target="0">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="6" source="1" target="0">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="7" source="0" target="6">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="8" source="3" target="1">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="9" source="4" target="3">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="10" source="2" target="0">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="11" source="0" target="7">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="12" source="7" target="0">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="13" source="1" target="7">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
+		<edge id="14" source="5" target="4">
+			<data key="edgetype">association</data>
+			<data key="edgestroke">#000000</data>
+			<data key="edgestroketype">1</data>
+			<data key="edgestrokewidth">1</data>
+		</edge>
 	</graph>
 </graphml>
