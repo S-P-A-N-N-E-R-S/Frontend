@@ -41,10 +41,8 @@ SOURCES = \
 PLUGINNAME = ogdf_plugin
 
 PY_FILES = __init__.py mainPlugin.py helperFunctions.py exceptions.py
-DIRECTORIES = controllers lib models resources views network i18n
-EXTRAS = metadata.txt
-
-# COMPILED_RESOURCE_FILES = resources.py
+DIRECTORIES = controllers lib models resources views network i18n scripts
+EXTRAS = metadata.txt Makefile
 
 PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 
@@ -57,7 +55,7 @@ PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 #	* Windows:
 #	  AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins
 
-QGISDIR=.local/share/QGIS/QGIS3/profiles/default/python/plugins/
+QGISDIR=.local/share/QGIS/QGIS3/profiles/default/python/plugins
 
 #################################################
 # Normally you would not need to edit below here
@@ -121,12 +119,12 @@ pybind_build:
 	echo "Script to build shared object with pybind"
 	echo "Start build"
 	echo "Execute setup.py"
-	python3 scripts/setup.py build_ext --build-lib models/
+	python3 scripts/setup.py build_ext --build-temp build_tmp/ --build-lib lib/
 	echo "Remove build folder"
-	rm -rf build
+	rm -rf build_tmp
 	echo "End pybind build"
 
-zip:
+zip: transcompile proto # not compile pybind sources due to system and architecture incompatibility
 	@echo
 	@echo "---------------------------"
 	@echo "Creating plugin zip bundle."
@@ -209,5 +207,5 @@ test:
 	@echo "----------------------"
 	@echo "Tests"
 	@echo "----------------------"
-	@-export PYTHONPATH=`pwd`:$(PYTHONPATH); export QGIS_DEBUG=0; export QGIS_LOG_FILE=/dev/null; \
-		python -m unittest discover -s tests -t .. -v || true
+	@export PYTHONPATH=`pwd`:$(PYTHONPATH); export QGIS_DEBUG=0; export QGIS_LOG_FILE=/dev/null; \
+		python3 -m unittest discover -s tests -t .. -v

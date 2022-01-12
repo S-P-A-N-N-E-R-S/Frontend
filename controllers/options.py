@@ -16,11 +16,12 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+from qgis.core import QgsSettings, QgsApplication, QgsAuthMethodConfig
+
 from .base import BaseController
 from .. import mainPlugin
 from .. import helperFunctions as helper
 
-from qgis.core import QgsSettings, QgsApplication, QgsAuthMethodConfig
 
 class OptionsController(BaseController):
 
@@ -39,6 +40,12 @@ class OptionsController(BaseController):
 
         self.view.setHost(helper.getHost())
         self.view.setPort(helper.getPort())
+        self.view.setSsl(helper.getEncryptionOption())
+        self.view.setSslCheck(helper.getEncryptionCertCheckOption())
+
+        # init ssl input visibility
+        self.view.setSslCheckVisibility(helper.getEncryptionOption())
+
         # check if id is set and not manually removed by user
         if savedAuthId and savedAuthId in self.authManager.configIds():
             self.view.setUsername(username)
@@ -47,6 +54,8 @@ class OptionsController(BaseController):
     def saveOptions(self):
         host = self.view.getHost()
         port = self.view.getPort()
+        ssl = self.view.getSsl()
+        sslCheck = self.view.getSslCheck()
         username = self.view.getUsername()
         password = self.view.getPassword()
         savedAuthId = self.settings.value("ogdfplugin/authId")
@@ -57,8 +66,9 @@ class OptionsController(BaseController):
         # save settings
         self.settings.setValue("ogdfplugin/host", host)
         self.settings.setValue("ogdfplugin/port", port)
-        # fetch available handlers
-        mainPlugin.OGDFPlugin.fetchHandlers()
+        self.settings.setValue("ogdfplugin/ssl", ssl)
+        self.settings.setValue("ogdfplugin/sslCheck", sslCheck)
+
         # only save username if not empty
         if username:
             self.settings.setValue("ogdfplugin/username", username)
@@ -91,8 +101,11 @@ class OptionsController(BaseController):
             self.authManager.updateAuthenticationConfig(config)
 
         if password and not username or not username and hasAuth:
-            self.view.showWarning(self.tr("Please enter an username!"))
+            self.view.showWarning(self.tr("Please enter a username!"))
         elif not password and username and not hasAuth:
             self.view.showWarning(self.tr("Please enter a password!"))
         else:
             self.view.showSuccess(self.tr("Settings saved!"))
+
+        # fetch available handlers
+        mainPlugin.OGDFPlugin.fetchHandlers()

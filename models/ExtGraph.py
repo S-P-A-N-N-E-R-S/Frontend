@@ -984,6 +984,26 @@ class ExtGraph(QObject):
 
         return deletedEdgeIDs
 
+    def updateCrs(self, crs=QgsCoordinateReferenceSystem("EPSG:4326")):
+        """
+        Update the graphs coordinate reference system.
+        The containing coordinates will be updated if the given crs is a different one.
+        """
+        # update crs and coordinates if new crs is different and old crs is not None
+        if not self.crs or not crs.authid() == self.crs.authid():
+            newCrs = crs
+
+            if self.crs:
+                transform = QgsCoordinateTransform(self.crs, newCrs, QgsProject.instance())
+
+                for vertex in self.mVertices:
+                    coords = vertex.point()
+                    newCoords = transform.transform(coords)
+
+                    vertex.setNewPoint(newCoords)
+
+            self.crs = newCrs
+
 
     def writeGraphML(self, path):
         """
@@ -1094,7 +1114,7 @@ class ExtGraph(QObject):
             graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
             graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
             graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
-            graphString += '" distanceunit="' + str(self.distance[1]) + (('" seed="' + str(self.randomSeed)) if self.randomSeed else '')
+            graphString += '" distanceunit="' + str(self.distance[1]) + '"' + ((' seed="' + str(self.randomSeed)) if self.randomSeed else '')
             graphString += (('" crs="' + self.crs.authid() + '"') if self.crs else '') + '>\n'
             file.write(graphString)
 

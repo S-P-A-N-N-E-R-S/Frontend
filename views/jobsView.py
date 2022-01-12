@@ -16,13 +16,22 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QListWidgetItem
+from PyQt5.QtWidgets import QStyle
+from qgis.PyQt.QtCore import Qt, QSize
+from qgis.PyQt.QtWidgets import QListWidgetItem, QStyledItemDelegate, QStyleOptionViewItem
 
 from .baseView import BaseView
 from ..controllers.jobs import JobsController
 from ..network import statusManager
+from ..network.exceptions import NetworkClientError
 from ..helperFunctions import getVectorFileFilter
+
+
+class ItemDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        option.decorationPosition = QStyleOptionViewItem.Right
+        option.decorationSize = QSize(20, 20)
+        super().paint(painter, option, index)
 
 
 class JobsView(BaseView):
@@ -45,21 +54,42 @@ class JobsView(BaseView):
         # set save path formats
         self.dialog.ogdf_jobs_output.setFilter("GraphML (*.graphml );;" + getVectorFileFilter())
 
+        # enable mousetracking to enable hints on hover and align icons to the right
+        self.dialog.ogdf_jobs_list.setMouseTracking(True)
+        self.dialog.ogdf_jobs_list.setItemDelegate(ItemDelegate())
+
         # change job status text
         self.dialog.ogdf_jobs_list.currentItemChanged.connect(self._changeStatusText)
 
         # initial refresh jobs
         self.controller.refreshJobs()
 
+    def setFetchStatusText(self):
+        self.setStatusText("...")
+
+    def resetStatusText(self):
+        self.setStatusText("")
+
+    def refreshStatusText(self):
+        self._changeStatusText()
+
     def _changeStatusText(self):
+        self.setResultHtml("")
+        self.setResultVisible(False)
+
         job = self.getCurrentJob()
-        if job is not None:
+        if job is None:
+            self.resetStatusText()
+        else:
             self.setStatusText(job.getStatusText())
 
     def addJob(self, job):
         jobName = job.getJobName()
         jobItem = QListWidgetItem(jobName)
         jobItem.setData(Qt.UserRole, job.jobId)
+        icon = self.dialog.ogdf_jobs_list.style().standardIcon(getattr(QStyle,job.getIconName()))
+        jobItem.setIcon(icon)
+        jobItem.setToolTip(f"Status: {job.getStatus()}")
         self.dialog.ogdf_jobs_list.addItem(jobItem)
 
     def clearJobs(self):
@@ -82,8 +112,21 @@ class JobsView(BaseView):
     def getCurrentJob(self):
         item = self.dialog.ogdf_jobs_list.currentItem()
         if item is None:
-            return None
+            # If no items selected: Try getting the last selected job
+            try:
+                lastJob = statusManager.getJobState(self.controller.lastJobId)
+            except NetworkClientError:
+                return None
+            try:
+                item = self.dialog.ogdf_jobs_list.findItems(lastJob.getJobName(), Qt.MatchExactly)[0]
+            except IndexError as error:
+                self.controller.lastJobId = -1
+                raise NetworkClientError("Can't refresh the status of the last selected job") from error
+            self.dialog.ogdf_jobs_list.setCurrentItem(item)
+            return lastJob
+
         jobId = item.data(Qt.UserRole)
+        self.controller.lastJobId = jobId
         return statusManager.getJobState(jobId)
 
     # status text

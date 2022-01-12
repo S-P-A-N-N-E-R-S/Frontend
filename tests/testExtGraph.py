@@ -219,7 +219,8 @@ class TestExtGraph(TestCase):
 
         edgeIndex = self.graph.addEdge(firstVertex.id(), secondVertex.id())
         edge = self.graph.edge(edgeIndex)
-        self.graph.crs = QgsCoordinateReferenceSystem("EPSG:4326")
+        # self.graph.crs = QgsCoordinateReferenceSystem("EPSG:4326")
+        self.graph.updateCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         self.graph.setDistanceStrategy("Euclidean")
         self.assertEqual(math.sqrt(2), self.graph.costOfEdge(edgeIndex))
@@ -228,7 +229,8 @@ class TestExtGraph(TestCase):
         self.graph.setDistanceStrategy("Geodesic")
         self.assertEqual(157249.38127194397, self.graph.costOfEdge(edgeIndex))
         self.graph.setDistanceStrategy("Ellipsoidal")
-        self.assertEqual(156899.56829134026, self.graph.costOfEdge(edgeIndex))
+        self.assertLess(156899, self.graph.costOfEdge(edgeIndex))
+        self.assertGreater(156900, self.graph.costOfEdge(edgeIndex))
         self.graph.setDistanceStrategy("Advanced")
         self.graph.setCostOfEdge(edgeIndex, 0, 12)
         self.graph.setCostOfEdge(edgeIndex, 1, 24)
@@ -283,6 +285,7 @@ class TestExtGraph(TestCase):
         graphBuilder.setRandomOption("numberOfVertices", 10)
         graphBuilder.setOption("connectionType", "DistanceNN")
         graph = graphBuilder.makeGraph()
+        graph.updateCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         graph.addVertexWithEdges([-1.0, 1.0])
 

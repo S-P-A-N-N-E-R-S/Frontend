@@ -1,2 +1,2 @@
 protobuf >= 3.17
-pybind >= 2.7.1
+pybind11 >= 2.7.1

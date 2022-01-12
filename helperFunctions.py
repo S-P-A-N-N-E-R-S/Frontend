@@ -18,11 +18,20 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+from enum import Enum
+
 from qgis.PyQt.QtCore import QCoreApplication
+from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
 
 from os.path import abspath, join, dirname, splitext, basename, isfile
+import os
+import re
 
-from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
+
+class TlsOption(Enum):
+    DISABLED = 1
+    ENABLED_NO_CHECK = 2
+    ENABLED = 3
 
 
 def getHost():
@@ -33,6 +42,36 @@ def getHost():
 def getPort():
     """ Get the server port address"""
     return int(QgsSettings().value("ogdfplugin/port", 4711))
+
+
+def getEncryptionOption():
+    """ Get the use ssl value"""
+    val = QgsSettings().value("ogdfplugin/ssl", True)
+    if isinstance(val, bool):
+        return val
+    else:
+        return val != "false"
+
+
+def getEncryptionCertCheckOption():
+    """ Get the ssl check certificates value"""
+    if not getEncryptionOption():
+        return False
+
+    val = QgsSettings().value("ogdfplugin/sslCheck", True)
+    if isinstance(val, bool):
+        return val
+    else:
+        return val != "false"
+
+def getTlsOption():
+    """ Get the TlsOption depending on the encryption options """
+    if getEncryptionCertCheckOption():
+        return TlsOption.ENABLED
+    elif getEncryptionOption():
+        return TlsOption.ENABLED_NO_CHECK
+    else:
+        return TlsOption.DISABLED
 
 
 def getPluginPath():
@@ -224,3 +263,15 @@ def getRasterFileFilter():
         filters.append(filterAndFormat.filterString)
     return ";;".join(filters)
 
+
+def hasAStarC():
+    """
+    Checks if performant A* c++ implementation is available
+    :return: true if cpp library available
+    """
+    pattern = re.compile("AStarC")
+    dir = join(getPluginPath(), "lib")
+    for filepath in os.listdir(dir):
+        if pattern.search(filepath):
+            return True
+    return False

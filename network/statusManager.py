@@ -48,8 +48,11 @@ class JobState():
     def isSuccessful(self):
         return self.status == StatusType.SUCCESS
 
+    def getStatus(self):
+        return STATUS_TEXTS.get(self.status, STATUS_TEXTS[StatusType.UNKNOWN_STATUS])
+
     def getStatusText(self):
-        status = STATUS_TEXTS.get(self.status, STATUS_TEXTS[StatusType.UNKNOWN_STATUS])
+        status = self.getStatus()
         statusText = f"Status: {status}"
 
         if self.timeReceived:
@@ -67,6 +70,13 @@ class JobState():
         elif not self.isRunning() and not self.isSuccessful():
             statusText = f"{statusText}\nMessage: unknown"
         return statusText
+
+    def getIconName(self):
+        if self.isSuccessful():
+            return "SP_DialogApplyButton"
+        elif self.isRunning():
+            return "SP_DriveHDIcon"
+        return "SP_DialogCancelButton"
 
 
 jobStates = {}
@@ -97,5 +107,6 @@ def insertJobState(jobState):
 
 
 def insertJobStates(states):
+    jobStates.clear()
     for jobState in states:
         jobStates[jobState.job_id] = JobState(jobState)

@@ -19,7 +19,7 @@
 from qgis.core import *
 from qgis.utils import iface
 
-from qgis.PyQt.QtCore import QVariant, QPointF, Qt
+from qgis.PyQt.QtCore import QVariant, QPointF, Qt, QLineF
 from qgis.PyQt.QtGui import QColor, QFont, QPainterPath, QPen
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import (QDialog, QPushButton, QBoxLayout, QLabel,
@@ -77,8 +77,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setBrush(self.mRandomColor)
         painter.setFont(QFont("arial", 10))
 
-        mTransform = self.renderContext().coordinateTransform()
-
+        # lines and points to render
+        lines = []
+        highlightedLines = []
         if isinstance(self.mGraph, ExtGraph):
             try:
                 # used to convert map coordinates to canvas coordinates
@@ -89,9 +90,6 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
                     # draw vertex
                     point = vertex.point()
-
-                    if mTransform.isValid():
-                        point = mTransform.transform(point)
 
                     point = converter.transform(point).toQPointF()
 
@@ -125,19 +123,13 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             toPoint = self.mGraph.vertex(self.mGraph.findVertexByID(edge.toVertex())).point()
                             fromPoint = vertex.point()
 
-                            if mTransform.isValid():
-                                toPoint = mTransform.transform(toPoint)
-                                fromPoint = mTransform.transform(fromPoint)
-
                             toPoint = converter.transform(toPoint).toQPointF()
                             fromPoint = converter.transform(fromPoint).toQPointF()
 
-                            painter.setPen(QColor('black'))
                             if edge.highlighted():
-                                highlightPen = QPen(QColor('red'))
-                                highlightPen.setWidth(2)
-                                painter.setPen(highlightPen)
-                            painter.drawLine(toPoint, fromPoint)
+                                highlightedLines.append(QLineF(toPoint.x(), toPoint.y(), fromPoint.x(), fromPoint.y()))
+                            else:
+                                lines.append(QLineF(toPoint.x(), toPoint.y(), fromPoint.x(), fromPoint.y()))
 
                             painter.setPen(QColor('black'))
                             if self.mShowDirection:
@@ -156,6 +148,16 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                                     painter.drawText(midPoint, str(edgeCost))
                                 else:
                                     painter.drawText(midPoint, str("%.3f" % edgeCost))
+
+                if not len(lines) == 0:
+                    painter.setPen(QColor('black'))
+                    painter.drawLines(lines)
+
+                if not len(highlightedLines) == 0:
+                    highlightPen = QPen(QColor('red'))
+                    highlightPen.setWidth(2)
+                    painter.setPen(highlightPen)
+                    painter.drawLines(highlightedLines)
 
             except Exception as err:
                 print(err)
@@ -223,7 +225,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
-        self.mGraph.crs = self.crs()
 
         self.mShowEdgeText = False
         self.mShowVertexText = False
@@ -239,8 +240,6 @@ class QgsGraphLayer(QgsPluginLayer):
         self.mRenderedVertexCostFunction = 0
 
         self.crsChanged.connect(self.updateCrs)
-
-        self.mTransform = QgsCoordinateTransform() # default is invalid
 
         self.isEditing = False
 
@@ -259,7 +258,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
         del self.mDataProvider
 
-        del self.mTransform
         del self._extent
 
         del self.mPointFields
@@ -287,7 +285,6 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def createMapRenderer(self, rendererContext):
         # print("CreateRenderer")
-        self.mTransform = rendererContext.coordinateTransform()
         return QgsGraphLayerRenderer(self.id(), rendererContext)
 
     def setTransformContext(self, ct):
@@ -305,7 +302,7 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mGraph = graph
 
             if not self.mGraph.crs:
-                self.mGraph.crs = self.crs()
+                self.mGraph.updateCrs(self.crs())
 
             if graph.edgeCount() != 0:
                 self.hasEdges = True
@@ -343,11 +340,6 @@ class QgsGraphLayer(QgsPluginLayer):
             self.mLineFields.append(toVertexField)
 
             # self.mGraph.calculateSize()
-
-            # testing purposes only
-            # for vertexIdx in range(self.mGraph.vertexCount()):
-            #     self.mGraph.setCostOfVertex(vertexIdx, 0, vertexIdx)
-            #     self.mGraph.setCostOfVertex(vertexIdx, 1, 2*vertexIdx)
 
     def getGraph(self):
         return self.mGraph
@@ -550,6 +542,7 @@ class QgsGraphLayer(QgsPluginLayer):
             srsNode = srsNode.nextSibling()
 
         self.crs().readXml(srsNode)
+        # here no updateCrs since coordinates and crs are read from XML and therefore need no coordinate projection
         self.mGraph.crs = self.crs()
 
         # find graph node in xml
@@ -783,7 +776,7 @@ class QgsGraphLayer(QgsPluginLayer):
         self.setCustomProperty(QgsGraphLayer.LAYER_PROPERTY, self.mLayerType)
 
     def extent(self):
-        # TODO: maybe improve extent in add/deleteVertex
+        self._extent = QgsRectangle()
         for vertexIdx in range(self.mGraph.vertexCount()):
             self._extent.combineExtentWith(self.mGraph.vertex(vertexIdx).point())
 
@@ -792,9 +785,6 @@ class QgsGraphLayer(QgsPluginLayer):
     def zoomToExtent(self):
         canvas = iface.mapCanvas()
         extent = self.extent()
-
-        if self.mTransform.isValid():
-            extent = self.mTransform.transform(extent)
 
         canvas.setExtent(extent)
         canvas.refresh()
@@ -814,7 +804,9 @@ class QgsGraphLayer(QgsPluginLayer):
     def updateCrs(self):
         self.__crsUri = "crs=" + self.crs().authid()
         self.mDataProvider.setCrs(self.crs())
-        self.mGraph.crs = self.crs()
+
+        # update crs and project coordinates in graph accordingly
+        self.mGraph.updateCrs(self.crs())
 
         self.triggerRepaint()
         iface.mapCanvas().refresh()
@@ -921,14 +913,16 @@ class QgsGraphLayerType(QgsPluginLayerType):
     """
     TOOLTIPTEXT = tr("List of Options") + ":"\
                                 +"\n " + tr("LeftClick: Add Vertex without Edges")\
-                                +"\n " + tr("CTRL+LeftClick: Add Vertex with Edges")\
+                                +"\n " + tr("CTRL + LeftClick: Add Vertex with Edges")\
                                 +"\n " + tr("RightClick: Select Vertex")\
                                 +"\n " + tr(" 1) Select Vertex")\
                                 +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
                                 +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
                                 +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
                                 +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
-                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection")
+                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection")\
+                                +"\n " + tr("SHIFT + LeftClick + Drag: Select multiple vertices at once")\
+                                +"\n " + tr("SHIFT + RightClick + Drag: Zoom to selected area")
 
     def __init__(self):
         super().__init__(QgsGraphLayer.LAYER_TYPE)
@@ -1154,7 +1148,6 @@ class QgsGraphLayerType(QgsPluginLayerType):
         editBoxLayout.addWidget(editButton)
 
         def __toolTip():
-            print("Debug")
             toolTipWin = QDialog(iface.mainWindow())
             toolTipWin.setVisible(True)
             toolTipLayout = QBoxLayout(QBoxLayout.Direction.TopToBottom)

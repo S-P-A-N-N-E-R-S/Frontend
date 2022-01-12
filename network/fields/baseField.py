@@ -23,7 +23,7 @@ class BaseField:
         return QLabel(self.label)
 
     def createWidget(self, parent):
-        raise NameError("Not implemented!")
+        raise AttributeError("Not implemented!")
 
     def getWidgetData(self, _widget):
         return self.default
@@ -42,8 +42,10 @@ class BaseResult:
             "label": self.label,
         }
 
-    def getProtoField(self, response):
+    def getProtoField(self, response):   
         try:
+            if not self.key in dir(response):
+                return response.graphAttributes[self.key]
             return getattr(response, self.key)
         except AttributeError as error:
             raise ParseError(f"Invalid key: {self.key}") from error
@@ -54,6 +56,9 @@ class BaseResult:
             return getattr(response, fieldName)[mapKey]
         except AttributeError as error:
             raise ParseError(f"Invalid field name: {fieldName}") from error
+
+    def getResultString(self, _data):
+        return ""
 
 
 class GraphDependencyMixin():

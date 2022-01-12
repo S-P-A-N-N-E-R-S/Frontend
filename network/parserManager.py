@@ -54,3 +54,7 @@ def getParserPairs():
 
 def insertParserPair(request, response):
     parser[request.key] = ParserPair(request, response)
+
+
+def resetParsers():
+    parser.clear()

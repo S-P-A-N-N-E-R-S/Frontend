@@ -19,13 +19,15 @@
 from qgis.core import QgsSettings, QgsApplication, QgsTask
 
 from .base import BaseController
+from .. import mainPlugin
 from ..exceptions import FieldRequiredError
 from .. import helperFunctions as helper
 
 # client imports
 from ..network.client import Client
 from ..network import parserManager
-from ..network.exceptions import NetworkClientError, ParseError
+from ..network.exceptions import NetworkClientError, ParseError, ServerError
+from .. import helperFunctions as helper
 
 
 class OGDFAnalysisController(BaseController):
@@ -83,21 +85,22 @@ class OGDFAnalysisController(BaseController):
             self.createRequestTask,
             host=helper.getHost(),
             port=helper.getPort(),
+            tlsOption=helper.getTlsOption(),
             request=request,
             on_finished=self.requestCompleted
         )
         QgsApplication.taskManager().addTask(task)
         OGDFAnalysisController.activeTask = task
 
-    def createRequestTask(self, task, host, port, request):
+    def createRequestTask(self, task, host, port, tlsOption, request):
         """
         Performs a job request in a task.
         """
         try:
-            with Client(host, port) as client:
+            with Client(host, port, tlsOption) as client:
                 client.sendJobRequest(request)
                 return {"success": self.tr("Job started!")}
-        except (NetworkClientError, ParseError) as error:
+        except (NetworkClientError, ParseError, ServerError) as error:
             return {"error": str(error)}
 
     def requestCompleted(self, exception, result=None):
@@ -118,3 +121,10 @@ class OGDFAnalysisController(BaseController):
                     self.view.showError(str(result["error"]), self.tr("Network Error"))
         else:
             raise exception
+
+    def refreshAnalysisList(self):
+        parserManager.resetParsers()
+        self.view.clearAnalysisList()
+        mainPlugin.OGDFPlugin.fetchHandlers()
+        for requestKey, request in parserManager.getRequestParsers().items():
+            self.view.addAnalysis(request.name, requestKey)

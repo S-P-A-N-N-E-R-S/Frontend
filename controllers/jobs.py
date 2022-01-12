@@ -24,8 +24,7 @@ from .. import helperFunctions as helper
 
 # client imports
 from ..network.client import Client
-from ..network.exceptions import NetworkClientError, ParseError
-from ..network.protocol.build.available_handlers_pb2 import ResultInformation
+from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
 class JobsController(BaseController):
@@ -39,9 +38,14 @@ class JobsController(BaseController):
 
         self.settings = QgsSettings()
 
+        self.lastJobId = -1
+
         self.view.setResultVisible(False)
 
     def fetchResult(self):
+        self.view.setResultHtml("")
+        self.view.setResultVisible(False)
+
         if self.view.getCurrentJob() is None:
             self.view.showWarning(self.tr("Please select a job."))
             return
@@ -53,26 +57,28 @@ class JobsController(BaseController):
 
         # Get result from finished job
         try:
-            with Client(helper.getHost(), helper.getPort()) as client:
+            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                 response = client.getJobResult(job.jobId)
-        except (NetworkClientError, ParseError) as error:
+        except (NetworkClientError, ParseError, ServerError) as error:
             self.view.showError(str(error), self.tr("Network Error"))
             return
 
-        # show graph in qgis
-        graphLayer = QgsGraphLayer()
-        graphLayer.setGraph(response.getGraph())
-        success, errorMsg = helper.saveGraph(response.getGraph(), graphLayer, f"{job.getJobName()} - {self.tr('Result')}", self.view.getDestinationFilePath())
-        if not success:
-            self.view.showError(errorMsg)
+        # if response contains a graph: show it in qgis
+        try:
+            graph = response.getGraph()
+            graphLayer = QgsGraphLayer()
+            graphLayer.setGraph(graph)
+            success, errorMsg = helper.saveGraph(graph, graphLayer, f"{job.getJobName()} - {self.tr('Result')}", self.view.getDestinationFilePath())
+            if not success:
+                self.view.showError(errorMsg)
+        except AttributeError:
+            pass
 
         # show text results in response
-        resultString = ""
-        for resultKey, resultData in response.data.items():
-            result = response.results[resultKey]
-            if result.type in [ResultInformation.HandlerReturnType.INT, ResultInformation.HandlerReturnType.DOUBLE,
-                               ResultInformation.HandlerReturnType.STRING]:
-                resultString += result.label + ": " + str(resultData) + "\n"
+        try:
+            resultString = response.getResultString()
+        except AttributeError:
+            resultString = ""
         self.view.setResultHtml(resultString)
         self.view.setResultVisible(resultString != "")
 
@@ -82,16 +88,21 @@ class JobsController(BaseController):
         pass
 
     def refreshJobs(self):
+        self.view.clearStatus()
+        self.view.clearResult()
         self.view.clearJobs()
+        self.view.setFetchStatusText()
 
         # get response
         try:
-            with Client(helper.getHost(), helper.getPort()) as client:
+            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                 states = client.getJobStatus()
                 # add jobs
                 for job in states.values():
                     self.view.addJob(job)
-        except (NetworkClientError, ParseError) as error:
+                self.view.refreshStatusText()
+        except (NetworkClientError, ParseError, ServerError) as error:
+            self.view.resetStatusText()
             self.view.showError(str(error), self.tr("Network Error"))
 
     def abortJob(self):
