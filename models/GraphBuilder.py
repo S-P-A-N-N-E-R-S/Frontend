@@ -51,6 +51,12 @@ class GraphBuilder:
         - createGraphAsLayers: False, True
         - createRandomGraph: False, True
         - usePolygonsAsForbidden: False, True
+        - usePolygonsInCostFunction: False, True
+        - useAdditionalPoints: False, True
+        - createShortestPathView: False, True
+        - randomConnectionNumber: int
+        - createFeatureInfos: False, True
+        - degreeThreshold: int
 
     Random options:
         - numberOfVertices: int
@@ -331,7 +337,7 @@ class GraphBuilder:
         # create edges between the vertices in one bucket
         for key in buckets.keys():
             bucket = buckets[key]
-            if len(buckets) > 1:
+            if len(bucket) == 2:               
                 for i in range(len(bucket)-1):
                     if self.__options["createFeatureInfos"]:
                         feat1 = attributeDictsForVertices[bucket[i][0]][0]
@@ -344,7 +350,31 @@ class GraphBuilder:
                     else:
                         toAdd = None                          
                     self.graph.addEdge(bucket[i][0], bucket[i+1][0], feat=toAdd)
-        
+            # if there are more then two points, the features have to be sorted by their distance to the
+            # start point of the line segement
+            elif len(bucket) > 2:
+                startPoint = explodedLines.getFeature(key).geometry().asPolyline()[0]         
+                for i in range(len(bucket)):
+                    feat = bucket[i][1]
+                    geom = feat.geometry()
+                    point = geom.asPoint()
+                    dist = math.sqrt(pow(startPoint.x()-point.x(),2) + pow(startPoint.y()-point.y(),2)) 
+                    bucket[i] = bucket[i] + (dist,)
+                   
+                sortedList = sorted(bucket, key=lambda tri: tri[2])
+                for index in range(len(sortedList)-1):
+                    if self.__options["createFeatureInfos"]:
+                        feat1 = attributeDictsForVertices[sortedList[index][0]][0]
+                        feat2 = attributeDictsForVertices[sortedList[index+1][0]][0]
+                        if feat1 == feat2:
+                            toAdd = [feat1]
+                        else:
+                            # can happen because of the assumption
+                            toAdd = [feat1, feat2]
+                    else:
+                        toAdd = None
+                    self.graph.addEdge(sortedList[index][0], sortedList[index+1][0], feat=toAdd)                   
+                 
         if self.task is not None:
             self.task.setProgress(self.task.progress() + 5)  
             
@@ -495,8 +525,7 @@ class GraphBuilder:
                             
                             if self.graph.hasEdge(nearestV1, nearestV2) == -1:                            
                                 self.graph.addEdge(nearestV1, nearestV2, feat=toAdd)
-                            
-         
+                                    
         return visitedCounter 
                         
     def __createComplete(self):
