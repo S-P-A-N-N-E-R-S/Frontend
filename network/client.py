@@ -45,7 +45,9 @@ class Client():
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def __enter__(self):
+        self.socket.settimeout(1)  # 1 second
         self.connect()
+        self.socket.settimeout(None)  # blocking mode
         return self
 
     def __exit__(self, _type, _value, _traceback):
