@@ -310,7 +310,7 @@ class GraphBuilder:
             else:
                 crsUnitRead = self.vLayer.crs()
             distConverted = self.__options["distance"][0] * QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())
-            result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": explodedLines, "PREFIX": "new_", "MAX_DISTANCE": distConverted, "OUTPUT": "memory:"})
+            result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": explodedLines, "PREFIX": "new_", "NEIGHBORS": explodedLines.featureCount(),"MAX_DISTANCE": distConverted, "OUTPUT": "memory:"})
         joinedLayer = result["OUTPUT"]
 
         if self.task is not None:
