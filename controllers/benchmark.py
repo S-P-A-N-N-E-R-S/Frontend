@@ -1,4 +1,5 @@
 import time
+import traceback
 from datetime import date, datetime
 
 from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog, Qgis
@@ -256,169 +257,181 @@ class BenchmarkController(BaseController):
         return True
 
     def runTask(self):
+        if self.task is not None:
+            self.view.showError(self.tr("Please wait until previous benchmark is finished!"))
+            return
+
         # create and get BenchmarkData objects
-        debugMode = False
         self.benchmarkDOs = self.view.getOGDFBenchmarkWidget().getBenchmarkDataObjects()
         if not self._checkSelections():
             return
-        if not debugMode and self.task is None:           
-            task = QgsTask.fromFunction("Start benchmark process", self.runJob, on_finished=self.completed)
-            self.task = task
-            QgsApplication.taskManager().addTask(task)
-        else:
-            self.runJob(None)
-            self.task = None
-            self._visualisationControl()
-            
+
+        task = QgsTask.fromFunction("Start benchmark process", self.runJob, on_finished=self.completed)
+        self.task = task
+        QgsApplication.taskManager().addTask(task)
+
     def completed(self, _exception, result=None):
-        if not result is None:
+        self.task = None
+
+        if _exception is not None:
+            QgsMessageLog.logMessage(
+                "Exception: {exception}\n Traceback (most recent call last):\n {traceback}".format(
+                    exception=_exception,
+                    traceback="".join(traceback.format_tb(_exception.__traceback__))
+                ),
+                level=Qgis.Critical
+            )
+            raise _exception
+
+        if result is not None:
             QgsMessageLog.logMessage("Exception: {}".format(result), "TaskFromFunction", Qgis.Critical)
 
-        elif self.task is not None and not self.task.isCanceled():
-            try:
-                if self.view.getCsvCreationSelection():
-                    # the csv for the individual benchmarks is created in the BenchmarkVisualisation
-                    # and called by self._visualisationControl()
-                    path = self.view.getTextFilePath()
-                    dateString = date.today().strftime("%b_%d_%Y_")
-                    timeString = datetime.now().strftime("%H_%M_%S")
-                    if path == "":
-                        f = open(path + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
-                    else:
-                        f = open(path + "/" + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
+        try:
+            if self.view.getCsvCreationSelection():
+                # the csv for the individual benchmarks is created in the BenchmarkVisualisation
+                # and called by self._visualisationControl()
+                path = self.view.getTextFilePath()
+                dateString = date.today().strftime("%b_%d_%Y_")
+                timeString = datetime.now().strftime("%H_%M_%S")
+                if path == "":
+                    f = open(path + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
+                else:
+                    f = open(path + "/" + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
 
-                    # write header to file
-                    f.write("Algorithm,Name of Graph")
-                    allParameters = []
-                    for benchmarkDO in self.benchmarkDOs:
-                        for key in benchmarkDO.parameters.keys():
-                            if not key in allParameters and key != "graph":
-                                allParameters.append(key)
+                # write header to file
+                f.write("Algorithm,Name of Graph")
+                allParameters = []
+                for benchmarkDO in self.benchmarkDOs:
+                    for key in benchmarkDO.parameters.keys():
+                        if not key in allParameters and key != "graph":
+                            allParameters.append(key)
+                for paraKey in allParameters:
+                    f.write("," + str(paraKey))
+
+                f.write(",Runtime(s),Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness")
+                if self.view.getCompleteAnalysisSelection():
+                    f.write(",Lightness,Min Fragility,Max Fragility,Avg Fragility,Diameter,Radius,Girth(unit weights),Girth,Node Connectivity,Edge Connectivity,Reciprocity\n")
+                else:
+                    f.write("\n")
+
+                for benchmarkDO in self.benchmarkDOs:
+                    # write all benchmark information into file
+                    f.write(benchmarkDO.algorithm +  "," + benchmarkDO.graphName)
                     for paraKey in allParameters:
-                        f.write("," + str(paraKey))
+                        if paraKey in benchmarkDO.parameters.keys():
+                            paraString = str(benchmarkDO.parameters[paraKey])
+                            if "," in paraString and "(" in paraString:
+                                paraString = paraString.split(",")[0].replace("(","").replace("'","")
+                            f.write("," + paraString)
+                        else:
+                            f.write(",?")
+                    allNumberOfEdgesResponse = benchmarkDO.getAllNumberOfEdgesResponse()
+                    f.write("," + str(benchmarkDO.getAvgRuntime()))
+                    f.write("," + str(allNumberOfEdgesResponse).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                    f.write("," + str(benchmarkDO.getAllNumberOfVerticesResponse()).replace("[","").replace("]","").replace(",","/").replace(" ",""))
 
-                    f.write(",Runtime(s),Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness")
+                    edgeCountDiff = []
+                    for edgeCount in allNumberOfEdgesResponse:
+                        edgeCountDiff.append(abs(benchmarkDO.getGraph().edgeCount() - edgeCount))
+                    f.write("," + str(edgeCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                    vertexCountDiff = []
+                    for vertexCount in benchmarkDO.getAllNumberOfVerticesResponse():
+                        vertexCountDiff.append(abs(benchmarkDO.getGraph().vertexCount() - vertexCount))
+                    f.write("," + str(vertexCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                    allVertexCounts = benchmarkDO.getAllNumberOfVerticesResponse()
+
+                    avgDegrees = []
+                    for i in range(len(allNumberOfEdgesResponse)):
+                        avgDegrees.append(round(allNumberOfEdgesResponse[i] / allVertexCounts[i],3))
+                    f.write("," + str(avgDegrees).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                    sparseness = []
+                    for edgeCount in allNumberOfEdgesResponse:
+                        sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(),3))
+                    f.write("," + str(sparseness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
                     if self.view.getCompleteAnalysisSelection():
-                        f.write(",Lightness,Min Fragility,Max Fragility,Avg Fragility,Diameter,Radius,Girth(unit weights),Girth,Node Connectivity,Edge Connectivity,Reciprocity\n")
-                    else:
-                        f.write("\n")    
+                        costFunction = benchmarkDO.getParameters()['edgeCosts']
+                        mstWeight = float(self.doWrapper.serverCall(benchmarkDO.getGraph(), "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])
+                        lightness = []
+                        allEdgeCounts = benchmarkDO.getAllNumberOfEdgesResponse()
+                        for edgeCount in allEdgeCounts:
+                            lightness.append(round(edgeCount / mstWeight, 3))
+                        f.write("," + str(lightness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
 
-                    for benchmarkDO in self.benchmarkDOs:
-                        # write all benchmark information into file
-                        f.write(benchmarkDO.algorithm +  "," + benchmarkDO.graphName)
-                        for paraKey in allParameters:
-                            if paraKey in benchmarkDO.parameters.keys():
-                                paraString = str(benchmarkDO.parameters[paraKey])
-                                if "," in paraString and "(" in paraString:
-                                    paraString = paraString.split(",")[0].replace("(","").replace("'","")
-                                f.write("," + paraString)
-                            else:
-                                f.write(",?")
-                        allNumberOfEdgesResponse = benchmarkDO.getAllNumberOfEdgesResponse()
-                        f.write("," + str(benchmarkDO.getAvgRuntime()))
-                        f.write("," + str(allNumberOfEdgesResponse).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        f.write("," + str(benchmarkDO.getAllNumberOfVerticesResponse()).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        
-                        edgeCountDiff = []
-                        for edgeCount in allNumberOfEdgesResponse:
-                            edgeCountDiff.append(abs(benchmarkDO.getGraph().edgeCount() - edgeCount))
-                        f.write("," + str(edgeCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        
-                        vertexCountDiff = []
-                        for vertexCount in benchmarkDO.getAllNumberOfVerticesResponse():
-                            vertexCountDiff.append(abs(benchmarkDO.getGraph().vertexCount() - vertexCount))
-                        f.write("," + str(vertexCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        allVertexCounts = benchmarkDO.getAllNumberOfVerticesResponse()
-                        
-                        avgDegrees = []
-                        for i in range(len(allNumberOfEdgesResponse)):
-                            avgDegrees.append(round(allNumberOfEdgesResponse[i] / allVertexCounts[i],3))
-                        f.write("," + str(avgDegrees).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        
-                        sparseness = []
-                        for edgeCount in allNumberOfEdgesResponse:
-                            sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(),3))
-                        f.write("," + str(sparseness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        
-                        if self.view.getCompleteAnalysisSelection():
-                            costFunction = benchmarkDO.getParameters()['edgeCosts']   
-                            mstWeight = float(self.doWrapper.serverCall(benchmarkDO.getGraph(), "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])
-                            lightness = []
-                            allEdgeCounts = benchmarkDO.getAllNumberOfEdgesResponse()                        
-                            for edgeCount in allEdgeCounts:
-                                lightness.append(round(edgeCount / mstWeight, 3))                 
-                            f.write("," + str(lightness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                            
-                            fragilities = [[] for i in range(3)]
-                            for graph in benchmarkDO.getResponseGraphs():
-                                result = self.doWrapper.serverCall(graph, "utils/Fragility", 0)
-                                fragilities[0].append(float(result.data["minFragility"]))
-                                fragilities[1].append(float(result.data["maxFragility"]))
-                                fragilities[2].append(float(result.data["avgFragility"]))                               
-                            f.write("," + str(fragilities[0]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                            f.write("," + str(fragilities[1]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                            f.write("," + str(fragilities[2]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                            
-                            diameter = []
-                            for graph in benchmarkDO.getResponseGraphs():
-                                diameter.append(float(self.doWrapper.serverCall(graph, "utils/Diameter", 0).data["diameter"]))
-                            f.write("," + str(diameter).replace("[","").replace("]","").replace(",","/").replace(" ",""))    
-                        
-                            radius = []
-                            for graph in benchmarkDO.getResponseGraphs():
-                                radius.append(float(self.doWrapper.serverCall(graph, "utils/Radius", 0).data["radius"]))
-                            f.write("," + str(radius).replace("[","").replace("]","").replace(",","/").replace(" ","")) 
-                        
-                            girth = []
-                            addInfos = {"graphAttributes.unitWeights": 1}
-                            for graph in benchmarkDO.getResponseGraphs():
-                                girth.append(float(self.doWrapper.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))
-                            f.write("," + str(girth).replace("[","").replace("]","").replace(",","/").replace(" ","")) 
-                        
-                            girth = []
-                            addInfos = {"graphAttributes.unitWeights": 0}
-                            for graph in benchmarkDO.getResponseGraphs():
-                                girth.append(float(self.doWrapper.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))
-                            f.write("," + str(girth).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                            
-                            connectivity = []
-                            if benchmarkDO.getGraph().edgeDirection == "Directed":
-                                directed = 1
-                            else:
-                                directed = 0
-                            addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
-                            for graph in benchmarkDO.getResponseGraphs():
-                                connectivity.append(float(self.doWrapper.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
-                            f.write("," + str(connectivity).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                            
-                            connectivity = []
-                            addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
-                            for graph in benchmarkDO.getResponseGraphs():
-                                connectivity.append(float(self.doWrapper.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
-                            f.write("," + str(connectivity).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                            
-                            reci = []
-                            counts = benchmarkDO.getAllNumberOfReciprocalEdges()
-                            allResponseGraphs = benchmarkDO.getResponseGraphs()
-                            for index, count  in enumerate(counts):
-                                reci.append(count / allResponseGraphs[index].edgeCount())
-                            f.write("," + str(reci).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                                                   
-                        f.write("\n")
-            except Exception as inst:
-                print(type(inst))
-                print(inst)
+                        fragilities = [[] for i in range(3)]
+                        for graph in benchmarkDO.getResponseGraphs():
+                            result = self.doWrapper.serverCall(graph, "utils/Fragility", 0)
+                            fragilities[0].append(float(result.data["minFragility"]))
+                            fragilities[1].append(float(result.data["maxFragility"]))
+                            fragilities[2].append(float(result.data["avgFragility"]))
+                        f.write("," + str(fragilities[0]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        f.write("," + str(fragilities[1]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        f.write("," + str(fragilities[2]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                        diameter = []
+                        for graph in benchmarkDO.getResponseGraphs():
+                            diameter.append(float(self.doWrapper.serverCall(graph, "utils/Diameter", 0).data["diameter"]))
+                        f.write("," + str(diameter).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                        radius = []
+                        for graph in benchmarkDO.getResponseGraphs():
+                            radius.append(float(self.doWrapper.serverCall(graph, "utils/Radius", 0).data["radius"]))
+                        f.write("," + str(radius).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                        girth = []
+                        addInfos = {"graphAttributes.unitWeights": 1}
+                        for graph in benchmarkDO.getResponseGraphs():
+                            girth.append(float(self.doWrapper.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))
+                        f.write("," + str(girth).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                        girth = []
+                        addInfos = {"graphAttributes.unitWeights": 0}
+                        for graph in benchmarkDO.getResponseGraphs():
+                            girth.append(float(self.doWrapper.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))
+                        f.write("," + str(girth).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                        connectivity = []
+                        if benchmarkDO.getGraph().edgeDirection == "Directed":
+                            directed = 1
+                        else:
+                            directed = 0
+                        addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
+                        for graph in benchmarkDO.getResponseGraphs():
+                            connectivity.append(float(self.doWrapper.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
+                        f.write("," + str(connectivity).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                        connectivity = []
+                        addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
+                        for graph in benchmarkDO.getResponseGraphs():
+                            connectivity.append(float(self.doWrapper.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
+                        f.write("," + str(connectivity).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                        reci = []
+                        counts = benchmarkDO.getAllNumberOfReciprocalEdges()
+                        allResponseGraphs = benchmarkDO.getResponseGraphs()
+                        for index, count  in enumerate(counts):
+                            reci.append(count / allResponseGraphs[index].edgeCount())
+                        f.write("," + str(reci).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+
+                    f.write("\n")
 
             self._visualisationControl()
-
-        self.task = None
+        except Exception as exception:
+            QgsMessageLog.logMessage(
+                "Exception: {exception}\n Traceback (most recent call last):\n {traceback}".format(
+                    exception=exception,
+                    traceback="".join(traceback.format_tb(exception.__traceback__))
+                ),
+                level=Qgis.Critical
+            )
+            raise exception
 
     def abortTask(self):
         self.task.cancel()
 
     def runJob(self, _task):
-        # todo: pass authId to client
-        #authId = self.settings.value("ogdfplugin/authId")
         for benchmarkDO in self.benchmarkDOs:
             requestKey = benchmarkDO.algorithm
             request = parserManager.getRequestParser(requestKey)
@@ -440,7 +453,7 @@ class BenchmarkController(BaseController):
                 while status != "success":
                     if status == "failed":
                         return "Execution failed"
-                    if self.task is not None and self.task.isCanceled():
+                    if self.task.isCanceled():
                         return
                     try:
                         with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
@@ -464,7 +477,6 @@ class BenchmarkController(BaseController):
                         benchmarkDO.setRuntime(statusManager.getJobState(jobId).ogdfRuntime)
                 except (NetworkClientError, ParseError, ServerError) as error:
                     return "Network Error: " + str(error)
-            if self.task is not None:
-                self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs))
+            self.task.setProgress(self.task.progress() + 100/len(self.benchmarkDOs))
 
         self.doWrapper = BenchmarkDataObjWrapper(self.benchmarkDOs)

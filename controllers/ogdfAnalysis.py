@@ -16,7 +16,9 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.core import QgsSettings, QgsApplication, QgsTask
+import traceback
+
+from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog, Qgis
 
 from .base import BaseController
 from .. import mainPlugin
@@ -120,6 +122,13 @@ class OGDFAnalysisController(BaseController):
                 elif "error" in result:
                     self.view.showError(str(result["error"]), self.tr("Network Error"))
         else:
+            QgsMessageLog.logMessage(
+                "Exception: {exception}\n Traceback (most recent call last):\n {traceback}".format(
+                    exception=exception,
+                    traceback="".join(traceback.format_tb(exception.__traceback__))
+                ),
+                level=Qgis.Critical
+            )
             raise exception
 
     def refreshAnalysisList(self):
