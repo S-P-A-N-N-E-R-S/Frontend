@@ -33,7 +33,7 @@ from .network.exceptions import NetworkClientError, ParseError, ServerError
 
 from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
 
-import os
+import os, string, random
 
 
 class OGDFPlugin:
@@ -196,7 +196,7 @@ class OGDFPlugin:
             readFileName = QgsProject.instance().absoluteFilePath()
         else:
             # temporarily unzip qgz to qgs
-            directory = QgsProject.instance().absolutePath() + "/" + QgsProject.instance().baseName()
+            directory = QgsProject.instance().absolutePath() + "/" + QgsProject.instance().baseName() + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
             if not os.path.exists(directory):
                 os.makedirs(directory)
             QgsZipUtils.unzip(QgsProject.instance().absoluteFilePath(), directory)
@@ -223,7 +223,6 @@ class OGDFPlugin:
 
         # delete unzipped directory
         if wasZipped:
-            # os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgd")
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
             os.rmdir(directory)
 
