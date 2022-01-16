@@ -3,9 +3,11 @@ name=OGDF Plugin
 email=jwittker@uos.de
 author=Jwittker
 qgisMinimumVersion=3.0
-description=Prototype Plugin for Project Group Theoretical Computer Science. Creates Graphs from VectorLayers and provides several OGDF analysis tools.
+description=Prototype Plugin for Project Group Theoretical Computer Science.
+    Creates Graphs from VectorLayers and provides several OGDF analysis tools.
 about=Plugin for Project Group Theoretical Computer Science.
 icon=resources/images/icon.svg
 version=version 1
+homepage=https://project2.informatik.uni-osnabrueck.de/spanners/
 repository=https://gitpgtcs.informatik.uni-osnabrueck.de/spanners/frontend
 qgisMaximumversion=3.99

@@ -20,7 +20,12 @@ import os
 from enum import Enum
 
 from qgis.PyQt import uic, QtWidgets
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QUrl
+from qgis.PyQt.QtGui import QDesktopServices
+
+from qgis.gui import QgsMessageBar
+
+from .. import helperFunctions as helper
 
 from .resourceView import ResourceView
 from .graphView import GraphView
@@ -59,6 +64,13 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
         # left navigation
         self.menu_list.currentRowChanged.connect(self.changeViewIndex)
 
+        # setup message bar
+        self.bar = QgsMessageBar()
+        self.content_widget.layout().insertWidget(1, self.bar)
+
+        # set up help button
+        self.footer_buttonbox.helpRequested.connect(self.showHelp)
+
         # display dialog as window with minimize and maximize buttons
         self.setWindowFlags(Qt.Window)
 
@@ -72,6 +84,10 @@ class PluginDialog(QtWidgets.QDialog, FORM_CLASS):
 
         # create example data as default
         self.menu_list.setCurrentRow(0)
+
+    def showHelp(self):
+        """ Opens help website in web browser """
+        QDesktopServices.openUrl(QUrl(helper.getHelpUrl()))
 
     def setView(self, View):
         self.menu_list.setCurrentRow(View.value)

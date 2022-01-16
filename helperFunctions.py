@@ -26,6 +26,7 @@ from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTyp
 from os.path import abspath, join, dirname, splitext, basename, isfile
 import os
 import re
+import configparser
 
 
 class TlsOption(Enum):
@@ -63,6 +64,7 @@ def getEncryptionCertCheckOption():
         return val
     else:
         return val != "false"
+
 
 def getTlsOption():
     """ Get the TlsOption depending on the encryption options """
@@ -112,6 +114,19 @@ def getDatasetDescriptionPath(example):
     if isfile(absolutePath):
         return absolutePath
     return None
+
+
+def getHelpUrl():
+    """
+    Get the URL to the homepage from metadata
+    :return: URL
+    """
+    # save homepage as static variable to parse metadata once
+    if not hasattr(getHelpUrl, "homepage"):
+        config = configparser.ConfigParser()
+        config.read(join(getPluginPath(), "metadata.txt"))
+        getHelpUrl.homepage = config["general"]["homepage"]
+    return getHelpUrl.homepage
 
 
 def tr(message, context="@default"):

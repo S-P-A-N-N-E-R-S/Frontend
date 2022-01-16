@@ -16,10 +16,9 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.gui import QgsMessageBar
 from qgis.core import Qgis
 
-from PyQt5.QtWidgets import QFileDialog
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.PyQt.QtCore import QObject
 
 
@@ -36,10 +35,6 @@ class BaseView(QObject):
         self.dialog = dialog
         self.controller = None
 
-        # setup message bar
-        self.bar = QgsMessageBar()
-        self.dialog.content_widget.layout().insertWidget(-1, self.bar)
-
     def setMinimized(self, minimized=True):
         """ Minimizes the plugin dialog """
         if minimized:
@@ -49,16 +44,16 @@ class BaseView(QObject):
             self.dialog.activateWindow()
 
     def showError(self, msg, title="Error"):
-        self.bar.pushMessage(title, msg, level=Qgis.Critical)
+        self.dialog.bar.pushMessage(title, msg, level=Qgis.Critical)
 
     def showWarning(self, msg, title="Warning"):
-        self.bar.pushMessage(title, msg, level=Qgis.Warning)
+        self.dialog.bar.pushMessage(title, msg, level=Qgis.Warning)
 
     def showSuccess(self, msg, title="Success"):
-        self.bar.pushMessage(title, msg, level=Qgis.Success)
+        self.dialog.bar.pushMessage(title, msg, level=Qgis.Success)
 
     def showInfo(self, msg, title="Info"):
-        self.bar.pushMessage(title, msg, level=Qgis.Info)
+        self.dialog.bar.pushMessage(title, msg, level=Qgis.Info)
 
     def _browseFile(self, layerComboBox, filter):
         """

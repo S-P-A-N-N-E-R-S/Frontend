@@ -137,6 +137,9 @@ QListWidget::item::selected {
      <layout class="QVBoxLayout" name="content_widget_layout">
       <item>
        <widget class="QScrollArea" name="content_scroll">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
         <property name="widgetResizable">
          <bool>true</bool>
         </property>
@@ -145,8 +148,8 @@ QListWidget::item::selected {
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>904</width>
-           <height>880</height>
+           <width>906</width>
+           <height>851</height>
           </rect>
          </property>
          <property name="minimumSize">
@@ -171,7 +174,7 @@ QListWidget::item::selected {
           <item>
            <widget class="QStackedWidget" name="stacked_content_views">
             <property name="currentIndex">
-             <number>3</number>
+             <number>5</number>
             </property>
             <widget class="QWidget" name="create_from_resource">
              <property name="sizePolicy">
@@ -181,6 +184,18 @@ QListWidget::item::selected {
               </sizepolicy>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_2">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
               <item>
                <widget class="QSplitter" name="splitter_3">
                 <property name="sizePolicy">
@@ -213,8 +228,8 @@ QListWidget::item::selected {
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>112</width>
-                    <height>126</height>
+                    <width>644</width>
+                    <height>849</height>
                    </rect>
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_24">
@@ -274,6 +289,45 @@ QListWidget::item::selected {
                      </property>
                     </spacer>
                    </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout">
+                     <property name="sizeConstraint">
+                      <enum>QLayout::SetDefaultConstraint</enum>
+                     </property>
+                     <item>
+                      <spacer name="horizontalSpacer_3">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="create_from_resource_btn">
+                       <property name="toolTip">
+                        <string>Create example data</string>
+                       </property>
+                       <property name="text">
+                        <string>Create</string>
+                       </property>
+                       <property name="autoDefault">
+                        <bool>true</bool>
+                       </property>
+                       <property name="default">
+                        <bool>false</bool>
+                       </property>
+                       <property name="flat">
+                        <bool>false</bool>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
                   </layout>
                  </widget>
                 </widget>
@@ -290,49 +344,22 @@ QListWidget::item::selected {
                 </widget>
                </widget>
               </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout">
-                <property name="sizeConstraint">
-                 <enum>QLayout::SetDefaultConstraint</enum>
-                </property>
-                <item>
-                 <spacer name="horizontalSpacer_3">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="create_from_resource_btn">
-                  <property name="toolTip">
-                   <string>Create example data</string>
-                  </property>
-                  <property name="text">
-                   <string>Create</string>
-                  </property>
-                  <property name="autoDefault">
-                   <bool>true</bool>
-                  </property>
-                  <property name="default">
-                   <bool>false</bool>
-                  </property>
-                  <property name="flat">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
              </layout>
             </widget>
             <widget class="QWidget" name="create_graph">
              <layout class="QVBoxLayout" name="verticalLayout_7">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout">
                 <item>
@@ -355,8 +382,8 @@ QListWidget::item::selected {
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>351</width>
-                         <height>1197</height>
+                         <width>866</width>
+                         <height>1192</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1264,6 +1291,49 @@ QListWidget::item::selected {
                       </widget>
                      </widget>
                     </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_3">
+                      <item>
+                       <spacer name="horizontalSpacer">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                      <item>
+                       <widget class="QCheckBox" name="create_graph_render_graph_checkbox">
+                        <property name="text">
+                         <string>render graph</string>
+                        </property>
+                        <property name="checked">
+                         <bool>true</bool>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="create_graph_create_btn">
+                        <property name="toolTip">
+                         <string>Create graph</string>
+                        </property>
+                        <property name="text">
+                         <string>Create</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>false</bool>
+                        </property>
+                        <property name="default">
+                         <bool>false</bool>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
                    </layout>
                   </widget>
                   <widget class="QWidget" name="graph_tasks_tab">
@@ -1334,53 +1404,22 @@ QListWidget::item::selected {
                 </item>
                </layout>
               </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_3">
-                <item>
-                 <spacer name="horizontalSpacer">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="create_graph_render_graph_checkbox">
-                  <property name="text">
-                   <string>render graph</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="create_graph_create_btn">
-                  <property name="toolTip">
-                   <string>Create graph</string>
-                  </property>
-                  <property name="text">
-                   <string>Create</string>
-                  </property>
-                  <property name="checkable">
-                   <bool>false</bool>
-                  </property>
-                  <property name="default">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
              </layout>
             </widget>
             <widget class="QWidget" name="ogdf_analysis">
              <layout class="QVBoxLayout" name="verticalLayout_9">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_8">
                 <item>
@@ -1419,11 +1458,11 @@ QListWidget::item::selected {
                          <rect>
                           <x>0</x>
                           <y>0</y>
-                          <width>186</width>
-                          <height>153</height>
+                          <width>620</width>
+                          <height>798</height>
                          </rect>
                         </property>
-                        <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0">
+                        <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0,0">
                          <item>
                           <layout class="QVBoxLayout" name="verticalLayout_21">
                            <property name="sizeConstraint">
@@ -1469,6 +1508,33 @@ QListWidget::item::selected {
                             </widget>
                            </item>
                            <item>
+                            <layout class="QHBoxLayout" name="horizontalLayout_12">
+                             <item>
+                              <widget class="QPushButton" name="ogdf_analysis_refresh_btn">
+                               <property name="toolTip">
+                                <string>Refresh analysis list</string>
+                               </property>
+                               <property name="text">
+                                <string>Refresh</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
+                              <spacer name="horizontalSpacer_6">
+                               <property name="orientation">
+                                <enum>Qt::Horizontal</enum>
+                               </property>
+                               <property name="sizeHint" stdset="0">
+                                <size>
+                                 <width>40</width>
+                                 <height>20</height>
+                                </size>
+                               </property>
+                              </spacer>
+                             </item>
+                            </layout>
+                           </item>
+                           <item>
                             <widget class="QGroupBox" name="ogdf_analysis_parameters_box">
                              <property name="title">
                               <string>Analysis Parameters</string>
@@ -1488,6 +1554,33 @@ QListWidget::item::selected {
                               </size>
                              </property>
                             </spacer>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <layout class="QHBoxLayout" name="horizontalLayout_11">
+                           <item>
+                            <spacer name="horizontalSpacer_2">
+                             <property name="orientation">
+                              <enum>Qt::Horizontal</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>40</width>
+                               <height>20</height>
+                              </size>
+                             </property>
+                            </spacer>
+                           </item>
+                           <item>
+                            <widget class="QPushButton" name="ogdf_analysis_run_btn">
+                             <property name="toolTip">
+                              <string>Run job on server</string>
+                             </property>
+                             <property name="text">
+                              <string>Run job</string>
+                             </property>
+                            </widget>
                            </item>
                           </layout>
                          </item>
@@ -1525,43 +1618,6 @@ QListWidget::item::selected {
                   </widget>
                  </widget>
                 </item>
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_11">
-                  <item>
-                   <widget class="QPushButton" name="ogdf_analysis_refresh_btn">
-                    <property name="toolTip">
-                     <string>Refresh analysis list</string>
-                    </property>
-                    <property name="text">
-                     <string>Refresh</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_2">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="ogdf_analysis_run_btn">
-                    <property name="toolTip">
-                     <string>Run job on server</string>
-                    </property>
-                    <property name="text">
-                     <string>Run job</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
                </layout>
               </item>
              </layout>
@@ -1574,371 +1630,398 @@ QListWidget::item::selected {
               </sizepolicy>
              </property>
              <layout class="QGridLayout" name="gridLayout">
-              <item row="0" column="4" colspan="2">
-               <widget class="QLabel" name="label_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Graph Selection</string>
-                </property>
-               </widget>
-              </item>
-              <item row="8" column="5">
-               <widget class="QPushButton" name="benchmark_abort_benchmark">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Abort</string>
-                </property>
-                <property name="icon">
-                 <iconset>
-                  <normaloff>:/images/themes/default/mIconDelete.svg</normaloff>:/images/themes/default/mIconDelete.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>18</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="autoDefault">
-                 <bool>true</bool>
-                </property>
-                <property name="default">
-                 <bool>false</bool>
-                </property>
-                <property name="flat">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="3">
-               <widget class="QToolButton" name="benchmark_add_all_graphs">
-                <property name="text">
-                 <string>...</string>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>32</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="popupMode">
-                 <enum>QToolButton::InstantPopup</enum>
-                </property>
-                <property name="toolButtonStyle">
-                 <enum>Qt::ToolButtonIconOnly</enum>
-                </property>
-                <property name="arrowType">
-                 <enum>Qt::NoArrow</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="4" colspan="3">
-               <widget class="QListWidget" name="benchmark_graph_selection">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>411</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="dragDropMode">
-                 <enum>QAbstractItemView::DropOnly</enum>
-                </property>
-                <property name="selectionMode">
-                 <enum>QAbstractItemView::ExtendedSelection</enum>
-                </property>
-               </widget>
-              </item>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
               <item row="0" column="0">
-               <widget class="QLabel" name="label">
+               <widget class="QFrame" name="benchmark_frame">
                 <property name="frameShape">
-                 <enum>QFrame::NoFrame</enum>
+                 <enum>QFrame::StyledPanel</enum>
                 </property>
                 <property name="frameShadow">
-                 <enum>QFrame::Sunken</enum>
+                 <enum>QFrame::Raised</enum>
                 </property>
-                <property name="text">
-                 <string>All Graphs</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0" colspan="5">
-               <widget class="QLabel" name="label_3">
-                <property name="text">
-                 <string>OGDF Algorithms</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="4" colspan="2">
-               <widget class="QPushButton" name="benchmark_clear_graph_selection">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Clear</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="benchmark_refresh_all_graphs">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Refresh</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="3">
-               <widget class="QListWidget" name="benchmark_all_graphs">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="dragDropMode">
-                 <enum>QAbstractItemView::DragOnly</enum>
-                </property>
-                <property name="selectionMode">
-                 <enum>QAbstractItemView::ExtendedSelection</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="0" colspan="5">
-               <widget class="QgsFileWidget" name="benchmark_txt_path">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="defaultRoot">
-                 <string extracomment="Path"/>
-                </property>
-                <property name="storageMode">
-                 <enum>QgsFileWidget::GetDirectory</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="8" column="6">
-               <widget class="QPushButton" name="benchmark_start_benchmark">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
-                </property>
-                <property name="text">
-                 <string>Start</string>
-                </property>
-                <property name="icon">
-                 <iconset>
-                  <normaloff>../resources/images/icon.svg</normaloff>../resources/images/icon.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="6">
-               <widget class="QCheckBox" name="benchmark_complete_analysis">
-                <property name="text">
-                 <string>Complete analysis</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="5">
-               <widget class="QCheckBox" name="benchmark_create_as_txt">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Create .csv file</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0" colspan="3">
-               <widget class="QTreeWidget" name="benchmark_ogdf_algorithms">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="headerHidden">
-                 <bool>true</bool>
-                </property>
-                <column>
-                 <property name="text">
-                  <string notr="true">1</string>
-                 </property>
-                </column>
-               </widget>
-              </item>
-              <item row="4" column="3" colspan="4">
-               <widget class="QScrollArea" name="ogdf_parameters_area">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>11</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="widgetResizable">
-                 <bool>true</bool>
-                </property>
-                <widget class="QWidget" name="benchmark_ogdf_parameters">
-                 <property name="geometry">
-                  <rect>
-                   <x>0</x>
-                   <y>0</y>
-                   <width>488</width>
-                   <height>190</height>
-                  </rect>
-                 </property>
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <stylestrategy>PreferDefault</stylestrategy>
-                  </font>
-                 </property>
-                </widget>
-               </widget>
-              </item>
-              <item row="5" column="0" colspan="7">
-               <widget class="QScrollArea" name="analysis_area">
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAsNeeded</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAsNeeded</enum>
-                </property>
-                <property name="sizeAdjustPolicy">
-                 <enum>QAbstractScrollArea::AdjustIgnored</enum>
-                </property>
-                <property name="widgetResizable">
-                 <bool>true</bool>
-                </property>
-                <widget class="QWidget" name="analysis_visualisation">
-                 <property name="geometry">
-                  <rect>
-                   <x>0</x>
-                   <y>0</y>
-                   <width>884</width>
-                   <height>320</height>
-                  </rect>
-                 </property>
-                 <layout class="QGridLayout" name="gridLayout_2">
-                  <item row="0" column="0">
-                   <widget class="QLabel" name="label_4">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
+                <layout class="QGridLayout" name="gridLayout_3">
+                 <item row="1" column="0">
+                  <widget class="QListWidget" name="benchmark_all_graphs">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="dragDropMode">
+                    <enum>QAbstractItemView::DragOnly</enum>
+                   </property>
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::ExtendedSelection</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="2" colspan="3">
+                  <widget class="QListWidget" name="benchmark_graph_selection">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>411</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="dragDropMode">
+                    <enum>QAbstractItemView::DropOnly</enum>
+                   </property>
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::ExtendedSelection</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="1" colspan="4">
+                  <widget class="QScrollArea" name="ogdf_parameters_area">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>11</pointsize>
+                    </font>
+                   </property>
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="widgetResizable">
+                    <bool>true</bool>
+                   </property>
+                   <widget class="QWidget" name="benchmark_ogdf_parameters">
+                    <property name="geometry">
+                     <rect>
+                      <x>0</x>
+                      <y>0</y>
+                      <width>441</width>
+                      <height>190</height>
+                     </rect>
                     </property>
-                    <property name="text">
-                     <string>Benchmark Selection</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="1">
-                   <widget class="QLabel" name="label_5">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>Visualisation</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="1">
-                   <widget class="QListWidget" name="visualisation_1">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>380</width>
-                      <height>192</height>
-                     </size>
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <stylestrategy>PreferDefault</stylestrategy>
+                     </font>
                     </property>
                    </widget>
-                  </item>
-                  <item row="1" column="0">
-                   <widget class="QTabWidget" name="tabWidget_3">
-                    <widget class="QWidget" name="tab_3">
-                     <attribute name="title">
-                      <string>Tab 1</string>
-                     </attribute>
-                    </widget>
-                    <widget class="QWidget" name="tab_4">
-                     <attribute name="title">
-                      <string>Tab 2</string>
-                     </attribute>
-                    </widget>
+                  </widget>
+                 </item>
+                 <item row="6" column="4">
+                  <widget class="QCheckBox" name="benchmark_complete_analysis">
+                   <property name="text">
+                    <string>Complete analysis</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QPushButton" name="benchmark_refresh_all_graphs">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Refresh</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="2">
+                  <widget class="QPushButton" name="benchmark_clear_graph_selection">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Clear</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="5" column="0" colspan="5">
+                  <widget class="QScrollArea" name="analysis_area">
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="verticalScrollBarPolicy">
+                    <enum>Qt::ScrollBarAsNeeded</enum>
+                   </property>
+                   <property name="horizontalScrollBarPolicy">
+                    <enum>Qt::ScrollBarAsNeeded</enum>
+                   </property>
+                   <property name="sizeAdjustPolicy">
+                    <enum>QAbstractScrollArea::AdjustIgnored</enum>
+                   </property>
+                   <property name="widgetResizable">
+                    <bool>true</bool>
+                   </property>
+                   <widget class="QWidget" name="analysis_visualisation">
+                    <property name="geometry">
+                     <rect>
+                      <x>0</x>
+                      <y>0</y>
+                      <width>884</width>
+                      <height>289</height>
+                     </rect>
+                    </property>
+                    <layout class="QGridLayout" name="gridLayout_2">
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_4">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="text">
+                        <string>Benchmark Selection</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QLabel" name="label_5">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="text">
+                        <string>Visualisation</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="1">
+                      <widget class="QListWidget" name="visualisation_1">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>380</width>
+                         <height>192</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QTabWidget" name="tabWidget_3">
+                       <property name="currentIndex">
+                        <number>1</number>
+                       </property>
+                       <widget class="QWidget" name="tab_3">
+                        <attribute name="title">
+                         <string>Tab 1</string>
+                        </attribute>
+                       </widget>
+                       <widget class="QWidget" name="tab_4">
+                        <attribute name="title">
+                         <string>Tab 2</string>
+                        </attribute>
+                       </widget>
+                      </widget>
+                     </item>
+                    </layout>
                    </widget>
-                  </item>
-                 </layout>
-                </widget>
+                  </widget>
+                 </item>
+                 <item row="4" column="0">
+                  <widget class="QTreeWidget" name="benchmark_ogdf_algorithms">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="headerHidden">
+                    <bool>true</bool>
+                   </property>
+                   <column>
+                    <property name="text">
+                     <string notr="true">1</string>
+                    </property>
+                   </column>
+                  </widget>
+                 </item>
+                 <item row="7" column="3">
+                  <widget class="QPushButton" name="benchmark_abort_benchmark">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Abort</string>
+                   </property>
+                   <property name="icon">
+                    <iconset>
+                     <normaloff>:/images/themes/default/mIconDelete.svg</normaloff>:/images/themes/default/mIconDelete.svg</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>18</width>
+                     <height>18</height>
+                    </size>
+                   </property>
+                   <property name="autoDefault">
+                    <bool>true</bool>
+                   </property>
+                   <property name="default">
+                    <bool>false</bool>
+                   </property>
+                   <property name="flat">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label">
+                   <property name="frameShape">
+                    <enum>QFrame::NoFrame</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Sunken</enum>
+                   </property>
+                   <property name="text">
+                    <string>All Graphs</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="6" column="3">
+                  <widget class="QCheckBox" name="benchmark_create_as_txt">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Create .csv file</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="7" column="4">
+                  <widget class="QPushButton" name="benchmark_start_benchmark">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true"/>
+                   </property>
+                   <property name="text">
+                    <string>Start</string>
+                   </property>
+                   <property name="icon">
+                    <iconset>
+                     <normaloff>../resources/images/icon.svg</normaloff>../resources/images/icon.svg</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>24</width>
+                     <height>24</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QToolButton" name="benchmark_add_all_graphs">
+                   <property name="text">
+                    <string>...</string>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>32</width>
+                     <height>32</height>
+                    </size>
+                   </property>
+                   <property name="popupMode">
+                    <enum>QToolButton::InstantPopup</enum>
+                   </property>
+                   <property name="toolButtonStyle">
+                    <enum>Qt::ToolButtonIconOnly</enum>
+                   </property>
+                   <property name="arrowType">
+                    <enum>Qt::NoArrow</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="6" column="0" colspan="3">
+                  <widget class="QgsFileWidget" name="benchmark_txt_path">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="defaultRoot">
+                    <string extracomment="Path"/>
+                   </property>
+                   <property name="storageMode">
+                    <enum>QgsFileWidget::GetDirectory</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="2">
+                  <widget class="QLabel" name="label_2">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Graph Selection</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="0" colspan="3">
+                  <widget class="QLabel" name="label_3">
+                   <property name="text">
+                    <string>OGDF Algorithms</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
@@ -1948,392 +2031,228 @@ QListWidget::item::selected {
               <bool>true</bool>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_12">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_6">
                 <item>
-                 <layout class="QVBoxLayout" name="verticalLayout_15">
-                  <item>
-                   <widget class="QSplitter" name="splitter">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <widget class="QWidget" name="verticalLayoutWidget">
-                     <layout class="QVBoxLayout" name="verticalLayout_25">
-                      <item>
-                       <widget class="QLabel" name="ogdf_jobs_jobs_label">
-                        <property name="text">
-                         <string>Jobs</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QListWidget" name="ogdf_jobs_list">
-                        <property name="autoScrollMargin">
-                         <number>16</number>
-                        </property>
-                        <property name="batchSize">
-                         <number>100</number>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
-                    </widget>
-                    <widget class="QWidget" name="verticalLayoutWidget_2">
-                     <layout class="QVBoxLayout" name="verticalLayout_26">
-                      <item>
-                       <widget class="QLabel" name="ogdf_jobs_status_label">
-                        <property name="text">
-                         <string>Status</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QTextBrowser" name="ogdf_jobs_status_text"/>
-                      </item>
-                     </layout>
-                    </widget>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QWidget" name="ogdf_jobs_list_buttons" native="true">
-                    <layout class="QHBoxLayout" name="horizontalLayout_13">
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <widget class="QPushButton" name="ogdf_jobs_refresh_btn">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>Refresh</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <spacer name="horizontalSpacer_5">
-                       <property name="orientation">
-                        <enum>Qt::Horizontal</enum>
-                       </property>
-                       <property name="sizeHint" stdset="0">
-                        <size>
-                         <width>40</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                      </spacer>
-                     </item>
-                     <item>
-                      <widget class="QPushButton" name="ogdf_jobs_abort_btn">
-                       <property name="text">
-                        <string>Abort</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QPushButton" name="ogdf_jobs_restart_btn">
-                       <property name="text">
-                        <string>Restart</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QWidget" name="ogdf_jobs_destination_widget" native="true">
-                    <layout class="QVBoxLayout" name="verticalLayout_28">
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <spacer name="verticalSpacer_7">
-                       <property name="orientation">
-                        <enum>Qt::Vertical</enum>
-                       </property>
-                       <property name="sizeType">
-                        <enum>QSizePolicy::Fixed</enum>
-                       </property>
-                       <property name="sizeHint" stdset="0">
-                        <size>
-                         <width>20</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                      </spacer>
-                     </item>
-                     <item>
-                      <widget class="QLabel" name="ogdf_jobs_output_label">
-                       <property name="styleSheet">
-                        <string notr="true">m</string>
-                       </property>
-                       <property name="lineWidth">
-                        <number>1</number>
-                       </property>
-                       <property name="text">
-                        <string>Destination</string>
-                       </property>
-                       <property name="scaledContents">
-                        <bool>false</bool>
-                       </property>
-                       <property name="wordWrap">
-                        <bool>false</bool>
-                       </property>
-                       <property name="margin">
-                        <number>0</number>
-                       </property>
-                       <property name="indent">
-                        <number>-1</number>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QgsFileWidget" name="ogdf_jobs_output">
-                       <property name="toolTip">
-                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify where and in which format the result should be saved. If this field is empty, a temporary layer will be created.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                       </property>
-                       <property name="storageMode">
-                        <enum>QgsFileWidget::SaveFile</enum>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QWidget" name="ogdf_jobs_result_widget" native="true">
-                    <layout class="QVBoxLayout" name="verticalLayout_29">
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <widget class="QLabel" name="ogdf_jobs_result_label">
-                       <property name="text">
-                        <string>Result</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QTextBrowser" name="ogdf_jobs_result_textbrowser"/>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="verticalSpacer">
-                    <property name="orientation">
-                     <enum>Qt::Vertical</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>20</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="QWidget" name="ogdf_jobs_button_box" native="true">
-                  <layout class="QHBoxLayout" name="horizontalLayout_9">
-                   <property name="leftMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="topMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="rightMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="bottomMargin">
-                    <number>0</number>
-                   </property>
+                 <widget class="QFrame" name="ogdf_jobs_frame">
+                  <property name="frameShape">
+                   <enum>QFrame::StyledPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Raised</enum>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_32">
                    <item>
-                    <spacer name="horizontalSpacer_4">
+                    <widget class="QSplitter" name="splitter">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
                      </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="ogdf_jobs_fetch_origin_graph_btn">
-                     <property name="text">
-                      <string>Fetch Origin Graph</string>
-                     </property>
+                     <widget class="QWidget" name="verticalLayoutWidget">
+                      <layout class="QVBoxLayout" name="verticalLayout_25">
+                       <item>
+                        <widget class="QLabel" name="ogdf_jobs_jobs_label">
+                         <property name="text">
+                          <string>Jobs</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QListWidget" name="ogdf_jobs_list">
+                         <property name="autoScrollMargin">
+                          <number>16</number>
+                         </property>
+                         <property name="batchSize">
+                          <number>100</number>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                     <widget class="QWidget" name="verticalLayoutWidget_2">
+                      <layout class="QVBoxLayout" name="verticalLayout_26">
+                       <item>
+                        <widget class="QLabel" name="ogdf_jobs_status_label">
+                         <property name="text">
+                          <string>Status</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QTextBrowser" name="ogdf_jobs_status_text"/>
+                       </item>
+                      </layout>
+                     </widget>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="ogdf_jobs_fetch_result_btn">
-                     <property name="text">
-                      <string>Fetch Result</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-            <widget class="QWidget" name="options">
-             <layout class="QVBoxLayout" name="verticalLayout_10">
-              <item>
-               <layout class="QVBoxLayout" name="verticalLayout_4">
-                <item>
-                 <widget class="QGroupBox" name="options_server_settings">
-                  <property name="title">
-                   <string>Server settings</string>
-                  </property>
-                  <layout class="QFormLayout" name="formLayout_2">
-                   <item row="0" column="0" colspan="2">
-                    <layout class="QFormLayout" name="formLayout_5">
-                     <item row="1" column="0" colspan="2">
-                      <widget class="QLineEdit" name="options_server_host_input">
-                       <property name="toolTip">
-                        <string>Enter host adress</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="3" column="0" colspan="2">
-                      <widget class="QSpinBox" name="options_server_port_input">
-                       <property name="toolTip">
-                        <string>Enter server port</string>
-                       </property>
-                       <property name="maximum">
-                        <number>65535</number>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="0" column="0" colspan="2">
-                      <widget class="QLabel" name="options_server_host_label">
-                       <property name="text">
-                        <string>Host</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="0" colspan="2">
-                      <widget class="QLabel" name="options_server_port_label">
-                       <property name="text">
-                        <string>Port</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="4" column="0" colspan="2">
-                      <widget class="QLabel" name="options_server_security_label">
-                       <property name="text">
-                        <string>Security</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="5" column="0" colspan="1">
-                      <widget class="QCheckBox" name="options_ssl_input">
-                       <property name="text">
-                        <string>Enable TLS</string>
-                       </property>
-                       <property name="checked">
-                        <bool>true</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>Check if the connection to the server is TLS encrypted. This requires the server to be configured to establish a TLS encrypted connection.</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="5" column="1" colspan="1">
-                      <widget class="QCheckBox" name="options_ssl_check_input">
-                       <property name="text">
-                        <string>Validate server certificates</string>
-                       </property>
-                       <property name="checked">
-                        <bool>true</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>Check if the TLS certificate used by the server should be validated. This requires the server certificate to be validated by a valid Certificate Authority.</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="1" column="0" colspan="2">
-                    <widget class="QGroupBox" name="options_credentials">
-                     <property name="title">
-                      <string>Authentication</string>
-                     </property>
-                     <layout class="QVBoxLayout" name="verticalLayout_20">
+                    <widget class="QWidget" name="ogdf_jobs_destination_widget" native="true">
+                     <layout class="QVBoxLayout" name="verticalLayout_28">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
                       <item>
-                       <layout class="QFormLayout" name="formLayout_6">
-                        <item row="3" column="0" colspan="2">
-                         <widget class="QgsPasswordLineEdit" name="options_credentials_password_input">
-                          <property name="toolTip">
-                           <string>Enter password</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="1" column="0" colspan="2">
-                         <widget class="QLineEdit" name="options_credentials_username_input">
-                          <property name="toolTip">
-                           <string>Enter username</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="2" column="0" colspan="2">
-                         <widget class="QLabel" name="options_credentials_password_label">
-                          <property name="text">
-                           <string>Password</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="0" column="0" colspan="2">
-                         <widget class="QLabel" name="options_credentials_username_label">
-                          <property name="text">
-                           <string>Username</string>
-                          </property>
-                         </widget>
-                        </item>
-                       </layout>
+                       <spacer name="verticalSpacer_7">
+                        <property name="orientation">
+                         <enum>Qt::Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Fixed</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>20</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="ogdf_jobs_output_label">
+                        <property name="styleSheet">
+                         <string notr="true">m</string>
+                        </property>
+                        <property name="lineWidth">
+                         <number>1</number>
+                        </property>
+                        <property name="text">
+                         <string>Destination</string>
+                        </property>
+                        <property name="scaledContents">
+                         <bool>false</bool>
+                        </property>
+                        <property name="wordWrap">
+                         <bool>false</bool>
+                        </property>
+                        <property name="margin">
+                         <number>0</number>
+                        </property>
+                        <property name="indent">
+                         <number>-1</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QgsFileWidget" name="ogdf_jobs_output">
+                        <property name="toolTip">
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify where and in which format the result should be saved. If this field is empty, a temporary layer will be created.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                        </property>
+                        <property name="storageMode">
+                         <enum>QgsFileWidget::SaveFile</enum>
+                        </property>
+                       </widget>
                       </item>
                      </layout>
                     </widget>
                    </item>
-                   <item row="2" column="0" colspan="2">
-                    <spacer name="verticalSpacer_5">
+                   <item>
+                    <widget class="QWidget" name="ogdf_jobs_list_buttons" native="true">
+                     <layout class="QHBoxLayout" name="horizontalLayout_13">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QPushButton" name="ogdf_jobs_refresh_btn">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="text">
+                         <string>Refresh</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_5">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="ogdf_jobs_abort_btn">
+                        <property name="text">
+                         <string>Abort</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="ogdf_jobs_restart_btn">
+                        <property name="text">
+                         <string>Restart</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QWidget" name="ogdf_jobs_result_widget" native="true">
+                     <layout class="QVBoxLayout" name="verticalLayout_29">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QLabel" name="ogdf_jobs_result_label">
+                        <property name="text">
+                         <string>Result</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QTextBrowser" name="ogdf_jobs_result_textbrowser"/>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="verticalSpacer">
                      <property name="orientation">
                       <enum>Qt::Vertical</enum>
                      </property>
@@ -2345,19 +2264,232 @@ QListWidget::item::selected {
                      </property>
                     </spacer>
                    </item>
+                   <item>
+                    <widget class="QWidget" name="ogdf_jobs_button_box" native="true">
+                     <layout class="QHBoxLayout" name="horizontalLayout_9">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <spacer name="horizontalSpacer_4">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="ogdf_jobs_fetch_origin_graph_btn">
+                        <property name="text">
+                         <string>Fetch Origin Graph</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="ogdf_jobs_fetch_result_btn">
+                        <property name="text">
+                         <string>Fetch Result</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
                   </layout>
                  </widget>
                 </item>
                </layout>
               </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="options">
+             <layout class="QVBoxLayout" name="verticalLayout_10">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
               <item>
-               <widget class="QDialogButtonBox" name="options_save_btn">
-                <property name="toolTip">
-                 <string>Save settings</string>
+               <widget class="QFrame" name="options_frame">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
                 </property>
-                <property name="standardButtons">
-                 <set>QDialogButtonBox::Save</set>
-                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_4">
+                 <property name="leftMargin">
+                  <number>9</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>9</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>9</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>9</number>
+                 </property>
+                 <item>
+                  <widget class="QGroupBox" name="options_server_settings">
+                   <property name="title">
+                    <string>Server settings</string>
+                   </property>
+                   <layout class="QFormLayout" name="formLayout_2">
+                    <item row="0" column="0" colspan="2">
+                     <layout class="QFormLayout" name="formLayout_5">
+                      <item row="1" column="0" colspan="2">
+                       <widget class="QLineEdit" name="options_server_host_input">
+                        <property name="toolTip">
+                         <string>Enter host adress</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="0" colspan="2">
+                       <widget class="QSpinBox" name="options_server_port_input">
+                        <property name="toolTip">
+                         <string>Enter server port</string>
+                        </property>
+                        <property name="maximum">
+                         <number>65535</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="0" column="0" colspan="2">
+                       <widget class="QLabel" name="options_server_host_label">
+                        <property name="text">
+                         <string>Host</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="0" colspan="2">
+                       <widget class="QLabel" name="options_server_port_label">
+                        <property name="text">
+                         <string>Port</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="4" column="0" colspan="2">
+                       <widget class="QLabel" name="options_server_security_label">
+                        <property name="text">
+                         <string>Security</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="5" column="0">
+                       <widget class="QCheckBox" name="options_ssl_input">
+                        <property name="toolTip">
+                         <string>Check if the connection to the server is TLS encrypted. This requires the server to be configured to establish a TLS encrypted connection.</string>
+                        </property>
+                        <property name="text">
+                         <string>Enable TLS</string>
+                        </property>
+                        <property name="checked">
+                         <bool>true</bool>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="5" column="1">
+                       <widget class="QCheckBox" name="options_ssl_check_input">
+                        <property name="toolTip">
+                         <string>Check if the TLS certificate used by the server should be validated. This requires the server certificate to be validated by a valid Certificate Authority.</string>
+                        </property>
+                        <property name="text">
+                         <string>Validate server certificates</string>
+                        </property>
+                        <property name="checked">
+                         <bool>true</bool>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="1" column="0" colspan="2">
+                     <widget class="QGroupBox" name="options_credentials">
+                      <property name="title">
+                       <string>Authentication</string>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_20">
+                       <item>
+                        <layout class="QFormLayout" name="formLayout_6">
+                         <item row="3" column="0" colspan="2">
+                          <widget class="QgsPasswordLineEdit" name="options_credentials_password_input">
+                           <property name="toolTip">
+                            <string>Enter password</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="1" column="0" colspan="2">
+                          <widget class="QLineEdit" name="options_credentials_username_input">
+                           <property name="toolTip">
+                            <string>Enter username</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="2" column="0" colspan="2">
+                          <widget class="QLabel" name="options_credentials_password_label">
+                           <property name="text">
+                            <string>Password</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="0" colspan="2">
+                          <widget class="QLabel" name="options_credentials_username_label">
+                           <property name="text">
+                            <string>Username</string>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_5">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QDialogButtonBox" name="options_save_btn">
+                   <property name="toolTip">
+                    <string>Save settings</string>
+                   </property>
+                   <property name="standardButtons">
+                    <set>QDialogButtonBox::Save</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
@@ -2366,6 +2498,25 @@ QListWidget::item::selected {
           </item>
          </layout>
         </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDialogButtonBox" name="footer_buttonbox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="standardButtons">
+         <set>QDialogButtonBox::Help</set>
+        </property>
+        <property name="centerButtons">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
      </layout>
