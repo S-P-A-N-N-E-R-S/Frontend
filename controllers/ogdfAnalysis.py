@@ -21,15 +21,13 @@ import traceback
 from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog, Qgis
 
 from .base import BaseController
-from .. import mainPlugin
-from ..exceptions import FieldRequiredError
 from .. import helperFunctions as helper
+from ..exceptions import FieldRequiredError
 
 # client imports
 from ..network.client import Client
 from ..network import parserManager
 from ..network.exceptions import NetworkClientError, ParseError, ServerError
-from .. import helperFunctions as helper
 
 
 class OGDFAnalysisController(BaseController):
@@ -50,8 +48,7 @@ class OGDFAnalysisController(BaseController):
         self.view.setDescriptionVisible(False)
 
         # add available analysis
-        for requestKey, request in parserManager.getRequestParsers().items():
-            self.view.addAnalysis(request.name, requestKey)
+        self.refreshAnalysisList()
 
     def runJob(self):
         if OGDFAnalysisController.activeTask is not None:
@@ -73,6 +70,8 @@ class OGDFAnalysisController(BaseController):
             self.view.showError(str(error))
             return
 
+        self.view.setNetworkButtonsEnabled(False)
+
         # set field data into request
         request.resetData()
 
@@ -83,7 +82,7 @@ class OGDFAnalysisController(BaseController):
 
         # create request in background task
         task = QgsTask.fromFunction(
-            "Creating job request",
+            "Creating job request...",
             self.createRequestTask,
             host=helper.getHost(),
             port=helper.getPort(),
@@ -93,8 +92,9 @@ class OGDFAnalysisController(BaseController):
         )
         QgsApplication.taskManager().addTask(task)
         OGDFAnalysisController.activeTask = task
+        self.view.showInfo(task.description())
 
-    def createRequestTask(self, task, host, port, tlsOption, request):
+    def createRequestTask(self, _task, host, port, tlsOption, request):
         """
         Performs a job request in a task.
         """
@@ -111,6 +111,8 @@ class OGDFAnalysisController(BaseController):
         """
         # first remove active task to allow a new request.
         OGDFAnalysisController.activeTask = None
+
+        self.view.setNetworkButtonsEnabled(True)
 
         if exception is None:
             if result is None:
@@ -132,8 +134,54 @@ class OGDFAnalysisController(BaseController):
             raise exception
 
     def refreshAnalysisList(self):
+        """
+        fetches all available handlers from server
+        :return:
+        """
         parserManager.resetParsers()
         self.view.clearAnalysisList()
-        mainPlugin.OGDFPlugin.fetchHandlers()
-        for requestKey, request in parserManager.getRequestParsers().items():
-            self.view.addAnalysis(request.name, requestKey)
+        self.view.setNetworkButtonsEnabled(False)
+
+        task = QgsTask.fromFunction(
+            "Refreshing algorithms...",
+            self.createFetchHandlersTask,
+            host=helper.getHost(),
+            port=helper.getPort(),
+            tlsOption=helper.getTlsOption(),
+            on_finished=self.fetchHandlersCompleted
+        )
+        QgsApplication.taskManager().addTask(task)
+        OGDFAnalysisController.activeTask = task
+        self.view.showInfo(task.description())
+
+    def createFetchHandlersTask(self, _task, host, port, tlsOption):
+        try:
+            with Client(host, port, tlsOption) as client:
+                client.getAvailableHandlers()
+                return {"success": self.tr("Algorithms refreshed!"),}
+        except (NetworkClientError, ParseError, ServerError) as error:
+            return {"error": str(error)}
+
+    def fetchHandlersCompleted(self, exception, result=None):
+        """
+        Processes the results of the fetch handlers task.
+        """
+        # first remove active task to allow a new request.
+        OGDFAnalysisController.activeTask = None
+
+        self.view.setNetworkButtonsEnabled(True)
+
+        if exception is None:
+            if result is None:
+                # no result returned (probably manually canceled by the user)
+                return
+            else:
+                if "success" in result:
+                    for requestKey, request in parserManager.getRequestParsers().items():
+                        self.view.addAnalysis(request.name, requestKey)
+                    self.view.showSuccess(result["success"])
+
+                elif "error" in result:
+                    self.view.showError(str(result["error"]), self.tr("Network Error"))
+        else:
+            raise exception
