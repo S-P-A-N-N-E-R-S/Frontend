@@ -80,6 +80,9 @@ class OGDFAnalysisView(BaseView):
         _requestName, requestKey = self.analysisTreeView.getAnalysis()
         return parserManager.getRequestParser(requestKey)
 
+    def analysisListEmpty(self):
+        return parserManager.parserListEmpty()
+
     def addAnalysis(self, analysis, userData=None):
         self.analysisTreeView.addAnalysis(analysis, userData)
 
@@ -149,3 +152,7 @@ class OGDFAnalysisView(BaseView):
 
     def getLogHtml(self):
         return self.dialog.ogdf_analysis_log.toHtml()
+
+    def setNetworkButtonsEnabled(self, enabled):
+        self.dialog.ogdf_analysis_run_btn.setEnabled(enabled)
+        self.dialog.ogdf_analysis_refresh_btn.setEnabled(enabled)

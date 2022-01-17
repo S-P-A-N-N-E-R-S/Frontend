@@ -56,5 +56,9 @@ def insertParserPair(request, response):
     parser[request.key] = ParserPair(request, response)
 
 
+def parserListEmpty():
+    return len(parser) == 0
+
+
 def resetParsers():
     parser.clear()

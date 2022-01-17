@@ -19,8 +19,8 @@
 from qgis.core import QgsSettings, QgsApplication, QgsAuthMethodConfig
 
 from .base import BaseController
-from .. import mainPlugin
 from .. import helperFunctions as helper
+from ..network import parserManager
 
 
 class OptionsController(BaseController):
@@ -107,5 +107,4 @@ class OptionsController(BaseController):
         else:
             self.view.showSuccess(self.tr("Settings saved!"))
 
-        # fetch available handlers
-        mainPlugin.OGDFPlugin.fetchHandlers()
+        parserManager.resetParsers()

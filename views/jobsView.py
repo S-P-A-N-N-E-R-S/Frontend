@@ -61,9 +61,6 @@ class JobsView(BaseView):
         # change job status text
         self.dialog.ogdf_jobs_list.currentItemChanged.connect(self._changeStatusText)
 
-        # initial refresh jobs
-        self.controller.refreshJobs()
-
     def setFetchStatusText(self):
         self.setStatusText("...")
 
@@ -192,3 +189,10 @@ class JobsView(BaseView):
 
     def getDestinationFilePath(self):
         return self.dialog.ogdf_jobs_output.filePath()
+
+    def setNetworkButtonsEnabled(self, enabled):
+        self.dialog.ogdf_jobs_fetch_result_btn.setEnabled(enabled)
+        self.dialog.ogdf_jobs_refresh_btn.setEnabled(enabled)
+        self.dialog.ogdf_jobs_fetch_origin_graph_btn.setEnabled(enabled)
+        self.dialog.ogdf_jobs_abort_btn.setEnabled(enabled)
+        self.dialog.ogdf_jobs_restart_btn.setEnabled(enabled)

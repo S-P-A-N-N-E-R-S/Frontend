@@ -16,7 +16,7 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.core import QgsSettings
+from qgis.core import QgsSettings, QgsApplication, QgsTask
 
 from .base import BaseController
 from ..models.QgsGraphLayer import QgsGraphLayer
@@ -28,6 +28,8 @@ from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
 class JobsController(BaseController):
+
+    activeTask = None
 
     def __init__(self, view):
         """
@@ -43,6 +45,10 @@ class JobsController(BaseController):
         self.view.setResultVisible(False)
 
     def fetchResult(self):
+        if JobsController.activeTask is not None:
+            self.view.showError(self.tr("Please wait until previous result fetch is finished!"))
+            return
+
         self.view.setResultHtml("")
         self.view.setResultVisible(False)
 
@@ -55,55 +61,148 @@ class JobsController(BaseController):
             self.view.showWarning(self.tr("Selected job status is not successful."))
             return
 
+        self.view.setNetworkButtonsEnabled(False)
+
+        # fetch result in background task
+        task = QgsTask.fromFunction(
+            "Fetching job result...",
+            self.createResultFetchTask,
+            host=helper.getHost(),
+            port=helper.getPort(),
+            tlsOption=helper.getTlsOption(),
+            job=job,
+            on_finished=self.resultFetchCompleted
+        )
+        QgsApplication.taskManager().addTask(task)
+        JobsController.activeTask = task
+        self.view.showInfo(task.description())
+
+    def createResultFetchTask(self, _task, host, port, tlsOption, job):
         # Get result from finished job
         try:
-            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
+            with Client(host, port, tlsOption) as client:
                 response = client.getJobResult(job.jobId)
         except (NetworkClientError, ParseError, ServerError) as error:
-            self.view.showError(str(error), self.tr("Network Error"))
-            return
+            return {"error": str(error)}
 
-        # if response contains a graph: show it in qgis
         try:
             graph = response.getGraph()
-            graphLayer = QgsGraphLayer()
-            graphLayer.setGraph(graph)
-            success, errorMsg = helper.saveGraph(graph, graphLayer, f"{job.getJobName()} - {self.tr('Result')}", self.view.getDestinationFilePath())
-            if not success:
-                self.view.showError(errorMsg)
         except AttributeError:
-            pass
+            graph = None
 
-        # show text results in response
         try:
             resultString = response.getResultString()
         except AttributeError:
             resultString = ""
-        self.view.setResultHtml(resultString)
-        self.view.setResultVisible(resultString != "")
 
-        self.view.showSuccess(self.tr("Result fetched!"))
+        return {
+            "success": self.tr("Result fetched!"),
+            "resultString": resultString,
+            "graph": graph,
+            "job": job,
+        }
+
+    def resultFetchCompleted(self, exception, result=None):
+        """
+        Processes the results of the result fetch task.
+        """
+        # first remove active task to allow a new request.
+        JobsController.activeTask = None
+
+        self.view.setNetworkButtonsEnabled(True)
+
+        if exception is None:
+            if result is None:
+                # no result returned (probably manually canceled by the user)
+                return
+
+            if "success" in result:
+                self.view.showSuccess(result["success"])
+
+                # show text results of response
+                self.view.setResultHtml(result["resultString"])
+                self.view.setResultVisible(result["resultString"] != "")
+
+                # if response contains a graph: show it in qgis
+                if "graph" in result and result["graph"]:
+                    graphLayer = QgsGraphLayer()
+                    graphLayer.setGraph(result["graph"])
+                    jobName = result["job"].getJobName()
+                    success, errorMsg = helper.saveGraph(result["graph"], graphLayer, f"{jobName} - {self.tr('Result')}", self.view.getDestinationFilePath())
+                    if not success:
+                        self.view.showError(str(errorMsg))
+                self.view.showSuccess(result["success"])
+
+            if "error" in result:
+                self.view.showError(str(result["error"]), self.tr("Network Error"))
+        else:
+            raise exception
 
     def fetchOriginGraph(self):
         pass
 
     def refreshJobs(self):
+        if JobsController.activeTask is not None:
+            self.view.showError(self.tr("Please wait until previous refresh is finished!"))
+            return
+
+        self.view.setNetworkButtonsEnabled(False)
         self.view.clearStatus()
         self.view.clearResult()
         self.view.clearJobs()
         self.view.setFetchStatusText()
 
-        # get response
+        # fetch result in background task
+        task = QgsTask.fromFunction(
+            "Refreshing job list...",
+            self.createRefreshJobsTask,
+            host=helper.getHost(),
+            port=helper.getPort(),
+            tlsOption=helper.getTlsOption(),
+            on_finished=self.refreshJobsCompleted
+        )
+        QgsApplication.taskManager().addTask(task)
+        JobsController.activeTask = task
+        self.view.showInfo(task.description())
+
+    def createRefreshJobsTask(self, _task, host, port, tlsOption):
+        # get refreshed job states
         try:
-            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
+            with Client(host, port, tlsOption) as client:
                 states = client.getJobStatus()
-                # add jobs
-                for job in states.values():
+                # return jobs
+                return {
+                    "success": self.tr("Job list refreshed!"),
+                    "states": states,
+                }
+        except (NetworkClientError, ParseError, ServerError) as error:
+            return {"error": str(error)}
+
+    def refreshJobsCompleted(self, exception, result=None):
+        """
+        Processes the results of the refresh jobs task.
+        """
+        # first remove active task to allow a new request.
+        JobsController.activeTask = None
+
+        self.view.setNetworkButtonsEnabled(True)
+
+        if exception is None:
+            if result is None:
+                # no result returned (probably manually canceled by the user)
+                return
+
+            if "success" in result:
+                for job in result["states"].values():
                     self.view.addJob(job)
                 self.view.refreshStatusText()
-        except (NetworkClientError, ParseError, ServerError) as error:
-            self.view.resetStatusText()
-            self.view.showError(str(error), self.tr("Network Error"))
+                self.view.showSuccess(result["success"])
+
+            if "error" in result:
+                self.view.resetStatusText()
+                self.view.showError(str(result["error"]), self.tr("Network Error"))
+        else:
+            raise exception
 
     def abortJob(self):
         pass

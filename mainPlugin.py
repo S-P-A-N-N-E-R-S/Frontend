@@ -27,9 +27,7 @@ from qgis.analysis import *
 from qgis.utils import *
 
 from .views.pluginDialog import PluginDialog
-from .helperFunctions import getImagePath, getPluginPath, getPort, getHost, getTlsOption
-from .network.client import Client
-from .network.exceptions import NetworkClientError, ParseError, ServerError
+from .helperFunctions import getImagePath
 
 from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
 
@@ -67,21 +65,6 @@ class OGDFPlugin:
         QgsProject.instance().layersWillBeRemoved.connect(self.deleteLayers)
 
         self.initActions()
-
-        # # get available handlers from server
-        OGDFPlugin.fetchHandlers()
-
-    @staticmethod
-    def fetchHandlers():
-        """
-        fetches all available handlers from server
-        :return:
-        """
-        try:
-            with Client(getHost(), getPort(), tlsOption=getTlsOption()) as client:
-                client.getAvailableHandlers()
-        except (NetworkClientError, ParseError, ServerError) as error:
-            iface.messageBar().pushMessage("OGDF Plugin Error", str(error), level=Qgis.Critical)
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
