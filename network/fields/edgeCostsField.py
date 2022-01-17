@@ -50,6 +50,7 @@ class EdgeCostsResult(BaseResult, GraphDependencyMixin):
     type = available_handlers_pb2.ResultInformation.HandlerReturnType.EDGE_COSTS
 
     def parseProtoBuf(self, response, data):
+        data[self.graphKey].setDistanceStrategy("Advanced")
         if "." in self.key:
             protoField = self.getProtoMapField(response)
             for edgeIdx, edgeCost in enumerate(protoField.attributes):
