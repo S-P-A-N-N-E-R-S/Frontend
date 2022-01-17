@@ -84,7 +84,7 @@ class BaseGraphResponse(BaseResponse):
 
     def initGraphField(self):
         newGraph = ExtGraph()
-        newGraph.setDistanceStrategy("Advanced")
+        newGraph.setDistanceStrategy("None")
         self.data[self.graphKey] = newGraph
 
     def initCostFields(self):

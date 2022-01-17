@@ -301,7 +301,9 @@ class QgsGraphLayer(QgsPluginLayer):
             # TODO: does this shallow copy work after all?
             self.mGraph = graph
 
-            if not self.mGraph.crs:
+            if self.mGraph.crs:
+                self.setCrs(self.mGraph.crs)
+            else:
                 self.mGraph.updateCrs(self.crs())
 
             if graph.edgeCount() != 0:

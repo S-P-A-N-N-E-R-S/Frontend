@@ -1,4 +1,4 @@
-from qgis.core import QgsPointXY, QgsMapLayerProxyModel
+from qgis.core import QgsPointXY, QgsMapLayerProxyModel, QgsCoordinateReferenceSystem
 from qgis.gui import QgsMapLayerComboBox
 
 from .baseField import BaseField, BaseResult
@@ -18,17 +18,22 @@ class GraphField(BaseField):
             return
 
         protoField = getattr(request, self.key)
+        graph = data[self.key]
 
         protoField.uid = 0
-        for vertex in data[self.key].vertices():
+        for vertex in graph.vertices():
             protoVertex = protoField.vertexList.add()
             protoVertex.uid = vertex.id()
 
-        for edge in data[self.key].edges():
+        for edge in graph.edges():
             protoEdge = protoField.edgeList.add()
             protoEdge.uid = edge.id()
-            protoEdge.inVertexIndex = data[self.key].findVertexByID(edge.fromVertex())
-            protoEdge.outVertexIndex = data[self.key].findVertexByID(edge.toVertex())
+            protoEdge.inVertexIndex = graph.findVertexByID(edge.fromVertex())
+            protoEdge.outVertexIndex = graph.findVertexByID(edge.toVertex())
+
+        # add static attributes to request
+        request.staticAttributes["crs"] = str(graph.crs.authid())
+        request.staticAttributes["edgeDirection"] = str(graph.edgeDirection)
 
     def createWidget(self, parent):
         widget = QgsMapLayerComboBox(parent)
@@ -50,14 +55,21 @@ class GraphResult(BaseResult):
 
     def parseProtoBuf(self, response, data):
         protoField = self.getProtoField(response)
+        graph = data[self.key]
+
+        # parse static attributes from response
+        crs = QgsCoordinateReferenceSystem(response.staticAttributes.get("crs"))
+        if crs.isValid():
+            graph.updateCrs(crs)
+        graph.edgeDirection = response.staticAttributes.get("edgeDirection", "Directed")
 
         for vertex in protoField.vertexList:
-            data[self.key].addVertex(QgsPointXY(0,0), -1, vertex.uid)
+            graph.addVertex(QgsPointXY(0,0), -1, vertex.uid)
 
         for edge in protoField.edgeList:
             inVertexId = protoField.vertexList[edge.inVertexIndex].uid
             outVertexId = protoField.vertexList[edge.outVertexIndex].uid
-            data[self.key].addEdge(inVertexId, outVertexId, -1, edge.uid)
+            graph.addEdge(inVertexId, outVertexId, -1, edge.uid)
 
     def getResultString(self, _data):
         return "Result contains a graph, which will be displayed in a new layer."
