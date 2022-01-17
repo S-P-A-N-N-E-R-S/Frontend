@@ -17,6 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 import os
+import traceback
 
 from .base import BaseController
 
@@ -218,8 +219,13 @@ class GraphController(BaseController):
 
         # create and run task from function
         graphLayer = QgsGraphLayer()
-        graphTask = QgsTask.fromFunction("Building graph: {}".format(graphName), builder.makeGraphTask,
-                                         graphLayer=graphLayer, graphName=graphName, on_finished=self.completed)
+        graphTask = QgsTask.fromFunction(
+            "Building graph: {}".format(graphName),
+            builder.makeGraphTask,
+            graphLayer=graphLayer,
+            graphName=graphName,
+            on_finished=self.completed
+        )
         taskId = QgsApplication.taskManager().addTask(graphTask)
         GraphController.activeGraphTasks.append((graphTask, taskId))
 
@@ -278,7 +284,13 @@ class GraphController(BaseController):
             self.view.insertLogText("Remaining graph creation processes : {}\n".format(
                 len(GraphController.activeGraphTasks)))
         else:
-            QgsMessageLog.logMessage("Exception: {}".format(exception), level=Qgis.Critical)
+            QgsMessageLog.logMessage(
+                "Exception: {exception}\n Traceback (most recent call last):\n {traceback}".format(
+                    exception=exception,
+                    traceback="".join(traceback.format_tb(exception.__traceback__))
+                ),
+                level=Qgis.Critical
+            )
             raise exception
 
     def discardTask(self, taskId):
