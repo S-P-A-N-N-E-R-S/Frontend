@@ -1740,7 +1740,7 @@ QListWidget::item::selected {
                   </widget>
                  </item>
                  <item row="2" column="0">
-                  <widget class="QPushButton" name="benchmark_refresh_all_graphs">
+                  <widget class="QPushButton" name="benchmark_refresh_btn">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                      <horstretch>0</horstretch>

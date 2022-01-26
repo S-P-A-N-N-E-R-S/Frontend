@@ -12,8 +12,7 @@ from ..models.benchmark.BenchmarkVisualisation import BenchmarkVisualisation
 from ..network.client import Client
 from ..network.exceptions import NetworkClientError, ParseError, ServerError
 from .. import helperFunctions as helper
-from ..network import parserManager
-from ..network import statusManager
+from ..network import parserManager, statusManager, parserFetcher
 from ..network.protocol.build.status_pb2 import StatusType
 
 
@@ -42,11 +41,8 @@ class BenchmarkController(BaseController):
         self.authManager = QgsApplication.authManager()
 
         # add available analysis
-        requestNameList = []
-        for request in parserManager.getRequestParsers().values():
-            requestNameList.append(request.name)
-
-        self.view.addOGDFAlgs(requestNameList)
+        parserFetcher.instance().parsersRefreshed.connect(self.fetchHandlersCompleted)
+        self.refreshView()
 
         self.doWrapper = None
         self.task = None
@@ -71,9 +67,9 @@ class BenchmarkController(BaseController):
         # go through all the benchmark requests created
         for sIndex in range(len(self.view.getSelection1())):
             benchVis = BenchmarkVisualisation(analysisSelections[sIndex], legendSelections[sIndex], logSelections[sIndex], tightSelections[sIndex])
-            selectionList = self.view.getSelection1()[sIndex]                     
+            selectionList = self.view.getSelection1()[sIndex]
             firstPartition = {"":self.doWrapper.benchmarkDOs}
-            partition = {}            
+            partition = {}
             for i in range(0,len(selectionList)):
                 selection = selectionList[i]
                 if i > 0:
@@ -82,22 +78,22 @@ class BenchmarkController(BaseController):
                     elif selection in allGraphAnalyses:
                         partition = self.doWrapper.partition("Graphs", partition, graphAnalysis = selection.split(" ")[1])
                     else:
-                        partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.parameterKeyHash[selection])  
+                        partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.parameterKeyHash[selection])
                 else:
                     if selection == "Graphs" or selection == "Algorithms":
                         firstPartition = self.doWrapper.partition(selection, firstPartition)
                     elif selection in allGraphAnalyses:
-                        firstPartition = self.doWrapper.partition("Graphs", firstPartition, graphAnalysis = selection.split(" ")[1])             
+                        firstPartition = self.doWrapper.partition("Graphs", firstPartition, graphAnalysis = selection.split(" ")[1])
                     else:
-                        firstPartition = self.doWrapper.partition("Parameter", firstPartition, self.doWrapper.parameterKeyHash[selection])    
-                     
+                        firstPartition = self.doWrapper.partition("Parameter", firstPartition, self.doWrapper.parameterKeyHash[selection])
+
                     for key in firstPartition:
                         if isinstance(key, tuple):
-                            partition[key[1]] = firstPartition[key]                        
+                            partition[key[1]] = firstPartition[key]
             # color categorization done
             if len(selectionList) == 0:
                 partition = {"":self.doWrapper.benchmarkDOs}
-            
+
             # split the partition into individual dictionary entries
             for dictKey in partition.keys():
                 dictValue = partition[dictKey]
@@ -147,7 +143,7 @@ class BenchmarkController(BaseController):
 
                     if boxPlotSel:
                         xValuesBox.append(self.doWrapper.getAnalysisValue(self.view.getAnalysis()[sIndex], dictHelp[dictKey2], False))
-                    
+
                     xValues.append(self.doWrapper.getAnalysisValue(self.view.getAnalysis()[sIndex], dictHelp[dictKey2], True))
 
                 xLabel = ""
@@ -255,6 +251,43 @@ class BenchmarkController(BaseController):
                         self.view.showError(self.tr("Select multiple graphs"), self.tr("Error in benchmark number " + str(counter+1)))
                         return False
         return True
+
+    def refreshView(self):
+        self.refreshOGDFAlgs()
+        self.view.updateAllGraphs()
+
+    def refreshOGDFAlgs(self):
+        self.view.resetOGDFAlgs()
+        self.view.setNetworkButtonsEnabled(False)
+
+        parserFetcher.instance().refreshParsers()
+
+        self.view.showInfo("Refreshing algorithms...")
+
+    def fetchHandlersCompleted(self, result=None):
+        """
+        Processes the results of the fetch handlers task.
+        """
+        self.view.resetOGDFAlgs()
+        self.view.setNetworkButtonsEnabled(True)
+
+        if not result.get("exception"):
+            if result is None:
+                # no result returned (probably manually canceled by the user)
+                return
+            else:
+                if "success" in result:
+                    requestNameList = []
+                    for request in parserManager.getRequestParsers().values():
+                        requestNameList.append(request.name)
+
+                    self.view.addOGDFAlgs(requestNameList)
+                    self.view.showSuccess(result["success"])
+
+                elif "error" in result:
+                    self.view.showError(str(result["error"]), self.tr("Network Error"))
+        else:
+            raise result["exception"]
 
     def runTask(self):
         if self.task is not None:
@@ -437,11 +470,11 @@ class BenchmarkController(BaseController):
             request = parserManager.getRequestParser(requestKey)
             request.resetData()
 
-            for key in benchmarkDO.parameters:               
+            for key in benchmarkDO.parameters:
                 fieldData = benchmarkDO.parameters[key]
                 request.setFieldData(key, fieldData)
 
-            for i in range(self.view.getExecutions(benchmarkDO.algorithm)):             
+            for i in range(self.view.getExecutions(benchmarkDO.algorithm)):
                 try:
                     with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                         executionID = client.sendJobRequest(request)
@@ -461,8 +494,8 @@ class BenchmarkController(BaseController):
                                 time.sleep(0.5)
                                 counter+=1
                             else:
-                                time.sleep(1)   
-                            jobStatus = client.getJobStatus()                               
+                                time.sleep(1)
+                            jobStatus = client.getJobStatus()
                             jobId = executionID
                             job = jobStatus[jobId]
                             status = self.STATUS_TEXTS.get(job.status, "status not supported")

@@ -49,7 +49,7 @@ class BenchmarkView(BaseView):
 
         self.dialog.benchmark_add_all_graphs.setIcon(QgsApplication.getThemeIcon("mIconModelOutput.svg"))
 
-        self.dialog.benchmark_refresh_all_graphs.clicked.connect(self._updateAllGraphs)
+        self.dialog.benchmark_refresh_btn.clicked.connect(self.controller.refreshView)
         self.dialog.benchmark_clear_graph_selection.clicked.connect(self._clearGraphSelection)
         self.dialog.benchmark_start_benchmark.clicked.connect(self.controller.runTask)
         self.dialog.benchmark_add_all_graphs.clicked.connect(self._addAllGraphs)
@@ -57,7 +57,6 @@ class BenchmarkView(BaseView):
 
         self.dialog.benchmark_graph_selection.model().rowsInserted.connect(self._updateOGDFParameters)
 
-        self._updateAllGraphs()
         self.dialog.benchmark_all_graphs.itemDoubleClicked.connect(self._addItemToSelected)
         self.dialog.benchmark_graph_selection.itemDoubleClicked.connect(self._deleteItem)
 
@@ -95,8 +94,8 @@ class BenchmarkView(BaseView):
     def _newBenchmarkSelection(self):
         self.benchmarkAnalysisCounter+=1
         tabBenchmarkWidget = QTabWidget()
-        
-        
+
+
         self.dialog.analysis_visualisation.layout().addWidget(tabBenchmarkWidget,*(self.benchmarkAnalysisCounter,0))
 
         ogdfAlgs = self.getSelectedAlgs()
@@ -113,12 +112,12 @@ class BenchmarkView(BaseView):
                      "Graph Girth (unit weights)", "Graph Girth", "Graph Node Connectivity",
                      "Graph Edge Connectivity", "Graph Reciprocity", "Algorithms"]
 
-        
+
         colorCat = QListWidget()
         colorCat.setMinimumSize(380, 192)
         colorCat.setObjectName("colour_selection_" + str(self.benchmarkAnalysisCounter))
         for item in itemsToAdd:
-            self._addItemToWidget(colorCat, item)        
+            self._addItemToWidget(colorCat, item)
         # add field of selected algorithms
         self._addParameterFields(colorCat, requests)
         tabBenchmarkWidget.addTab(colorCat, "Colour Cat")
@@ -142,21 +141,21 @@ class BenchmarkView(BaseView):
         for item in itemsToAdd:
             self._addRadioButtonToWidget(analysisSel, item)
         tabBenchmarkWidget.addTab(analysisSel, "Analysis")
-        
+
         # visualization widget
         listWidgetVisualisation = QListWidget()
         listWidgetVisualisation.setMinimumSize(380,192)
         listWidgetVisualisation.setObjectName("visualisation_"+ str(self.benchmarkAnalysisCounter))
         self.dialog.analysis_visualisation.layout().addWidget(listWidgetVisualisation,*(self.benchmarkAnalysisCounter,1))
 
-        # fill widget   
-        itemsToAdd = ["Points without connection", "Points with connection", "Bar chart", "Lines", "Box plot"]       
+        # fill widget
+        itemsToAdd = ["Points without connection", "Points with connection", "Bar chart", "Lines", "Box plot"]
         for item in itemsToAdd:
             self._addItemToWidget(listWidgetVisualisation, item)
-        
+
         item = QListWidgetItem("------------------------------Additional Options------------------------------")
         listWidgetVisualisation.addItem(item)
-        itemsToAdd = ["Logarithmic y-axis", "Create legend", "Tight layout"]       
+        itemsToAdd = ["Logarithmic y-axis", "Create legend", "Tight layout"]
         for item in itemsToAdd:
             self._addItemToWidget(listWidgetVisualisation, item)
 
@@ -185,7 +184,7 @@ class BenchmarkView(BaseView):
         item = QListWidgetItem(itemName)
         item.setCheckState(Qt.Unchecked)
         widget.addItem(item)
-        
+
     def _addRadioButtonToWidget(self, widget, itemName):
         item = QListWidgetItem()
         widget.addItem(item)
@@ -219,7 +218,7 @@ class BenchmarkView(BaseView):
     def _getOGDFParameters(self):
         self.ogdfBenchmarkWidget.getBenchmarkDataObjects()
 
-    def _updateAllGraphs(self):
+    def updateAllGraphs(self):
         for layer in QgsProject.instance().mapLayers().values():
             if isinstance(layer, QgsPluginLayer) and not self.dialog.benchmark_all_graphs.findItems(layer.name(), Qt.MatchExactly):
                 self.dialog.benchmark_all_graphs.addItem(layer.name())
@@ -265,6 +264,9 @@ class BenchmarkView(BaseView):
             items.append(item)
 
         self.dialog.benchmark_ogdf_algorithms.insertTopLevelItems(0, items)
+
+    def resetOGDFAlgs(self):
+        self.dialog.benchmark_ogdf_algorithms.clear()
 
     def getSelectedAlgs(self):
         checked = []
@@ -334,7 +336,7 @@ class BenchmarkView(BaseView):
         for c in range(1,self.benchmarkAnalysisCounter+1):
             benchmarkSelWidget = grid.itemAtPosition(c,0).widget().widget(2)
             sectionFound = False
-            for i in range(benchmarkSelWidget.count()):             
+            for i in range(benchmarkSelWidget.count()):
                 radioB = benchmarkSelWidget.itemWidget(benchmarkSelWidget.item(i))
                 if radioB.isChecked():
                     analysis.append(radioB.text())
@@ -426,3 +428,6 @@ class BenchmarkView(BaseView):
 
     def getNumberOfSelectedGraphs(self):
         return self.dialog.benchmark_graph_selection.count()
+
+    def setNetworkButtonsEnabled(self, enabled):
+        self.dialog.benchmark_refresh_btn.setEnabled(enabled)

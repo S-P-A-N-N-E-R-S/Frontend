@@ -26,7 +26,7 @@ from ..exceptions import FieldRequiredError
 
 # client imports
 from ..network.client import Client
-from ..network import parserManager
+from ..network import parserManager, parserFetcher
 from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
@@ -48,6 +48,7 @@ class OGDFAnalysisController(BaseController):
         self.view.setDescriptionVisible(False)
 
         # add available analysis
+        parserFetcher.instance().parsersRefreshed.connect(self.fetchHandlersCompleted)
         self.refreshAnalysisList()
 
     def runJob(self):
@@ -134,44 +135,21 @@ class OGDFAnalysisController(BaseController):
             raise exception
 
     def refreshAnalysisList(self):
-        """
-        fetches all available handlers from server
-        :return:
-        """
-        parserManager.resetParsers()
         self.view.clearAnalysisList()
         self.view.setNetworkButtonsEnabled(False)
 
-        task = QgsTask.fromFunction(
-            "Refreshing algorithms...",
-            self.createFetchHandlersTask,
-            host=helper.getHost(),
-            port=helper.getPort(),
-            tlsOption=helper.getTlsOption(),
-            on_finished=self.fetchHandlersCompleted
-        )
-        QgsApplication.taskManager().addTask(task)
-        OGDFAnalysisController.activeTask = task
-        self.view.showInfo(task.description())
+        parserFetcher.instance().refreshParsers()
 
-    def createFetchHandlersTask(self, _task, host, port, tlsOption):
-        try:
-            with Client(host, port, tlsOption) as client:
-                client.getAvailableHandlers()
-                return {"success": self.tr("Algorithms refreshed!"),}
-        except (NetworkClientError, ParseError, ServerError) as error:
-            return {"error": str(error)}
+        self.view.showInfo("Refreshing algorithms...")
 
-    def fetchHandlersCompleted(self, exception, result=None):
+    def fetchHandlersCompleted(self, result=None):
         """
         Processes the results of the fetch handlers task.
         """
-        # first remove active task to allow a new request.
-        OGDFAnalysisController.activeTask = None
-
+        self.view.clearAnalysisList()
         self.view.setNetworkButtonsEnabled(True)
 
-        if exception is None:
+        if not result.get("exception"):
             if result is None:
                 # no result returned (probably manually canceled by the user)
                 return
@@ -184,4 +162,4 @@ class OGDFAnalysisController(BaseController):
                 elif "error" in result:
                     self.view.showError(str(result["error"]), self.tr("Network Error"))
         else:
-            raise exception
+            raise result["exception"]
