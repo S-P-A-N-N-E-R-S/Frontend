@@ -61,6 +61,11 @@ class JobsView(BaseView):
         # change job status text
         self.dialog.ogdf_jobs_list.currentItemChanged.connect(self._changeStatusText)
 
+        # init sorting options
+        self.initSortingOptions()
+        self.dialog.ogdf_jobs_sorting_options.currentIndexChanged.connect(self.controller.refreshJobs)
+        self.dialog.ogdf_jobs_sorting_direction.clicked.connect(self.updateSortingDirection)
+
     def setFetchStatusText(self):
         self.setStatusText("...")
 
@@ -125,6 +130,25 @@ class JobsView(BaseView):
         jobId = item.data(Qt.UserRole)
         self.controller.lastJobId = jobId
         return statusManager.getJobState(jobId)
+
+    # sorting
+    def initSortingOptions(self):
+        sortingOptionsWidget = self.dialog.ogdf_jobs_sorting_options
+        for sortingOption in statusManager.getSortingOptions():
+            sortingOptionsWidget.addItem(sortingOption)
+
+    def updateSortingDirection(self):
+        if self.dialog.ogdf_jobs_sorting_direction.text() == "Ascending":
+            self.dialog.ogdf_jobs_sorting_direction.setText("Descending")
+        else:
+            self.dialog.ogdf_jobs_sorting_direction.setText("Ascending")
+        self.controller.refreshJobs()
+
+    def getSortingOption(self):
+        return self.dialog.ogdf_jobs_sorting_options.currentText()
+
+    def getSortingDirection(self):
+        return self.dialog.ogdf_jobs_sorting_direction.text()
 
     # status text
 

@@ -2069,6 +2069,43 @@ QListWidget::item::selected {
                         </widget>
                        </item>
                        <item>
+                        <layout class="QHBoxLayout" name="ogdf_jobs_sorting_layout">
+                         <item>
+                          <widget class="QLabel" name="ogdf_jobs_sorting_label">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="text">
+                            <string>Sort:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QComboBox" name="ogdf_jobs_sorting_options">
+                           <property name="toolTip">
+                            <string>Select a sorting option</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="ogdf_jobs_sorting_direction">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="text">
+                            <string>Ascending</string>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
                         <widget class="QListWidget" name="ogdf_jobs_list">
                          <property name="autoScrollMargin">
                           <number>16</number>
