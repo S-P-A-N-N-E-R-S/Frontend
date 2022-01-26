@@ -24,6 +24,7 @@ from .. import helperFunctions as helper
 
 # client imports
 from ..network.client import Client
+from ..network import statusManager
 from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
@@ -151,6 +152,9 @@ class JobsController(BaseController):
         self.view.clearResult()
         self.view.clearJobs()
         self.view.setFetchStatusText()
+        
+        sortingOption = self.view.getSortingOption()
+        sortingDirection = self.view.getSortingDirection()
 
         # fetch result in background task
         task = QgsTask.fromFunction(
@@ -159,17 +163,20 @@ class JobsController(BaseController):
             host=helper.getHost(),
             port=helper.getPort(),
             tlsOption=helper.getTlsOption(),
+            sortingOption=sortingOption,
+            sortingDirection=sortingDirection,
             on_finished=self.refreshJobsCompleted
         )
         QgsApplication.taskManager().addTask(task)
         JobsController.activeTask = task
         self.view.showInfo(task.description())
 
-    def createRefreshJobsTask(self, _task, host, port, tlsOption):
+    def createRefreshJobsTask(self, _task, host, port, tlsOption, sortingOption, sortingDirection):
         # get refreshed job states
         try:
             with Client(host, port, tlsOption) as client:
-                states = client.getJobStatus()
+                client.getJobStatus()
+                states = statusManager.getSortedJobStates(sortingOption, sortingDirection)
                 # return jobs
                 return {
                     "success": self.tr("Job list refreshed!"),
@@ -193,7 +200,7 @@ class JobsController(BaseController):
                 return
 
             if "success" in result:
-                for job in result["states"].values():
+                for job in result["states"]:
                     self.view.addJob(job)
                 self.view.refreshStatusText()
                 self.view.showSuccess(result["success"])

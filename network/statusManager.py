@@ -14,6 +14,15 @@ STATUS_TEXTS = {
 }
 
 
+SORTING_OPTIONS = {
+    "Start Time": "startingTime",
+    "End Time": "endTime",
+    "Runtime": "ogdfRuntime",
+    "Status": "status",
+    "Name": "name"
+}
+
+
 class JobState():
     def __init__(self, jobState):
         self.jobId = jobState.job_id
@@ -32,6 +41,10 @@ class JobState():
         if timestamp.seconds > 0:
             return datetime.fromtimestamp(timestamp.seconds + timestamp.nanos/1e9)
         return None
+
+    @property
+    def name(self):
+        return self.getJobName()
 
     def getJobName(self):
         if self.jobName:
@@ -89,6 +102,17 @@ def getJobState(jobId):
         raise NetworkClientError("Found no job with the given id") from error
 
 
+def jobSortingFunction(job, sortingOption):
+    return getattr(job, SORTING_OPTIONS.get(sortingOption, "startingTime"))
+
+
+def getSortedJobStates(sortingOption, sortingDirection):
+    sortedJobStates = list(jobStates.values())
+    sortedJobStates.sort(key= lambda job: jobSortingFunction(job, sortingOption),
+        reverse=bool(sortingDirection=="Descending"))
+    return sortedJobStates or []
+
+
 def getJobStates():
     return jobStates
 
@@ -100,6 +124,10 @@ def getJobStateDict():
             'status': state.status
         }
     return jobStatesDict
+
+
+def getSortingOptions():
+    return list(SORTING_OPTIONS.keys())
 
 
 def insertJobState(jobState):
