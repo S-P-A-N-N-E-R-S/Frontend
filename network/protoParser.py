@@ -4,11 +4,12 @@ from . import parserManager, statusManager
 from .exceptions import ParseError, ServerError
 from .protocol.build import container_pb2, error_pb2, meta_pb2
 
-from .responses.statusResponse import StatusResponse
 from .responses.availableHandlersResponse import AvailableHandlersResponse
+from .responses.emptyResponse import EmptyResponse
 from .responses.genericResponse import GenericResponse
 from .responses.newJobResponse import NewJobResponse
 from .responses.shortestPathResponse import ShortestPathResponse
+from .responses.statusResponse import StatusResponse
 
 
 ERROR_TYPES = {
@@ -147,11 +148,13 @@ def getResponseByType(requestType):
     # Return the correct default constructed response type by the type field provied by meta data
     try:
         return {
+            meta_pb2.RequestType.AUTH: EmptyResponse,
             meta_pb2.RequestType.AVAILABLE_HANDLERS: AvailableHandlersResponse,
+            meta_pb2.RequestType.CREATE_USER: EmptyResponse,
             meta_pb2.RequestType.GENERIC: GenericResponse,
             meta_pb2.RequestType.NEW_JOB_RESPONSE: NewJobResponse,
             meta_pb2.RequestType.SHORTEST_PATH: ShortestPathResponse,
             meta_pb2.RequestType.STATUS: StatusResponse,
-        }.get(requestType)
+        }[requestType]
     except KeyError as error:
         raise ParseError("Unknown response key") from error

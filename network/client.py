@@ -69,22 +69,14 @@ class Client():
         metaString = protoParser.getMetaStringFromType(meta_pb2.RequestType.AUTH)
         self._sendProtoBufString(metaString, bytearray())
 
-        # Get meta message length
-        rawMsgLength = self._recvAll(LENGTH_FIELD_SIZE)
-        if not rawMsgLength:
-            raise NetworkClientError("No ProtoBuf length received")
-        msgLength = struct.unpack('!Q', rawMsgLength)[0]
+        self.recv()
+        return True
 
-        # Get meta message
-        metaString = self._recvAll(msgLength)
-        metaData = protoParser.parseMetaData(metaString)
+    def createUser(self):
+        metaString = protoParser.getMetaStringFromType(meta_pb2.RequestType.CREATE_USER)
+        self._sendProtoBufString(metaString, bytearray())
 
-        # Get errorMessage
-        if metaData.containerSize and metaData.type == meta_pb2.RequestType.ERROR:
-            compressedProtoBufString = self._recvAll(metaData.containerSize)
-            if not compressedProtoBufString:
-                raise NetworkClientError("No ProtoBuf received")
-            protoParser.parseError(gzip.decompress(compressedProtoBufString))
+        self.recv()
         return True
 
     def getAvailableHandlers(self):
@@ -168,11 +160,14 @@ class Client():
             if not handlerType or not metaData.handlerType or handlerType != metaData.handlerType:
                 raise ParseError("Invalid handler type")
 
-        # Get container
-        compressedProtoBufString = self._recvAll(metaData.containerSize)
-        if not compressedProtoBufString:
+        if metaData.containerSize:
+            # Get container
+            compressedProtoBufString = self._recvAll(metaData.containerSize)
+            if not compressedProtoBufString:
+                raise NetworkClientError("No ProtoBuf received")
+            return protoParser.parseProtoBuf(gzip.decompress(compressedProtoBufString), metaData.type, handlerType)
+        else:
             raise NetworkClientError("No ProtoBuf received")
-        return protoParser.parseProtoBuf(gzip.decompress(compressedProtoBufString), metaData.type, handlerType)
 
     def _recvAll(self, msgLength):
         # Helper function to recv n bytes or return None if EOF is hit

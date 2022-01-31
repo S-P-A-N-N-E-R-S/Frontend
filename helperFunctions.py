@@ -18,15 +18,14 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+import os
+from os.path import abspath, join, dirname, splitext, basename, isfile
+import re
+import configparser
 from enum import Enum
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
-
-from os.path import abspath, join, dirname, splitext, basename, isfile
-import os
-import re
-import configparser
 
 
 class TlsOption(Enum):
@@ -74,6 +73,16 @@ def getTlsOption():
         return TlsOption.ENABLED_NO_CHECK
     else:
         return TlsOption.DISABLED
+
+
+def getUsername():
+    """ Get the last saved username"""
+    return QgsSettings().value("ogdfplugin/username", "")
+
+
+def getAuthId():
+    """ Get the authId"""
+    return QgsSettings().value("ogdfplugin/authId")
 
 
 def getPluginPath():
@@ -155,107 +164,107 @@ def saveLayer(layer, layerName, type, path=None, format=None):
     """
     if layer.isValid():
         if type == "vector":
-                if path:
-                    if not format:
-                        # use extension
-                        format = splitext(path)[1]
-                    # copy layer to path
-                    QgsVectorFileWriter.writeAsVectorFormat(layer, path, "UTF-8", layer.crs(), QgsVectorFileWriter.driverForExtension(format))
-                    # load created layer
-                    createdLayer = QgsVectorLayer(path, splitext(basename(path))[0], "ogr")
-                    if createdLayer.isValid():
-                        return createdLayer
-                else:
-                    # create scratch layer by copy vector data
-                    wkbType = QgsWkbTypes.displayString(layer.wkbType())
-                    tmpLayer = QgsVectorLayer(wkbType, layerName, "memory")
-                    tmpLayer.setCrs(layer.crs())
-                    tmpLayerData = tmpLayer.dataProvider()
-                    tmpLayerData.addAttributes(layer.fields())
-                    tmpLayer.updateFields()
-                    tmpLayerData.addFeatures(layer.getFeatures())
-                    if tmpLayer.isValid():
-                        return tmpLayer
-
-        elif type == "raster":
-                if not path:
-                    # create temporary path
-                    path = QgsProcessingUtils.generateTempFilename(layerName)
+            if path:
                 if not format:
-                    # use tif
-                    format = "tif"
+                    # use extension
+                    format = splitext(path)[1]
                 # copy layer to path
-                provider = layer.dataProvider()
-                pipe = QgsRasterPipe()
-                pipe.set(provider.clone())
-
-                fileWriter = QgsRasterFileWriter(path)
-                fileWriter.setOutputFormat(fileWriter.driverForExtension(format))
-                fileWriter.writeRaster(pipe, provider.xSize(), provider.ySize(), provider.extent(), provider.crs())
-
+                QgsVectorFileWriter.writeAsVectorFormat(layer, path, "UTF-8", layer.crs(), QgsVectorFileWriter.driverForExtension(format))
                 # load created layer
-                createdLayer = QgsRasterLayer(path, splitext(basename(path))[0])
+                createdLayer = QgsVectorLayer(path, splitext(basename(path))[0], "ogr")
                 if createdLayer.isValid():
                     return createdLayer
+            else:
+                # create scratch layer by copy vector data
+                wkbType = QgsWkbTypes.displayString(layer.wkbType())
+                tmpLayer = QgsVectorLayer(wkbType, layerName, "memory")
+                tmpLayer.setCrs(layer.crs())
+                tmpLayerData = tmpLayer.dataProvider()
+                tmpLayerData.addAttributes(layer.fields())
+                tmpLayer.updateFields()
+                tmpLayerData.addFeatures(layer.getFeatures())
+                if tmpLayer.isValid():
+                    return tmpLayer
+
+        elif type == "raster":
+            if not path:
+                # create temporary path
+                path = QgsProcessingUtils.generateTempFilename(layerName)
+            if not format:
+                # use tif
+                format = "tif"
+            # copy layer to path
+            provider = layer.dataProvider()
+            pipe = QgsRasterPipe()
+            pipe.set(provider.clone())
+
+            fileWriter = QgsRasterFileWriter(path)
+            fileWriter.setOutputFormat(fileWriter.driverForExtension(format))
+            fileWriter.writeRaster(pipe, provider.xSize(), provider.ySize(), provider.extent(), provider.crs())
+
+            # load created layer
+            createdLayer = QgsRasterLayer(path, splitext(basename(path))[0])
+            if createdLayer.isValid():
+                return createdLayer
     return None
 
 
 def saveGraph(graph, graphLayer, graphName="", savePath=None, renderGraph=True):
-        """
-        Saves graph or created graph layers to destination and adds the created layers to project
-        :param graph: ExtGraph
-        :param graphLayer:
-        :param graphName:
-        :return: successful or not
-        """
-        success = True
-        errorMsg = ""
-        if savePath:
-            fileName, extension = splitext(savePath)
-            if extension == ".graphml":
-                graph.writeGraphML(savePath)
-            else:
-                # if layer path as .shp
-                # create vector layer from graph layer
-                [vectorPointLayer, vectorLineLayer] = graphLayer.createVectorLayer()
-
-                # adjust path to point or lines
-                savePath = savePath[:-len(extension)]
-                savePathPoints = savePath
-                savePathLines = savePath
-
-                savePathPoints += "Points" + extension
-                savePathLines += "Lines" + extension
-
-                # save vector layers to path
-                vectorPointLayer = saveLayer(vectorPointLayer, vectorPointLayer.name(), "vector", savePathPoints, extension)
-                vectorLineLayer = saveLayer(vectorLineLayer, vectorLineLayer.name(), "vector", savePathLines, extension)
-
-                # add vector layers to project
-                if vectorPointLayer:
-                    QgsProject.instance().addMapLayer(vectorPointLayer)
-                else:
-                    errorMsg = tr("Created point layer can not be loaded due to invalidity!")
-                    success = False
-
-                if vectorLineLayer:
-                    QgsProject.instance().addMapLayer(vectorLineLayer)
-                else:
-                    errorMsg = tr("Created line layer can not be loaded due to invalidity!")
-                    success = False
-
-        # add graph layer to project
-        graphLayer.setName(graphName + "GraphLayer")
-        if graphLayer.isValid():
-            QgsProject.instance().addMapLayer(graphLayer)
-
-            # disable graph rendering if checkbox is not checked
-            if not renderGraph:
-                QgsProject.instance().layerTreeRoot().findLayer(graphLayer).setItemVisibilityChecked(False)
+    """
+    Saves graph or created graph layers to destination and adds the created layers to project
+    :param graph: ExtGraph
+    :param graphLayer:
+    :param graphName:
+    :return: successful or not
+    """
+    success = True
+    errorMsg = ""
+    if savePath:
+        fileName, extension = splitext(savePath)
+        if extension == ".graphml":
+            graph.writeGraphML(savePath)
         else:
-            errorMsg = tr("Created graph layer can not be loaded due to invalidity!")
-            success = False
-        return success, errorMsg
+            # if layer path as .shp
+            # create vector layer from graph layer
+            [vectorPointLayer, vectorLineLayer] = graphLayer.createVectorLayer()
+
+            # adjust path to point or lines
+            savePath = savePath[:-len(extension)]
+            savePathPoints = savePath
+            savePathLines = savePath
+
+            savePathPoints += "Points" + extension
+            savePathLines += "Lines" + extension
+
+            # save vector layers to path
+            vectorPointLayer = saveLayer(vectorPointLayer, vectorPointLayer.name(), "vector", savePathPoints, extension)
+            vectorLineLayer = saveLayer(vectorLineLayer, vectorLineLayer.name(), "vector", savePathLines, extension)
+
+            # add vector layers to project
+            if vectorPointLayer:
+                QgsProject.instance().addMapLayer(vectorPointLayer)
+            else:
+                errorMsg = tr("Created point layer can not be loaded due to invalidity!")
+                success = False
+
+            if vectorLineLayer:
+                QgsProject.instance().addMapLayer(vectorLineLayer)
+            else:
+                errorMsg = tr("Created line layer can not be loaded due to invalidity!")
+                success = False
+
+    # add graph layer to project
+    graphLayer.setName(graphName + "GraphLayer")
+    if graphLayer.isValid():
+        QgsProject.instance().addMapLayer(graphLayer)
+
+        # disable graph rendering if checkbox is not checked
+        if not renderGraph:
+            QgsProject.instance().layerTreeRoot().findLayer(graphLayer).setItemVisibilityChecked(False)
+    else:
+        errorMsg = tr("Created graph layer can not be loaded due to invalidity!")
+        success = False
+    return success, errorMsg
 
 
 def getVectorFileFilter():

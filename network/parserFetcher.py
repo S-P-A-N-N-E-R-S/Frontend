@@ -52,6 +52,10 @@ class ParserFetcher(QObject):
             result["exception"] = exception
             self.parsersRefreshed.emit(result)
 
+    def resetParsers(self):
+        parserManager.resetParsers()
+        self.parsersRefreshed.emit({"reset": True})
+
 
 _inst = ParserFetcher()
 
