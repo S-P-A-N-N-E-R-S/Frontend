@@ -56,10 +56,11 @@ class OGDFAnalysisController(BaseController):
             self.view.showError(self.tr("Please wait until previous request is finished!"))
             return
 
-        # todo: pass authId to client
-        _authId = self.settings.value("ogdfplugin/authId")
-
-        request = self.view.getAnalysis()
+        try:
+            request = self.view.getAnalysis()
+        except NetworkClientError:
+            self.view.showError(self.tr("No analysis selected!"))
+            return
         if request is None:
             self.view.showError(self.tr("No analysis selected!"))
             return

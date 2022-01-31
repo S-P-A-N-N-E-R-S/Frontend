@@ -16,7 +16,10 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+from qgis.PyQt.QtWidgets import QDialogButtonBox, QDialog
+
 from .baseView import BaseView
+from .widgets.QgsLoginDialog import LoginDialog
 from ..controllers.options import OptionsController
 
 
@@ -27,7 +30,10 @@ class OptionsView(BaseView):
         self.name = "options"
         self.controller = OptionsController(self)
 
-        self.dialog.options_save_btn.clicked.connect(self.controller.saveOptions)
+        self.dialog.options_save_btn.clicked.connect(self.controller.saveAction)
+        self.dialog.options_log_out_btn.clicked.connect(self.controller.logOut)
+        self.dialog.options_log_in_btn.clicked.connect(self.controller.logIn)
+        self.dialog.options_user_creation_btn.clicked.connect(self.controller.createUser)
 
         self.dialog.options_ssl_input.stateChanged.connect(self.updateSslCheckVisibility)
 
@@ -63,6 +69,12 @@ class OptionsView(BaseView):
 
     # authentication
 
+    def getCredentials(self, username="", create=False):
+        loginDialog = LoginDialog(username=username, create=create)
+        if loginDialog.exec_() == QDialog.Accepted:
+            return loginDialog.getUsername(), loginDialog.getPassword()
+        return "", ""
+
     def getUsername(self):
         return self.dialog.options_credentials_username_input.text()
 
@@ -72,5 +84,19 @@ class OptionsView(BaseView):
     def getPassword(self):
         return self.dialog.options_credentials_password_input.text()
 
+    def setLoggedInView(self, loggedIn, username=""):
+        if loggedIn:
+            loggedInText = f"{self.tr('Logged in as')}: {username}"
+            self.dialog.ogdf_logged_in_label.setText(loggedInText)
+        else:
+            self.dialog.ogdf_logged_in_label.setText(self.tr("Not logged in"))
+        self.dialog.options_log_out_btn.setVisible(loggedIn)
+        self.dialog.options_log_in_btn.setVisible(not loggedIn)
+        self.dialog.options_user_creation_btn.setVisible(not loggedIn)
+
     def setPasswordPlaceholder(self, text):
         self.dialog.options_credentials_password_input.setPlaceholderText(text)
+
+    def setNetworkButtonsEnabled(self, enabled):
+        self.dialog.options_save_btn.button(QDialogButtonBox.Save).setEnabled(enabled)
+        self.dialog.options_user_creation_btn.setEnabled(enabled)
