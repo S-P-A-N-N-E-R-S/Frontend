@@ -8,6 +8,8 @@ from .exceptions import NetworkClientError, ParseError
 from .protocol.build import meta_pb2
 from .requests.statusRequest import StatusRequest
 from .requests.resultRequest import ResultRequest
+from .requests.abortJobRequest import AbortJobRequest
+from .requests.deleteJobRequest import DeleteJobRequest
 from ..helperFunctions import TlsOption
 
 
@@ -120,6 +122,32 @@ class Client():
         handlerType = statusManager.getJobState(jobId).handlerType
         jobResponse = self.recv(handlerType)
         return jobResponse
+
+    def abortJob(self, jobId):
+        request = AbortJobRequest(jobId)
+        protoBufString = protoParser.createProtoBuf(request)
+        compressedProtoBufString = gzip.compress(protoBufString)
+
+        metaString = protoParser.getMetaStringFromRequest(request, len(compressedProtoBufString))
+
+        self._sendProtoBufString(metaString, compressedProtoBufString)
+
+        # Wait for answer
+        self.recv()
+        return True
+
+    def deleteJob(self, jobId):
+        request = DeleteJobRequest(jobId)
+        protoBufString = protoParser.createProtoBuf(request)
+        compressedProtoBufString = gzip.compress(protoBufString)
+
+        metaString = protoParser.getMetaStringFromRequest(request, len(compressedProtoBufString))
+
+        self._sendProtoBufString(metaString, compressedProtoBufString)
+
+        # Wait for answer
+        self.recv()
+        return True
 
     def sendJobRequest(self, request):
         # Create compressed wire format
