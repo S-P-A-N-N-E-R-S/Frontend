@@ -46,7 +46,7 @@ class JobsView(BaseView):
         self.dialog.ogdf_jobs_fetch_origin_graph_btn.clicked.connect(self.controller.fetchOriginGraph)
         self.dialog.ogdf_jobs_refresh_btn.clicked.connect(self.controller.refreshJobs)
         self.dialog.ogdf_jobs_abort_btn.clicked.connect(self.controller.abortJob)
-        self.dialog.ogdf_jobs_restart_btn.clicked.connect(self.controller.restartJob)
+        self.dialog.ogdf_jobs_delete_btn.clicked.connect(self.controller.deleteJob)
 
         # show output placeholder
         self.dialog.ogdf_jobs_output.lineEdit().setPlaceholderText("[Save to temporary layer]")
@@ -58,8 +58,11 @@ class JobsView(BaseView):
         self.dialog.ogdf_jobs_list.setMouseTracking(True)
         self.dialog.ogdf_jobs_list.setItemDelegate(ItemDelegate())
 
-        # change job status text
-        self.dialog.ogdf_jobs_list.currentItemChanged.connect(self._changeStatusText)
+        # job changed
+        self.dialog.ogdf_jobs_list.itemSelectionChanged.connect(self._jobChanged)
+
+        # init job buttons visibility
+        self.updateJobButtonsVisibility()
 
         # init sorting options
         self.initSortingOptions()
@@ -73,9 +76,6 @@ class JobsView(BaseView):
         self.setStatusText("")
 
     def refreshStatusText(self):
-        self._changeStatusText()
-
-    def _changeStatusText(self):
         self.setResultHtml("")
         self.setResultVisible(False)
 
@@ -84,6 +84,10 @@ class JobsView(BaseView):
             self.resetStatusText()
         else:
             self.setStatusText(job.getStatusText())
+
+    def _jobChanged(self):
+        self.refreshStatusText()
+        self.updateJobButtonsVisibility()
 
     def addJob(self, job):
         jobName = job.getJobName()
@@ -130,6 +134,21 @@ class JobsView(BaseView):
         jobId = item.data(Qt.UserRole)
         self.controller.lastJobId = jobId
         return statusManager.getJobState(jobId)
+
+    def hasSelectedJob(self):
+        return len(self.dialog.ogdf_jobs_list.selectedItems()) > 0
+
+    def updateJobButtonsVisibility(self):
+        if self.hasSelectedJob():
+            # enable and disable button according to job status
+            job = self.getCurrentJob()
+
+            self.dialog.ogdf_jobs_abort_btn.setVisible(job.isRunning())
+            self.dialog.ogdf_jobs_delete_btn.setVisible(not job.isRunning())
+        else:
+            # no job selected in list
+            self.dialog.ogdf_jobs_abort_btn.setVisible(False)
+            self.dialog.ogdf_jobs_delete_btn.setVisible(False)
 
     # sorting
     def initSortingOptions(self):
@@ -219,4 +238,4 @@ class JobsView(BaseView):
         self.dialog.ogdf_jobs_refresh_btn.setEnabled(enabled)
         self.dialog.ogdf_jobs_fetch_origin_graph_btn.setEnabled(enabled)
         self.dialog.ogdf_jobs_abort_btn.setEnabled(enabled)
-        self.dialog.ogdf_jobs_restart_btn.setEnabled(enabled)
+        self.dialog.ogdf_jobs_delete_btn.setEnabled(enabled)

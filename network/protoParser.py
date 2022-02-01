@@ -148,9 +148,11 @@ def getResponseByType(requestType):
     # Return the correct default constructed response type by the type field provied by meta data
     try:
         return {
+            meta_pb2.RequestType.ABORT_JOB: EmptyResponse,
             meta_pb2.RequestType.AUTH: EmptyResponse,
             meta_pb2.RequestType.AVAILABLE_HANDLERS: AvailableHandlersResponse,
             meta_pb2.RequestType.CREATE_USER: EmptyResponse,
+            meta_pb2.RequestType.DELETE_JOB: EmptyResponse,
             meta_pb2.RequestType.GENERIC: GenericResponse,
             meta_pb2.RequestType.NEW_JOB_RESPONSE: NewJobResponse,
             meta_pb2.RequestType.SHORTEST_PATH: ShortestPathResponse,
