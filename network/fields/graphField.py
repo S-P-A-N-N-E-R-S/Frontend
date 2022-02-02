@@ -33,6 +33,7 @@ class GraphField(BaseField):
 
         # add static attributes to request
         request.staticAttributes["crs"] = str(graph.crs.authid())
+        request.staticAttributes["distanceStrategy"] = str(graph.distanceStrategy)
         request.staticAttributes["edgeDirection"] = str(graph.edgeDirection)
 
     def createWidget(self, parent):
