@@ -10,6 +10,7 @@ from .requests.statusRequest import StatusRequest
 from .requests.resultRequest import ResultRequest
 from .requests.abortJobRequest import AbortJobRequest
 from .requests.deleteJobRequest import DeleteJobRequest
+from .requests.originGraphRequest import OriginGraphRequest
 from ..helperFunctions import TlsOption
 
 
@@ -148,6 +149,19 @@ class Client():
         # Wait for answer
         self.recv()
         return True
+
+    def getOriginGraph(self, jobId):
+        request = OriginGraphRequest(jobId)
+        protoBufString = protoParser.createProtoBuf(request)
+        compressedProtoBufString = gzip.compress(protoBufString)
+
+        metaString = protoParser.getMetaStringFromRequest(request, len(compressedProtoBufString))
+
+        self._sendProtoBufString(metaString, compressedProtoBufString)
+
+        # Wait for answer
+        response = self.recv()
+        return response
 
     def sendJobRequest(self, request):
         # Create compressed wire format

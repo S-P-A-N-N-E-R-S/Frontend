@@ -107,11 +107,42 @@ class JobsController(BaseController):
             "success": self.tr("Result fetched!"),
             "resultString": resultString,
             "graph": graph,
+            "graphName": f"{job.getJobName()} - {self.tr('Result')}",
             "job": job,
         }
 
     def fetchOriginGraph(self):
-        pass
+        job = self.view.getCurrentJob()
+        if job is None:
+            self.view.showWarning(self.tr("Please select a job."))
+            return
+
+        # todo: Check if job has a graph
+
+        self.view.setNetworkButtonsEnabled(False)
+
+        # fetch origin graph in background task
+        self._createTask(self.tr("Fetching origin graph..."), self.fetchOriginGraphTask, job=job)
+
+    def fetchOriginGraphTask(self, _task, host, port, tlsOption, job):
+        try:
+            with Client(host, port, tlsOption=tlsOption) as client:
+                response = client.getOriginGraph(job.jobId)
+        except (NetworkClientError, ParseError, ServerError) as error:
+            return {"error": str(error)}
+
+        # if response contains a graph: show it in qgis
+        try:
+            graph = response.getGraph()
+        except AttributeError:
+            graph = None
+
+        return {
+            "success": self.tr("Origin graph fetched!"),
+            "graph": graph,
+            "graphName": f"{job.getJobName()} - {self.tr('Origin')}",
+            "job": job,
+        }
 
     def refreshJobs(self):
         if JobsController.activeTask is not None:
@@ -249,7 +280,9 @@ class JobsController(BaseController):
                 graphLayer = QgsGraphLayer()
                 graphLayer.setGraph(result["graph"])
                 jobName = result["job"].getJobName()
-                success, errorMsg = helper.saveGraph(result["graph"], graphLayer, f"{jobName} - {self.tr('Result')}", self.view.getDestinationFilePath())
+                graphName = result.get("graphName", f"{jobName} - {self.tr('Result')}")
+                success, errorMsg = helper.saveGraph(result["graph"], graphLayer, graphName,
+                                                     self.view.getDestinationFilePath())
                 if not success:
                     self.view.showError(str(errorMsg))
 

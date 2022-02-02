@@ -8,6 +8,7 @@ from .responses.availableHandlersResponse import AvailableHandlersResponse
 from .responses.emptyResponse import EmptyResponse
 from .responses.genericResponse import GenericResponse
 from .responses.newJobResponse import NewJobResponse
+from .responses.originGraphResponse import OriginGraphResponse
 from .responses.shortestPathResponse import ShortestPathResponse
 from .responses.statusResponse import StatusResponse
 
@@ -155,6 +156,7 @@ def getResponseByType(requestType):
             meta_pb2.RequestType.DELETE_JOB: EmptyResponse,
             meta_pb2.RequestType.GENERIC: GenericResponse,
             meta_pb2.RequestType.NEW_JOB_RESPONSE: NewJobResponse,
+            meta_pb2.RequestType.ORIGIN_GRAPH: OriginGraphResponse,
             meta_pb2.RequestType.SHORTEST_PATH: ShortestPathResponse,
             meta_pb2.RequestType.STATUS: StatusResponse,
         }[requestType]
