@@ -1095,11 +1095,14 @@ class ExtGraph(QObject):
                 clusterKey = '\t<key for="node" attr.name="clusterid" attr.type="int" id="clusterid" />\n'
                 file.write(clusterKey)
 
-            if self.distanceStrategy == "Advanced":
+            if self.distanceStrategy == "Advanced" and self.amountOfEdgeCostFunctions() > 1:
                 advancedEdgeKeys = ''
                 for costIdx in range(self.amountOfEdgeCostFunctions()):
-                    advancedEdgeKeys += '\t<key for="edge" attr.name="weight_' + str(costIdx) + ' attr.type="double id="c_' + str(costIdx) + '" />\n'
+                    advancedEdgeKeys += '\t<key for="edge" attr.name="weight_' + str(costIdx) + '" attr.type="double" id="weight_' + str(costIdx) + '" />\n'
                 file.write(advancedEdgeKeys)
+            else:
+                weightKey = '\t<key for="edge" attr.name="weight" attr.type="double" id="weight" />\n'
+                file.write(weightKey)
 
             # if setCostOfVertex was used to add specific cost to a vertex
             if hasattr(self, "advancedVertexWeights") and self.advancedVertexWeights:
@@ -1114,8 +1117,8 @@ class ExtGraph(QObject):
             graphString += 'edgedefault="' + edgeDefault + '" distancestrategy="' + self.distanceStrategy
             graphString += '" connectiontype="' + self.mConnectionType + '" numberneighbors="' + str(self.numberNeighbours)
             graphString += '" nnallowdoubleedges="' + str(self.nnAllowDoubleEdges) + '" distance="' + str(self.distance[0])
-            graphString += '" distanceunit="' + str(self.distance[1]) + '"' + ((' seed="' + str(self.randomSeed)) if self.randomSeed else '')
-            graphString += (('" crs="' + self.crs.authid() + '"') if self.crs else '') + '>\n'
+            graphString += '" distanceunit="' + str(self.distance[1]) + '"' + ((' seed="' + str(self.randomSeed)) + '"' if self.randomSeed else '')
+            graphString += ((' crs="' + self.crs.authid() + '"') if self.crs else '') + '>\n'
             file.write(graphString)
 
             vertexKeyAttributes = ['\t\t\t<data key="width">20</data>\n',
@@ -1167,11 +1170,15 @@ class ExtGraph(QObject):
                 edgeLine = '\t\t<edge id="' + str(edge.id()) + '" source="' + str(edge.fromVertex()) + '" target="' + str(edge.toVertex()) + '">\n'
                 file.write(edgeLine)
                 file.writelines(edgeKeyAttributes)
-                if self.distanceStrategy == "Advanced":
-                    edgeData = ''
+
+                edgeData = ''
+                if self.distanceStrategy == "Advanced" and self.amountOfEdgeCostFunctions() > 1:
                     for costIdx in range(self.amountOfEdgeCostFunctions()):
-                        edgeData += '\t\t\t<data key="c_' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
-                    file.write(edgeData)
+                        edgeData += '\t\t\t<data key="weight_' + str(costIdx) + '">' + str(self.costOfEdge(idx, costIdx)) + '</data>\n'
+                else:
+                    edgeData += '\t\t\t<data key="weight">' + str(self.costOfEdge(idx)) + '</data>\n'
+                file.write(edgeData)
+
                 if self.vLayer != None and self.vLayer.geometryType() == QgsWkbTypes.LineGeometry:
                     for field in self.vLayer.fields():
                         if edge.feature != None:
@@ -1269,9 +1276,13 @@ class ExtGraph(QObject):
                 elif 'key="cluster"' in line:
                     self.vertex(currNodeIdx).setClusterID(int(line.split('<data key="cluster">')[1].split('<')[0]))
 
-                elif 'key="c_' in line:
-                    costIdx = int(line.split('key="c_')[1].split('"')[0])
-                    cost = float(line.split('<data key="c_' + str(costIdx) + '">')[1].split('<')[0])
+                elif 'key="weight' in line and self.distanceStrategy == "Advanced":
+                    if "weight_" in line:
+                        costIdx = int(line.split('key="weight_')[1].split('"')[0])
+                        cost = float(line.split('<data key="weight_' + str(costIdx) + '">')[1].split('<')[0])
+                    elif "weight" in line:
+                        costIdx = 0
+                        cost = float(line.split('<data key="weight">')[1].split('<')[0])
 
                     if parseNode:
                         self.setCostOfVertex(currNodeIdx, costIdx, cost)
