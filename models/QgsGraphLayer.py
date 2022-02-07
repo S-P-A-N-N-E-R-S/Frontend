@@ -902,10 +902,15 @@ class QgsGraphLayer(QgsPluginLayer):
                 if constructName == layer.name() and currHighestNr == 0:
                     currHighestNr = 1
                 elif constructName in layer.name():
-                    nameNr = int(layer.name().split(constructName)[1])
+                    nameNr = layer.name().split(constructName)[1]
+                    if nameNr != "":
+                        nameNr = int(nameNr)
+                        if currHighestNr <= nameNr:
+                            currHighestNr = nameNr + 1
+                    else:
+                        if currHighestNr <= 0:
+                            currHighestNr = 1
 
-                    if currHighestNr <= nameNr:
-                        currHighestNr = nameNr + 1
 
             self.setName(constructName + (str(currHighestNr) if currHighestNr > 0 else ""))
 
