@@ -20,13 +20,24 @@ from qgis.core import *
 from qgis.gui import QgsMapTool, QgsVertexMarker, QgsRubberBand
 from qgis.utils import iface
 
-from qgis.PyQt.QtCore import QPoint, Qt
-from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QDoubleSpinBox, QGroupBox
+from qgis.PyQt.QtCore import QPoint, Qt, QObject
+from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QDoubleSpinBox, QGroupBox, QActionGroup
 from qgis.PyQt.QtGui import QColor
 
 from .QgsGraphUndoCommands import ExtVertexUndoCommand, ExtEdgeUndoCommand
 
-class QgsGraphMapTool(QgsMapTool):
+import enum
+
+class Operations(enum.Enum):
+    DEFAULT = -1
+
+    # left clicks
+    ADD_VERTEX_WITH_EDGES = 1
+
+    # right clicks
+    SELECT_VERTEX = 2
+
+class QgsGraphMapTool(QgsMapTool, QObject):
     """
     QgsGraphMapTool enables the user to edit an ExtGraph in a QgsGraphLayer
     """
@@ -45,19 +56,74 @@ class QgsGraphMapTool(QgsMapTool):
 
         self.rubberBand = None
 
+        # states which operation got triggered
+        self.operation = Operations.DEFAULT
+        self.triggeredAction = None
+
     def activate(self):
         self.advancedCosts = self.mLayer.mGraph.distanceStrategy == "Advanced"
         iface.mapCanvas().grabKeyboard()
-        # iface.mapCanvas().releaseKeyboard()
-        # emit self.activated()
-        pass
+
+        # enable actions in edit toolbar and listen to them
+        toolbar = self.mLayer.graphToolBar
+        toolbar.actionTriggered.connect(self.__toolBarActionTriggered)
+
+        for action in toolbar.actions():
+            if not "Delete Vertex" in action.whatsThis():
+                action.setEnabled(True)
+            if "Toggle Edit" in action.whatsThis():
+                action.setChecked(True)
+
+        self.operation = Operations.DEFAULT
 
     def deactivate(self):
         if hasattr(self, "win") and self.win:
             self.win.done(0)
         iface.mapCanvas().releaseKeyboard()
-        # emit self.deactivated()
-        pass
+
+        # enable all actions in edit toolbar and listen to them
+        toolbar = self.mLayer.graphToolBar
+        toolbar.actionTriggered.disconnect(self.__toolBarActionTriggered)
+
+        for action in toolbar.actions():
+            whatsThis = action.whatsThis()
+            if "Vertex" in whatsThis or "Undo" in whatsThis or "Redo" in whatsThis:
+                action.setEnabled(False)
+            action.setChecked(False)
+
+        self.mLayer = None
+
+    def __toolBarActionTriggered(self, action):
+        whatsThis = action.whatsThis()
+        self.triggeredAction = action
+
+        if "Select Vertex" in whatsThis:
+            if self.operation == Operations.SELECT_VERTEX:
+                self.operation = Operations.DEFAULT
+                self.triggeredAction.setChecked(False)
+            else:
+                self.operation = Operations.SELECT_VERTEX
+                self.triggeredAction.setChecked(True)
+
+        elif "Delete Vertex" in whatsThis:
+            # remove vertex if found
+            self._deleteVertex(self.firstFoundVertexIdx)
+
+            self.__removeFirstFound()
+
+        elif "Add Vertex With Edges" in whatsThis:
+            if self.operation == Operations.ADD_VERTEX_WITH_EDGES:
+                self.operation = Operations.DEFAULT
+                self.triggeredAction.setChecked(False)
+            else:
+                self.operation = Operations.ADD_VERTEX_WITH_EDGES
+                self.triggeredAction.setChecked(True)
+
+        elif action.tr("Undo") in whatsThis:
+            self.mLayer.mUndoStack.undo()
+
+        elif action.tr("Redo") in whatsThis:
+            self.mLayer.mUndoStack.redo()
 
     def _addVertex(self, point, movePoint=False):
         """
@@ -255,7 +321,8 @@ class QgsGraphMapTool(QgsMapTool):
         self.converter = iface.mapCanvas().getCoordinateTransform()
         clickPosition = self.converter.toMapCoordinates(clickPosition)
 
-        if event.button() == Qt.LeftButton: # LeftClick
+        # left click or left click Operations
+        if event.button() == Qt.LeftButton and self.operation == Operations.DEFAULT or self.operation == Operations.ADD_VERTEX_WITH_EDGES: # LeftClick
             self.leftPressed = True
 
             if self.shiftPressed: # select vertices by rectangle
@@ -263,22 +330,23 @@ class QgsGraphMapTool(QgsMapTool):
                 self.bottomRight = clickPosition
                 self.drawRect = True
 
-            elif not self.ctrlPressed:
+            elif not self.ctrlPressed and not self.operation == Operations.ADD_VERTEX_WITH_EDGES:
                 if not self.firstFound: # addVertex
                     self._addVertex(clickPosition)
 
-                else: # move firstFoundVertex to new position
+                elif self.firstFound: # move firstFoundVertex to new position
                     self._addVertex(clickPosition, True)
 
                     self.__removeFirstFound()
 
-            else: # CTRL + LeftClick
+            elif self.ctrlPressed or self.operation == Operations.ADD_VERTEX_WITH_EDGES: # CTRL + LeftClick
                 if not self.advancedCosts:
                     if not self.firstFound:
                         # use addVertex from GraphBuilder to also add edges
                         self._addVertexWithEdges(clickPosition)
 
                         self.__removeFirstFound()
+
                     elif self.firstFound:
                         # deleteVertex firstFoundVertex, addVertex (with edges) on clicked position
                         self._deleteVertex(self.firstFoundVertexIdx)
@@ -287,10 +355,13 @@ class QgsGraphMapTool(QgsMapTool):
                         self._addVertexWithEdges(clickPosition)
 
                         self.__removeFirstFound()
+
+                    self.operation = Operations.DEFAULT
                 else:
                     iface.messageBar().pushMessage("Error", self.tr("Add Vertex with Edges is disabled for advanced costs"), level=Qgis.Critical)
 
-        elif event.button() == Qt.RightButton: # RightClick
+        # right click or right click Operations
+        if not self.operation == Operations.DEFAULT or event.button() == Qt.RightButton: # RightClick
             self.rightPressed = True
 
             vertexIdx = self.mLayer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 8)
@@ -300,7 +371,7 @@ class QgsGraphMapTool(QgsMapTool):
                 self.bottomRight = clickPosition
                 self.drawRect = True
 
-            elif vertexIdx >= 0 and not self.firstFound and not self.ctrlPressed: # first RightClick
+            elif vertexIdx >= 0 and (self.operation == Operations.SELECT_VERTEX or not self.ctrlPressed) and not self.firstFound: # first RightClick
                 # mark first found vertex
                 self.firstFound = True
                 self.firstFoundVertexIdx = vertexIdx
@@ -309,22 +380,29 @@ class QgsGraphMapTool(QgsMapTool):
                 self.firstMarker.setIconType(QgsVertexMarker.ICON_CROSS)
                 self.firstMarker.setCenter(clickPosition)
 
+                for action in self.mLayer.graphToolBar.actions():
+                    if "Delete Vertex" in action.whatsThis():
+                        action.setEnabled(True)
+
             elif vertexIdx < 0 and self.firstFound: # second RightClick (no vertex found)
                 self.__removeFirstFound()
 
-            elif vertexIdx > 0 and self.firstFound and not self.ctrlPressed: # second RightClick
+            elif vertexIdx > 0 and self.firstFound and (not self.ctrlPressed or self.operation == Operations.SELECT_VERTEX): # second RightClick
                 # add edge between firstFoundVertexID and vertexID
                 # shows edge edit window if it already exits
                 self._addEdge(self.firstFoundVertexIdx, vertexIdx)
 
                 self.__removeFirstFound()
 
-            elif vertexIdx > 0 and self.firstFound and self.ctrlPressed: # second CTRL + RightClick
+            elif vertexIdx > 0 and self.ctrlPressed and self.firstFound: # second CTRL + RightClick
                 # remove vertex if found on click
                 self._deleteVertex(vertexIdx)
 
                 self.__removeFirstFound()
 
+        self.operation = Operations.DEFAULT
+        if self.triggeredAction:
+            self.triggeredAction.setChecked(False)
         self.mLayer.triggerRepaint()
 
     def canvasMoveEvent(self, event):
@@ -499,6 +577,10 @@ class QgsGraphMapTool(QgsMapTool):
     def __removeFirstFound(self):
         if self.firstFound:
             self.firstFound = False
+
+            for action in self.mLayer.graphToolBar.actions():
+                if "Delete Vertex" in action.whatsThis():
+                    action.setEnabled(False)
 
             iface.mapCanvas().scene().removeItem(self.firstMarker)
             del self.firstMarker

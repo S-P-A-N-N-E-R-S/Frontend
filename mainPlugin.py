@@ -116,14 +116,7 @@ class OGDFPlugin:
         self.defaultAction.setStatusTip(self.tr("Create from resource"))
 
     def initGui(self):
-        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
-
-        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
-                                                                            QgsGraphDataProvider.description(),
-                                                                            QgsGraphDataProvider.createProvider()))
-
-        # re-read and therefore reload plugin layers after adding QgsGraphLayerType to PluginLayerRegistry
-        self.reloadPluginLayers()
+        self.iface.currentLayerChanged.connect(self.__layerChanged)
 
         # create menu
         menu = QMenu("OGDF Plugin")
@@ -147,6 +140,73 @@ class OGDFPlugin:
         plugin_menu = self.iface.pluginMenu()
         plugin_menu.addMenu(menu)
 
+        # create toolbar entries for edit options if not already existing
+        self.graphToolbar = None
+        toolbars = iface.mainWindow().findChildren(QToolBar)
+        for toolbar in toolbars:
+            if toolbar.objectName() == "Graph ToolBar":
+                self.graphToolbar = toolbar
+                break
+        if not self.graphToolbar:
+            self.graphToolbar = self.iface.mainWindow().addToolBar("Graph ToolBar")
+            self.graphToolbar.setObjectName("Graph ToolBar")
+
+        self.zoomLayerAction = QAction(QIcon(getImagePath("Zoom_To_Layer_Icon.svg")), self.tr("Zoom to Layer"))
+        # use whatsThis() to identify triggered action
+        self.zoomLayerAction.setToolTip(self.tr("Zoom to Layer"))
+        self.zoomLayerAction.setWhatsThis("Zoom to Layer")
+        self.graphToolbar.addAction(self.zoomLayerAction)
+
+        self.toggleEditAction = QAction(QIcon(getImagePath("Toggle_Edit_Icon.svg")), self.tr("Toggle Edit"))
+        self.toggleEditAction.setToolTip(self.tr("Toggle Edit"))
+        self.toggleEditAction.setWhatsThis("Toggle Edit")
+        self.toggleEditAction.setCheckable(True)
+        self.graphToolbar.addAction(self.toggleEditAction)
+
+        self.selectVertexAction = QAction(QIcon(getImagePath("Select_Vertex_Icon.svg")), self.tr("Select Vertex"))
+        self.selectVertexAction.setToolTip(self.tr("Select Vertex"))
+        self.selectVertexAction.setWhatsThis("Select Vertex")
+        self.selectVertexAction.setEnabled(False)
+        self.selectVertexAction.setCheckable(True)
+        self.graphToolbar.addAction(self.selectVertexAction)
+
+        self.deleteVertexAction = QAction(QIcon(getImagePath("Delete_Vertex_Icon.svg")), self.tr("Delete Vertex"))
+        self.deleteVertexAction.setToolTip(self.tr("Delete Vertex"))
+        self.deleteVertexAction.setWhatsThis("Delete Vertex")
+        self.deleteVertexAction.setEnabled(False)
+        self.graphToolbar.addAction(self.deleteVertexAction)
+
+        self.addVertexWithEdgesAction = QAction(QIcon(getImagePath("Add_Vertex_With_Edges_Icon.svg")), self.tr("Add Vertex With Edges"))
+        self.addVertexWithEdgesAction.setToolTip(self.tr("Add Vertex With Edges"))
+        self.addVertexWithEdgesAction.setWhatsThis("Add Vertex With Edges")
+        self.addVertexWithEdgesAction.setEnabled(False)
+        self.addVertexWithEdgesAction.setCheckable(True)
+        self.graphToolbar.addAction(self.addVertexWithEdgesAction)
+
+        self.undoAction = QAction(QIcon(getImagePath("Undo_Icon.svg")), self.tr("Undo"))
+        self.undoAction.setToolTip(self.tr("Undo"))
+        self.undoAction.setWhatsThis("Undo")
+        self.undoAction.setEnabled(False)
+        self.graphToolbar.addAction(self.undoAction)
+
+        self.redoAction = QAction(QIcon(getImagePath("Redo_Icon.svg")), self.tr("Redo"))
+        self.redoAction.setToolTip(self.tr("Redo"))
+        self.redoAction.setWhatsThis("Redo")
+        self.redoAction.setEnabled(False)
+        self.graphToolbar.addAction(self.redoAction)
+
+        self.graphToolbar.setEnabled(True)
+        self.graphToolbar.setVisible(True)
+
+        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
+
+        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
+                                                                            QgsGraphDataProvider.description(),
+                                                                            QgsGraphDataProvider.createProvider()))
+
+        # re-read and therefore reload plugin layers after adding QgsGraphLayerType to PluginLayerRegistry
+        self.reloadPluginLayers()
+
     def openView(self, view):
         if self.dialog is None:
             self.dialog = PluginDialog()
@@ -160,12 +220,26 @@ class OGDFPlugin:
         # remove toolbar entry
         self.iface.removeToolBarIcon(self.toolBarAction)
 
+        self.graphToolbar.removeAction(self.toggleEditAction)
+        self.graphToolbar.removeAction(self.zoomLayerAction)
+        self.graphToolbar.removeAction(self.selectVertexAction)
+        self.graphToolbar.removeAction(self.deleteVertexAction)
+        self.graphToolbar.removeAction(self.addVertexWithEdgesAction)
+        self.graphToolbar.removeAction(self.undoAction)
+        self.graphToolbar.removeAction(self.redoAction)
+
+        self.iface.mainWindow().removeToolBar(self.graphToolbar)
+
+        del self.graphToolbar
+
         # remove menu entry
         plugin_menu = self.iface.pluginMenu()
         plugin_menu.removeAction(self.menuAction)
 
         QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
         QgsProject.instance().layersWillBeRemoved.disconnect(self.deleteLayers)
+
+        self.iface.currentLayerChanged.disconnect(self.__layerChanged)
 
     def reloadPluginLayers(self):
         """Re-reads and reloads plugin layers
@@ -211,7 +285,26 @@ class OGDFPlugin:
             os.remove(directory + "/" + QgsProject.instance().baseName() + ".qgs")
             os.rmdir(directory)
 
+        # keep track of currently selected layer if it is a GraphLayer
+        self.currentLayer = self.iface.activeLayer()
+        if not hasattr(self.currentLayer, "LAYER_TYPE") or self.currentLayer.LAYER_TYPE != "graph":
+            self.currentLayer = None
+
     def deleteLayers(self, layers):
             for l in layers:
                 delLayer = QgsProject.instance().mapLayer(l)
                 del delLayer
+
+    def __layerChanged(self, layer):
+        """
+        Makes sure the current layer stops editing if the current layer is changed.
+
+        :type layer: QgsMapLayer
+        """
+        if hasattr(self, "currentLayer") and self.currentLayer and self.currentLayer.isEditing:
+            self.currentLayer.toggleEdit()
+
+        if not layer == None:
+            if hasattr(layer, "LAYER_TYPE") and layer.LAYER_TYPE == "graph":
+                # only keep track of current QgsGraphLayers
+                self.currentLayer = layer
