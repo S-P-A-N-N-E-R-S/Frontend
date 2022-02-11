@@ -24,7 +24,8 @@ from qgis.PyQt.QtGui import QColor, QFont, QPainterPath, QPen
 from qgis.PyQt.QtXml import *
 from qgis.PyQt.QtWidgets import (QDialog, QPushButton, QBoxLayout, QLabel,
                                     QFileDialog, QFrame, QApplication, QHBoxLayout,
-                                    QRadioButton, QGroupBox, QUndoStack, QToolButton, QSpinBox)
+                                    QRadioButton, QGroupBox, QUndoStack, QToolButton, QSpinBox,
+                                    QToolBar)
 
 import random, math
 
@@ -253,6 +254,9 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.nameChanged.connect(self.activateUniqueName)
 
+        if not iface == None:
+            self.enableEditToolBar()
+
     def deleteLater(self, dummy):
         self.toggleEdit(True)
 
@@ -264,6 +268,9 @@ class QgsGraphLayer(QgsPluginLayer):
         del self.mLineFields
 
         del self.mGraph
+
+        if self.graphToolBar:
+            self.graphToolBar.actionTriggered.disconnect(self.__toolBarActionTriggered)
 
         try:
             del self.mUndoStack
@@ -847,6 +854,26 @@ class QgsGraphLayer(QgsPluginLayer):
             iface.mapCanvas().setMapTool(self.oldMapTool)
 
             del self.mMapTool
+
+        if willBeDeleted:
+            self.isEditing = False
+
+    def enableEditToolBar(self):
+        self.graphToolBar = None
+        toolbars = iface.mainWindow().findChildren(QToolBar)
+        for toolbar in toolbars:
+            if toolbar.objectName() == "Graph ToolBar":
+                self.graphToolBar = toolbar
+                break
+        if self.graphToolBar:
+            self.graphToolBar.actionTriggered.connect(self.__toolBarActionTriggered)
+
+    def __toolBarActionTriggered(self, action):
+        if iface.activeLayer().id() == self.id():
+            if "Toggle Edit" in action.whatsThis():
+                self.toggleEdit()
+            elif "Zoom to Layer" in action.whatsThis():
+                self.zoomToExtent()
 
     def isEditable(self):
         return True
