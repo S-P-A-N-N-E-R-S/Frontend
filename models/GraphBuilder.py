@@ -811,7 +811,7 @@ class GraphBuilder:
                 geom = feature.geometry()
                 pointID = self.graph.addVertex(geom.asPoint())
 
-                nearestPointID = self.kdTree.search_knn([self.graph.vertex(pointID).point().x(),self.graph.vertex(pointID).point().y(), counter],2)[1][0].data[2]
+                nearestPointID = self.kdTree.search_knn([self.graph.vertex(pointID).point().x(),self.graph.vertex(pointID).point().y(), counter],2)[0][0].data[2]
                 self.graph.addEdge(pointID, nearestPointID)
 
     def __importAdvancedCosts(self):
