@@ -1798,6 +1798,18 @@ QListWidget::item::selected {
                  </item>
                  <item row="7" column="0" colspan="5">
                   <widget class="QScrollArea" name="analysis_area">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>263</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
                    </property>
@@ -1819,7 +1831,7 @@ QListWidget::item::selected {
                       <x>0</x>
                       <y>0</y>
                       <width>920</width>
-                      <height>285</height>
+                      <height>261</height>
                      </rect>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_2">
@@ -1942,7 +1954,7 @@ QListWidget::item::selected {
                    <item row="0" column="0">
                     <widget class="QTreeWidget" name="benchmark_ogdf_algorithms">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -1960,7 +1972,7 @@ QListWidget::item::selected {
                    <item row="0" column="1">
                     <widget class="QScrollArea" name="ogdf_parameters_area">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -1982,7 +1994,7 @@ QListWidget::item::selected {
                         <x>0</x>
                         <y>0</y>
                         <width>455</width>
-                        <height>190</height>
+                        <height>214</height>
                        </rect>
                       </property>
                       <property name="sizePolicy">
