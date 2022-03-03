@@ -1,3 +1,7 @@
 [submodule "protocol"]
 	path = network/protocol
 	url = ../protocol.git
+
+[submodule "help"]
+	path = help
+	url = ../handbookwebsite.git
