@@ -64,7 +64,6 @@ class QgsEdgePickerMapTool(QgsMapTool):
         # used to convert canvas coordinates to map coordinates
         converter = iface.mapCanvas().getCoordinateTransform()
         clickPosition = converter.toMapCoordinates(clickPosition)
-        clickPosition = self.layer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
         vertexIdx = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
 
