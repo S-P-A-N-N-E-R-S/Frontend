@@ -1,6 +1,6 @@
 #  This file is part of the OGDF plugin.
 #
-#  Copyright (C) 2021  Tim Hartmann, Julian Wittker
+#  Copyright (C) 2022  Tim Hartmann, Julian Wittker
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 #  This file is part of the OGDF plugin.
 #
-#  Copyright (C) 2021  Dennis Benz
+#  Copyright (C) 2022  Dennis Benz, Julian Wittker
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
