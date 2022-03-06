@@ -233,7 +233,7 @@ def formulaCheck(function, fields, numberOfRasterData, numberOfPolygons):
                     return toReturn  
               
                 res = possOperandsRegex.search(secondOperand)                              
-                if res == None and not secondOperand.isnumeric():              
+                if res == None and not secondOperand.isnumeric() and not("." in secondOperand and secondOperand.split(".")[0].isnumeric() and secondOperand.split(".")[1].isnumeric):        
                     toReturn = ("Error in if construct: Invalid second operand of comparison", "", errorPos[0], errorPos[1])
                     return toReturn  
                  

@@ -40,7 +40,7 @@ class AdvancedCostCalculator():
     Class to calculate the edge costs of a graph by analysis of a cost function. The cost function
     can use different variables and operators.    
     """
-    def __init__(self, rLayers, vLayer, graph, polygons, usePolygons, rasterBands, task, createShortestPathView = False):
+    def __init__(self, rLayers, vLayer, graph, polygons, usePolygons, rasterBands, task, allowDoubleEdges, createShortestPathView = False):
         """
         Constructor
         
@@ -54,9 +54,11 @@ class AdvancedCostCalculator():
         self.vLayerFields = []        
         self.vLayer = vLayer
         self.graph = graph
+        self.allowDoubleEdges = allowDoubleEdges
         
         self.pointValuesForEdge = [None] * len(self.rLayers)
         self.pixelValuesForEdge = [None] * len(self.rLayers) * 6
+        self.spForPointPairs = {}
         
         self.polygons = polygons
         self.usePolygons = usePolygons        
@@ -271,12 +273,15 @@ class AdvancedCostCalculator():
                 else:
                     heurID = int(part.split("(")[1].split(")")[0]) 
                 numberOfDiagonals = None   
-                for aStarObj in self.aStarAlgObjects:
-                    
-                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:   
-                                  
-                        if self.pixelValuesForEdge[rasterDataID*6 + heurID] == None:            
-                            pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
+                for aStarObj in self.aStarAlgObjects:                  
+                    if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:                                  
+                        if self.pixelValuesForEdge[rasterDataID*6 + heurID] == None:
+                            if self.allowDoubleEdges and (self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point()) in self.spForPointPairs.keys():
+                                pixelValues = self.spForPointPairs[self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point()]       
+                            else:
+                                pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(), self.graph.vertex(edge.toVertex()).point())
+                                if self.allowDoubleEdges:
+                                    self.spForPointPairs[(self.graph.vertex(edge.toVertex()).point(), self.graph.vertex(edge.fromVertex()).point())] = pixelValues
                             self.pixelValuesForEdge[rasterDataID*6 + heurID] = pixelValues
                         numberOfDiagonals = aStarObj.getNumberOfDiagonals()  
                 if "," in part:
