@@ -1,6 +1,6 @@
 #  This file is part of the OGDF plugin.
 #
-#  Copyright (C) 2021  Leon Nienhüser
+#  Copyright (C) 2022  Leon Nienhüser
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 from qgis.PyQt.QtWidgets import QDialog, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QMessageBox, QLabel
+
 
 class LoginDialog(QDialog):
     def __init__(self, parent=None, username="", create=False):

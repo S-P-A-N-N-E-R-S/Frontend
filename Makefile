@@ -1,20 +1,17 @@
 #/***************************************************************************
 # OGDFPlugin
 #
-# Prototype Plugin for Project Group Theoretical Computer Science. Creates Graphs from VectorLayers.
 #							 -------------------
-#		begin				: 2021-05-07
-#		copyright			: (C) 2021 by Jwittker
-#		email				: jwittker@uos.de
+# copyright: (C) 2022 by Dennis Benz, Timo Glane, Tim Hartmann, Leon Nienhüser
 # ***************************************************************************/
 #
 #/***************************************************************************
-# *																		 *
+# *																		    *
 # *   This program is free software; you can redistribute it and/or modify  *
 # *   it under the terms of the GNU General Public License as published by  *
-# *   the Free Software Foundation; either version 2 of the License, or	 *
-# *   (at your option) any later version.								   *
-# *																		 *
+# *   the Free Software Foundation; either version 2 of the License, or	    *
+# *   (at your option) any later version.								    *
+# *																		    *
 # ***************************************************************************/
 
 #################################################
