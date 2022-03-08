@@ -24,7 +24,7 @@ from ...exceptions import FieldRequiredError
 from ...network.protocol.build.available_handlers_pb2 import FieldInformation
 
 
-class QgsOGDFParametersWidget(QWidget):
+class OGDFParametersWidget(QWidget):
     """
     Dynamically creates and shows input widgets created from parameter list
     """

@@ -28,7 +28,7 @@ from ...models.benchmark.BenchmarkData import BenchmarkData
 from ...network.protocol.build.available_handlers_pb2 import FieldInformation
 
 
-class QgsOGDFBenchmarkWidget(QWidget):
+class OGDFBenchmarkWidget(QWidget):
     """
     Dynamically creates and shows input widgets created from parameter list
     """

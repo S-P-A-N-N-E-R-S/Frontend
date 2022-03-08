@@ -19,19 +19,19 @@
 from qgis.PyQt.QtWidgets import QWidget, QHBoxLayout, QComboBox, QToolButton, QMenu, QAction, QApplication
 from qgis.PyQt.QtCore import pyqtSignal, Qt, QPoint
 
-from qgis.gui import QgsMapTool, QgsVertexMarker
+from qgis.gui import QgsMapTool
 from qgis.utils import iface
 from qgis.core import QgsCoordinateTransform
 
 from ...models.QgsGraphLayer import QgsGraphLayer
 
 
-class QgsEdgePickerMapTool(QgsMapTool):
+class VertexPickerMapTool(QgsMapTool):
     """
-    QgsMapTool to select an edge on a graph layer
+    QgsMapTool to select a vertex on a graph layer
     """
 
-    edgeSelected = pyqtSignal(int)
+    vertexSelected = pyqtSignal(int)
     canceled = pyqtSignal()
 
     def __init__(self, canvas, layer):
@@ -39,19 +39,11 @@ class QgsEdgePickerMapTool(QgsMapTool):
         self.canvas = canvas
         self.layer = layer
 
-        self._firstVertex = None
-        self._secondVertex = None
-
-        self._firstVertexMarker = None
-
-        self.selectedEdgeId = None
+        self.selectedVertexIdx = None
 
     def activate(self):
         super().activate()
-        self._firstVertex = None
-        self._secondVertex = None
-        self.selectedEdgeId = None
-        self._removeMarker()
+        self.selectedVertexIdx = None
 
     def canvasReleaseEvent(self, event):
         """
@@ -68,60 +60,30 @@ class QgsEdgePickerMapTool(QgsMapTool):
         vertexIdx = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
 
         if vertexIdx >= 0:
-            if self._firstVertex is None:
-                # select first edge vertex
-                self._firstVertex = vertexIdx
-                self._firstVertexMarker = QgsVertexMarker(iface.mapCanvas())
-                self._firstVertexMarker.setIconType(QgsVertexMarker.ICON_BOX)
-                self._firstVertexMarker.setCenter(clickPosition)
-            else:
-                # select second vertex
-                self._secondVertex = vertexIdx
-                edgeIdx = self.layer.mGraph.hasEdge(self.layer.mGraph.vertex(self._firstVertex).id(), self.layer.mGRaph.vertex(self._secondVertex).id())
-                if edgeIdx >= 0:
-                    self.selectedEdgeIdx = edgeIdx
-                    self.edgeSelected.emit(edgeIdx)
-                # remove first vertex
-                self._firstVertex = None
-                # remove marker from canvas
-                self._removeMarker()
+            self.selectedVertexIdx = vertexIdx
+            self.vertexSelected.emit(vertexIdx)
 
     def keyReleaseEvent(self, event):
         # cancel selection
         if event.key() == Qt.Key_Escape:
-            # remove marker
-            self._removeMarker()
-
-            # remove vertex selections
-            self._firstVertex = None
-            self._secondVertex = None
             self.canceled.emit()
 
-    def _removeMarker(self):
-        """
-        Removes the first vertex marker
-        :return:
-        """
-        if self._firstVertexMarker is not None:
-            iface.mapCanvas().scene().removeItem(self._firstVertexMarker)
-            self._firstVertexMarker = None
-
-    def getSelectedEdgeIdx(self):
-        return self.selectedEdgeIdx
+    def getSelectedVertexIdx(self):
+        return self.selectedVertexIdx
 
 
-class QgsGraphEdgePickerWidget(QWidget):
+class GraphVertexPickerWidget(QWidget):
     """
-    Shows a combobox with all available graph edges.
+    Shows a combobox with all available graph vertices.
     """
 
-    edgeChanged = pyqtSignal()
+    vertexChanged = pyqtSignal()
     graphLayerChanged = pyqtSignal()
     graphChanged = pyqtSignal()
     toggleDialogVisibility = pyqtSignal(bool)
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super(GraphVertexPickerWidget, self).__init__(parent)
 
         self.graph = None
         self.graphLayer = None
@@ -133,13 +95,13 @@ class QgsGraphEdgePickerWidget(QWidget):
         layout = QHBoxLayout()
         self.comboBox = QComboBox()
         self.comboBox.setStyleSheet("QComboBox { combobox-popup: 0; }")
-        self.comboBox.currentIndexChanged.connect(self.edgeChanged)
+        self.comboBox.currentIndexChanged.connect(self.vertexChanged)
         layout.addWidget(self.comboBox)
 
         # set up tool button menu
         self.toolButton = QToolButton()
         self.toolButton.setText("...")
-        self.selectOnCanvasAction = QAction(self.tr("Select edge on canvas"))
+        self.selectOnCanvasAction = QAction(self.tr("Select vertex on canvas"))
         self.selectOnCanvasAction.triggered.connect(self._selectOnCanvas)
 
         menu = QMenu()
@@ -155,44 +117,42 @@ class QgsGraphEdgePickerWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-    def _updateEdges(self):
+    def _updateVertices(self):
         """
-        Updates all combobox edge items
+        Updates all combobox vertex items
         :return:
         """
         self.comboBox.clear()
         # graph layer is prioritized
         graph = self.graphLayer.getGraph() if self.graphLayer is not None else self.graph
         if graph is not None:
-            for edgeIdx in range(graph.edgeCount()):
-                edge = graph.edge(edgeIdx)
-                fromVertex = graph.vertex(graph.findVertexByID(edge.fromVertex())).point()
-                toVertex = graph.vertex(graph.findVertexByID(edge.toVertex())).point()
-                self.comboBox.addItem("Edge ID: {} [FromPoint({}), ToPoint({})]".format(
-                    graph.edge(edgeIdx).id(), fromVertex.toString(2), toVertex.toString(2)), graph.edge(edgeIdx).id())
+            for vertexIdx in range(graph.vertexCount()):
+                vertex = graph.vertex(vertexIdx).point()
+                self.comboBox.addItem("Vertex ID: {} [Point({})]".format(
+                    graph.vertex(vertexIdx).id(), vertex.toString(2)), graph.vertex(vertexIdx).id())
 
     def _selectOnCanvas(self):
         """
-        Enable edge select on map canvas
+        Enable vertex select on map canvas
         :return:
         """
-        self.mapTool = QgsEdgePickerMapTool(iface.mapCanvas(), self.graphLayer)
+        self.mapTool = VertexPickerMapTool(iface.mapCanvas(), self.graphLayer)
 
         self.oldMapTool = iface.mapCanvas().mapTool()
         iface.mapCanvas().setMapTool(self.mapTool)
 
-        self.mapTool.edgeSelected.connect(self._edgeSelected)
+        self.mapTool.vertexSelected.connect(self._vertexSelected)
         self.mapTool.canceled.connect(self._deactivateMapTool)
 
         self.toggleDialogVisibility.emit(False)
 
-    def _edgeSelected(self, edgeIdx):
+    def _vertexSelected(self, vertexIdx):
         """
-        Set selected edge in combobox
-        :param edgeId:
+        Set selected vertex in combobox
+        :param vertexId:
         :return:
         """
-        self.comboBox.setCurrentIndex(self.comboBox.findData(edgeIdx))
+        self.comboBox.setCurrentIndex(self.comboBox.findData(vertexIdx))
         self._deactivateMapTool()
 
     def _deactivateMapTool(self):
@@ -218,12 +178,12 @@ class QgsGraphEdgePickerWidget(QWidget):
 
     def setGraph(self, graph):
         """
-        Sets graph without possibility to select an edge on canvas
+        Sets graph without possibility to select vertex on canvas
         :param graph:
         :return:
         """
         self.graph = graph
-        self._updateEdges()
+        self._updateVertices()
         self.graphChanged.emit()
 
     def getGraph(self):
@@ -231,7 +191,7 @@ class QgsGraphEdgePickerWidget(QWidget):
 
     def setGraphLayer(self, graphLayer):
         """
-        Sets a graph layer. It allows to select an edge on the canvas.
+        Sets a graph layer. It allows to select a vertex on the canvas.
         If graph is also set, the graph layer will be prioritized.
         :param graphLayer:
         :return:
@@ -239,7 +199,7 @@ class QgsGraphEdgePickerWidget(QWidget):
         if graphLayer is not None and graphLayer.pluginLayerType() != QgsGraphLayer.LAYER_TYPE:
             raise TypeError("Not a graph layer")
         self.graphLayer = graphLayer
-        self._updateEdges()
+        self._updateVertices()
 
         # show tool button
         self.toolButton.setVisible(self.graphLayer is not None)
@@ -248,9 +208,9 @@ class QgsGraphEdgePickerWidget(QWidget):
     def getGraphLayer(self):
         return self.graphLayer
 
-    def getEdge(self):
+    def getVertex(self):
         """
-        :return: Returns edge id of selected edge in graph
+        :return: Returns vertex id of selected vertex in graph
         """
         return self.comboBox.currentData()
 

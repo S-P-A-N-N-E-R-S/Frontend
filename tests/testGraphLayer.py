@@ -33,7 +33,7 @@ import shutil
 start_app()
 
 
-class TestQgsGraphLayer(TestCase):
+class TestGraphLayer(TestCase):
 
     def setUp(self):
         """Runs before each test."""

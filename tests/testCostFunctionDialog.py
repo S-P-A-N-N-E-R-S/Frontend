@@ -22,7 +22,7 @@ from qgis.PyQt.QtTest import QTest
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsVectorLayer, QgsRasterLayer
 
-from ..views.widgets.QgsCostFunctionDialog import QgsCostFunctionDialog
+from ..views.widgets.costFunctionDialog import CostFunctionDialog
 from ..helperFunctions import getPluginPath
 
 import os
@@ -30,11 +30,11 @@ import os
 start_app()
 
 
-class TestQgsOGDFParametersWidget(TestCase):
+class TestOGDFParametersWidget(TestCase):
 
     def setUp(self):
         """Runs before each test."""
-        self.dialog = QgsCostFunctionDialog()
+        self.dialog = CostFunctionDialog()
         self.dialog.show()
 
     def tearDown(self):

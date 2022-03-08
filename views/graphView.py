@@ -17,7 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 from .baseView import BaseView
-from .widgets.QgsCostFunctionDialog import QgsCostFunctionDialog
+from .widgets.costFunctionDialog import CostFunctionDialog
 from ..controllers.graph import GraphController
 from ..helperFunctions import getVectorFileFilter, hasAStarC
 from ..models.ExtGraph import ExtGraph
@@ -388,7 +388,7 @@ class GraphView(BaseView):
         Creates and displays the cost function Dialog
         :return:
         """
-        costFunctionDialog = QgsCostFunctionDialog()
+        costFunctionDialog = CostFunctionDialog()
         if not self.isRandom():
             costFunctionDialog.setVectorLayer(self.getInputLayer())
         costFunctionDialog.setPolygonLayers(self.getPolygonCostLayers())

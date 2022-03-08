@@ -17,7 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 
-from ...views.widgets.QgsGraphVertexPickerWidget import QgsGraphVertexPickerWidget
+from ...views.widgets.graphVertexPickerWidget import GraphVertexPickerWidget
 
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
@@ -52,7 +52,7 @@ class VertexIDField(BaseField):
                 raise ParseError(f"Invalid key: {self.key}") from error
 
     def createWidget(self, parent):
-        vertexPickerWidget = QgsGraphVertexPickerWidget(parent)
+        vertexPickerWidget = GraphVertexPickerWidget(parent)
         vertexPickerWidget.toggleDialogVisibility.connect(parent.toggleDialogVisibility.emit)
         return vertexPickerWidget
 

@@ -22,7 +22,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QToolButton, QListWidget, QListWidgetItem, QRadioButton, QTreeWidgetItem, QSizePolicy, QTabWidget
 
 from .baseView import BaseView
-from .widgets.QgsOgdfBenchmarkWidget import QgsOGDFBenchmarkWidget
+from .widgets.ogdfBenchmarkWidget import OGDFBenchmarkWidget
 from ..controllers.benchmark import BenchmarkController
 from ..network import parserManager
 from ..network.protocol.build.available_handlers_pb2 import FieldInformation
@@ -61,7 +61,7 @@ class BenchmarkView(BaseView):
         self.dialog.benchmark_graph_selection.itemDoubleClicked.connect(self._deleteItem)
 
         # load parameters for every selected ogdf algorithm
-        self.ogdfBenchmarkWidget = QgsOGDFBenchmarkWidget(self.dialog)
+        self.ogdfBenchmarkWidget = OGDFBenchmarkWidget(self.dialog)
 
         self.dialog.benchmark_ogdf_parameters.setLayout(self.ogdfBenchmarkWidget.layout)
         self.dialog.benchmark_ogdf_algorithms.itemChanged.connect(self._updateOGDFParameters)

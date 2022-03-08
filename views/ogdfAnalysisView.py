@@ -21,8 +21,8 @@ from qgis.PyQt.QtWidgets import QSizePolicy
 from .baseView import BaseView
 from ..controllers.ogdfAnalysis import OGDFAnalysisController
 from ..network import parserManager
-from .widgets.QgsOgdfParametersWidget import QgsOGDFParametersWidget
-from .widgets.QgsAnalysisTreeView import QgsAnalysisTreeView
+from .widgets.ogdfParametersWidget import OGDFParametersWidget
+from .widgets.analysisTreeView import AnalysisTreeView
 
 
 class OGDFAnalysisView(BaseView):
@@ -43,14 +43,14 @@ class OGDFAnalysisView(BaseView):
         # )
 
         # set up analysis tree view
-        self.analysisTreeView = QgsAnalysisTreeView()
+        self.analysisTreeView = AnalysisTreeView()
         self.analysisTreeView.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.analysisTreeView.setToolTip(self.tr("Select an analysis"))
         self.dialog.ogdf_analysis_analysis_analysis_tree_widget.layout().addWidget(self.analysisTreeView)
 
         # set up analysis parameter widget
         layout = self.dialog.ogdf_analysis_parameters_box.layout()
-        self.ogdfParametersWidget = QgsOGDFParametersWidget()
+        self.ogdfParametersWidget = OGDFParametersWidget()
         self.ogdfParametersWidget.toggleDialogVisibility.connect(lambda visible: self.setMinimized(not visible))
         layout.addWidget(self.ogdfParametersWidget)
         self.dialog.ogdf_analysis_parameters_box.hide()

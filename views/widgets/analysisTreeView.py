@@ -25,7 +25,7 @@ from qgis.PyQt.QtWidgets import QAbstractItemView, QTreeView
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 
 
-class QgsAnalysisItem(QStandardItem):
+class AnalysisItem(QStandardItem):
 
     class ItemType(Enum):
         ANALYSIS = 0
@@ -61,7 +61,7 @@ class QgsAnalysisItem(QStandardItem):
         return self.analysis
 
 
-class QgsAnalysisTreeView(QTreeView):
+class AnalysisTreeView(QTreeView):
     """
     Displays OGDF Analysis in a tree view grouped by type
     """
@@ -89,7 +89,7 @@ class QgsAnalysisTreeView(QTreeView):
         """Emits signal if analysis is changed"""
         item = self.treeModel.itemFromIndex(currentItemIndex)
         if item is not None:
-            if item.getItemType() == QgsAnalysisItem.ItemType.ANALYSIS:
+            if item.getItemType() == AnalysisItem.ItemType.ANALYSIS:
                 self.analysisSelected.emit(item.getAnalysis())
             else:
                 self.analysisDeselected.emit()
@@ -129,7 +129,7 @@ class QgsAnalysisTreeView(QTreeView):
         # if not all groups found, create missing groups
         if lastGroupIndex < len(groups)-1:
             for index in range(lastGroupIndex+1, len(groups)):
-                newGroup = QgsAnalysisItem(groups[index], QgsAnalysisItem.ItemType.GROUP)
+                newGroup = AnalysisItem(groups[index], AnalysisItem.ItemType.GROUP)
                 if lastGroupItem is None:
                     self.treeModel.appendRow(newGroup)
                 else:
@@ -137,7 +137,7 @@ class QgsAnalysisTreeView(QTreeView):
                 lastGroupItem = newGroup
 
         # append new analysis
-        analysisItem = QgsAnalysisItem(analysisName, QgsAnalysisItem.ItemType.ANALYSIS, analysis, userData)
+        analysisItem = AnalysisItem(analysisName, AnalysisItem.ItemType.ANALYSIS, analysis, userData)
         if lastGroupItem is None:
             # if not a path or no group existing
             self.treeModel.appendRow(analysisItem)
@@ -150,7 +150,7 @@ class QgsAnalysisTreeView(QTreeView):
         :return:
         """
         selectedItem = self.treeModel.itemFromIndex(self.currentIndex())
-        if selectedItem is not None and selectedItem.getItemType() == QgsAnalysisItem.ItemType.ANALYSIS:
+        if selectedItem is not None and selectedItem.getItemType() == AnalysisItem.ItemType.ANALYSIS:
             return selectedItem.getAnalysis(), selectedItem.getUserData()
 
         return None, None

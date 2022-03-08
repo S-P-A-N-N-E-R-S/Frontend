@@ -333,487 +333,487 @@
 <context>
     <name>QgsExpressionContext</name>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="63"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="63"/>
         <source>Conditionals</source>
         <translation>Bedingungen</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="64"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="64"/>
         <source>This group contains functions to handle conditional checks in expressions.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="69"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="69"/>
         <source>Tests a condition and returns a different result depending on the conditional check.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="75"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="75"/>
         <source>Distances</source>
         <translation>Distanzen</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="76"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="76"/>
         <source>This group contains distances to use in the cost calculation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="81"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="81"/>
         <source>Calculates the euclidean metric.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="86"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="86"/>
         <source>Calculates the manhattan metric.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="91"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="91"/>
         <source>Calculates the geodesic metric.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="96"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="96"/>
         <source>Fields</source>
         <translation>Felder</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="97"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="97"/>
         <source>This group contains numeric fields from the selected vector layer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="101"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="101"/>
         <source>Math</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="102"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="102"/>
         <source>This group contains math functions.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="107"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="107"/>
         <source>Returns the inverse cosine of a value in radians.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="112"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="112"/>
         <source>Returns the inverse hyperbolic cosine of a value in radians.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="117"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="117"/>
         <source>Returns the arc sine of a value in radians.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="122"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="122"/>
         <source>Returns the inverse hyperbolic sine of a value in radians.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="127"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="127"/>
         <source>Returns the arc tangent of a value in radians.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="132"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="132"/>
         <source>Returns the arc tangent of y, x values in radians.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="137"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="137"/>
         <source>Rounds a number upwards.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="142"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="142"/>
         <source>Returns number of ways to choose k items from n items without repetition and without order.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="148"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="148"/>
         <source>Return a float with the magnitude of x but the sign of y.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="153"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="153"/>
         <source>Returns cosine of an angle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="158"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="158"/>
         <source>Returns the hyperbolic cosine of an angle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="163"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="163"/>
         <source>Converts from radians to degrees.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="168"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="168"/>
         <source>Returns the Euclidean distance between two points.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="173"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="173"/>
         <source>Returns the error function of a value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="178"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="178"/>
         <source>Returns the complementary error function of a value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="183"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="183"/>
         <source>Returns exponential of an value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="188"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="188"/>
         <source>Returns E**x - 1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="193"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="193"/>
         <source>Returns the absolute value of a value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="198"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="198"/>
         <source>Returns the factorial of a value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="203"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="203"/>
         <source>Rounds a number downwards.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="208"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="208"/>
         <source>Returns the modulo of a value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="213"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="213"/>
         <source>Returns the mantissa and the exponent of a value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="218"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="218"/>
         <source>Returns the sum of all items in an iterable.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="223"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="223"/>
         <source>Returns the gamma function at x.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="228"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="228"/>
         <source>Returns the greatest common divisor of two integers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="233"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="233"/>
         <source>Returns the Euclidean norm.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="238"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="238"/>
         <source>Checks whether two values are close to each other, or not.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="243"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="243"/>
         <source>Checks whether a number is finite.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="248"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="248"/>
         <source>Checks whether a number is infinite.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="253"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="253"/>
         <source>Checks whether a value is NaN (not a number).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="258"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="258"/>
         <source>Rounds a square root number downwards to the nearest integer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="263"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="263"/>
         <source>Returns the inverse of frexp() which is x * (2**i) of the given numbers x and i.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="268"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="268"/>
         <source>Returns the log gamma value of x.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="273"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="273"/>
         <source>Returns the value of the logarithm of the passed value and base.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="278"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="278"/>
         <source>Returns the value of the base 10 logarithm of the passed expression.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="283"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="283"/>
         <source>Returns the value of the natural logarithm of 1+x.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="288"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="288"/>
         <source>Returns the value of the base 2 logarithm.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="293"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="293"/>
         <source>Return the number of ways to choose k items from n items with order and without repetition.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="299"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="299"/>
         <source>Returns the value of x to the power of y</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="304"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="304"/>
         <source>Returns the product of all the elements in an iterable.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="309"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="309"/>
         <source>Converts from degrees to radians.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="314"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="314"/>
         <source>Returns a random number.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="319"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="319"/>
         <source>Returns the IEEE 754-style remainder of x with respect to y</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="324"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="324"/>
         <source>Returns the sine of an angle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="329"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="329"/>
         <source>Returns the hyperbolic sine of angle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="334"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="334"/>
         <source>Returns square root of a value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="339"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="339"/>
         <source>Returns the tangent of an angle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="344"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="344"/>
         <source>Returns the hyperbolic tangent of an angle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="349"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="349"/>
         <source>Returns the truncated integer part of a value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="354"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="354"/>
         <source>Operators</source>
         <translation>Operatoren</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="355"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="355"/>
         <source>This group contains several common operators.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="360"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="360"/>
         <source>Addition of two values.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="365"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="365"/>
         <source>Subtraction of two values.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="370"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="370"/>
         <source>Multiplication of two values.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="375"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="375"/>
         <source>Division of two values.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="380"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="380"/>
         <source>Index operator.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="385"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="385"/>
         <source>Opening round bracket.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="390"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="390"/>
         <source>Closing round bracket.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="395"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="395"/>
         <source>Returns 1 when condition a and b are true.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="400"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="400"/>
         <source>Returns 1 when condition a or b is true.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="405"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="405"/>
         <source>Negates a condition.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="410"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="410"/>
         <source>Compares two values and evaluates to 1 if the left value is less than the right value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="415"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="415"/>
         <source>Compares two values and evaluates to 1 if the left value is greater than the right value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="421"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="421"/>
         <source>Compares two values and evaluates to 1 if they are equal.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="426"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="426"/>
         <source>Compares two values and evaluates to 1 if they are unequal.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="431"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="431"/>
         <source>Raster</source>
         <translation>Raster</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="432"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="432"/>
         <source>This group contains raster functions which calculate raster statistics and values for each edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="437"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="437"/>
         <source>Returns the raster sum of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="442"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="442"/>
         <source>Returns the raster mean of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="447"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="447"/>
         <source>Returns the raster median of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="452"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="452"/>
         <source>Returns the raster minimum of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="457"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="457"/>
         <source>Returns the raster maximum of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="482"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="482"/>
         <source>Returns the raster variance of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="467"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="467"/>
         <source>Returns the raster standard deviation of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="472"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="472"/>
         <source>Returns the raster gradient sum of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="477"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="477"/>
         <source>Returns the raster gradient minimum of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="487"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="487"/>
         <source>Returns the raster ascent of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="492"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="492"/>
         <source>Returns the raster descent of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="497"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="497"/>
         <source>Returns the raster total climb of an edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="502"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="502"/>
         <source>Double-click to add field to expression editor.</source>
         <translation>Doppelklicken Sie, um das Feld zum Editor hinzuzufügen.</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="555"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="555"/>
         <source>expression {}</source>
         <translation>Expression {}</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="557"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="557"/>
         <source>function {}</source>
         <translation>Funktion {}</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="559"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="559"/>
         <source>distance {}</source>
         <translation>Distanz {}</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="561"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="561"/>
         <source>operator {}</source>
         <translation>Operator {}</translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.py" line="570"/>
+        <location filename="../views/widgets/CostFunctionDialog.py" line="570"/>
         <source>group {}</source>
         <translation>Gruppe {}</translation>
     </message>
@@ -1149,57 +1149,57 @@
 <context>
     <name>qgsCostFunctionDialog</name>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="17"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="17"/>
         <source>Cost Function Builder</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="97"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="97"/>
         <source>+</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="104"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="104"/>
         <source>-</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="111"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="111"/>
         <source>*</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="118"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="118"/>
         <source>/</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="125"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="125"/>
         <source>^</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="132"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="132"/>
         <source>(</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="139"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="139"/>
         <source>)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="146"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="146"/>
         <source>if</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="179"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="179"/>
         <source>Status:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../views/widgets/QgsCostFunctionDialog.ui" line="192"/>
+        <location filename="../views/widgets/CostFunctionDialog.ui" line="192"/>
         <source>None</source>
         <translation></translation>
     </message>
