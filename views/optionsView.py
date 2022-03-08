@@ -19,7 +19,7 @@
 from qgis.PyQt.QtWidgets import QDialogButtonBox, QDialog
 
 from .baseView import BaseView
-from .widgets.QgsLoginDialog import LoginDialog
+from .widgets.loginDialog import LoginDialog
 from ..controllers.options import OptionsController
 
 

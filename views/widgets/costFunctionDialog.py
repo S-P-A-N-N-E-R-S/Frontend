@@ -31,7 +31,7 @@ from qgis.core import QgsVectorLayer
 from ...models.GraphBuilder import GraphBuilder
 
 
-class QgsExpressionItem(QStandardItem):
+class ExpressionItem(QStandardItem):
 
     class ItemType(Enum):
         Expression = 0
@@ -45,7 +45,7 @@ class QgsExpressionItem(QStandardItem):
         :param helpText: help text can be set as html string
         :param itemType: distinguish between group and expression items
         """
-        super(QgsExpressionItem, self).__init__(label)
+        super(ExpressionItem, self).__init__(label)
         self.label = label
         self.expressionText = expressionText
         self.helpText = helpText
@@ -64,7 +64,7 @@ class QgsExpressionItem(QStandardItem):
         return self.itemType
 
 
-class QgsExpressionContext(QObject):
+class ExpressionContext(QObject):
     """
     Expression context class which holds all information of available cost function expressions
     """
@@ -665,7 +665,7 @@ class QgsExpressionContext(QObject):
         """
         Collects all expressions items of a group
         :param group:
-        :return: list of QgsExpressionItem
+        :return: list of ExpressionItem
         """
         groupExpressionItems = []
         for expression in self.groups.get(group, {}).get("expressions", []):
@@ -673,11 +673,11 @@ class QgsExpressionContext(QObject):
             description = expression.get("description", "")
             syntax = expression.get("syntax", "")
             example = expression.get("example", "")
-            expressionItem = QgsExpressionItem(label,
-                                               expression.get("expressionText", ""),
-                                               self.formatHelpText(group, label, description, syntax, example),
-                                               QgsExpressionItem.ItemType.Expression
-                                               )
+            expressionItem = ExpressionItem(label,
+                                            expression.get("expressionText", ""),
+                                            self.formatHelpText(group, label, description, syntax, example),
+                                            ExpressionItem.ItemType.Expression
+                                            )
             groupExpressionItems.append(expressionItem)
 
         return groupExpressionItems
@@ -689,7 +689,7 @@ class QgsExpressionContext(QObject):
         :return:
         """
         groupLabel = self.groups.get(group, {}).get("label", group)
-        return QgsExpressionItem(groupLabel, "", self.getGroupHelpText(group), QgsExpressionItem.ItemType.Group)
+        return ExpressionItem(groupLabel, "", self.getGroupHelpText(group), ExpressionItem.ItemType.Group)
 
     def getFieldItem(self, group, field):
         """
@@ -698,9 +698,9 @@ class QgsExpressionContext(QObject):
         :param field: name of field
         :return:
         """
-        return QgsExpressionItem(field, " field:" + field + " ",
-                                 self.formatHelpText(group, field, self.fieldDescription),
-                                 QgsExpressionItem.ItemType.Expression)
+        return ExpressionItem(field, " field:" + field + " ",
+                              self.formatHelpText(group, field, self.fieldDescription),
+                              ExpressionItem.ItemType.Expression)
 
     def getPolygonItem(self, group, label, polygonIndex):
         """
@@ -710,9 +710,9 @@ class QgsExpressionContext(QObject):
         :param label: label of polygon
         :return:
         """
-        return QgsExpressionItem(label, " polygon[{}]:".format(polygonIndex),
-                                 self.formatHelpText(group, label, self.polygonsDescription),
-                                 QgsExpressionItem.ItemType.Expression)
+        return ExpressionItem(label, " polygon[{}]:".format(polygonIndex),
+                              self.formatHelpText(group, label, self.polygonsDescription),
+                              ExpressionItem.ItemType.Expression)
 
     def getRasterDataItem(self, group, label, rasterIndex):
         """
@@ -722,9 +722,9 @@ class QgsExpressionContext(QObject):
         :param label: label of raster data
         :return:
         """
-        return QgsExpressionItem(label, " raster[{}]:".format(rasterIndex),
-                                 self.formatHelpText(group, label, self.rasterDataDescription),
-                                 QgsExpressionItem.ItemType.Expression)
+        return ExpressionItem(label, " raster[{}]:".format(rasterIndex),
+                              self.formatHelpText(group, label, self.rasterDataDescription),
+                              ExpressionItem.ItemType.Expression)
 
     def formatHelpText(self, group, expression, description, syntax="", example=""):
         """
@@ -767,10 +767,10 @@ class QgsExpressionContext(QObject):
         return "<h2>{}</h2><p>{}</p>".format(html.escape(title), groupDescription)
 
 
-QgsCostFunctionDialogUi, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'QgsCostFunctionDialog.ui'))
+CostFunctionDialogUi, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'CostFunctionDialog.ui'))
 
 
-class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
+class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
     """
     Advanced cost function editor
     """
@@ -783,7 +783,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         :param parent:
         :param vectorLayer: Vector layer which fields are shown in the tree view
         """
-        super(QgsCostFunctionDialog, self).__init__(parent)
+        super(CostFunctionDialog, self).__init__(parent)
         self.setupUi(self)
 
         self.vectorLayer = vectorLayer
@@ -808,7 +808,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
             operatorButton.clicked.connect(self._operatorButtonClicked)
 
         # expression context
-        self.expressionContext = QgsExpressionContext()
+        self.expressionContext = ExpressionContext()
 
         # set up tree view
         self.treeModel = QStandardItemModel()
@@ -873,7 +873,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         if not item:
             return
 
-        if item.getItemType() is QgsExpressionItem.ItemType.Group:
+        if item.getItemType() is ExpressionItem.ItemType.Group:
             return
 
         self.insertEditorText(item.getExpressionText())
@@ -882,7 +882,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
         """
         Adds an expression item to the tree view
         :param group: tree view group
-        :param item: QgsExpressionItem to append
+        :param item: ExpressionItem to append
         :param icon: icon in tree view
         :return:
         """
@@ -902,7 +902,7 @@ class QgsCostFunctionDialog(QtWidgets.QDialog, QgsCostFunctionDialogUi):
 
     def _loadTreeViewItems(self):
         """
-        Loads all expressions from the QgsExpressionContext class into the tree view
+        Loads all expressions from the ExpressionContext class into the tree view
         :return:
         """
         self.treeModel.clear()

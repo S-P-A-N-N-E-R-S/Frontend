@@ -17,7 +17,7 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 
-from ...views.widgets.QgsGraphEdgePickerWidget import QgsGraphEdgePickerWidget
+from ...views.widgets.graphEdgePickerWidget import GraphEdgePickerWidget
 
 from .baseField import BaseField, BaseResult
 from ..exceptions import ParseError
@@ -49,7 +49,7 @@ class EdgeIDField(BaseField):
                 raise ParseError(f"Invalid key: {self.key}") from error
 
     def createWidget(self, parent):
-        edgePickerWidget = QgsGraphEdgePickerWidget(parent)
+        edgePickerWidget = GraphEdgePickerWidget(parent)
         edgePickerWidget.toggleDialogVisibility.connect(parent.toggleDialogVisibility.emit)
         return edgePickerWidget
 
