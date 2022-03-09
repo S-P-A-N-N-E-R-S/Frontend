@@ -31,6 +31,7 @@ start_app()
 
 
 class TestOGDFParametersWidget(TestCase):
+    """ Provides test cases for testing the OGDFParametersWidget """
 
     def setUp(self):
         """Runs before each test."""

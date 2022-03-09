@@ -26,6 +26,7 @@ from qgis.PyQt.QtCore import QUrl
 
 
 class ResourceView(BaseView):
+    """ View for loading sample data sets """
 
     def __init__(self, dialog):
         super().__init__(dialog)
@@ -49,6 +50,7 @@ class ResourceView(BaseView):
         self.dialog.create_from_resource_input.addItem(name, userData)
 
     def setDescriptionSource(self, source):
+        """ Sets the source for the data description """
         if source is None:
             self.dialog.create_from_resource_description_textbrowser.setPlainText(self.tr("No description available"))
         else:
@@ -57,6 +59,7 @@ class ResourceView(BaseView):
     # destination output
 
     def setFilter(self, filter):
+        """ Sets the supported output file formats """
         self.dialog.create_from_resource_output.setFilter(filter)
 
     def setVectorFilter(self):

@@ -34,6 +34,7 @@ import time, os, re
 
 
 class GraphView(BaseView):
+    """ View for graph creation """
 
     def __init__(self, dialog):
         super().__init__(dialog)
@@ -414,6 +415,7 @@ class GraphView(BaseView):
             self.dialog.create_graph_randomarea_extent.setDisabled(True)
 
     def hasInput(self):
+        """ Checks if graph input has at least one layer """
         return self.dialog.create_graph_input.count() > 0
 
     def isInputLayer(self):
@@ -469,6 +471,7 @@ class GraphView(BaseView):
         return None
 
     def isRandom(self):
+        """ Checks if a random graph should be created """
         return self.dialog.random_graph_checkbox.isChecked()
 
     def getSavePath(self):
@@ -641,6 +644,7 @@ class GraphView(BaseView):
         return statusDict.get(status, "unknown")
 
     def __setTableRow(self, row, task, taskId):
+        """ Creates a new row """
         taskIdItem = QTableWidgetItem(str(taskId))
         descriptionItem = QTableWidgetItem(task.description())
         statusItem = QTableWidgetItem(self.__getTaskStatus(task.status()))

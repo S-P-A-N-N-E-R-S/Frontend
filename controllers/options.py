@@ -35,6 +35,7 @@ class TaskOptions(Enum):
 
 
 class OptionsController(BaseController):
+    """ Controller for storing and reading the options """
 
     activeTask = None
 
@@ -76,12 +77,14 @@ class OptionsController(BaseController):
         self.settings.setValue("ogdfplugin/sslCheck", sslCheck)
 
     def saveAction(self):
+        """ Action for saving the options """
         self.saveOptions()
         self.view.showSuccess(self.tr("Settings saved!"))
 
         parserFetcher.instance().refreshParsers()
 
     def updateCredentials(self, savedAuthId, hasAuth, username, password):
+        """ Creates or updates the server credentials """
         # only save username if not empty
         self.settings.setValue("ogdfplugin/username", username)
 
@@ -112,11 +115,13 @@ class OptionsController(BaseController):
         self.updateCredentials(savedAuthId, hasAuth, "", "")
 
     def logOut(self):
+        """ Logs out the user from the server """
         self.resetCredentials()
         parserFetcher.instance().resetParsers()
         self.view.setLoggedInView(False)
 
     def logIn(self, username=""):
+        """ Logs in the user to the server """
         self.createTask(self.createLogInTask, "Logging in ...", username)
 
     def createLogInTask(self, _task, host, port, tlsOption):
@@ -135,6 +140,7 @@ class OptionsController(BaseController):
             return {"error": self.tr("Login failed!")}
 
     def createUser(self, username=""):
+        """ Creates a new user in the server """
         self.createTask(self.createUserCreationTask, "Creating user...", username, create=True)
 
     def createUserCreationTask(self, _task, host, port, tlsOption):
@@ -153,6 +159,13 @@ class OptionsController(BaseController):
             return {"error": self.tr("User creation failed!")}
 
     def createTask(self, creationMethod, description, username="", create=False):
+        """
+        Generic function to create tasks
+        :param creationMethod: task function
+        :param description: description of the task
+        :param username: username for the server
+        :param create: indicates if a new user should be created
+        """
         if OptionsController.activeTask is not None:
             self.view.showError(self.tr("Please wait until previous user creation is finished!"))
             return

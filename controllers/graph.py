@@ -30,6 +30,9 @@ from qgis.utils import iface
 
 
 class GraphController(BaseController):
+    """
+    Controller for handling of all graph creation tasks by using the GraphBuilder class
+    """
 
     # class variable contains list of taskTuples: (task, taskId)
     activeGraphTasks = []

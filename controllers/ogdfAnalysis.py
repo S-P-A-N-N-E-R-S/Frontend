@@ -31,6 +31,11 @@ from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
 class OGDFAnalysisController(BaseController):
+    """
+    Controller for the execution of OGDF Analysis
+
+    The controller uses the client to transmit the analysis parameters to the backend.
+    """
 
     activeTask = None
 
@@ -52,6 +57,7 @@ class OGDFAnalysisController(BaseController):
         self.refreshAnalysisList()
 
     def runJob(self):
+        """ Collects all job parameters and creates a job request """
         if OGDFAnalysisController.activeTask is not None:
             self.view.showError(self.tr("Please wait until previous request is finished!"))
             return
@@ -136,6 +142,7 @@ class OGDFAnalysisController(BaseController):
             raise exception
 
     def refreshAnalysisList(self):
+        """ Refreshes the available analyses by fetching them from the server """
         self.view.clearAnalysisList()
         self.view.setNetworkButtonsEnabled(False)
 
@@ -145,7 +152,7 @@ class OGDFAnalysisController(BaseController):
 
     def fetchHandlersCompleted(self, result=None):
         """
-        Processes the results of the fetch handlers task.
+        Refreshes the analysis list after fetching the analyses from server.
         """
         self.view.clearAnalysisList()
         self.view.setNetworkButtonsEnabled(True)

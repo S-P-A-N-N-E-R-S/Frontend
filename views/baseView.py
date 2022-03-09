@@ -23,10 +23,11 @@ from qgis.PyQt.QtCore import QObject
 
 
 class BaseView(QObject):
+    """ Base class of all views """
 
     def __init__(self, dialog):
         """
-        Base constuctor of a content window
+        Base constructor of a view
         :param dialog: contains all ui elements
         """
         super(BaseView, self).__init__()
@@ -44,15 +45,19 @@ class BaseView(QObject):
             self.dialog.activateWindow()
 
     def showError(self, msg, title="Error"):
+        """ Shows an error in the notification bar """
         self.dialog.bar.pushMessage(title, msg, level=Qgis.Critical)
 
     def showWarning(self, msg, title="Warning"):
+        """ Shows a warning in the notification bar """
         self.dialog.bar.pushMessage(title, msg, level=Qgis.Warning)
 
     def showSuccess(self, msg, title="Success"):
+        """ Shows a success in the notification bar """
         self.dialog.bar.pushMessage(title, msg, level=Qgis.Success)
 
     def showInfo(self, msg, title="Info"):
+        """ Shows an info in the notification bar """
         self.dialog.bar.pushMessage(title, msg, level=Qgis.Info)
 
     def _browseFile(self, layerComboBox, filter):

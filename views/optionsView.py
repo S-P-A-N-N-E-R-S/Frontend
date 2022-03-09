@@ -24,6 +24,7 @@ from ..controllers.options import OptionsController
 
 
 class OptionsView(BaseView):
+    """ View for displaying and setting plugin options """
 
     def __init__(self, dialog):
         super().__init__(dialog)
@@ -70,21 +71,20 @@ class OptionsView(BaseView):
     # authentication
 
     def getCredentials(self, username="", create=False):
+        """ Requests the credentials from the user by using the LoginDialog """
         loginDialog = LoginDialog(username=username, create=create)
         if loginDialog.exec_() == QDialog.Accepted:
             return loginDialog.getUsername(), loginDialog.getPassword()
         return "", ""
 
-    def getUsername(self):
-        return self.dialog.options_credentials_username_input.text()
-
-    def setUsername(self, username):
-        self.dialog.options_credentials_username_input.setText(username)
-
-    def getPassword(self):
-        return self.dialog.options_credentials_password_input.text()
-
     def setLoggedInView(self, loggedIn, username=""):
+        """
+        Sets the logged in status and buttons
+        :param loggedIn: user is logged in or not
+        :type loggedIn: bool
+        :param username:
+        :return:
+        """
         if loggedIn:
             loggedInText = f"{self.tr('Logged in as')}: {username}"
             self.dialog.ogdf_logged_in_label.setText(loggedInText)

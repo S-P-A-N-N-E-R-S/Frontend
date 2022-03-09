@@ -26,21 +26,11 @@ from .widgets.analysisTreeView import AnalysisTreeView
 
 
 class OGDFAnalysisView(BaseView):
+    """ View for displaying and starting analysis """
 
     def __init__(self, dialog):
         super().__init__(dialog)
         self.name = "ogdf analysis"
-
-        # # setup graph input
-        # self.dialog.ogdf_analysis_graph_input.setFilters(QgsMapLayerProxyModel.PluginLayer)
-        #
-        # # set null layer as default
-        # self.dialog.ogdf_analysis_graph_input.setCurrentIndex(0)
-
-        # # set up graph file upload
-        # self.dialog.ogdf_analysis_graph_input_tools.clicked.connect(
-        #     lambda: self._browseFile("ogdf_analysis_graph_input", "GraphML (*.graphml)")
-        # )
 
         # set up analysis tree view
         self.analysisTreeView = AnalysisTreeView()
@@ -64,6 +54,7 @@ class OGDFAnalysisView(BaseView):
         self.dialog.ogdf_analysis_run_btn.clicked.connect(self.controller.runJob)
 
     def _analysisChanged(self):
+        """ Updates the displayed analysis information """
         request = self.getAnalysis()
         if request:
             self.setParameterFields(request)
@@ -95,7 +86,7 @@ class OGDFAnalysisView(BaseView):
     def setParameterFields(self, request):
         """
         Sets parameter fields which should be shown as input widgets
-        :param request: request instance
+        :param request: request instance containing the fields
         """
         self.ogdfParametersWidget.setParameterFields(request)
 

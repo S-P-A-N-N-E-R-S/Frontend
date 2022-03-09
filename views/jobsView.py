@@ -28,13 +28,17 @@ from ..helperFunctions import getVectorFileFilter
 
 
 class ItemDelegate(QStyledItemDelegate):
+    """ Customizes the drawing of the job items in the list """
+
     def paint(self, painter, option, index):
+        """ Draws the icons on the right side """
         option.decorationPosition = QStyleOptionViewItem.Right
         option.decorationSize = QSize(20, 20)
         super().paint(painter, option, index)
 
 
 class JobsView(BaseView):
+    """ View for listing all jobs and providing job functions """
 
     def __init__(self, dialog):
         super().__init__(dialog)

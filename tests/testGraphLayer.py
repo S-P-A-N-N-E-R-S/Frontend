@@ -34,6 +34,7 @@ start_app()
 
 
 class TestGraphLayer(TestCase):
+    """ Provides test cases for testing the graph layer """
 
     def setUp(self):
         """Runs before each test."""

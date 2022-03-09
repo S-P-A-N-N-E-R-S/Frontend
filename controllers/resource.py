@@ -25,6 +25,7 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject, QgsVectorFileW
 
 
 class ResourceController(BaseController):
+    """ Controller for loading of sample data sets """
 
     def __init__(self, view):
         """
@@ -48,6 +49,7 @@ class ResourceController(BaseController):
         self.changeResource()
 
     def changeResource(self):
+        """ Changes the information to the selected resource """
         resource, resourceType = self.view.getResource()[1]
         # set filter
         if resourceType == "vector":
@@ -59,6 +61,7 @@ class ResourceController(BaseController):
         self.view.setDescriptionSource(helper.getDatasetDescriptionPath(resource))
 
     def createData(self):
+        """ Loads the selected data and stores it to the destination path if specified """
         LayerName = self.view.getResource()[0]
         resource, resourceType = self.view.getResource()[1]
         path = self.view.getFilePath()

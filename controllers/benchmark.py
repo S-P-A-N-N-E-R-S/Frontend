@@ -308,6 +308,7 @@ class BenchmarkController(BaseController):
             raise result["exception"]
 
     def runTask(self):
+        """ Starts the benchmark process """
         if self.task is not None:
             self.view.showError(self.tr("Please wait until previous benchmark is finished!"))
             return
@@ -317,11 +318,12 @@ class BenchmarkController(BaseController):
         if not self._checkSelections():
             return
 
-        task = QgsTask.fromFunction("Start benchmark process", self.runJob, on_finished=self.completed)
+        task = QgsTask.fromFunction("Start benchmark process", self.benchmarkTask, on_finished=self.completed)
         self.task = task
         QgsApplication.taskManager().addTask(task)
 
     def completed(self, _exception, result=None):
+        """ Processes the results of the benchmark task """
         self.task = None
 
         if _exception is not None:
@@ -482,7 +484,7 @@ class BenchmarkController(BaseController):
     def abortTask(self):
         self.task.cancel()
 
-    def runJob(self, _task):
+    def benchmarkTask(self, _task):
         for benchmarkDO in self.benchmarkDOs:
             requestKey = benchmarkDO.algorithm
             request = parserManager.getRequestParser(requestKey)

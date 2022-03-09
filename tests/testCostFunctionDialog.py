@@ -30,7 +30,8 @@ import os
 start_app()
 
 
-class TestOGDFParametersWidget(TestCase):
+class TestCostFunctionDialog(TestCase):
+    """ Provides test cases for testing the CostFunctionDialog """
 
     def setUp(self):
         """Runs before each test."""

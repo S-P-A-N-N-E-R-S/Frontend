@@ -20,20 +20,29 @@ from qgis.PyQt.QtWidgets import QDialog, QLineEdit, QPushButton, QVBoxLayout, QH
 
 
 class LoginDialog(QDialog):
+    """
+    Dialog for user login and user creation
+
+    It provides two input fields for username and password.
+    """
+
     def __init__(self, parent=None, username="", create=False):
         super().__init__(parent)
 
+        # username input
         labelName = QLabel(self)
         labelName.setText("Username")
         self.textName = QLineEdit(self)
         if username:
             self.textName.setText(username)
 
+        # password input
         labelPass = QLabel(self)
         labelPass.setText("Password")
         self.textPass = QLineEdit(self)
         self.textPass.setEchoMode(QLineEdit.Password)
 
+        # set up buttons
         btnText = "Create User" if create else "Login"
         self.buttonLogin = QPushButton(btnText, self)
         self.buttonLogin.clicked.connect(self.handleLogin)
