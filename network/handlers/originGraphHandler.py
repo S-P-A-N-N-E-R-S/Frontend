@@ -16,12 +16,23 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-
 from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem
 
-from ..protocol.build import meta_pb2, origin_graph_pb2
-
 from ...models.ExtGraph import ExtGraph
+
+from ..protocol.build import origin_graph_pb2, meta_pb2
+
+
+class OriginGraphRequest():
+
+    def __init__(self, jobId):
+        self.type = meta_pb2.RequestType.ORIGIN_GRAPH
+        self.jobId = jobId
+
+    def toProtoBuf(self):
+        proto = origin_graph_pb2.OriginGraphRequest()
+        proto.jobId = self.jobId
+        return proto
 
 
 class OriginGraphResponse():

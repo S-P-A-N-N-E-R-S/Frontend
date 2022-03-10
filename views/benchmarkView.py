@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QToolButton, QListWidget, QListWidgetItem, QRadioBut
 from .baseView import BaseView
 from .widgets.ogdfBenchmarkWidget import OGDFBenchmarkWidget
 from ..controllers.benchmark import BenchmarkController
-from ..network import parserManager
+from ..network import handlerManager
 from ..network.protocol.build.available_handlers_pb2 import FieldInformation
 
 
@@ -103,7 +103,7 @@ class BenchmarkView(BaseView):
 
         # get field information for all selected algorithms
         for alg in ogdfAlgs:
-            request = parserManager.getRequestParser(alg)
+            request = handlerManager.getRequestHandler(alg)
             if request:
                 requests.append(request.getFieldInfo())
 
@@ -205,7 +205,7 @@ class BenchmarkView(BaseView):
 
             # get field information for all selected algorithms
             for alg in ogdfAlgs:
-                request = parserManager.getRequestParser(alg)
+                request = handlerManager.getRequestHandler(alg)
                 if request:
                     requests.append(request.getFieldInfo())
 

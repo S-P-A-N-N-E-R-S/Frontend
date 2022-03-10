@@ -21,23 +21,23 @@ from qgis.core import QgsApplication, QgsTask
 from qgis.PyQt.QtCore import QObject, pyqtSignal
 
 from .. import helperFunctions as helper
-from . import parserManager
+from . import handlerManager
 from .client import Client
 from .exceptions import NetworkClientError, ParseError, ServerError
 
-class ParserFetcher(QObject):
+class HandlerFetcher(QObject):
     activeTask = None
-    parsersRefreshed = pyqtSignal(object, name='parsersRefreshed')
+    handlersRefreshed = pyqtSignal(object, name='handlersRefreshed')
 
-    def refreshParsers(self):
+    def refreshHandlers(self):
         """
         fetches all available handlers from server
         :return:
         """
-        if ParserFetcher.activeTask:
+        if HandlerFetcher.activeTask:
             return
 
-        parserManager.resetParsers()
+        handlerManager.resetHandlers()
 
         task = QgsTask.fromFunction(
             "Refreshing algorithms...",
@@ -48,7 +48,7 @@ class ParserFetcher(QObject):
             on_finished=self.fetchHandlersCompleted
         )
         QgsApplication.taskManager().addTask(task)
-        ParserFetcher.activeTask = task
+        HandlerFetcher.activeTask = task
 
     def createFetchHandlersTask(self, _task, host, port, tlsOption):
         try:
@@ -63,20 +63,20 @@ class ParserFetcher(QObject):
         Processes the results of the fetch handlers task.
         """
         # first remove active task to allow a new request.
-        ParserFetcher.activeTask = None
+        HandlerFetcher.activeTask = None
 
         if exception is None:
-            self.parsersRefreshed.emit(result)
+            self.handlersRefreshed.emit(result)
         else:
             result["exception"] = exception
-            self.parsersRefreshed.emit(result)
+            self.handlersRefreshed.emit(result)
 
-    def resetParsers(self):
-        parserManager.resetParsers()
-        self.parsersRefreshed.emit({"reset": True})
+    def resetHandlers(self):
+        handlerManager.resetHandlers()
+        self.handlersRefreshed.emit({"reset": True})
 
 
-_inst = ParserFetcher()
+_inst = HandlerFetcher()
 
 
 def instance():

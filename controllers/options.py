@@ -22,7 +22,7 @@ from qgis.core import QgsSettings, QgsApplication, QgsAuthMethodConfig, QgsTask
 
 from .base import BaseController
 from .. import helperFunctions as helper
-from ..network import parserFetcher
+from ..network import handlerFetcher
 
 # client imports
 from ..network.client import Client
@@ -79,7 +79,7 @@ class OptionsController(BaseController):
         self.saveOptions()
         self.view.showSuccess(self.tr("Settings saved!"))
 
-        parserFetcher.instance().refreshParsers()
+        handlerFetcher.instance().refreshHandlers()
 
     def updateCredentials(self, savedAuthId, hasAuth, username, password):
         # only save username if not empty
@@ -113,7 +113,7 @@ class OptionsController(BaseController):
 
     def logOut(self):
         self.resetCredentials()
-        parserFetcher.instance().resetParsers()
+        handlerFetcher.instance().resetHandlers()
         self.view.setLoggedInView(False)
 
     def logIn(self, username=""):
@@ -203,12 +203,12 @@ class OptionsController(BaseController):
                 self.view.setLoggedInView(True, username)
                 self.view.showSuccess(result["success"])
 
-                parserFetcher.instance().refreshParsers()
+                handlerFetcher.instance().refreshHandlers()
 
             if "error" in result:
                 username = helper.getUsername()
                 self.resetCredentials()
-                parserFetcher.instance().resetParsers()
+                handlerFetcher.instance().resetHandlers()
                 self.view.showError(str(result["error"]), self.tr("Network Error"))
                 if result["method"] == TaskOptions.CREATE_USER:
                     self.createUser(username)
@@ -216,6 +216,6 @@ class OptionsController(BaseController):
                     self.logIn(username)
         else:
             self.resetCredentials()
-            parserFetcher.instance().resetParsers()
+            handlerFetcher.instance().resetHandlers()
             self.view.showError(f"An unknown error occurred: {str(exception)}")
             raise exception

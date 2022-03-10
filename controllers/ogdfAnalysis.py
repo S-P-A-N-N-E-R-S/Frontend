@@ -26,7 +26,7 @@ from ..exceptions import FieldRequiredError
 
 # client imports
 from ..network.client import Client
-from ..network import parserManager, parserFetcher
+from ..network import handlerFetcher, handlerManager
 from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
@@ -48,7 +48,7 @@ class OGDFAnalysisController(BaseController):
         self.view.setDescriptionVisible(False)
 
         # add available analysis
-        parserFetcher.instance().parsersRefreshed.connect(self.fetchHandlersCompleted)
+        handlerFetcher.instance().handlersRefreshed.connect(self.fetchHandlersCompleted)
         self.refreshAnalysisList()
 
     def runJob(self):
@@ -139,7 +139,7 @@ class OGDFAnalysisController(BaseController):
         self.view.clearAnalysisList()
         self.view.setNetworkButtonsEnabled(False)
 
-        parserFetcher.instance().refreshParsers()
+        handlerFetcher.instance().refreshHandlers()
 
         self.view.showInfo("Refreshing algorithms...")
 
@@ -156,7 +156,7 @@ class OGDFAnalysisController(BaseController):
                 return
             else:
                 if "success" in result:
-                    for requestKey, request in parserManager.getRequestParsers().items():
+                    for requestKey, request in handlerManager.getRequestHandlers().items():
                         self.view.addAnalysis(request.name, requestKey)
                     self.view.showSuccess(result["success"])
 

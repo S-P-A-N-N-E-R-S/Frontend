@@ -22,9 +22,8 @@ from qgis.PyQt.QtTest import QTest
 from qgis.PyQt.QtCore import Qt
 
 from ..views.widgets.ogdfParametersWidget import OGDFParametersWidget
-from ..network.protocol.build.available_handlers_pb2 import FieldInformation
-from ..network.requests.baseRequest import BaseRequest
-from ..network.fields import baseField, boolField, graphField, intField, choiceField, doubleField, stringField, edgeIDField, vertexIDField, edgeCostsField, vertexCostsField
+from ..network.handlers.baseHandler import BaseRequest
+from ..network.fields import boolField, graphField, intField, choiceField, doubleField, stringField, edgeIDField, vertexIDField, edgeCostsField, vertexCostsField
 from ..exceptions import FieldRequiredError
 
 start_app()

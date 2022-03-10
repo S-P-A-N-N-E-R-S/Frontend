@@ -22,15 +22,16 @@ import ssl
 import struct
 import gzip
 
-from . import parserManager, protoParser, statusManager
+from . import handlerManager, protoParser, statusManager
 from .exceptions import NetworkClientError, ParseError
-from .protocol.build import meta_pb2
-from .requests.statusRequest import StatusRequest
-from .requests.resultRequest import ResultRequest
-from .requests.abortJobRequest import AbortJobRequest
-from .requests.deleteJobRequest import DeleteJobRequest
-from .requests.originGraphRequest import OriginGraphRequest
+from .handlers.statusHandler import StatusRequest
+from .handlers.resultHandler import ResultRequest
+from .handlers.abortJobHandler import AbortJobRequest
+from .handlers.deleteJobHandler import DeleteJobRequest
+from .handlers.originGraphHandler import OriginGraphRequest
 from ..helperFunctions import TlsOption
+
+from .protocol.build import meta_pb2
 
 
 LENGTH_FIELD_SIZE = 8
@@ -109,7 +110,7 @@ class Client():
 
         # Wait for answer
         self.recv()
-        return parserManager.getParserPairs()
+        return handlerManager.getHandlerPairs()
 
     def getJobStatus(self):
         # Send status request

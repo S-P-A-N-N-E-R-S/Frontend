@@ -19,17 +19,17 @@
 
 from qgis.core import QgsSettings, QgsApplication, QgsAuthMethodConfig
 
-from . import parserManager, statusManager
+from . import handlerManager, statusManager
 from .exceptions import ParseError, ServerError
 from .protocol.build import container_pb2, error_pb2, meta_pb2
 
-from .responses.availableHandlersResponse import AvailableHandlersResponse
-from .responses.emptyResponse import EmptyResponse
-from .responses.genericResponse import GenericResponse
-from .responses.newJobResponse import NewJobResponse
-from .responses.originGraphResponse import OriginGraphResponse
-from .responses.shortestPathResponse import ShortestPathResponse
-from .responses.statusResponse import StatusResponse
+from .handlers.availableHandlersHandler import AvailableHandlersResponse
+from .handlers.emptyHandler import EmptyResponse
+from .handlers.genericHandler import GenericResponse
+from .handlers.newJobHandler import NewJobResponse
+from .handlers.originGraphHandler import OriginGraphResponse
+from .handlers.shortestPathHandler import ShortestPathResponse
+from .handlers.statusHandler import StatusResponse
 
 
 ERROR_TYPES = {
@@ -124,7 +124,7 @@ def parseProtoBuf(protoBufString, responseType, handlerType=None):
                 raise ParseError("Missing handler type")
 
             # Get specific generic response for request
-            response = parserManager.getResponseParser(handlerType)
+            response = handlerManager.getResponseHandler(handlerType)
         else:
             response = getResponseByType(responseType)()
             if not response:

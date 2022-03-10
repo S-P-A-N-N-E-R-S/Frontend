@@ -19,6 +19,7 @@
 
 from ..protocol.build import meta_pb2
 
+
 class EmptyResponse:
 
     def __init__(self):

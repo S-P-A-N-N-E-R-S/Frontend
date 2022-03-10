@@ -20,7 +20,7 @@ from qgis.PyQt.QtWidgets import QSizePolicy
 
 from .baseView import BaseView
 from ..controllers.ogdfAnalysis import OGDFAnalysisController
-from ..network import parserManager
+from ..network import handlerManager
 from .widgets.ogdfParametersWidget import OGDFParametersWidget
 from .widgets.analysisTreeView import AnalysisTreeView
 
@@ -78,10 +78,10 @@ class OGDFAnalysisView(BaseView):
 
     def getAnalysis(self):
         _requestName, requestKey = self.analysisTreeView.getAnalysis()
-        return parserManager.getRequestParser(requestKey)
+        return handlerManager.getRequestHandler(requestKey)
 
     def analysisListEmpty(self):
-        return parserManager.parserListEmpty()
+        return handlerManager.handlerListEmpty()
 
     def addAnalysis(self, analysis, userData=None):
         self.analysisTreeView.addAnalysis(analysis, userData)

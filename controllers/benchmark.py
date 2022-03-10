@@ -30,7 +30,7 @@ from ..models.benchmark.BenchmarkVisualisation import BenchmarkVisualisation
 from ..network.client import Client
 from ..network.exceptions import NetworkClientError, ParseError, ServerError
 from .. import helperFunctions as helper
-from ..network import parserManager, statusManager, parserFetcher
+from ..network import handlerFetcher, handlerManager, statusManager
 from ..network.protocol.build.status_pb2 import StatusType
 
 
@@ -59,7 +59,7 @@ class BenchmarkController(BaseController):
         self.authManager = QgsApplication.authManager()
 
         # add available analysis
-        parserFetcher.instance().parsersRefreshed.connect(self.fetchHandlersCompleted)
+        handlerFetcher.instance().handlersRefreshed.connect(self.fetchHandlersCompleted)
         self.refreshView()
 
         self.doWrapper = None
@@ -278,7 +278,7 @@ class BenchmarkController(BaseController):
         self.view.resetOGDFAlgs()
         self.view.setNetworkButtonsEnabled(False)
 
-        parserFetcher.instance().refreshParsers()
+        handlerFetcher.instance().refreshHandlers()
 
         self.view.showInfo("Refreshing algorithms...")
 
@@ -296,7 +296,7 @@ class BenchmarkController(BaseController):
             else:
                 if "success" in result:
                     requestNameList = []
-                    for request in parserManager.getRequestParsers().values():
+                    for request in handlerManager.getRequestHandlers().values():
                         requestNameList.append(request.name)
 
                     self.view.addOGDFAlgs(requestNameList)
@@ -485,7 +485,7 @@ class BenchmarkController(BaseController):
     def runJob(self, _task):
         for benchmarkDO in self.benchmarkDOs:
             requestKey = benchmarkDO.algorithm
-            request = parserManager.getRequestParser(requestKey)
+            request = handlerManager.getRequestHandler(requestKey)
             request.resetData()
 
             for key in benchmarkDO.parameters:
