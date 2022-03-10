@@ -303,7 +303,7 @@ class ExtGraph(QObject):
 
         self.edgeWeights[functionIndex][edgeIdx] = cost
 
-    def costOfEdge(self, edgeIdx, functionIndex = 0):
+    def costOfEdge(self, edgeIdx, functionIndex = -1):
         """
         Function to get the weight of an edge. The returned value
         depends on the set distance strategy and on the functionIndex.
@@ -314,29 +314,30 @@ class ExtGraph(QObject):
         :type functionIndex: Integer
         :return cost of Edge
         """
-        # differentiate between edge weights from cost functions and set weights from graph builder
-        if self.distanceStrategy == "Euclidean":
-            return self.euclideanDist(edgeIdx)
-
-        elif self.distanceStrategy == "Manhattan":
-            return self.manhattanDist(edgeIdx)
-
-        # calculate geodesic distance using the Haversine formula
-        elif self.distanceStrategy == "Geodesic":
-            return self.geodesicDist(edgeIdx)
-
-        elif self.distanceStrategy == "Ellipsoidal":
-            return self.ellipsoidalDist(edgeIdx)
-
         #if the type is advanced the distances are set by the GraphBuilder directly
-        elif self.distanceStrategy == "Advanced":
+        if self.distanceStrategy == "Advanced":
             # here edgeID is actually only edgeIdx
             if len(self.edgeWeights) <= functionIndex or len(self.edgeWeights[functionIndex]) <= edgeIdx:
                 return 0
             return self.edgeWeights[functionIndex][edgeIdx]
-
+        
         elif self.distanceStrategy == "None":
             return None
+        
+        # differentiate between edge weights from cost functions and set weights from graph builder
+        elif (functionIndex == -1 and self.distanceStrategy == "Euclidean") or functionIndex == 0:
+            return self.euclideanDist(edgeIdx)
+
+        elif (functionIndex == -1 and self.distanceStrategy == "Manhattan") or functionIndex == 1:
+            return self.manhattanDist(edgeIdx)
+
+        # calculate geodesic distance using the Haversine formula
+        elif (functionIndex == -1 and self.distanceStrategy == "Geodesic") or functionIndex == 2:
+            return self.geodesicDist(edgeIdx)
+
+        elif (functionIndex == -1 and self.distanceStrategy == "Ellipsoidal") or functionIndex == 3:
+            return self.ellipsoidalDist(edgeIdx)
+       
         else:
             print("DistanceStrategy: ", self.distanceStrategy)
             raise NameError("Unknown distance strategy")

@@ -199,14 +199,23 @@ class OGDFBenchmarkWidget(QWidget):
                                             rangeValues.append(c)
                                             #rangeValues.append(("Advanced",c))
                                     else:
-                                        rangeValues = [("Euclidean",0), ("Manhattan",0), ("Geodesic",0), ("Ellipsoidal",0)]
+                                        rangeValues = [0, 1, 2, 3]
                                     ranges[field.get("label")] = rangeValues
                                 else:
                                     if layer.getGraph().distanceStrategy == "Advanced":
                                         ranges[field.get("label")] = [0]
                                         #ranges[field.get("label")] = [("Advanced", int(widget.currentText().split(":")[1]))]
                                     else:
-                                        ranges[field.get("label")] = [(str(widget.currentText()),0)]
+                                        if str(widget.currentText()) == "Euclidean":
+                                            ranges[field.get("label")] = [0]
+                                        elif str(widget.currentText()) == "Manhattan":
+                                            ranges[field.get("label")] = [1]
+                                        elif str(widget.currentText()) == "Geodesic":
+                                            ranges[field.get("label")] = [2]
+                                        elif str(widget.currentText()) == "Ellipsoidal":
+                                            ranges[field.get("label")] = [3]    
+                                        else:
+                                            ranges[field.get("label")] = [-1]
 
                     elif field.get("type") == FieldInformation.FieldType.STRING:
                         for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
