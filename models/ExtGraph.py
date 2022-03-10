@@ -317,6 +317,8 @@ class ExtGraph(QObject):
         #if the type is advanced the distances are set by the GraphBuilder directly
         if self.distanceStrategy == "Advanced":
             # here edgeID is actually only edgeIdx
+            if functionIndex == -1:
+                functionIndex = 0
             if len(self.edgeWeights) <= functionIndex or len(self.edgeWeights[functionIndex]) <= edgeIdx:
                 return 0
             return self.edgeWeights[functionIndex][edgeIdx]
