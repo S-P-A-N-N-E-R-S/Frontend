@@ -32,6 +32,7 @@ start_app()
 
 
 class TestExtGraph(TestCase):
+    """ Provides test cases for testing the graph class """
 
     def setUp(self):
         """Runs before each test."""

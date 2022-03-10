@@ -48,7 +48,7 @@ class VertexPickerMapTool(QgsMapTool):
     def canvasReleaseEvent(self, event):
         """
         Select a vertex on canvas
-        :param event:
+        :param event: click release event
         :return:
         """
         clickPosition = QPoint(event.pos().x(), event.pos().y())

@@ -32,6 +32,11 @@ from ...models.GraphBuilder import GraphBuilder
 
 
 class ExpressionItem(QStandardItem):
+    """
+    Item that holds all expression information and is displayed in the TreeView
+
+    The ItemType indicates whether the item is an expression category or not.
+    """
 
     class ItemType(Enum):
         Expression = 0
@@ -664,7 +669,7 @@ class ExpressionContext(QObject):
     def getGroupExpressionItems(self, group):
         """
         Collects all expressions items of a group
-        :param group:
+        :type group: str
         :return: list of ExpressionItem
         """
         groupExpressionItems = []
@@ -685,7 +690,7 @@ class ExpressionContext(QObject):
     def getGroupItem(self, group):
         """
         Creates the corresponding group item
-        :param group:
+        :type group: str
         :return:
         """
         groupLabel = self.groups.get(group, {}).get("label", group)
@@ -695,7 +700,9 @@ class ExpressionContext(QObject):
         """
         Returns a field expression item
         :param group: name of field group
+        :type group: str
         :param field: name of field
+        :type field: str
         :return:
         """
         return ExpressionItem(field, " field:" + field + " ",
@@ -706,8 +713,11 @@ class ExpressionContext(QObject):
         """
         Returns a polygon expression item
         :param polygonIndex: array index of polygon layer
+        :type polygonIndex: int
         :param group: name of field group
+        :type group: str
         :param label: label of polygon
+        :type label: str
         :return:
         """
         return ExpressionItem(label, " polygon[{}]:".format(polygonIndex),
@@ -730,9 +740,11 @@ class ExpressionContext(QObject):
         """
         Formats the help text by appending a title to the text.
         :param expression: name of expression
-        :param group:
-        :param description:
-        :return:
+        :param group: group of the expression
+        :param description: expression description
+        :param syntax: expression syntax text
+        :param example: expression example text
+        :return: formatted help text
         """
         helpText = ""
 
@@ -760,6 +772,7 @@ class ExpressionContext(QObject):
         return helpText
 
     def getGroupHelpText(self, group):
+        """ Return the formatted group help text"""
         groupLabel = self.groups.get(group, {}).get("label", group)
         groupDescription = self.groups.get(group, {}).get("description", "")
         title = self.tr("group {}").format(groupLabel)
@@ -779,8 +792,8 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
     def __init__(self, parent=None, vectorLayer=None, rasterData=[], polygonLayers=[]):
         """
         Constructor
-        :type rasterData: Array of raster inputs and each input is a tuple: (layer, band)
         :param parent:
+        :type rasterData: Array of raster inputs and each input is a tuple: (layer, band)
         :param vectorLayer: Vector layer which fields are shown in the tree view
         """
         super(CostFunctionDialog, self).__init__(parent)
@@ -1012,6 +1025,11 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
         return self.vectorLayer
 
     def setPolygonLayers(self, polygonLayers):
+        """
+        Sets polygon layers that can be selected in the editor
+        :param polygonLayers: List of polygon layers
+        :return:
+        """
         self.polygonLayers = polygonLayers
         self._loadTreeViewItems()
 
@@ -1038,7 +1056,7 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
     def setStatus(self, text):
         """
         Sets an status information for the user
-        :param text:
+        :param text: status text
         :return:
         """
         self.statusText.setText(text)

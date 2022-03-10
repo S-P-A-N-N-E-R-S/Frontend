@@ -20,6 +20,7 @@ from qgis.PyQt.QtCore import QObject
 
 
 class BaseController(QObject):
+    """ Base class of all controllers """
 
     def __init__(self, view):
         super(BaseController, self).__init__()

@@ -91,6 +91,7 @@ class PluginDialog(QDialog, FORM_CLASS):
         QDesktopServices.openUrl(QUrl(helper.getHelpUrl()))
 
     def setView(self, View):
+        """ Opens the passed view """
         self.menu_list.setCurrentRow(View.value)
         self.activateWindow()
 

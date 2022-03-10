@@ -26,6 +26,12 @@ from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 
 
 class AnalysisItem(QStandardItem):
+    """
+    Items of the AnalysisTreeView
+
+    This class contains information of the analysis.
+    The ItemType indicates if an item is a group or a selectable analysis.
+    """
 
     class ItemType(Enum):
         ANALYSIS = 0
@@ -35,8 +41,11 @@ class AnalysisItem(QStandardItem):
         """
         Tree View item which represents an analysis or group
         :param label: label in the tree
+        :type label: str
         :param itemType: distinguish between group and expression items
+        :type itemType: ItemType
         :param analysis: analysis name or path. None in Group Items.
+        :type analysis: str
         :param userData: arbitrary user data. None in Group Items.
         """
         super().__init__(label)
@@ -127,8 +136,8 @@ class AnalysisTreeView(QTreeView):
                 break
 
         # if not all groups found, create missing groups
-        if lastGroupIndex < len(groups)-1:
-            for index in range(lastGroupIndex+1, len(groups)):
+        if lastGroupIndex < len(groups) - 1:
+            for index in range(lastGroupIndex + 1, len(groups)):
                 newGroup = AnalysisItem(groups[index], AnalysisItem.ItemType.GROUP)
                 if lastGroupItem is None:
                     self.treeModel.appendRow(newGroup)

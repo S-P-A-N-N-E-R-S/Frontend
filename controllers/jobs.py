@@ -29,6 +29,9 @@ from ..network.exceptions import NetworkClientError, ParseError, ServerError
 
 
 class JobsController(BaseController):
+    """
+    Controller for fetching of all jobs and results by using the Client class
+    """
 
     activeTask = None
 
@@ -46,6 +49,12 @@ class JobsController(BaseController):
         self.view.setResultVisible(False)
 
     def _createTask(self, description, taskFunction, **kwargs):
+        """
+        Generic function to create a task
+        :param description: description of the task
+        :param taskFunction: function which should be executed in task
+        :param kwargs: additional parameters passed to the task function
+        """
         if JobsController.activeTask is not None:
             self.view.showError(self.tr("Please wait until previous request is finished!"))
             return
@@ -64,6 +73,7 @@ class JobsController(BaseController):
         self.view.showInfo(task.description())
 
     def fetchResult(self):
+        """ Fetches the result of a job """
         if JobsController.activeTask is not None:
             self.view.showError(self.tr("Please wait until previous result fetch is finished!"))
             return
@@ -86,7 +96,7 @@ class JobsController(BaseController):
         self._createTask("Fetching job result...", self.resultFetchTask, job=job)
 
     def resultFetchTask(self, _task, host, port, tlsOption, job):
-        # Get result from finished job
+        """ Task function of ``fetchResult`` """
         try:
             with Client(host, port, tlsOption) as client:
                 response = client.getJobResult(job.jobId)
@@ -112,6 +122,7 @@ class JobsController(BaseController):
         }
 
     def fetchOriginGraph(self):
+        """ Fetches the origin graph of a job """
         job = self.view.getCurrentJob()
         if job is None:
             self.view.showWarning(self.tr("Please select a job."))
@@ -125,6 +136,7 @@ class JobsController(BaseController):
         self._createTask(self.tr("Fetching origin graph..."), self.fetchOriginGraphTask, job=job)
 
     def fetchOriginGraphTask(self, _task, host, port, tlsOption, job):
+        """ Task function of ``fetchOriginGraph`` """
         try:
             with Client(host, port, tlsOption=tlsOption) as client:
                 response = client.getOriginGraph(job.jobId)
@@ -145,6 +157,7 @@ class JobsController(BaseController):
         }
 
     def refreshJobs(self):
+        """ Refreshes the job list """
         if JobsController.activeTask is not None:
             self.view.showError(self.tr("Please wait until previous refresh is finished!"))
             return
@@ -163,7 +176,7 @@ class JobsController(BaseController):
                          sortingDirection=sortingDirection,)
 
     def refreshJobsTask(self, _task, host, port, tlsOption, sortingOption, sortingDirection):
-        # get refreshed job states
+        """ Task function of ``refreshJobs`` """
         try:
             with Client(host, port, tlsOption) as client:
                 client.getJobStatus()
@@ -180,6 +193,7 @@ class JobsController(BaseController):
             }
 
     def abortJob(self):
+        """ Aborts the execution of a job """
         if JobsController.activeTask is not None:
             self.view.showError(self.tr("Please wait until previous request is finished!"))
             return
@@ -200,7 +214,7 @@ class JobsController(BaseController):
         self._createTask("Aborting job...", self.abortJobTask, job=job)
 
     def abortJobTask(self, _task, host, port, tlsOption, job):
-        # get refreshed job states
+        """ Task function of ``abortJob`` """
         try:
             with Client(host, port, tlsOption) as client:
                 client.abortJob(job.jobId)
@@ -213,6 +227,7 @@ class JobsController(BaseController):
             return {"error": str(error)}
 
     def deleteJob(self):
+        """ Deletes a job """
         if JobsController.activeTask is not None:
             self.view.showError(self.tr("Please wait until previous request is finished!"))
             return
@@ -233,7 +248,7 @@ class JobsController(BaseController):
         self._createTask("Deleting job...", self.deleteJobTask, job=job)
 
     def deleteJobTask(self, _task, host, port, tlsOption, job):
-        # get refreshed job states
+        """ Task function of ``deleteJob`` """
         try:
             with Client(host, port, tlsOption) as client:
                 client.deleteJob(job.jobId)
@@ -246,9 +261,7 @@ class JobsController(BaseController):
             return {"error": str(error)}
 
     def requestCompleted(self, exception, result=None):
-        """
-        Processes the results of request task.
-        """
+        """ Processes the result of a request task """
         # first remove active task to allow a new request.
         JobsController.activeTask = None
 

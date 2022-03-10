@@ -38,6 +38,7 @@ from processing.core.Processing import Processing
 Processing.initialize()
 
 class TestGraphBuilder(TestCase):
+    """ Provides test cases for testing the graph building """
 
     def setUp(self):
         """Runs before each test."""

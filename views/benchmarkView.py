@@ -29,6 +29,7 @@ from ..network.protocol.build.available_handlers_pb2 import FieldInformation
 
 
 class BenchmarkView(BaseView):
+    """ View for displaying and setting the benchmark inputs """
 
     def __init__(self, dialog):
         super().__init__(dialog)
@@ -80,6 +81,10 @@ class BenchmarkView(BaseView):
         ]
 
     def getOGDFBenchmarkWidget(self):
+        """
+        Returns the benchmark widget
+        :rtype: OGDFBenchmarkWidget
+        """
         return self.ogdfBenchmarkWidget
 
     def _createNewBenchmarkSelections(self, initial = False):
@@ -168,6 +173,11 @@ class BenchmarkView(BaseView):
         self.dialog.analysis_visualisation.layout().addWidget(removeButton, *(self.benchmarkAnalysisCounter,2))
 
     def _addParameterFields(self, widget, requests):
+        """
+        Adds all parameter fields of an analysis
+        :param widget: widget to add fields to
+        :param requests: request conntaining the fields
+        """
         alreadyAddedLabels = []
         for fields in requests:
             for key in fields:

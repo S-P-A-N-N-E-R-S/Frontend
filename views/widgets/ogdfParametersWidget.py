@@ -49,7 +49,7 @@ class OGDFParametersWidget(QWidget):
     def setParameterFields(self, request):
         """
         Sets parameter fields which should be shown as input widgets
-        :param fields: fields dictionary
+        :param request: request which contains the fields
         """
         self.request = request
         self._createParameterWidgets()

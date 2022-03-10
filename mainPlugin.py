@@ -35,9 +35,12 @@ import os, string, random
 
 
 class OGDFPlugin:
-    # contains all available server requests and responses
-    requests = {}  # keep alive until qgis is closed
-    responses = {}  # keep alive until qgis is closed
+    """
+    This plugin provides the creation, visualization and modification of graphs.
+
+    In addition, this plugin serves as a frontend for the backend that supports the execution of
+    analyses on the created graphs.
+    """
 
     def __init__(self, iface):
         """
@@ -67,7 +70,8 @@ class OGDFPlugin:
         self.initActions()
 
     def tr(self, message):
-        """Get the translation for a string using Qt translation API.
+        """
+        Get the translation for a string using Qt translation API.
 
         We implement this ourselves since we do not inherit QObject.
 
@@ -208,6 +212,11 @@ class OGDFPlugin:
         self.reloadPluginLayers()
 
     def openView(self, view):
+        """
+        Opens the passed view
+
+        :type view: PluginDialog.Views
+        """
         if self.dialog is None:
             self.dialog = PluginDialog()
             self.dialog.setView(view)
@@ -217,6 +226,7 @@ class OGDFPlugin:
             self.dialog.setView(view)
 
     def unload(self):
+        """ Unload all gui elements """
         # remove toolbar entry
         self.iface.removeToolBarIcon(self.toolBarAction)
 
@@ -242,7 +252,8 @@ class OGDFPlugin:
         self.iface.currentLayerChanged.disconnect(self.__layerChanged)
 
     def reloadPluginLayers(self):
-        """Re-reads and reloads plugin layers
+        """
+        Re-reads and reloads plugin layers
         """
         # if project is empty
         if QgsProject.instance().baseName() == "":
@@ -291,9 +302,9 @@ class OGDFPlugin:
             self.currentLayer = None
 
     def deleteLayers(self, layers):
-            for l in layers:
-                delLayer = QgsProject.instance().mapLayer(l)
-                del delLayer
+        for l in layers:
+            delLayer = QgsProject.instance().mapLayer(l)
+            del delLayer
 
     def __layerChanged(self, layer):
         """
