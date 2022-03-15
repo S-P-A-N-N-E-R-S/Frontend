@@ -17,13 +17,12 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 
-from .. import parserManager
+from .. import handlerManager
 from ..exceptions import ParseError
 from ..fields import boolField, choiceField, doubleField, edgeCostsField, edgeIDField, edgeIdArrayField, graphField, intField, literalField, stringField, vertexCoordinatesField, vertexCostsField, vertexIdArrayField, vertexIDField
-from ..requests.genericRequest import GenericRequest
-from ..requests.shortestPathRequest import ShortestPathRequest
-from .genericResponse import GenericResponse
-from .shortestPathResponse import ShortestPathResponse
+from .genericHandler import GenericRequest, GenericResponse
+from .shortestPathHandler import ShortestPathRequest, ShortestPathResponse
+
 from ..protocol.build import available_handlers_pb2, meta_pb2
 
 REQUEST = 0
@@ -65,6 +64,7 @@ RESULT_TYPES = {
     available_handlers_pb2.ResultInformation.HandlerReturnType.VERTEX_ID_ARRAY: vertexIdArrayField.VertexIdArrayResult,
 }
 
+
 class AvailableHandlersResponse:
 
     def __init__(self):
@@ -102,7 +102,7 @@ class AvailableHandlersResponse:
 
             responseObj.key = requestObj.key
 
-            parserManager.insertParserPair(requestObj, responseObj)
+            handlerManager.insertHandlerPair(requestObj, responseObj)
 
     def parseField(self, field):
         try:

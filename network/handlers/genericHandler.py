@@ -17,19 +17,31 @@
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
 
-from .. import statusManager
-from ..protocol.build import meta_pb2, status_pb2
+from .baseHandler import BaseGraphRequest, BaseGraphResponse
+from ..fields import literalField
+
+from ..protocol.build import generic_container_pb2, meta_pb2
 
 
-class StatusResponse():
+class GenericRequest(BaseGraphRequest):
 
     def __init__(self):
-        self.type = meta_pb2.RequestType.STATUS
+        super().__init__()
 
-        self.jobStates = {}
+        self.type = meta_pb2.RequestType.GENERIC
+        self.protoRequest = generic_container_pb2.GenericRequest
 
-    def parseProtoBuf(self, protoBuf):
-        statusResponse = status_pb2.StatusResponse()
-        protoBuf.response.Unpack(statusResponse)
+    def addField(self, field):
+        if isinstance(field, literalField.LiteralField):
+            self.key = field.default
 
-        statusManager.insertJobStates(statusResponse.states)
+        super().addField(field)
+
+
+class GenericResponse(BaseGraphResponse):
+
+    def __init__(self):
+        super().__init__()
+
+        self.type = meta_pb2.RequestType.GENERIC
+        self.protoResponse = generic_container_pb2.GenericResponse

@@ -22,62 +22,62 @@ from copy import deepcopy
 from .exceptions import NetworkClientError
 
 
-class ParserPair():
+class HandlerPair():
     def __init__(self, request, response):
         self.request = request
         self.response = response
 
 
-parser = {}
+handlers = {}
 
 
-def getRequestParser(handlerType):
+def getRequestHandler(handlerType):
     try:
-        return deepcopy(parser[handlerType].request)
+        return deepcopy(handlers[handlerType].request)
     except KeyError as error:
         raise NetworkClientError("Unknown handler type") from error
 
 
-def getRequestParsers():
+def getRequestHandlers():
     requests = {}
-    for key, parserPair in parser.items():
-        requests[key] = deepcopy(parserPair.request)
+    for key, handlerPair in handlers.items():
+        requests[key] = deepcopy(handlerPair.request)
     return requests
 
 
-def getResponseParser(handlerType):
+def getResponseHandler(handlerType):
     try:
-        response = deepcopy(parser[handlerType].response)
+        response = deepcopy(handlers[handlerType].response)
         response.resetData()
         return response
     except KeyError as error:
         raise NetworkClientError("Unknown handler type") from error
 
 
-def getResponseParsers():
+def getResponseHandlers():
     responses = {}
-    for key, parserPair in parser.items():
-        responses[key] = deepcopy(parserPair.response)
+    for key, handlerPair in handlers.items():
+        responses[key] = deepcopy(handlerPair.response)
     return responses
 
 
-def getParserPairs():
+def getHandlerPairs():
     requests = {}
     responses = {}
-    for key, parserPair in parser.items():
-        requests[key] = deepcopy(parserPair.request)
-        responses[key] = deepcopy(parserPair.response)
+    for key, handlerPair in handlers.items():
+        requests[key] = deepcopy(handlerPair.request)
+        responses[key] = deepcopy(handlerPair.response)
 
     return requests, responses
 
 
-def insertParserPair(request, response):
-    parser[request.key] = ParserPair(request, response)
+def insertHandlerPair(request, response):
+    handlers[request.key] = HandlerPair(request, response)
 
 
-def parserListEmpty():
-    return len(parser) == 0
+def handlerListEmpty():
+    return len(handlers) == 0
 
 
-def resetParsers():
-    parser.clear()
+def resetHandlers():
+    handlers.clear()

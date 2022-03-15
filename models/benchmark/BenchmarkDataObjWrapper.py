@@ -20,7 +20,7 @@ import time
 from statistics import mean
 from collections import OrderedDict
 from ...network.client import Client
-from ...network import parserManager
+from ...network import handlerManager
 from ...network.exceptions import NetworkClientError, ParseError
 from ... import helperFunctions as helper
 from ...network import statusManager
@@ -47,7 +47,7 @@ class BenchmarkDataObjWrapper():
         for label in self.parameterKeyHash:
             parameterKey = self.parameterKeyHash[label]
             self.labelHash[parameterKey] = label
-            
+
         self.STATUS_TEXTS = {
             StatusType.UNKNOWN_STATUS: "unknown",
             StatusType.WAITING: "waiting",
@@ -56,7 +56,7 @@ class BenchmarkDataObjWrapper():
             StatusType.FAILED: "failed",
             StatusType.ABORTED: "aborted",
         }
-        
+
         self.serverCallMatchings = {"Min Fragility": ("utils/Fragility", "minFragility", None),
                                     "Max Fragility": ("utils/Fragility", "maxFragility", None),
                                     "Avg Fragility": ("utils/Fragility", "avgFragility", None),
@@ -83,7 +83,7 @@ class BenchmarkDataObjWrapper():
                 if average:
                     values = [dataObj.getAvgRuntime()]
                 else:
-                    values = dataObj.getAllRuntimes()                       
+                    values = dataObj.getAllRuntimes()
             elif analysis == "Number of Edges":
                 if average:
                     values = [dataObj.getAvgNumberOfEdgesResponse()]
@@ -121,44 +121,44 @@ class BenchmarkDataObjWrapper():
                     allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
                     for edgeCount in allEdgeCounts:
                         values.append(round(edgeCount / originalGraph.edgeCount(), 3))
-            elif analysis == "Lightness":           
-                costFunction = dataObj.getParameters()['edgeCosts']    
-                mstWeight = float(self.serverCall(originalGraph, "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])  
+            elif analysis == "Lightness":
+                costFunction = dataObj.getParameters()['edgeCosts']
+                mstWeight = float(self.serverCall(originalGraph, "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])
                 if average:
                     values = [dataObj.getAvgEdgeWeightResponse() / mstWeight]
                 else:
                     allEdgeCounts = dataObj.getAllEdgeWeightResponse()
                     for edgeCount in allEdgeCounts:
-                        values.append(round(edgeCount / mstWeight, 3))                       
-            
+                        values.append(round(edgeCount / mstWeight, 3))
+
             if analysis in self.serverCallMatchings:
                 values = self._getAnalysisValuesFromServer(dataObj, analysis)
-                      
+
             elif analysis == "Node Connectivity":
                 if originalGraph.edgeDirection == "Directed":
                     directed = 1
                 else:
-                    directed = 0  
+                    directed = 0
                 addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
-                for graph in dataObj.getResponseGraphs():              
+                for graph in dataObj.getResponseGraphs():
                     values.append(float(self.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
             elif analysis == "Edge Connectivity":
                 if originalGraph.edgeDirection == "Directed":
                     directed = 1
                 else:
-                    directed = 0   
+                    directed = 0
                 addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
-                for graph in dataObj.getResponseGraphs():              
+                for graph in dataObj.getResponseGraphs():
                     values.append(float(self.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
             elif analysis == "Reciprocity":
                 if average:
-                    values = [dataObj.getAvgNumberOfReciprocalEdges() / dataObj.getAvgNumberOfEdgesResponse()]                      
+                    values = [dataObj.getAvgNumberOfReciprocalEdges() / dataObj.getAvgNumberOfEdgesResponse()]
                 else:
                     counts = dataObj.getAllNumberOfReciprocalEdges()
                     allResponseGraphs = dataObj.getResponseGraphs()
                     for index, count  in enumerate(counts):
                         values.append(count / allResponseGraphs[index].edgeCount())
-                                                                    
+
         # redundant in most cases because values has only one value
         if average:
             return mean(values)
@@ -216,15 +216,15 @@ class BenchmarkDataObjWrapper():
                                 partitionToSort[axisEntry].extend(dataObjsForPartition)
                             else:
                                 partitionToSort[axisEntry] = dataObjsForPartition
-                        else:                          
+                        else:
                             if graphAnalysis in self.serverCallMatchings:
                                 for dataObj in dataObjsForPartition:
                                     axisEntry = self._getAxisEntryFromServer(dataObj, graphAnalysis, allGraphs, i)
                                     if axisEntry in partitionToSort:
                                         partitionToSort[axisEntry].append(dataObj)
                                     else:
-                                        partitionToSort[axisEntry] = [dataObj] 
-                                        
+                                        partitionToSort[axisEntry] = [dataObj]
+
                             elif graphAnalysis == "Node Connectivity":
                                 if allGraphs[i][1].edgeDirection == "Directed":
                                     directed = 1
@@ -232,24 +232,24 @@ class BenchmarkDataObjWrapper():
                                     directed = 0
                                 costFunction = dataObj.getParameters()['edgeCosts']
                                 addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
-                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction, addInfos).data["connectivity"])  
+                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction, addInfos).data["connectivity"])
                                 if axisEntry in partitionToSort:
                                     partitionToSort[axisEntry].append(dataObj)
                                 else:
-                                    partitionToSort[axisEntry] = [dataObj] 
+                                    partitionToSort[axisEntry] = [dataObj]
                             elif graphAnalysis == "Edge Connectivity":
                                 if allGraphs[i][1].edgeDirection == "Directed":
                                     directed = 1
                                 else:
                                     directed = 0
-                                costFunction = dataObj.getParameters()['edgeCosts'] 
+                                costFunction = dataObj.getParameters()['edgeCosts']
                                 addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
-                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction, addInfos).data["connectivity"])  
+                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction, addInfos).data["connectivity"])
                                 if axisEntry in partitionToSort:
                                     partitionToSort[axisEntry].append(dataObj)
                                 else:
-                                    partitionToSort[axisEntry] = [dataObj]                                    
-                    
+                                    partitionToSort[axisEntry] = [dataObj]
+
                     if graphAnalysis is None:
                         if isinstance(keyTuple, tuple):
                             listConv = list(keyTuple)
@@ -272,7 +272,7 @@ class BenchmarkDataObjWrapper():
                             keyTuple = (key, str(sortedKey))
 
                         partition[keyTuple] = partitionToSort[sortedKey]
-                
+
             elif partitionType == "Algorithms":
                 allAlgs = self._getAllAlgs(doList)
                 for i in range(len(allAlgs)):
@@ -318,7 +318,7 @@ class BenchmarkDataObjWrapper():
         return partition
 
     def _getAxisEntryFromServer(self, dataObj, analysis, allGraphs, i):
-        costFunction = dataObj.getParameters()['edgeCosts']  
+        costFunction = dataObj.getParameters()['edgeCosts']
         result = self.serverCall(allGraphs[i][1], self.serverCallMatchings[analysis][0], costFunction, self.serverCallMatchings[analysis][2]).data[self.serverCallMatchings[analysis][1]]
         return float(result)
 
@@ -332,8 +332,8 @@ class BenchmarkDataObjWrapper():
         # TODO: set costFunction correctly if this is fixed in the network
         # Currently the returned graph has advanced costs with one cost function
         # so its works to set the edge costs to 0 for the analysis calls (except lightness call)
-        
-        request = parserManager.getRequestParser(algoString)
+
+        request = handlerManager.getRequestHandler(algoString)
         parameterFieldsData = {}
         parameterFieldsData['graph'] = graph
         parameterFieldsData['edgeCosts'] = costFunction
@@ -343,37 +343,37 @@ class BenchmarkDataObjWrapper():
                 parameterFieldsData[key] = addInfos[key]
         for key in parameterFieldsData:
             fieldData = parameterFieldsData[key]
-            request.setFieldData(key, fieldData) 
-        request.jobName = algoString + "benchmark" 
+            request.setFieldData(key, fieldData)
+        request.jobName = algoString + "benchmark"
         try:
             with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                 executionID = client.sendJobRequest(request)
         except (NetworkClientError, ParseError) as error:
-            pass 
+            pass
         status = "waiting"
         counter = 0
         while status != "success":
             if status == "failed":
-                return -1        
+                return -1
             try:
                 with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                     if counter == 0:
                         time.sleep(0.25)
                         counter+=1
                     else:
-                        time.sleep(0.25)       
+                        time.sleep(0.25)
                     jobStatus = client.getJobStatus()
-                                  
+
                     jobId = executionID
-                    job = jobStatus[jobId]                 
+                    job = jobStatus[jobId]
                     status = self.STATUS_TEXTS.get(job.status, "status not supported")
             except (NetworkClientError, ParseError) as error:
                 return -1
         try:
-            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:       
-                response = client.getJobResult(job.jobId)                          
+            with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
+                response = client.getJobResult(job.jobId)
                 return response
-                
+
         except (NetworkClientError, ParseError) as error:
             return -1
 

@@ -19,9 +19,9 @@
 
 from datetime import datetime
 
-from ..network.protocol.build.status_pb2 import StatusType
+from . import handlerManager
 from .exceptions import NetworkClientError
-from . import parserManager
+from ..network.protocol.build.status_pb2 import StatusType
 
 STATUS_TEXTS = {
     StatusType.UNKNOWN_STATUS: "unknown",
@@ -69,7 +69,7 @@ class JobState():
         if self.jobName:
             return self.jobName
         if self.handlerType:
-            handler = parserManager.getRequestParser(self.handlerType)
+            handler = handlerManager.getRequestHandler(self.handlerType)
             handlerName = handler.name
             return f"{handlerName} {self.jobId}"
         return str(self.jobId)
