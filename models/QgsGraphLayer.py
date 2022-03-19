@@ -252,6 +252,7 @@ class QgsGraphLayer(QgsPluginLayer):
 
         self.isEditing = False
 
+        self.mTransform = QgsCoordinateTransform()
         self._extent = QgsRectangle()
 
         self.willBeDeleted.connect(lambda: self.deleteLater("debug"))
@@ -799,7 +800,7 @@ class QgsGraphLayer(QgsPluginLayer):
         for vertexIdx in range(self.mGraph.vertexCount()):
             self._extent.combineExtentWith(self.mGraph.vertex(vertexIdx).point())
 
-        if QgsProject.instance().crs().authid() != self.mGraph.crs.authid():
+        if QgsProject.instance().crs().authid() != self.mGraph.crs.authid() and self.mTransform.isValid():
             self._extent = self.mTransform.transform(self._extent)
 
         return self._extent
