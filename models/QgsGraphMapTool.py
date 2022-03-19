@@ -381,10 +381,12 @@ class QgsGraphMapTool(QgsMapTool, QObject):
                 self.firstFoundVertexID = self.mLayer.mGraph.vertex(vertexIdx).id()
                 self.firstMarker = QgsVertexMarker(iface.mapCanvas())
                 self.firstMarker.setIconType(QgsVertexMarker.ICON_CROSS)
+
+                foundPosition = self.mLayer.mGraph.vertex(self.firstFoundVertexIdx).point()
                 if QgsProject.instance().crs().authid() != self.mLayer.mGraph.crs.authid():
-                    self.firstMarker.setCenter(self.mLayer.mTransform.transform(clickPosition))
+                    self.firstMarker.setCenter(self.mLayer.mTransform.transform(foundPosition))
                 else:
-                    self.firstMarker.setCenter(clickPosition)
+                    self.firstMarker.setCenter(foundPosition)
 
                 for action in self.mLayer.graphToolBar.actions():
                     if "Delete Vertex" in action.whatsThis():
@@ -569,6 +571,10 @@ class QgsGraphMapTool(QgsMapTool, QObject):
             self.shiftPressed = True
             self.rubberBand = QgsRubberBand(iface.mapCanvas(), True)
             self.rubberBand.setColor(QColor(232, 137, 137, 50))
+
+        elif event.key() == Qt.Key_Space:
+            if self.firstFound:
+                self.__removeFirstFound()
 
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Control:
