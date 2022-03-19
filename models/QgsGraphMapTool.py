@@ -572,7 +572,7 @@ class QgsGraphMapTool(QgsMapTool, QObject):
             self.rubberBand = QgsRubberBand(iface.mapCanvas(), True)
             self.rubberBand.setColor(QColor(232, 137, 137, 50))
 
-        elif event.key() == Qt.Key_Space:
+        elif event.key() == Qt.Key_R:
             if self.firstFound:
                 self.__removeFirstFound()
 

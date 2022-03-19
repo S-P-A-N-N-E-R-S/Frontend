@@ -519,8 +519,7 @@ class ExtGraph(QObject):
 
     def findVertex(self, vertex, tolerance=0):
         """
-        Modified findVertex function to find a vertex within a tolerance square
-        If no vertex in the tolerance square is found, the nearest vertex is chosen
+        Modified findVertex function to find a vertex closest to each other
 
         :type vertex: QgsPointXY
         :type tolerance: int
@@ -541,8 +540,6 @@ class ExtGraph(QObject):
                 minIdx = idx
 
             if tolerance == 0 and checkVertex.point() == vertex:
-                return idx
-            elif tolerance > 0 and toleranceRect.contains(checkVertex.point()):
                 return idx
 
         if not minIdx == -1:
