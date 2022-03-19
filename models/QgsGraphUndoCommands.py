@@ -29,7 +29,7 @@ class ExtVertexUndoCommand(QUndoCommand):
 
         :type layerId: Integer id of layer which contains the vertices graph
         :type vertexIdx: Integer
-        :type oldPoint: QgsPointXY 
+        :type oldPoint: QgsPointXY
         :type operation: String "Delete", "Add", "Move"
         :type newPoint: QgsPointXY
         """
@@ -50,7 +50,7 @@ class ExtVertexUndoCommand(QUndoCommand):
         self.mOldPoint = oldPoint
         self.mNewPoint = newPoint
         self.mOperation = operation
-        
+
         self.undoString = ""
         if self.mOperation == "Delete":
             self.undoString = "Readd vertex " + str(self.mVertexID)
@@ -62,10 +62,10 @@ class ExtVertexUndoCommand(QUndoCommand):
             self.undoString = "Delete vertex " + str(self.mVertexID) + " and its edges"
         else:
             self.undoString = "Move vertex " + str(self.mVertexID) + " back"
-        
+
         self.redoString = self.mOperation + " vertex " + str(self.mVertexID)
         self.setText(self.undoString)
-    
+
     def __del__(self):
         del self.redoString
         del self.undoString
@@ -80,8 +80,8 @@ class ExtVertexUndoCommand(QUndoCommand):
         self.mVertexIdx = self.mLayer.mGraph.addVertex(self.mOldPoint, self.mVertexIdx, self.mVertexID)
         self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
 
-        # call childs commands undo in reverse order
-        for i in range(self.childCount() - 1, -1, -1):
+        # call childs commands undo
+        for i in range(self.childCount()):
             childCommand = self.child(i)
             if fromWithEdges:
                 childCommand.redo()
@@ -105,7 +105,7 @@ class ExtVertexUndoCommand(QUndoCommand):
                 edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeIdx, edge.fromVertex(), edge.toVertex(), True, self)
                 edgeUndoCommand.setDeletedVertex(delVertID)
                 edgeUndoCommand.redo()
-        
+
         elif self.childCount() != 0:
             for i in range(self.childCount() - 1, -1, -1):
                 childCommand = self.child(i)
@@ -115,12 +115,12 @@ class ExtVertexUndoCommand(QUndoCommand):
                     childCommand.redo()
 
         iface.messageBar().pushMessage("Success", "Deleted vertex " + str(delVertID) + " and " + str(len(deletedEdges)) + " edges!", level=Qgis.Success, duration=1)
-    
+
     def _addVertexWithEdges(self):
         if self.childCount() == 0:
             addedEdges = self.mLayer.mGraph.addVertexWithEdges([self.mOldPoint.x(), self.mOldPoint.y()], True)
             self.mVertexID = self.mLayer.mGraph.vertex(self.mVertexIdx).id()
-            
+
             # call child commands redo in order
             if addedEdges:
                 for edge in addedEdges:
@@ -140,11 +140,11 @@ class ExtVertexUndoCommand(QUndoCommand):
         # delete vertex again
         if self.mOperation == "Delete":
             self._deleteVertex()
-        
+
         # add vertex again
         elif self.mOperation == "Add":
             self._addVertex()
-        
+
         # add vertex and its edges again
         elif self.mOperation == "AddWithEdges":
             self._addVertexWithEdges()
@@ -156,7 +156,7 @@ class ExtVertexUndoCommand(QUndoCommand):
 
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
-    
+
     def undo(self):
         # readd vertex again
         if self.mOperation == "Delete":
@@ -170,7 +170,7 @@ class ExtVertexUndoCommand(QUndoCommand):
         else:
             self.mLayer.mGraph.vertex(self.mVertexIdx).setNewPoint(self.mOldPoint)
             iface.messageBar().pushMessage("Success", "Moved vertex " + str(self.mVertexID) + "!", level=Qgis.Success)
-        
+
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
 
@@ -192,7 +192,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
         :type deleted: Bool True if the command was a deletion, an addition otherwise
         """
         super().__init__(parentCommand)
-        
+
         self.layerId = layerId
         mapLayers = QgsProject.instance().mapLayers()
         for layer in mapLayers.values():
@@ -225,9 +225,9 @@ class ExtEdgeUndoCommand(QUndoCommand):
         elif not (self.mFromVertexID == -1 or self.mToVertexID == -1):
             # edge delete does not come from deleteVertex
 
-            self.redoString = "Delete" if self.mDeleted else "Readd" 
+            self.redoString = "Delete" if self.mDeleted else "Readd"
             self.undoString = "Readd" if self.mDeleted else "Delete"
-            
+
             self.redoString += " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
             self.undoString += " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
 
@@ -236,8 +236,8 @@ class ExtEdgeUndoCommand(QUndoCommand):
         if self.mLayer.mGraph.distanceStrategy == "Advanced":
             self.mOldCosts = []
             for functionIdx in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
-                self.mOldCosts.append(self.mLayer.mGraph.costOfEdge(self.mEdgeIdx, functionIdx)) 
-    
+                self.mOldCosts.append(self.mLayer.mGraph.costOfEdge(self.mEdgeIdx, functionIdx))
+
     def __del__(self):
         del self.redoString
         del self.undoString
@@ -277,17 +277,17 @@ class ExtEdgeUndoCommand(QUndoCommand):
         for i in range(len(newCosts)):
             self.mNewCosts.append(newCosts[i])
         self.mCostsChanged = True
-    
+
     def setDeletedVertex(self, id):
         if self.mFromVertexID == -1:
             self.mFromVertexID = id
-        
+
         elif self.mToVertexID == -1:
             self.mToVertexID = id
 
         self.redoString = "Delete" if self.mDeleted else "Readd" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) + ", " + str(self.mToVertexID) + ")"
         self.undoString = "Readd" if self.mDeleted else "Delete" + " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
-                    
+
         self.setText(self.undoString)
 
     def redo(self):
@@ -301,7 +301,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
         # delete edge again
         elif self.mDeleted:
             self.__deleteEdge()
-        
+
         # add edge again
         else:
             self.__addEdge()
@@ -322,7 +322,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
         # add edge again
         elif self.mDeleted:
             self.__addEdge()
-        
+
         # delete edge again
         else:
             self.__deleteEdge()

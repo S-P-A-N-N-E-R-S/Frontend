@@ -974,9 +974,9 @@ class QgsGraphLayerType(QgsPluginLayerType):
         :type layer: QgsGraphLayer
         :return Boolean
         """
-        if hasattr(self, "win") and self.win and layer.id() == self.layerID:
-            self.win.setVisible(True)
-            return True
+        # if hasattr(self, "win") and self.win and layer.id() == self.layerID:
+        #     self.win.setVisible(True)
+        #     return True
 
         self.layerID = layer.id()
 
