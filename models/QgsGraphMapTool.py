@@ -321,6 +321,9 @@ class QgsGraphMapTool(QgsMapTool, QObject):
         self.converter = iface.mapCanvas().getCoordinateTransform()
         clickPosition = self.converter.toMapCoordinates(clickPosition)
 
+        if QgsProject.instance().crs().authid() != self.mLayer.mGraph.crs.authid():
+            clickPosition = self.mLayer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
+
         # left click or left click Operations
         if event.button() == Qt.LeftButton and self.operation == Operations.DEFAULT or self.operation == Operations.ADD_VERTEX_WITH_EDGES: # LeftClick
             self.leftPressed = True
@@ -378,7 +381,10 @@ class QgsGraphMapTool(QgsMapTool, QObject):
                 self.firstFoundVertexID = self.mLayer.mGraph.vertex(vertexIdx).id()
                 self.firstMarker = QgsVertexMarker(iface.mapCanvas())
                 self.firstMarker.setIconType(QgsVertexMarker.ICON_CROSS)
-                self.firstMarker.setCenter(clickPosition)
+                if QgsProject.instance().crs().authid() != self.mLayer.mGraph.crs.authid():
+                    self.firstMarker.setCenter(self.mLayer.mTransform.transform(clickPosition))
+                else:
+                    self.firstMarker.setCenter(clickPosition)
 
                 for action in self.mLayer.graphToolBar.actions():
                     if "Delete Vertex" in action.whatsThis():

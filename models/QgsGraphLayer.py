@@ -78,6 +78,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
         painter.setBrush(self.mRandomColor)
         painter.setFont(QFont("arial", 10))
 
+        if QgsProject.instance().crs().authid() != self.mLayer.mGraph.crs.authid():
+            mTransform = self.rendererContext.coordinateTransform()
+
         # lines and points to render
         lines = []
         highlightedLines = []
@@ -91,6 +94,9 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
 
                     # draw vertex
                     point = vertex.point()
+
+                    if QgsProject.instance().crs().authid() != self.mLayer.mGraph.crs.authid() and mTransform.isValid():
+                        point = mTransform.transform(point)
 
                     point = converter.transform(point).toQPointF()
 
@@ -122,10 +128,12 @@ class QgsGraphLayerRenderer(QgsMapLayerRenderer):
                             edge = self.mGraph.edge(edgeIdx)
 
                             toPoint = self.mGraph.vertex(self.mGraph.findVertexByID(edge.toVertex())).point()
-                            fromPoint = vertex.point()
+                            fromPoint = point
+
+                            if QgsProject.instance().crs().authid() != self.mLayer.mGraph.crs.authid() and mTransform.isValid():
+                                toPoint = mTransform.transform(toPoint)
 
                             toPoint = converter.transform(toPoint).toQPointF()
-                            fromPoint = converter.transform(fromPoint).toQPointF()
 
                             if edge.highlighted():
                                 highlightedLines.append(QLineF(toPoint.x(), toPoint.y(), fromPoint.x(), fromPoint.y()))
@@ -292,6 +300,8 @@ class QgsGraphLayer(QgsPluginLayer):
 
     def createMapRenderer(self, rendererContext):
         # print("CreateRenderer")
+        if QgsProject.instance().crs().authid() != self.mGraph.crs.authid():
+            self.mTransform = rendererContext.coordinateTransform()
         return QgsGraphLayerRenderer(self.id(), rendererContext)
 
     def setTransformContext(self, ct):
@@ -788,6 +798,9 @@ class QgsGraphLayer(QgsPluginLayer):
         self._extent = QgsRectangle()
         for vertexIdx in range(self.mGraph.vertexCount()):
             self._extent.combineExtentWith(self.mGraph.vertex(vertexIdx).point())
+
+        if QgsProject.instance().crs().authid() != self.mGraph.crs.authid():
+            self._extent = self.mTransform.transform(self._extent)
 
         return self._extent
 
