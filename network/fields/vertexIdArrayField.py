@@ -23,16 +23,34 @@ from ..protocol.build import available_handlers_pb2
 
 
 class VertexIdArrayField(BaseField):
+    """Handler class for vertex id array request fields"""
+
     type = available_handlers_pb2.FieldInformation.FieldType.VERTEX_ID_ARRAY
 
     def toProtoBuf(self, request, data):
-        # ExtGraph does not implement a function to get vertex costs yet
+        """
+        Creates and returns the protobuf message for the specified request with
+        the specified field data; Not implemented yet
+
+        :param request: Request the protobuf message will be placed in
+        :param data: Data for the request field
+        """
+
         raise ParseError("Not implemented")
 
 
 class VertexIdArrayResult(BaseResult):
+    """Handler class for vertex id array result fields"""
+
     type = available_handlers_pb2.ResultInformation.HandlerReturnType.VERTEX_ID_ARRAY
 
     def parseProtoBuf(self, response, data):
-        # ExtGraph does not implement a function to get vertex costs yet
+        """
+        Parses the result field from the specified response protobuf message into the specified data
+        dictionairy; Not implemented yet
+
+        :param response: Protobuf message containing the result field to be parsed
+        :param data: Dictionairy the data will be placed into
+        """
+
         raise ParseError("Not implemented")

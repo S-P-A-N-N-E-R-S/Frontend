@@ -26,9 +26,20 @@ from ..protocol.build import available_handlers_pb2
 
 
 class GraphField(BaseField):
+    """Handler class for graph request fields"""
+
     type = available_handlers_pb2.FieldInformation.FieldType.GRAPH
 
     def toProtoBuf(self, request, data):
+        """
+        Creates and returns the protobuf message for the specified request with
+        the specified field data
+
+        :param request: Request the protobuf message will be placed in
+        :param data: Data for the request field
+        :raises ParseError: If data does not contain the required key
+        """
+
         try:
             data.get(self.key)
         except KeyError as error:
@@ -56,6 +67,12 @@ class GraphField(BaseField):
         request.staticAttributes["edgeDirection"] = str(graph.edgeDirection)
 
     def createWidget(self, parent):
+        """
+        Creates a widget for the request field
+
+        :param parent: Parent of the created widget
+        """
+
         widget = QgsMapLayerComboBox(parent)
         widget.setFilters(QgsMapLayerProxyModel.PluginLayer)
         widget.setAllowEmptyLayer(True)
@@ -64,6 +81,13 @@ class GraphField(BaseField):
         return widget
 
     def getWidgetData(self, widget):
+        """
+        Returns the data of the specified widget
+
+        :param widget: The widget containing the desired data
+        :return: The widget data
+        """
+
         layer = widget.currentLayer()
         if layer is not None and layer.isValid():
             return layer.getGraph()
@@ -71,9 +95,19 @@ class GraphField(BaseField):
 
 
 class GraphResult(BaseResult):
+    """Handler class for graph result fields"""
+
     type = available_handlers_pb2.ResultInformation.HandlerReturnType.GRAPH
 
     def parseProtoBuf(self, response, data):
+        """
+        Parses the result field from the specified response protobuf message into the specified data
+        dictionairy
+
+        :param response: Protobuf message containing the result field to be parsed
+        :param data: Dictionairy the data will be placed into
+        """
+
         protoField = self.getProtoField(response)
         graph = data[self.key]
 
@@ -92,4 +126,11 @@ class GraphResult(BaseResult):
             graph.addEdge(inVertexId, outVertexId, -1, edge.uid)
 
     def getResultString(self, _data):
+        """
+        Returns the result string of the specified data
+
+        :param _data: The result data
+        :return: The result string
+        """
+
         return "Result contains a graph, which will be displayed in a new layer."

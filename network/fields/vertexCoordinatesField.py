@@ -23,9 +23,20 @@ from ..protocol.build import available_handlers_pb2
 
 
 class VertexCoordinatesField(BaseField, GraphDependencyMixin):
+    """Handler class for vertex coordinates request fields"""
+
     type = available_handlers_pb2.FieldInformation.FieldType.VERTEX_COORDINATES
 
     def toProtoBuf(self, request, data):
+        """
+        Creates and returns the protobuf message for the specified request with
+        the specified field data
+
+        :param request: Request the protobuf message will be placed in
+        :param data: Data for the request field
+        :raises ParseError: If data does not contain the required key
+        """
+
         try:
             data.get(self.key)
         except KeyError as error:
@@ -43,9 +54,19 @@ class VertexCoordinatesField(BaseField, GraphDependencyMixin):
 
 
 class VertexCoordinatesResult(BaseResult, GraphDependencyMixin):
+    """Handler class for vertex coordinates result fields"""
+
     type = available_handlers_pb2.ResultInformation.HandlerReturnType.VERTEX_COORDINATES
 
     def parseProtoBuf(self, response, data):
+        """
+        Parses the result field from the specified response protobuf message into the specified data
+        dictionairy
+
+        :param response: Protobuf message containing the result field to be parsed
+        :param data: Dictionairy the data will be placed into
+        """
+
         protoField = self.getProtoField(response)
         for idx, vertexCoordinates in enumerate(protoField):
             vertex = data[self.graphKey].vertex(idx)

@@ -25,9 +25,23 @@ from ..protocol.build import available_handlers_pb2, generic_container_pb2
 
 
 class EdgeCostsField(BaseField, GraphDependencyMixin):
+    """Handler class for edge costs request fields"""
+
     type = available_handlers_pb2.FieldInformation.FieldType.EDGE_COSTS
 
     def toProtoBuf(self, request, data):
+        """
+        Creates and returns the protobuf message for the specified request with
+        the specified field data
+
+        :param request: Request the protobuf message will be placed in
+        :param data: Data for the request field
+        :raises ParseError: If data does not contain the required key
+        :raises ParseError: If the graph is unweighted
+        :raises ParseError: If field name is invalid
+        :raises ParseError: If the field key is invalid
+        """
+
         try:
             data.get(self.key)
         except KeyError as error:
@@ -58,17 +72,40 @@ class EdgeCostsField(BaseField, GraphDependencyMixin):
                 raise ParseError(f"Invalid key: {self.key}") from error
 
     def createWidget(self, parent):
+        """
+        Creates a widget for the request field
+
+        :param parent: Parent of the created widget
+        """
+
         widget = QComboBox(parent)
         return widget
 
     def getWidgetData(self, widget):
+        """
+        Returns the data of the specified widget
+
+        :param widget: The widget containing the desired data
+        :return: The widget data
+        """
+
         return widget.currentData()
 
 
 class EdgeCostsResult(BaseResult, GraphDependencyMixin):
+    """Handler class for edge costs result fields"""
+
     type = available_handlers_pb2.ResultInformation.HandlerReturnType.EDGE_COSTS
 
     def parseProtoBuf(self, response, data):
+        """
+        Parses the result field from the specified response protobuf message into the specified data
+        dictionairy
+
+        :param response: Protobuf message containing the result field to be parsed
+        :param data: Dictionairy the data will be placed into
+        """
+
         data[self.graphKey].setDistanceStrategy("Advanced")
         if "." in self.key:
             protoField = self.getProtoMapField(response)

@@ -18,12 +18,12 @@
 
 
 class NetworkClientError(Exception):
-    pass
+    """ Error class for network client errors """
 
 
 class ServerError(Exception):
-    pass
+    """ Error class for server errors """
 
 
 class ParseError(Exception):
-    pass
+    """ Error class for parser errors """

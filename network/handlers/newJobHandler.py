@@ -21,11 +21,20 @@ from ..protocol.build import meta_pb2, new_job_response_pb2
 
 
 class NewJobResponse():
+    """Response handler for the new job response"""
 
     def __init__(self):
+        """Constructor"""
+
         self.type = meta_pb2.RequestType.NEW_JOB_RESPONSE
 
     def parseProtoBuf(self, protoBuf):
+        """
+        Parses the specified protobuf message
+
+        :param protoBuf: The protobuf message to be parsed
+        """
+
         newJobResponse = new_job_response_pb2.NewJobResponse()
         protoBuf.response.Unpack(newJobResponse)
 

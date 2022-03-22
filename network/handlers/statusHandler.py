@@ -22,22 +22,40 @@ from ..protocol.build import status_pb2, meta_pb2
 
 
 class StatusRequest():
+    """Request handler for the status request"""
 
     def __init__(self):
+        """Constructor"""
+
         self.type = meta_pb2.RequestType.STATUS
 
     def toProtoBuf(self):
+        """
+        Creates and returns the protobuf message of the status request
+
+        :return: The created protobuf message
+        """
+
         return status_pb2.StatusRequest()
 
 
 class StatusResponse():
+    """Response handler for the status response"""
 
     def __init__(self):
+        """Constructor"""
+
         self.type = meta_pb2.RequestType.STATUS
 
         self.jobStates = {}
 
     def parseProtoBuf(self, protoBuf):
+        """
+        Parses the specified protobuf message
+
+        :param protoBuf: The protobuf message to be parsed
+        """
+
         statusResponse = status_pb2.StatusResponse()
         protoBuf.response.Unpack(statusResponse)
 
