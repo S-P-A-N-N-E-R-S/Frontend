@@ -27,9 +27,22 @@ from ..protocol.build import available_handlers_pb2
 
 
 class DoubleField(BaseField):
+    """Handler class for double request fields"""
+
     type = available_handlers_pb2.FieldInformation.FieldType.DOUBLE
 
     def toProtoBuf(self, request, data):
+        """
+        Creates and returns the protobuf message for the specified request with
+        the specified field data
+
+        :param request: Request the protobuf message will be placed in
+        :param data: Data for the request field
+        :raises ParseError: If data does not contain the required key
+        :raises ParseError: If the field name is invalid
+        :raises ParseError: If the field key is invalid
+        """
+
         try:
             data.get(self.key)
         except KeyError as error:
@@ -54,6 +67,12 @@ class DoubleField(BaseField):
                 raise ParseError(f"Invalid key: {self.key}") from error
 
     def createWidget(self, parent):
+        """
+        Creates and returns a label for the request field
+
+        :return: Label for the request field
+        """
+
         widget = QDoubleSpinBox(parent)
         # highest minimum and maximum
         widget.setRange(-sys.float_info.min, sys.float_info.max)
@@ -64,13 +83,29 @@ class DoubleField(BaseField):
         return widget
 
     def getWidgetData(self, widget):
+        """
+        Creates a widget for the request field
+
+        :param parent: Parent of the created widget
+        """
+
         return widget.value()
 
 
 class DoubleResult(BaseResult):
+    """Handler class for double result fields"""
+
     type = available_handlers_pb2.ResultInformation.HandlerReturnType.DOUBLE
 
     def parseProtoBuf(self, response, data):
+        """
+        Parses the result field from the specified response protobuf message into the specified data
+        dictionairy
+
+        :param response: Protobuf message containing the result field to be parsed
+        :param data: Dictionairy the data will be placed into
+        """
+
         if "." in self.key:
             protoField = self.getProtoMapField(response)
             if 'graphAttributes' in self.key:
@@ -82,6 +117,13 @@ class DoubleResult(BaseResult):
             data[self.key] = protoField
 
     def getResultString(self, data):
+        """
+        Returns the result string of the specified data
+
+        :param _data: The result data
+        :return: The result string
+        """
+
         result = data.get(self.key, None)
         if result:
             return f"{self.label}: {result}"

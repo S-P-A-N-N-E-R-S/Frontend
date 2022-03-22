@@ -25,13 +25,28 @@ from ..protocol.build import available_handlers_pb2
 
 
 class ChoiceField(BaseField):
+    """Handler class for choice request fields"""
+
     type = available_handlers_pb2.FieldInformation.FieldType.CHOICE
 
     def toProtoBuf(self, request, data):
-        # ExtGraph does not implement a function to get vertex costs yet
+        """
+        Creates and returns the protobuf message for the specified request with
+        the specified field data; Not implemented yet
+
+        :param request: Request the protobuf message will be placed in
+        :param data: Data for the request field
+        """
+
         raise ParseError("Not implemented")
 
     def createWidget(self, parent):
+        """
+        Creates a widget for the request field
+
+        :param parent: Parent of the created widget
+        """
+
         widget = QComboBox(parent)
         choices = self.choices
         for choice in choices:
@@ -42,4 +57,11 @@ class ChoiceField(BaseField):
         return widget
 
     def getWidgetData(self, widget):
+        """
+        Returns the data of the specified widget
+
+        :param widget: The widget containing the desired data
+        :return: The widget data
+        """
+
         return widget.currentData()

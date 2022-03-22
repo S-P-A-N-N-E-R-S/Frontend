@@ -21,12 +21,25 @@ from ..protocol.build import abort_job_pb2, meta_pb2
 
 
 class AbortJobRequest():
+    """Handler class for the abort job request"""
 
     def __init__(self, jobId):
+        """
+        Constructor
+
+        :param jobId: ID of the job to abort
+        """
+
         self.type = meta_pb2.RequestType.ABORT_JOB
         self.jobId = jobId
 
     def toProtoBuf(self):
+        """
+        Parses the protobuf message
+
+        :return: The parsed protobuf message object
+        """
+
         proto = abort_job_pb2.AbortJobRequest()
         proto.jobId = self.jobId
         return proto

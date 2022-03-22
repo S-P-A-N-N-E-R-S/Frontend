@@ -23,9 +23,21 @@ from ..protocol.build import available_handlers_pb2
 
 
 class LiteralField(BaseField):
+    """Handler class for literal request fields"""
+
     type = available_handlers_pb2.FieldInformation.FieldType.LITERAL
 
     def toProtoBuf(self, request, _data):
+        """
+        Creates and returns the protobuf message for the specified request with
+        the specified field data
+
+        :param request: Request the protobuf message will be placed in
+        :param _data: Unused
+        :raises ParseError: If the field name is invalid
+        :raises ParseError: If the field key is invalid
+        """
+
         if "." in self.key:
             fieldName, mapKey = self.key.split(".")
             try:

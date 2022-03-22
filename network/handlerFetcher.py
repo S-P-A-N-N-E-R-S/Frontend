@@ -26,14 +26,14 @@ from .client import Client
 from .exceptions import NetworkClientError, ParseError, ServerError
 
 class HandlerFetcher(QObject):
+    """Class that fetches available handlers from server"""
+
     activeTask = None
     handlersRefreshed = pyqtSignal(object, name='handlersRefreshed')
 
     def refreshHandlers(self):
-        """
-        fetches all available handlers from server
-        :return:
-        """
+        """Creates a task that fetches available handlers from server"""
+
         if HandlerFetcher.activeTask:
             return
 
@@ -51,6 +51,16 @@ class HandlerFetcher(QObject):
         HandlerFetcher.activeTask = task
 
     def createFetchHandlersTask(self, _task, host, port, tlsOption):
+        """
+        Fetches available handlers from server
+
+        :param _task: Task object; Not used
+        :param host: Server IP address
+        :param port: Server port
+        :param tlsOption: TLS setting
+        :return: Success and error messages
+        """
+
         try:
             with Client(host, port, tlsOption) as client:
                 client.getAvailableHandlers()
@@ -60,9 +70,13 @@ class HandlerFetcher(QObject):
 
     def fetchHandlersCompleted(self, exception, result=None):
         """
-        Processes the results of the fetch handlers task.
+        Processes the results of the fetch handlers task
+
+        :param exception: Exceptions that occurred during the task execution
+        :param result: Result of the task, defaults to None
         """
-        # first remove active task to allow a new request.
+
+        # remove active task to allow a new request.
         HandlerFetcher.activeTask = None
 
         if exception is None:
@@ -72,6 +86,8 @@ class HandlerFetcher(QObject):
             self.handlersRefreshed.emit(result)
 
     def resetHandlers(self):
+        """Resets saved available handlers and emits reset signal"""
+
         handlerManager.resetHandlers()
         self.handlersRefreshed.emit({"reset": True})
 
@@ -80,4 +96,10 @@ _inst = HandlerFetcher()
 
 
 def instance():
+    """
+    Returns HandlerFetcher instance
+
+    :return: HandlerFetcher instance
+    """
+
     return _inst

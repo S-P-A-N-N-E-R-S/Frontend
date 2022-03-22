@@ -26,8 +26,11 @@ from ..protocol.build.handlers import shortest_path_pb2
 
 
 class ShortestPathRequest(BaseGraphRequest):
+    """Request handler for the shortest path request; Unused"""
 
     def __init__(self):
+        """Constructor"""
+
         super().__init__()
 
         self.type = meta_pb2.RequestType.SHORTEST_PATH
@@ -37,8 +40,17 @@ class ShortestPathRequest(BaseGraphRequest):
 
 
 class OldShortestPathRequest():
+    """Old request handler for the shortest path request; Unused"""
 
     def __init__(self, graph=None, startUid=None, endUid=None):
+        """
+        Constructor
+
+        :param graph: Graph instance, defaults to None
+        :param startUid: UID of the start node, defaults to None
+        :param endUid: UID of the end node, defaults to None
+        """
+
         self.graph = graph
         self.startUid = startUid
         self.endUid = endUid
@@ -46,6 +58,12 @@ class OldShortestPathRequest():
         self.type = meta_pb2.RequestContainer.RequestType.SHORTEST_PATH
 
     def toProtoBuf(self):
+        """
+        Creates and returns the protobuf message for the shortest path request
+
+        :return: The created protobuf message
+        """
+
         request = shortest_path_pb2.ShortestPathRequest()
         request.startUid = self.startUid
         request.endUid = self.endUid
@@ -77,8 +95,11 @@ class OldShortestPathRequest():
 
 
 class ShortestPathResponse(BaseGraphResponse):
+    """Response handler for the shortest path response; Unused"""
 
     def __init__(self):
+        """Constructor"""
+
         super().__init__()
 
         self.type = meta_pb2.RequestType.SHORTEST_PATH
@@ -88,13 +109,27 @@ class ShortestPathResponse(BaseGraphResponse):
 
 
 class OldShortestPathResponse():
+    """Old response handler for the shortest path response; Unused"""
 
     def __init__(self, graph=None):
+        """
+        Constructor
+
+        :param graph: Graph instance, defaults to None
+        """
+
         self.graph = graph
 
         self.type = meta_pb2.ResponseContainer.ResponseType.SHORTEST_PATH
 
     def parseProtoBuf(self, protoBuf):
+        """
+        Parses the specified protobuf message
+
+        :param protoBuf: Protobuf message to be parsed
+        :raises ParseError: If the response type is invalid
+        """
+
         if protoBuf.type != self.type:
             raise ParseError("Invalid response type")
 

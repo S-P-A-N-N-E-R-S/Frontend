@@ -23,7 +23,16 @@ from .exceptions import NetworkClientError
 
 
 class HandlerPair():
+    """Data structure that contains a request and response pair"""
+
     def __init__(self, request, response):
+        """
+        Constructor
+
+        :param request: Request handler
+        :param response: Response handler
+        """
+
         self.request = request
         self.response = response
 
@@ -32,6 +41,14 @@ handlers = {}
 
 
 def getRequestHandler(handlerType):
+    """
+    Returns a deep copy of a request handler of the specified handler type
+
+    :param handlerType: Type of the request handler
+    :raises NetworkClientError: If the handler type is unknown
+    :return: A request handler of the specified handler type
+    """
+
     try:
         return deepcopy(handlers[handlerType].request)
     except KeyError as error:
@@ -39,6 +56,12 @@ def getRequestHandler(handlerType):
 
 
 def getRequestHandlers():
+    """
+    Returns deep copies of all request handlers as a dictionairy
+
+    :return: All request handlers
+    """
+
     requests = {}
     for key, handlerPair in handlers.items():
         requests[key] = deepcopy(handlerPair.request)
@@ -46,6 +69,14 @@ def getRequestHandlers():
 
 
 def getResponseHandler(handlerType):
+    """
+    Returns a deep copy of a response handler of the specified handler type
+
+    :param handlerType: Type of the response handler
+    :raises NetworkClientError: If the handler type is unknown
+    :return: A response handler of the specified handler type
+    """
+
     try:
         response = deepcopy(handlers[handlerType].response)
         response.resetData()
@@ -55,6 +86,12 @@ def getResponseHandler(handlerType):
 
 
 def getResponseHandlers():
+    """
+    Returns deep copies of all response handlers as a dictionairy
+
+    :return: All response handlers
+    """
+
     responses = {}
     for key, handlerPair in handlers.items():
         responses[key] = deepcopy(handlerPair.response)
@@ -62,6 +99,13 @@ def getResponseHandlers():
 
 
 def getHandlerPairs():
+    """
+    Returns two dictionaries as a tuple, containing deep copies of all
+    request/response handlers respectively
+
+    :return: Tuple containing all request and response handlers
+    """
+
     requests = {}
     responses = {}
     for key, handlerPair in handlers.items():
@@ -72,12 +116,28 @@ def getHandlerPairs():
 
 
 def insertHandlerPair(request, response):
+    """
+    Inserts a new HandlerPair to be saved, containing the supplied
+    request and response
+
+    :param request: Request to be saved
+    :param response: Response to be saved
+    """
+
     handlers[request.key] = HandlerPair(request, response)
 
 
 def handlerListEmpty():
+    """
+    Returns whether or not the handler list is empty
+
+    :return: Boolean describing if the handler list is empty
+    """
+
     return len(handlers) == 0
 
 
 def resetHandlers():
+    """Deletes all saved handlers and resets handler list"""
+
     handlers.clear()

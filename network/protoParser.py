@@ -39,6 +39,14 @@ ERROR_TYPES = {
 
 
 def createProtoBuf(request):
+    """
+    Creates a protocol buffer string from the specified request object
+
+    :param request: Request object to be converted
+    :raises ParseError: If the request object can't be converted
+    :return: Protobuf string of the specified request object
+    """
+
     protoBuf = container_pb2.RequestContainer()
 
     try:
@@ -51,6 +59,13 @@ def createProtoBuf(request):
 
 
 def getMetaStringFromType(requestType):
+    """
+    Returns the meta data string with the specified request type
+
+    :param requestType: Request type
+    :return: Meta data string with the specified request type
+    """
+
     metaData = meta_pb2.MetaData()
     getAuthenticationData(metaData)
     metaData.containerSize = 0
@@ -59,6 +74,14 @@ def getMetaStringFromType(requestType):
 
 
 def getMetaStringFromRequest(request, requestStringLen):
+    """
+    Return the meta data string from the specified request object and request string length
+
+    :param request: Reuqest object
+    :param requestStringLen: Request string length
+    :return: Meta data string of the specified request object
+    """
+
     metaData = meta_pb2.MetaData()
     getAuthenticationData(metaData)
     metaData.containerSize = requestStringLen
@@ -76,6 +99,14 @@ def getMetaStringFromRequest(request, requestStringLen):
 
 
 def getAuthenticationData(metaData):
+    """
+    Inserts the currently saved authentication data into the specified
+    meta data object
+
+    :param metaData: Meta data object
+    :raises ParseError: If the authentication data can't be fetched or is invalid
+    """
+
     settings = QgsSettings()
     authId = settings.value("ogdfplugin/authId")
     authMgr = QgsApplication.authManager()
@@ -100,6 +131,14 @@ def getAuthenticationData(metaData):
 
 
 def parseMetaData(metaString):
+    """
+    Parse a meta data object from the specified meta data string
+
+    :param metaString: Meta data string
+    :raises ParseError: If specified string is empty
+    :return: Meta data object of specified meta data string
+    """
+
     metaData = meta_pb2.MetaData()
     metaData.ParseFromString(metaString)
     if metaData.containerSize <= 0 and metaData.type != meta_pb2.RequestType.AUTH:
@@ -108,6 +147,21 @@ def parseMetaData(metaString):
 
 
 def parseProtoBuf(protoBufString, responseType, handlerType=None):
+    """
+    Parse the specified protobuf string with the specified response type and
+    optional handler type
+
+    :param protoBufString: Protobuf string to be parsed
+    :param responseType: Reponse type of protobuf string
+    :param handlerType: Handler type of protobuf string, defaults to None
+    :raises ParseError: If the handler type is missing
+    :raises ParseError: If the response type is unknown
+    :raises ParseError: If the response can't be parsed
+    :raises ServerError: If the server responded with an error
+    :raises ParseError: If the server responded with an unknown status code
+    :return: The parsed response object
+    """
+
     if responseType == meta_pb2.RequestType.ERROR:
         parseError(protoBufString)
 
@@ -149,6 +203,13 @@ def parseProtoBuf(protoBufString, responseType, handlerType=None):
 
 
 def parseError(protoBufString):
+    """
+    Parse an error message object from the specified protobuf string
+
+    :param protoBufString: The protobuf string containing an error message
+    :raises ServerError: The error contained in the specified protobuf string
+    """
+
     errorMessage = error_pb2.ErrorMessage()
     errorMessage.ParseFromString(protoBufString)
 
@@ -165,7 +226,14 @@ def parseError(protoBufString):
 
 
 def getResponseByType(requestType):
-    # Return the correct default constructed response type by the type field provied by meta data
+    """
+    Returns a response object with the specified type
+
+    :param requestType: Type of the desired response object
+    :raises ParseError: If the specified type is unknown
+    :return: Response object with the specified type
+    """
+
     try:
         return {
             meta_pb2.RequestType.ABORT_JOB: EmptyResponse,

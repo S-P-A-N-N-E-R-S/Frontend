@@ -21,12 +21,25 @@ from ..protocol.build import delete_job_pb2, meta_pb2
 
 
 class DeleteJobRequest():
+    """Request handler for the delete job request"""
 
     def __init__(self, jobId):
+        """
+        Constructor
+
+        :param jobId: ID of the job to be deleted
+        """
+
         self.type = meta_pb2.RequestType.DELETE_JOB
         self.jobId = jobId
 
     def toProtoBuf(self):
+        """
+        Creates and returns the protobuf message object for the delete job request
+
+        :return: The created protobuf message object
+        """
+
         proto = delete_job_pb2.DeleteJobRequest()
         proto.jobId = self.jobId
         return proto

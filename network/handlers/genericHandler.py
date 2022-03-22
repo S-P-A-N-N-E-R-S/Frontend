@@ -24,14 +24,23 @@ from ..protocol.build import generic_container_pb2, meta_pb2
 
 
 class GenericRequest(BaseGraphRequest):
+    """Request handler for the generic job request"""
 
     def __init__(self):
+        """Constructor"""
+
         super().__init__()
 
         self.type = meta_pb2.RequestType.GENERIC
         self.protoRequest = generic_container_pb2.GenericRequest
 
     def addField(self, field):
+        """
+        Adds the specified field to the saved request fields
+
+        :param field: Field to be added
+        """
+
         if isinstance(field, literalField.LiteralField):
             self.key = field.default
 
@@ -39,8 +48,11 @@ class GenericRequest(BaseGraphRequest):
 
 
 class GenericResponse(BaseGraphResponse):
+    """Response handler for the generic job result response"""
 
     def __init__(self):
+        """Constructor"""
+
         super().__init__()
 
         self.type = meta_pb2.RequestType.GENERIC

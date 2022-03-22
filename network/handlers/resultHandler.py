@@ -21,12 +21,25 @@ from ..protocol.build import result_pb2, meta_pb2
 
 
 class ResultRequest():
+    """Request handler for the job result request"""
 
     def __init__(self, jobId):
+        """
+        Constructor
+
+        :param jobId: ID of the desired job result
+        """
+
         self.type = meta_pb2.RequestType.RESULT
         self.jobId = jobId
 
     def toProtoBuf(self):
+        """
+        Creates and returns the protobuf message of the job result request
+
+        :return: The created job result request
+        """
+
         proto = result_pb2.ResultRequest()
         proto.jobId = self.jobId
         return proto

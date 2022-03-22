@@ -25,8 +25,11 @@ from ..protocol.build import generic_container_pb2, available_handlers_pb2, meta
 
 
 class BaseRequest():
+    """Base class for job request handlers"""
 
     def __init__(self):
+        """Constructor"""
+
         self.type = meta_pb2.RequestType.UNDEFINED_REQUEST
         self.protoRequest = generic_container_pb2.GenericRequest
 
@@ -39,30 +42,74 @@ class BaseRequest():
         self.data = {}
 
     def getFieldInfo(self):
+        """
+        Returns the information of all request fields as a dictionairy
+
+        :return: Information of all request fields
+        """
+
         fieldInfo = {}
         for fieldKey, field in self.fields.items():
             fieldInfo[fieldKey] = field.getInfo()
         return fieldInfo
 
     def setFieldData(self, key, data):
+        """
+        Sets the data of the request field with the specified field key
+
+        :param key: Key of the request field
+        :param data: Data for the request field
+        :raises ParseError: If the field key is invalid
+        """
+
         try:
             self.data[key] = data
         except KeyError as error:
-            raise ParseError("Invalid data key") from error
+            raise ParseError("Invalid field key") from error
 
     def resetData(self):
+        """Resets all request field data"""
+
         self.data = {}
 
     def addField(self, field):
+        """
+        Adds the specified field to the saved request fields
+
+        :param field: Field to be added
+        """
+
         self.fields[field.key] = field
 
     def createWidget(self, fieldKey, parent):
+        """
+        Creates and returns the widget for the specified field
+
+        :param fieldKey: Field key of the widget to be created
+        :param parent: Parent set to be the parent of the widget
+        :return: The created field widget
+        """
+
         return self.fields[fieldKey].createWidget(parent)
 
     def getWidgetData(self, fieldKey, widget):
+        """
+        Returns the data of the specified field widget
+
+        :param fieldKey: The field key of the widget
+        :param widget: The widget containing the desired data
+        :return: The widget data
+        """
+
         return self.fields[fieldKey].getWidgetData(widget)
 
     def toProtoBuf(self):
+        """
+        Creates and returns the protobuf message of the request handler
+
+        :return: The created protobuf message
+        """
+
         request = self.protoRequest()
 
         for field in self.fields.values():
@@ -72,13 +119,22 @@ class BaseRequest():
 
 
 class BaseGraphRequest(BaseRequest):
+    """Base class for job request handlers containing a graph"""
 
     def __init__(self):
+        """Constructor"""
+
         super().__init__()
 
         self.graphKey = ""
 
     def addField(self, field):
+        """
+        Adds the specified field to the saved request fields
+
+        :param field: Field to be added
+        """
+
         if isinstance(field, graphField.GraphField):
             self.graphKey = field.key
             for savedField in self.fields.values():
@@ -90,6 +146,12 @@ class BaseGraphRequest(BaseRequest):
         super().addField(field)
 
     def toProtoBuf(self):
+        """
+        Creates and returns the protobuf message of the request handler
+
+        :return: The created protobuf message
+        """
+
         request = self.protoRequest()
 
         if self.graphKey:
@@ -103,8 +165,11 @@ class BaseGraphRequest(BaseRequest):
 
 
 class BaseResponse():
+    """Base class for job result handlers"""
 
     def __init__(self):
+        """Constructor"""
+
         self.type = meta_pb2.RequestType.UNDEFINED_REQUEST
         self.protoResponse = generic_container_pb2.GenericResponse
 
@@ -116,30 +181,65 @@ class BaseResponse():
         self.data = {}
 
     def getFieldInfo(self):
+        """
+        Returns the information of all response fields as a dictionairy
+
+        :return: Information of all response fields
+        """
+
         fieldInfo = {}
         for resultKey, result in self.results.items():
             fieldInfo[resultKey] = result.getInfo()
         return fieldInfo
 
     def getFieldData(self, key):
+        """
+        Returns the data of the response field with the specified field key
+
+        :param key: Key of the response field
+        :raises ParseError: If the field key is invalid
+        """
+
         try:
             return self.data[key]
         except KeyError as error:
-            raise ParseError("Invalid data key") from error
+            raise ParseError("Invalid field key") from error
 
     def setFieldData(self, key, data):
+        """
+        Sets the data of the response field with the specified field key
+
+        :param key: Key of the response field
+        :param data: Data for the response field
+        :raises ParseError: If the field key is invalid
+        """
+
         try:
             self.data[key] = data
         except KeyError as error:
-            raise ParseError("Invalid data key") from error
+            raise ParseError("Invalid field key") from error
 
     def resetData(self):
+        """Resets all response field data"""
+
         self.data = {}
 
     def addResult(self, result):
+        """
+        Adds the specified result field to the saved response fields
+
+        :param field: Result field to be added
+        """
+
         self.results[result.key] = result
 
     def getResultString(self):
+        """
+        Returns all field results as a string
+
+        :return: Field results
+        """
+
         resultString = ""
         for result in self.results.values():
             try:
@@ -150,6 +250,12 @@ class BaseResponse():
         return resultString
 
     def parseProtoBuf(self, protoBuf):
+        """
+        Parses the specified protobuf message
+
+        :param protoBuf: Protobuf message to be parsed
+        """
+
         response = self.protoResponse()
         protoBuf.response.Unpack(response)
 
@@ -158,13 +264,22 @@ class BaseResponse():
 
 
 class BaseGraphResponse(BaseResponse):
+    """Base class for job result handlers containing a graph"""
 
     def __init__(self):
+        """Constructor"""
+
         super().__init__()
 
         self.graphKey = ""
 
     def getEdgeCostFields(self):
+        """
+        Returns list of all edge cost fields contained in the job result message
+
+        :return: All edge cost fields
+        """
+
         edgeCostFields = []
         for result in self.results.values():
             if result.type == available_handlers_pb2.ResultInformation.HandlerReturnType.EDGE_COSTS:
@@ -172,6 +287,12 @@ class BaseGraphResponse(BaseResponse):
         return edgeCostFields
 
     def getVertexCostFields(self):
+        """
+        Returns list of all vertex cost fields contained in the job result message
+
+        :return: All vertex cost fields
+        """
+
         vertexCostFields = []
         for result in self.results.values():
             if result.type == available_handlers_pb2.ResultInformation.HandlerReturnType.VERTEX_COSTS:
@@ -179,11 +300,15 @@ class BaseGraphResponse(BaseResponse):
         return vertexCostFields
 
     def initGraphField(self):
+        """Initializes the graph field by creating a new graph instance"""
+
         newGraph = ExtGraph()
         newGraph.setDistanceStrategy("None")
         self.data[self.graphKey] = newGraph
 
     def initCostFields(self):
+        """Initializes all cost fields by resetting the cost index"""
+
         edgeCostIndex = 0
         vertexCostIndex = 0
         for result in self.results.values():
@@ -195,6 +320,12 @@ class BaseGraphResponse(BaseResponse):
                 vertexCostIndex += 1
 
     def addResult(self, result):
+        """
+        Adds the specified result field to the saved response fields
+
+        :param field: Result field to be added
+        """
+
         if isinstance(result, graphField.GraphResult):
             self.graphKey = result.key
             for savedResult in self.results.values():
@@ -206,14 +337,28 @@ class BaseGraphResponse(BaseResponse):
         super().addResult(result)
 
     def resetData(self):
+        """Resets all response field data"""
+
         super().resetData()
         self.initGraphField()
         self.initCostFields()
 
     def getGraph(self):
+        """
+        Returns the graph contained in the job result message
+
+        :return: The graph contained in the job result message
+        """
+
         return self.data[self.graphKey]
 
     def parseProtoBuf(self, protoBuf):
+        """
+        Parses the specified protobuf message
+
+        :param protoBuf: Protobuf message to be parsed
+        """
+
         response = self.protoResponse()
         protoBuf.response.Unpack(response)
 

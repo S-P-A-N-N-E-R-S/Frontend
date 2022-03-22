@@ -38,8 +38,19 @@ LENGTH_FIELD_SIZE = 8
 
 
 class Client():
+    """Class that manages all network communication of the plugin"""
 
     def __init__(self, host, port, tlsOption=TlsOption.ENABLED_NO_CHECK, maxRetryAttempts=1):
+        """
+        Constructor
+
+        :param host: IP address of the server
+        :param port: Port of the server
+        :param tlsOption: TLS setting of the server, defaults to TlsOption.ENABLED_NO_CHECK
+        :param maxRetryAttempts: Maximum number of connect attempts, defaults to 1
+        :raises TypeError: If tlsOption is not of Type TlsOption
+        """
+
         if not isinstance(tlsOption, TlsOption):
             raise TypeError("Parameter tlsOption is not of Type TlsOption")
 
@@ -77,6 +88,13 @@ class Client():
         self.socket.close()
 
     def connect(self, attempt=0):
+        """
+        Establishes a connection with the server
+
+        :param attempt: Current number of connect attempts, defaults to 0
+        :raises NetworkClientError: If connection to server was not possible
+        """
+
         if attempt < self.maxRetryAttempts:
             try:
                 self.socket.connect((self.host, self.port))
@@ -86,9 +104,17 @@ class Client():
             raise NetworkClientError("Can't connect to host")
 
     def disconnect(self):
+        """Closes connection to server"""
+
         self.socket.close()
 
     def checkAuthenticationData(self):
+        """
+        Checks the currently saved authentication data with the server
+
+        :return: True, if the authentication data is valid
+        """
+
         metaString = protoParser.getMetaStringFromType(meta_pb2.RequestType.AUTH)
         self._sendProtoBufString(metaString, bytearray())
 
@@ -96,6 +122,12 @@ class Client():
         return True
 
     def createUser(self):
+        """
+        Tries to create a new user account on the server with the currently saved authentication data
+
+        :return: True, if the user creation was successful
+        """
+
         metaString = protoParser.getMetaStringFromType(meta_pb2.RequestType.CREATE_USER)
         self._sendProtoBufString(metaString, bytearray())
 
@@ -103,6 +135,12 @@ class Client():
         return True
 
     def getAvailableHandlers(self):
+        """
+        Fetches all available handlers from the server
+
+        :return: HandlerPairs of all available handlers
+        """
+
         # Send request of type AVAILABLE_HANDLERS with empty container to receive handlers
         metaString = protoParser.getMetaStringFromType(meta_pb2.RequestType.AVAILABLE_HANDLERS)
 
@@ -113,6 +151,12 @@ class Client():
         return handlerManager.getHandlerPairs()
 
     def getJobStatus(self):
+        """
+        Fetches all job states associated to the current user from the server
+
+        :return: All job states associated to the current user
+        """
+
         # Send status request
         request = StatusRequest()
         protoBufString = protoParser.createProtoBuf(request)
@@ -127,10 +171,24 @@ class Client():
         return statusManager.getJobStates()
 
     def getJobStatusById(self, jobId):
-        # Not implemented in the backend yet
-        pass
+        """
+        Fetches the job state with the specified job ID from the server;
+        This method is not implemented yet!
+
+        :param jobId: ID of the desired job state
+        :raises NetworkClientError: Always
+        """
+
+        raise NetworkClientError("Not implemented!")
 
     def getJobResult(self, jobId):
+        """
+        Fetches the job result with the specified job ID from the server
+
+        :param jobId: ID of the desired job result
+        :return: Job response object of the job with the specified ID
+        """
+
         request = ResultRequest(jobId)
         protoBufString = protoParser.createProtoBuf(request)
         compressedProtoBufString = gzip.compress(protoBufString)
@@ -145,6 +203,13 @@ class Client():
         return jobResponse
 
     def abortJob(self, jobId):
+        """
+        Aborts the job with the specified job ID
+
+        :param jobId: ID of the job to be aborted
+        :return: True, if abort message was successful
+        """
+
         request = AbortJobRequest(jobId)
         protoBufString = protoParser.createProtoBuf(request)
         compressedProtoBufString = gzip.compress(protoBufString)
@@ -158,6 +223,13 @@ class Client():
         return True
 
     def deleteJob(self, jobId):
+        """
+        Deletes the job with the specified job ID
+
+        :param jobId: ID of the job to be deleted
+        :return: True, if delete message was successful
+        """
+
         request = DeleteJobRequest(jobId)
         protoBufString = protoParser.createProtoBuf(request)
         compressedProtoBufString = gzip.compress(protoBufString)
@@ -171,6 +243,13 @@ class Client():
         return True
 
     def getOriginGraph(self, jobId):
+        """
+        Fetches the origin graph of the request with the specified job ID from the server
+
+        :param jobId: Job ID of the request with the desired origin graph
+        :return: Job response object containing the desired origin graph
+        """
+
         request = OriginGraphRequest(jobId)
         protoBufString = protoParser.createProtoBuf(request)
         compressedProtoBufString = gzip.compress(protoBufString)
@@ -184,6 +263,13 @@ class Client():
         return response
 
     def sendJobRequest(self, request):
+        """
+        Sends a job request to be executed on the server
+
+        :param request: Job request to be executed on the server
+        :return: ID of the new job
+        """
+
         # Create compressed wire format
         protoBufString = protoParser.createProtoBuf(request)
         compressedProtoBufString = gzip.compress(protoBufString)
@@ -197,6 +283,15 @@ class Client():
         return newjobResponse.jobId
 
     def _sendProtoBufString(self, metaString, compressedProtoBufString):
+        """
+        Helper function that sends a compressed protobuf string with its meta data to the server
+
+        :param metaString: Meta data string
+        :param compressedProtoBufString: Compressed protobuf string
+        :raises NetworkClientError: If message could not be sent to the server
+        :return: Length of the message sent to the server
+        """
+
         # Pack message and send
         msg = struct.pack('!Q', len(metaString)) + metaString + compressedProtoBufString
 
@@ -208,13 +303,22 @@ class Client():
         return len(msg)
 
     def recv(self, handlerType=None):
-        # Get meta message length
+        """
+        Receives and parses a protobuf message from the server
+
+        :param handlerType: Optional handler type of the message to be received, defaults to None
+        :raises NetworkClientError: If no message could be received
+        :raises ParseError: If the hanlder type is invalid
+        :return: Parsed protobuf message
+        """
+
+        # Get meta data length
         rawMsgLength = self._recvAll(LENGTH_FIELD_SIZE)
         if not rawMsgLength:
             raise NetworkClientError("No ProtoBuf length received")
         msgLength = struct.unpack('!Q', rawMsgLength)[0]
 
-        # Get meta message
+        # Get meta data
         metaString = self._recvAll(msgLength)
         metaData = protoParser.parseMetaData(metaString)
 
@@ -232,7 +336,14 @@ class Client():
             raise NetworkClientError("No ProtoBuf received")
 
     def _recvAll(self, msgLength):
-        # Helper function to recv n bytes or return None if EOF is hit
+        """
+        Helper function to recv n bytes or return None if EOF is hit
+
+        :param msgLength: Number of bytes to receive
+        :raises NetworkClientError: If no message could be received
+        :return: Received data
+        """
+
         data = bytearray()
 
         while len(data) < msgLength:

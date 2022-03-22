@@ -24,9 +24,23 @@ from ..protocol.build import available_handlers_pb2
 
 
 class BoolField(BaseField):
+    """Handler class for boolean request fields"""
+
     type = available_handlers_pb2.FieldInformation.FieldType.BOOL
 
     def toProtoBuf(self, request, data):
+        """
+        Creates and returns the protobuf message for the specified request with
+        the specified field data
+
+        :param request: Request the protobuf message will be placed in
+        :param data: Data for the request field
+        :raises ParseError: If data does not contain the required key
+        :raises ParseError: If the field name is invalid
+        :raises ParseError: If the field value is invalid
+        :raises ParseError: If the field key is invalid
+        """
+
         try:
             data.get(self.key)
         except KeyError as error:
@@ -52,12 +66,31 @@ class BoolField(BaseField):
                 raise ParseError(f"Invalid value: {data[self.key]}") from error
 
     def createLabel(self):
+        """
+        Creates and returns a label for the request field
+
+        :return: Label for the request field
+        """
+
         return None
 
     def createWidget(self, parent):
+        """
+        Creates a widget for the request field
+
+        :param parent: Parent of the created widget
+        """
+
         widget = QCheckBox(self.label, parent)
         widget.setChecked(self.default is True)
         return widget
 
     def getWidgetData(self, widget):
+        """
+        Returns the data of the specified widget
+
+        :param widget: The widget containing the desired data
+        :return: The widget data
+        """
+
         return widget.isChecked()

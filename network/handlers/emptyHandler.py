@@ -21,12 +21,21 @@ from ..protocol.build import meta_pb2
 
 
 class EmptyResponse:
+    """Helper class for an empty response handler"""
 
     def __init__(self):
+        """Constructor"""
+
         self.types = [
             meta_pb2.RequestType.AUTH,
             meta_pb2.RequestType.CREATE_USER,
         ]
 
     def parseProtoBuf(self, _protoBuf):
+        """
+        Helper function
+
+        :param _protoBuf: Unused
+        """
+
         return

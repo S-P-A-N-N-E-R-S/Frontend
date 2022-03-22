@@ -24,20 +24,36 @@ from ..protocol.build import origin_graph_pb2, meta_pb2
 
 
 class OriginGraphRequest():
+    """Request handler for the origin graph request"""
 
     def __init__(self, jobId):
+        """
+        Constructor
+
+        :param jobId: ID of the job with the desired origin graph
+        """
+
         self.type = meta_pb2.RequestType.ORIGIN_GRAPH
         self.jobId = jobId
 
     def toProtoBuf(self):
+        """
+        Creates and returns the protobuf message for the origin graph request
+
+        :return: The created origin graph request
+        """
+
         proto = origin_graph_pb2.OriginGraphRequest()
         proto.jobId = self.jobId
         return proto
 
 
 class OriginGraphResponse():
+    """Response handler for the origin graph response"""
 
     def __init__(self):
+        """Constructor"""
+
         super().__init__()
 
         self.type = meta_pb2.RequestType.ORIGIN_GRAPH
@@ -46,9 +62,17 @@ class OriginGraphResponse():
         self.graph = None
 
     def getGraph(self):
+        """Returns the origin graph"""
+
         return self.graph
 
     def parseProtoBuf(self, protoBuf):
+        """
+        Parses the specified protobuf message object
+
+        :param protoBuf: The protobuf message to be parsed
+        """
+
         response = self.protoResponse()
         protoBuf.response.Unpack(response)
 

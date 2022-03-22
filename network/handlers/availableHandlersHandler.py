@@ -66,11 +66,21 @@ RESULT_TYPES = {
 
 
 class AvailableHandlersResponse:
+    """Handler class for the available handlers response"""
 
     def __init__(self):
+        """Constructor"""
+
         self.type = meta_pb2.RequestType.AVAILABLE_HANDLERS
 
     def parseProtoBuf(self, protoBuf):
+        """
+        Creates and saves the available handlers included in the specified protobuf message
+
+        :param protoBuf: Protobuf message to be parsed
+        :raises ParseError: If the type of a handler is unknown
+        """
+
         # if protoBuf.type != self.type:
         #     raise ParseError(f"Invalid response type: {protoBuf.type}")
 
@@ -82,7 +92,7 @@ class AvailableHandlersResponse:
                 requestObj = REQUEST_TYPES[handler.request_type][REQUEST]()
                 responseObj = REQUEST_TYPES[handler.request_type][RESPONSE]()
             except KeyError as error:
-                raise ParseError(f"Invalid handler type: {handler.request_type}") from error
+                raise ParseError(f"Unknown handler type: {handler.request_type}") from error
 
             requestObj.name = handler.name
             requestObj.description = handler.description
@@ -105,10 +115,19 @@ class AvailableHandlersResponse:
             handlerManager.insertHandlerPair(requestObj, responseObj)
 
     def parseField(self, field):
+        """
+        Creates a field object from the specified field message
+
+        :param field: Field message to be parsed
+        :raises ParseError: If the field type is unknown
+        :raises ParseError: If the field type is missing
+        :return: The resulting field object
+        """
+
         try:
             fieldObj = FIELD_TYPES[field.type]()
         except KeyError as error:
-            raise ParseError(f"Invalid field type: {field.type}") from error
+            raise ParseError(f"Unknown field type: {field.type}") from error
 
         fieldObj.key = field.key
         fieldObj.label = field.label
@@ -125,10 +144,17 @@ class AvailableHandlersResponse:
         return fieldObj
 
     def parseResult(self, result):
+        """
+        Creates a result object from the specified result message
+
+        :param field: Result message to be parsed
+        :raises ParseError: If the field type is unknown
+        :return: The resulting result object
+        """
         try:
             fieldObj = RESULT_TYPES[result.type]()
         except KeyError as error:
-            raise ParseError(f"Invalid field type: {result.type}") from error
+            raise ParseError(f"Unknown field type: {result.type}") from error
 
         fieldObj.key = result.key
         fieldObj.label = result.label
