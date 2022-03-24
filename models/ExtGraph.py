@@ -322,10 +322,10 @@ class ExtGraph(QObject):
             if len(self.edgeWeights) <= functionIndex or len(self.edgeWeights[functionIndex]) <= edgeIdx:
                 return 0
             return self.edgeWeights[functionIndex][edgeIdx]
-        
+
         elif self.distanceStrategy == "None":
             return None
-        
+
         # differentiate between edge weights from cost functions and set weights from graph builder
         elif (functionIndex == -1 and self.distanceStrategy == "Euclidean") or functionIndex == 0:
             return self.euclideanDist(edgeIdx)
@@ -339,7 +339,7 @@ class ExtGraph(QObject):
 
         elif (functionIndex == -1 and self.distanceStrategy == "Ellipsoidal") or functionIndex == 3:
             return self.ellipsoidalDist(edgeIdx)
-       
+
         else:
             print("DistanceStrategy: ", self.distanceStrategy)
             raise NameError("Unknown distance strategy")
@@ -519,7 +519,7 @@ class ExtGraph(QObject):
 
     def findVertex(self, vertex, tolerance=0):
         """
-        Modified findVertex function to find a vertex within a tolerance square
+        Modified findVertex function to find a vertex closest to each other
 
         :type vertex: QgsPointXY
         :type tolerance: int
@@ -528,13 +528,22 @@ class ExtGraph(QObject):
         if tolerance > 0:
             toleranceRect = QgsRectangle.fromCenterAndSize(vertex, tolerance, tolerance)
 
+        minDist = sys.maxsize
+        minIdx = -1
+
         for idx in range(self.mVertexCount):
             checkVertex = self.vertex(idx)
 
+            dist = checkVertex.point().distance(vertex)
+            if dist < minDist:
+                minDist = dist
+                minIdx = idx
+
             if tolerance == 0 and checkVertex.point() == vertex:
                 return idx
-            elif tolerance > 0 and toleranceRect.contains(checkVertex.point()):
-                return idx
+
+        if not minIdx == -1:
+            return minIdx
 
         return -1
 
