@@ -1,4 +1,4 @@
-#  This file is part of the OGDF plugin.
+#  This file is part of the S.P.A.N.N.E.R.S. plugin.
 #
 #  Copyright (C) 2022  Dennis Benz, Timo Glane, Leon Nienhüser
 #

@@ -1,4 +1,4 @@
-from .mainPlugin import OGDFPlugin
+from .mainPlugin import SPANNERSPlugin
 
 def classFactory(iface):
-    return OGDFPlugin(iface)
+    return SPANNERSPlugin(iface)

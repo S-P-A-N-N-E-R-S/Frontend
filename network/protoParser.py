@@ -1,4 +1,4 @@
-#  This file is part of the OGDF plugin.
+#  This file is part of the S.P.A.N.N.E.R.S. plugin.
 #
 #  Copyright (C) 2022  Timo Glane, Leon Nienhüser
 #
@@ -108,7 +108,7 @@ def getAuthenticationData(metaData):
     """
 
     settings = QgsSettings()
-    authId = settings.value("ogdfplugin/authId")
+    authId = settings.value("spannersplugin/authId")
     authMgr = QgsApplication.authManager()
     if not authId or not authId in authMgr.configIds():
         raise ParseError("Invalid authID")
@@ -116,7 +116,7 @@ def getAuthenticationData(metaData):
     authCfg = QgsAuthMethodConfig()
     # load config from manager to the new config instance and decrypt sensitive data
     authMgr.loadAuthenticationConfig(authId, authCfg, True)
-    authCfg.setName("ogdfplugin/serverAuth")
+    authCfg.setName("spannersplugin/serverAuth")
 
     username = authCfg.config("username", "")
     if not username:

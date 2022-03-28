@@ -1,6 +1,6 @@
 #  Basic helper functions
 #
-#  This file is part of the OGDF plugin.
+#  This file is part of the S.P.A.N.N.E.R.S. plugin.
 #
 #  Copyright (C) 2022  Dennis Benz, Timo Glane, Leon Nienhüser
 #
@@ -36,17 +36,17 @@ class TlsOption(Enum):
 
 def getHost():
     """ Get the server host address"""
-    return QgsSettings().value("ogdfplugin/host", "localhost")
+    return QgsSettings().value("spannersplugin/host", "localhost")
 
 
 def getPort():
     """ Get the server port address"""
-    return int(QgsSettings().value("ogdfplugin/port", 4711))
+    return int(QgsSettings().value("spannersplugin/port", 4711))
 
 
 def getEncryptionOption():
     """ Get the use ssl value"""
-    val = QgsSettings().value("ogdfplugin/ssl", True)
+    val = QgsSettings().value("spannersplugin/ssl", True)
     if isinstance(val, bool):
         return val
     else:
@@ -58,7 +58,7 @@ def getEncryptionCertCheckOption():
     if not getEncryptionOption():
         return False
 
-    val = QgsSettings().value("ogdfplugin/sslCheck", True)
+    val = QgsSettings().value("spannersplugin/sslCheck", True)
     if isinstance(val, bool):
         return val
     else:
@@ -77,12 +77,12 @@ def getTlsOption():
 
 def getUsername():
     """ Get the last saved username"""
-    return QgsSettings().value("ogdfplugin/username", "")
+    return QgsSettings().value("spannersplugin/username", "")
 
 
 def getAuthId():
     """ Get the authId"""
-    return QgsSettings().value("ogdfplugin/authId")
+    return QgsSettings().value("spannersplugin/authId")
 
 
 def getPluginPath():
