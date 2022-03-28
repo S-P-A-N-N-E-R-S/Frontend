@@ -1,5 +1,5 @@
 #/***************************************************************************
-# OGDFPlugin
+# SPANNERSPlugin
 #
 #							 -------------------
 # copyright: (C) 2022 by Dennis Benz, Timo Glane, Tim Hartmann, Leon Nienhüser

@@ -1,4 +1,4 @@
-#  This file is part of the OGDF plugin.
+#  This file is part of the S.P.A.N.N.E.R.S. plugin.
 #
 #  Copyright (C) 2022  Dennis Benz, Tim Hartmann, Julian Wittker
 #
@@ -34,7 +34,7 @@ from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphData
 import os, string, random
 
 
-class OGDFPlugin:
+class SPANNERSPlugin:
     """
     This plugin provides the creation, visualization and modification of graphs.
 
@@ -81,7 +81,7 @@ class OGDFPlugin:
         :returns: Translated version of message.
         :rtype: QString
         """
-        return QCoreApplication.translate('OGDFPlugin', message)
+        return QCoreApplication.translate('SPANNERSPlugin', message)
 
     def initActions(self):
         self.resourceAction = QAction(self.tr("Create from resource"), self.iface.mainWindow())
@@ -123,7 +123,7 @@ class OGDFPlugin:
         self.iface.currentLayerChanged.connect(self.__layerChanged)
 
         # create menu
-        menu = QMenu("OGDF Plugin")
+        menu = QMenu("S.P.A.N.N.E.R.S.")
         menu.setIcon(QIcon(getImagePath("icon.svg")))
         menu.addAction(self.resourceAction)
         menu.addAction(self.graphAction)

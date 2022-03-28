@@ -1,11 +1,16 @@
 [general]
-name=OGDF Plugin
-email=jwittker@uos.de
-author=Spanners Team
+name=S.P.A.N.N.E.R.S.
+email=spanners@uos.de
+author=Theoretical Computer Science Group, Osnabrück University: Dennis Benz, Timo Glane, Tim Hartmann, Benedikte Lechtermann, Steffen Meinert, Levin Nemesch, Leon Nienhüser, Leon Richardt, Jo Sandor, Joshua Sangmeister, Maria Stjepic, Julian Pascal Wittker
 qgisMinimumVersion=3.0
-description=Prototype Plugin for Project Group Theoretical Computer Science.
-    Creates Graphs from VectorLayers and provides several OGDF analysis tools.
-about=Plugin for Project Group Theoretical Computer Science.
+description=Plugin for creation, visualization, modification and analysis of graphs
+about=The S.P.A.N.N.E.R.S. plugin provides the creation, visualization and modification of graphs from geographical information.
+
+    In addition, this QGIS plugin serves as a frontend for the backend that supports the execution of analyses on the created graphs. For the execution of these analyses, the backend is required. The backend receives graph information from the frontend over the network in order to execute analyses on it using the Open Graph Drawing Framework (see https://ogdf.uos.de/).
+
+    Furthermore, customisable experiments can be performed and the results can automatically be visualised in a scientific manner.
+
+    Probably, the following python package needs to be installed: protobuf(>=3.17). Detailed installation instructions for the frontend and the backend are provided in the handbook (see https://project2.informatik.uni-osnabrueck.de/spanners/). The handbook also contains detailed usage information.
 icon=resources/images/icon.svg
 version=1.0.0
 tags=analysis, graph, layer, plot, visualization, draw

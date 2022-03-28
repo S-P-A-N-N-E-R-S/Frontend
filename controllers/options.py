@@ -1,4 +1,4 @@
-#  This file is part of the OGDF plugin.
+#  This file is part of the S.P.A.N.N.E.R.S. plugin.
 #
 #  Copyright (C) 2022  Dennis Benz, Timo Glane, Leon Nienhüser
 #
@@ -71,10 +71,10 @@ class OptionsController(BaseController):
         sslCheck = self.view.getSslCheck()
 
         # save settings
-        self.settings.setValue("ogdfplugin/host", host)
-        self.settings.setValue("ogdfplugin/port", port)
-        self.settings.setValue("ogdfplugin/ssl", ssl)
-        self.settings.setValue("ogdfplugin/sslCheck", sslCheck)
+        self.settings.setValue("spannersplugin/host", host)
+        self.settings.setValue("spannersplugin/port", port)
+        self.settings.setValue("spannersplugin/ssl", ssl)
+        self.settings.setValue("spannersplugin/sslCheck", sslCheck)
 
     def saveAction(self):
         """ Action for saving the options """
@@ -86,11 +86,11 @@ class OptionsController(BaseController):
     def updateCredentials(self, savedAuthId, hasAuth, username, password):
         """ Creates or updates the server credentials """
         # only save username if not empty
-        self.settings.setValue("ogdfplugin/username", username)
+        self.settings.setValue("spannersplugin/username", username)
 
         # save authentication
         config = QgsAuthMethodConfig()
-        config.setName("ogdfplugin/serverAuth")
+        config.setName("spannersplugin/serverAuth")
         config.setMethod("Basic")
         config.setConfig("username", username)
         config.setConfig("password", password)
@@ -104,7 +104,7 @@ class OptionsController(BaseController):
             # create new config
             hasAuth = self.authManager.storeAuthenticationConfig(config)
 
-        self.settings.setValue("ogdfplugin/authId", config.id())
+        self.settings.setValue("spannersplugin/authId", config.id())
 
         # check if id is set and not manually removed by user
         return bool(username and savedAuthId and savedAuthId in self.authManager.configIds())
