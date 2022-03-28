@@ -35,7 +35,7 @@ SOURCES = \
 	__init__.py \
 	mainPlugin.py
 
-PLUGINNAME = ogdf_plugin
+PLUGINNAME = spanners_plugin
 
 PY_FILES = __init__.py mainPlugin.py helperFunctions.py exceptions.py
 DIRECTORIES = controllers lib models resources views network i18n scripts
