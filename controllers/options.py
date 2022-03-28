@@ -103,6 +103,7 @@ class OptionsController(BaseController):
         else:
             # create new config
             hasAuth = self.authManager.storeAuthenticationConfig(config)
+            savedAuthId = config.id()
 
         self.settings.setValue("spannersplugin/authId", config.id())
 
@@ -175,7 +176,8 @@ class OptionsController(BaseController):
         savedAuthId = helper.getAuthId()
         hasAuth = savedAuthId and savedAuthId in self.authManager.configIds()
 
-        if not password or not username or not hasAuth:
+        if not password or not username:
+            self.view.showWarning(self.tr("Username or password is not set!"))
             return
 
         self.saveOptions()
