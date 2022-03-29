@@ -49,15 +49,17 @@ class LoginDialog(QDialog):
         self.buttonCancel = QPushButton('Cancel', self)
         self.buttonCancel.clicked.connect(self.reject)
 
+        btnLayout = QHBoxLayout()
+        btnLayout.addWidget(self.buttonCancel)
+        btnLayout.addWidget(self.buttonLogin)
+
         layout = QVBoxLayout(self)
-        btnLayout = QHBoxLayout(self)
         layout.addWidget(labelName)
         layout.addWidget(self.textName)
         layout.addWidget(labelPass)
         layout.addWidget(self.textPass)
-        btnLayout.addWidget(self.buttonCancel)
-        btnLayout.addWidget(self.buttonLogin)
         layout.addLayout(btnLayout)
+        self.setLayout(layout)
 
     def handleLogin(self):
         if self.textName.text() and self.textPass.text():
