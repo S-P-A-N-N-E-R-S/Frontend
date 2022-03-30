@@ -970,7 +970,7 @@ class GraphLayer(QgsPluginLayer):
                     currHighestNr = 1
                 elif constructName in layer.name():
                     nameNr = layer.name().split(constructName)[1]
-                    if nameNr != "":
+                    if nameNr != "" and nameNr.isnumeric():
                         nameNr = int(nameNr)
                         if currHighestNr <= nameNr:
                             currHighestNr = nameNr + 1
