@@ -435,6 +435,7 @@ class GraphMapTool(QgsMapTool, QObject):
 
             self.rubberBand.reset()
             del self.rubberBand
+            self.drawRect = False
 
             # if vertices are found
             if len(foundVertexIds) > 0:
@@ -530,11 +531,16 @@ class GraphMapTool(QgsMapTool, QObject):
 
                 def _closeVerticesWindow():
                     numberFound = len(foundVertexIds)
-                    for i in range(numberFound - 1, -1, -1):
-                        iface.mapCanvas().scene().removeItem(markers[i])
-                        del markers[i]
+                    if numberFound > 0 and len(markers) > 0:
+                        for i in range(numberFound - 1, -1, -1):
+                            print(markers[i])
+                            iface.mapCanvas().scene().removeItem(markers[i])
+                            del markers[i]
 
                 self.win.rejected.connect(_closeVerticesWindow)
+
+            # force repressing of SHIFT
+            self.shiftPressed = False
 
             self.drawRect = False
             self.topLeft = None
@@ -592,6 +598,7 @@ class GraphMapTool(QgsMapTool, QObject):
                 del self.rubberBand
 
     def __removeFirstFound(self):
+        print(self.firstFound, self.firstMarker)
         if self.firstFound:
             self.firstFound = False
 
