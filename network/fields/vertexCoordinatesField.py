@@ -45,7 +45,7 @@ class VertexCoordinatesField(BaseField, GraphDependencyMixin):
             return
 
         protoField = getattr(request, self.key)
-        for vertex in data[self.graphKey].vertices():
+        for vertexId, vertex in data[self.graphKey].vertices().items():
             point = vertex.point()
             vertexCoordinates = protoField.add()
             vertexCoordinates.x = point.x()
@@ -68,8 +68,9 @@ class VertexCoordinatesResult(BaseResult, GraphDependencyMixin):
         """
 
         protoField = self.getProtoField(response)
+        vertexIds = list(data[self.graphKey].vertices().keys())
         for idx, vertexCoordinates in enumerate(protoField):
-            vertex = data[self.graphKey].vertex(idx)
+            vertex = data[self.graphKey].vertex(vertexIds[idx])
             vertex.point().setX(vertexCoordinates.x)
             vertex.point().setY(vertexCoordinates.y)
             #TODO Parse possible z coordinates from protobuf

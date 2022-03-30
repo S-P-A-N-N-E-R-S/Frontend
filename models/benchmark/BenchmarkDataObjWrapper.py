@@ -23,7 +23,6 @@ from ...network.client import Client
 from ...network import handlerManager
 from ...network.exceptions import NetworkClientError, ParseError
 from ... import helperFunctions as helper
-from ...network import statusManager
 from ...network.protocol.build.status_pb2 import StatusType
 
 class BenchmarkDataObjWrapper():
@@ -62,7 +61,8 @@ class BenchmarkDataObjWrapper():
                                     "Avg Fragility": ("utils/Fragility", "avgFragility", None),
                                     "Diameter": ("utils/Diameter", "diameter", None),
                                     "Radius": ("utils/Radius", "radius", None),
-                                    "Girth (unit weights)": ("utils/Girth", "girth", {"graphAttributes.unitWeights": 1}),
+                                    "Girth (unit weights)": ("utils/Girth", "girth",
+                                                             {"graphAttributes.unitWeights": 1}),
                                     "Girth": ("utils/Girth", "girth", {"graphAttributes.unitWeights": 0})}
 
     def getAnalysisValue(self, analysis, dataObjs, average):
@@ -123,7 +123,8 @@ class BenchmarkDataObjWrapper():
                         values.append(round(edgeCount / originalGraph.edgeCount(), 3))
             elif analysis == "Lightness":
                 costFunction = dataObj.getParameters()['edgeCosts']
-                mstWeight = float(self.serverCall(originalGraph, "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])
+                mstWeight = float(self.serverCall(originalGraph, "Minimum Spanning Trees/Kruskals Algorithm",
+                                                  costFunction).data["totalWeight"])
                 if average:
                     values = [dataObj.getAvgEdgeWeightResponse() / mstWeight]
                 else:
@@ -193,16 +194,19 @@ class BenchmarkDataObjWrapper():
                     if graphAnalysis is None:
                         axisEntry = graphName
                     else:
-                        if graphAnalysis == "Edges" or graphAnalysis == "Vertices" or graphAnalysis == "Densities" or graphAnalysis == "Reciprocity":
+                        if graphAnalysis == "Edges" or graphAnalysis == "Vertices" or graphAnalysis == "Densities" or\
+                           graphAnalysis == "Reciprocity":
                             if graphAnalysis == "Edges":
                                 axisEntry = allGraphs[i][1].edgeCount()
                             elif graphAnalysis == "Vertices":
                                 axisEntry = allGraphs[i][1].vertexCount()
                             elif graphAnalysis == "Densities":
                                 if allGraphs[i][1].edgeDirection == "Directed":
-                                    axisEntry = allGraphs[i][1].edgeCount() / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
+                                    axisEntry = allGraphs[i][1].edgeCount() / (allGraphs[i][1].vertexCount()*\
+                                                (allGraphs[i][1].vertexCount()-1))
                                 else:
-                                    axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*(allGraphs[i][1].vertexCount()-1))
+                                    axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*\
+                                                (allGraphs[i][1].vertexCount()-1))
                             elif graphAnalysis == "Reciprocity":
                                 count = 0
                                 for edgeID in range(allGraphs[i][1].edgeCount()):
@@ -232,7 +236,8 @@ class BenchmarkDataObjWrapper():
                                     directed = 0
                                 costFunction = dataObj.getParameters()['edgeCosts']
                                 addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
-                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction, addInfos).data["connectivity"])
+                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction,
+                                                                  addInfos).data["connectivity"])
                                 if axisEntry in partitionToSort:
                                     partitionToSort[axisEntry].append(dataObj)
                                 else:
@@ -244,7 +249,8 @@ class BenchmarkDataObjWrapper():
                                     directed = 0
                                 costFunction = dataObj.getParameters()['edgeCosts']
                                 addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
-                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction, addInfos).data["connectivity"])
+                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction,
+                                                                  addInfos).data["connectivity"])
                                 if axisEntry in partitionToSort:
                                     partitionToSort[axisEntry].append(dataObj)
                                 else:
@@ -319,13 +325,16 @@ class BenchmarkDataObjWrapper():
 
     def _getAxisEntryFromServer(self, dataObj, analysis, allGraphs, i):
         costFunction = dataObj.getParameters()['edgeCosts']
-        result = self.serverCall(allGraphs[i][1], self.serverCallMatchings[analysis][0], costFunction, self.serverCallMatchings[analysis][2]).data[self.serverCallMatchings[analysis][1]]
+        result = self.serverCall(allGraphs[i][1], self.serverCallMatchings[analysis][0], costFunction,
+                                 self.serverCallMatchings[analysis][2]).data[self.serverCallMatchings[analysis][1]]
         return float(result)
 
     def _getAnalysisValuesFromServer(self, dataObj, analysis):
         values = []
         for graph in dataObj.getResponseGraphs():
-            values.append(float(self.serverCall(graph, self.serverCallMatchings[analysis][0], 0, self.serverCallMatchings[analysis][2]).data[self.serverCallMatchings[analysis][1]]))
+            values.append(float(self.serverCall(graph, self.serverCallMatchings[analysis][0], 0,
+                                                self.serverCallMatchings[analysis][2])
+                                                    .data[self.serverCallMatchings[analysis][1]]))
         return values
 
     def serverCall(self, graph, algoString, costFunction, addInfos = None):

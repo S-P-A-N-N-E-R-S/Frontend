@@ -16,10 +16,7 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.core import *
-from qgis.gui import *
-from qgis.PyQt.QtGui import *
-from qgis.analysis import *
+from qgis.core import QgsCoordinateTransform, QgsProject, QgsRasterBandStats
 from osgeo import gdal
 import numpy as np
 import sys
@@ -60,7 +57,8 @@ class AStarOnRasterData:
         self.predMatrix = None
 
         self.pixelWeights = None
-        minRasterValue = int((self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).minimumValue)
+        minRasterValue = int((self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All))
+                             .minimumValue)
         meanRasterValue = int((self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean)
 
         #----------------------------------
@@ -85,7 +83,8 @@ class AStarOnRasterData:
 
         dimensions = (self.matrixRowSize, self.matrixColSize)
         # check startPoint and endPoint are inside the raster, if not return max value
-        if startPointCol > self.matrixColSize or startPointCol < 0 or startPointRow < 0 or startPointRow > self.matrixRowSize:
+        if startPointCol > self.matrixColSize or startPointCol < 0 or startPointRow < 0 or\
+           startPointRow > self.matrixRowSize:
             return [sys.maxsize]
         if endPointCol > self.matrixColSize or endPointCol < 0 or endPointRow < 0 or endPointRow > self.matrixRowSize:
             return [sys.maxsize]

@@ -21,9 +21,9 @@ from qgis.PyQt.QtCore import pyqtSignal, Qt, QPoint
 
 from qgis.gui import QgsMapTool, QgsVertexMarker
 from qgis.utils import iface
-from qgis.core import QgsCoordinateTransform
+from qgis.core import QgsCoordinateTransform, QgsProject
 
-from ...models.QgsGraphLayer import QgsGraphLayer
+from ...models.GraphLayer import GraphLayer
 
 
 class EdgePickerMapTool(QgsMapTool):
@@ -65,22 +65,30 @@ class EdgePickerMapTool(QgsMapTool):
         converter = iface.mapCanvas().getCoordinateTransform()
         clickPosition = converter.toMapCoordinates(clickPosition)
 
-        vertexIdx = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
+        if QgsProject.instance().crs().authid() != self.layer.mGraph.crs.authid():
+            clickPosition = self.layer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
-        if vertexIdx >= 0:
+        vertexId = self.layer.mGraph.findVertex(clickPosition)
+
+        if vertexId >= 0:
             if self._firstVertex is None:
                 # select first edge vertex
-                self._firstVertex = vertexIdx
+                self._firstVertex = vertexId
                 self._firstVertexMarker = QgsVertexMarker(iface.mapCanvas())
                 self._firstVertexMarker.setIconType(QgsVertexMarker.ICON_BOX)
-                self._firstVertexMarker.setCenter(clickPosition)
+
+                foundPosition = self.layer.mGraph.vertex(self._firstVertex).point()
+                if QgsProject.instance().crs().authid() != self.layer.mGraph.crs.authid():
+                    self._firstVertexMarker.setCenter(self.layer.mTransform.transform(foundPosition))
+                else:
+                    self._firstVertexMarker.setCenter(foundPosition)
             else:
                 # select second vertex
-                self._secondVertex = vertexIdx
-                edgeIdx = self.layer.mGraph.hasEdge(self.layer.mGraph.vertex(self._firstVertex).id(), self.layer.mGRaph.vertex(self._secondVertex).id())
-                if edgeIdx >= 0:
-                    self.selectedEdgeIdx = edgeIdx
-                    self.edgeSelected.emit(edgeIdx)
+                self._secondVertex = vertexId
+                edgeId = self.layer.mGraph.hasEdge(self._firstVertex, self._secondVertex)
+                if edgeId >= 0:
+                    self.selectedEdgeIdx = edgeId
+                    self.edgeSelected.emit(edgeId)
                 # remove first vertex
                 self._firstVertex = None
                 # remove marker from canvas
@@ -164,12 +172,12 @@ class GraphEdgePickerWidget(QWidget):
         # graph layer is prioritized
         graph = self.graphLayer.getGraph() if self.graphLayer is not None else self.graph
         if graph is not None:
-            for edgeIdx in range(graph.edgeCount()):
-                edge = graph.edge(edgeIdx)
-                fromVertex = graph.vertex(graph.findVertexByID(edge.fromVertex())).point()
-                toVertex = graph.vertex(graph.findVertexByID(edge.toVertex())).point()
+            for edgeId in graph.edges():
+                edge = graph.edge(edgeId)
+                fromVertex = graph.vertex(edge.fromVertex()).point()
+                toVertex = graph.vertex(edge.toVertex()).point()
                 self.comboBox.addItem("Edge ID: {} [FromPoint({}), ToPoint({})]".format(
-                    graph.edge(edgeIdx).id(), fromVertex.toString(2), toVertex.toString(2)), graph.edge(edgeIdx).id())
+                    edgeId, fromVertex.toString(2), toVertex.toString(2)), edgeId)
 
     def _selectOnCanvas(self):
         """
@@ -236,7 +244,7 @@ class GraphEdgePickerWidget(QWidget):
         :param graphLayer:
         :return:
         """
-        if graphLayer is not None and graphLayer.pluginLayerType() != QgsGraphLayer.LAYER_TYPE:
+        if graphLayer is not None and graphLayer.pluginLayerType() != GraphLayer.LAYER_TYPE:
             raise TypeError("Not a graph layer")
         self.graphLayer = graphLayer
         self._updateEdges()
@@ -253,4 +261,3 @@ class GraphEdgePickerWidget(QWidget):
         :return: Returns edge id of selected edge in graph
         """
         return self.comboBox.currentData()
-

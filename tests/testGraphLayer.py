@@ -23,7 +23,7 @@ from qgis.utils import iface
 from qgis.PyQt.QtGui import QColor
 
 from ..models.ExtGraph import ExtGraph
-from ..models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
+from ..models.GraphLayer import GraphLayer, GraphLayerType, GraphDataProvider
 from ..helperFunctions import getPluginPath, saveLayer
 
 import os
@@ -39,7 +39,7 @@ class TestGraphLayer(TestCase):
     def setUp(self):
         """Runs before each test."""
         self.graph = ExtGraph()
-        self.graphLayer = QgsGraphLayer("TestLayer")
+        self.graphLayer = GraphLayer("TestLayer")
 
     def tearDown(self):
         """Runs after each test."""
@@ -50,16 +50,16 @@ class TestGraphLayer(TestCase):
     def setUpClass(cls):
         """Runs before each test class instantiation."""
         cls.tempDir = tempfile.mkdtemp()
-        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
-        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
-                                                                            QgsGraphDataProvider.description(),
-                                                                            QgsGraphDataProvider.createProvider()))
+        QgsApplication.pluginLayerRegistry().addPluginLayerType(GraphLayerType())
+        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(GraphDataProvider.providerKey(),
+                                                                            GraphDataProvider.description(),
+                                                                            GraphDataProvider.createProvider()))
 
     @classmethod
     def tearDownClass(cls):
         """Runs after each test class instantiation."""
         shutil.rmtree(cls.tempDir, True)
-        QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
+        QgsApplication.pluginLayerRegistry().removePluginLayerType(GraphLayer.LAYER_TYPE)
 
     @unittest.skipIf(Qgis.QGIS_VERSION_INT < 31800, "setControlImagePath available from QGIS 3.18")
     def test_graph_rendering(self):
@@ -91,9 +91,9 @@ class TestGraphLayer(TestCase):
         self.assertEqual(10, graph.vertexCount())
         self.assertEqual(15, graph.edgeCount())
 
-        self.assertEqual(QgsPointXY(0, -1.0), self.graph.vertex(self.graph.findEdgeByID(3)).point())
-        self.assertEqual(QgsPointXY(0.0, 0.0), self.graph.vertex(self.graph.findEdgeByID(0)).point())
-        self.assertEqual(QgsPointXY(2.0, 0), self.graph.vertex(self.graph.findEdgeByID(5)).point())
+        self.assertEqual(QgsPointXY(0, -1.0), self.graph.vertex(3).point())
+        self.assertEqual(QgsPointXY(0.0, 0.0), self.graph.vertex(0).point())
+        self.assertEqual(QgsPointXY(2.0, 0), self.graph.vertex(5).point())
 
     def test_createVectorLayer(self):
         graphmlFile = os.path.join(getPluginPath(), "tests/testdata/simple_graph.graphml")

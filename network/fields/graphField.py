@@ -50,16 +50,20 @@ class GraphField(BaseField):
         protoField = getattr(request, self.key)
         graph = data[self.key]
 
-        protoField.uid = 0
-        for vertex in graph.vertices():
-            protoVertex = protoField.vertexList.add()
-            protoVertex.uid = vertex.id()
+        # NOTE: the protocol demands the edge to refer to the indices of its vertices in the vertexList
+        vertexIdToIdx = {}
 
-        for edge in graph.edges():
+        protoField.uid = 0
+        for idx, vertexId in enumerate(list(graph.vertices().keys())):
+            protoVertex = protoField.vertexList.add()
+            protoVertex.uid = vertexId
+            vertexIdToIdx[vertexId] = idx
+
+        for edgeId, edge in graph.edges().items():
             protoEdge = protoField.edgeList.add()
-            protoEdge.uid = edge.id()
-            protoEdge.inVertexIndex = graph.findVertexByID(edge.fromVertex())
-            protoEdge.outVertexIndex = graph.findVertexByID(edge.toVertex())
+            protoEdge.uid = edgeId
+            protoEdge.inVertexIndex = vertexIdToIdx[edge.fromVertex()]
+            protoEdge.outVertexIndex = vertexIdToIdx[edge.toVertex()]
 
         # add static attributes to request
         request.staticAttributes["crs"] = str(graph.crs.authid())
@@ -118,12 +122,12 @@ class GraphResult(BaseResult):
         graph.edgeDirection = response.staticAttributes.get("edgeDirection", "Directed")
 
         for vertex in protoField.vertexList:
-            graph.addVertex(QgsPointXY(0,0), -1, vertex.uid)
+            graph.addVertex(QgsPointXY(0,0), vertex.uid)
 
         for edge in protoField.edgeList:
             inVertexId = protoField.vertexList[edge.inVertexIndex].uid
             outVertexId = protoField.vertexList[edge.outVertexIndex].uid
-            graph.addEdge(inVertexId, outVertexId, -1, edge.uid)
+            graph.addEdge(inVertexId, outVertexId, edge.uid)
 
     def getResultString(self, _data):
         """

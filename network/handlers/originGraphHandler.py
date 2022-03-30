@@ -87,17 +87,17 @@ class OriginGraphResponse():
 
         # create vertices
         for vertex in protoGraph.vertexList:
-            self.graph.addVertex(QgsPointXY(0, 0), -1, vertex.uid)
+            self.graph.addVertex(QgsPointXY(0, 0), vertex.uid)
 
         # create edges
         for edge in protoGraph.edgeList:
             inVertexId = protoGraph.vertexList[edge.inVertexIndex].uid
             outVertexId = protoGraph.vertexList[edge.outVertexIndex].uid
-            self.graph.addEdge(inVertexId, outVertexId, -1, edge.uid)
+            self.graph.addEdge(inVertexId, outVertexId, edge.uid)
 
         # set vertex positions
-        for idx, vertexCoordinates in enumerate(response.vertexCoordinates):
-            vertex = self.graph.vertex(idx)
+        for id, vertexCoordinates in enumerate(response.vertexCoordinates):
+            vertex = self.graph.vertex(id)
             vertex.point().setX(vertexCoordinates.x)
             vertex.point().setY(vertexCoordinates.y)
             # TODO Parse possible z coordinates from protobuf
@@ -105,5 +105,5 @@ class OriginGraphResponse():
         # set edge costs
         self.graph.setDistanceStrategy(response.staticAttributes.get("distanceStrategy", "None"))
         if self.graph.distanceStrategy == "Advanced":
-            for edgeIdx, edgeCost in enumerate(response.edgeCosts):
-                self.graph.setCostOfEdge(edgeIdx, 0, edgeCost)
+            for edgeId, edgeCost in enumerate(response.edgeCosts):
+                self.graph.setCostOfEdge(edgeId, 0, edgeCost)

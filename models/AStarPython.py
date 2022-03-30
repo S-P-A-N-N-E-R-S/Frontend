@@ -16,10 +16,6 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.core import *
-from qgis.gui import *
-from qgis.PyQt.QtGui import *
-from qgis.analysis import *
 import numpy as np
 import heapq
 import sys
@@ -71,9 +67,12 @@ class AStar:
                 currPathPoint = (endPoint[0], endPoint[1])
                 while currPathPoint != startPoint:
                     if self.createShortestPathMatrix:
-                        self.shortestPathMatrix1[currPathPoint[0]][currPathPoint[1]] = (self.shortestPathMatrix1[currPathPoint[0]][currPathPoint[1]] + randomRed) / 2
-                        self.shortestPathMatrix2[currPathPoint[0]][currPathPoint[1]] = (self.shortestPathMatrix2[currPathPoint[0]][currPathPoint[1]] + randomGreen) / 2
-                        self.shortestPathMatrix3[currPathPoint[0]][currPathPoint[1]] = (self.shortestPathMatrix3[currPathPoint[0]][currPathPoint[1]] + randomBlue) / 2
+                        self.shortestPathMatrix1[currPathPoint[0]][currPathPoint[1]] =\
+                                        (self.shortestPathMatrix1[currPathPoint[0]][currPathPoint[1]] + randomRed) / 2
+                        self.shortestPathMatrix2[currPathPoint[0]][currPathPoint[1]] =\
+                                        (self.shortestPathMatrix2[currPathPoint[0]][currPathPoint[1]] + randomGreen) / 2
+                        self.shortestPathMatrix3[currPathPoint[0]][currPathPoint[1]] =\
+                                        (self.shortestPathMatrix3[currPathPoint[0]][currPathPoint[1]] + randomBlue) / 2
                     shortestPathWeights.append(self.matrix[u[0]][u[1]])
                     prevX = u[0]
                     prevY = u[1]
@@ -84,9 +83,12 @@ class AStar:
                     currPathPoint = (u[0], u[1])
                 shortestPathWeights.append(self.matrix[startPoint[0], startPoint[1]])
                 if self.createShortestPathMatrix:
-                    self.shortestPathMatrix1[startPoint[0]][startPoint[1]] = (self.shortestPathMatrix1[currPathPoint[0]][currPathPoint[1]] + randomRed) / 2
-                    self.shortestPathMatrix2[startPoint[0]][startPoint[1]] = (self.shortestPathMatrix2[currPathPoint[0]][currPathPoint[1]] + randomGreen) / 2
-                    self.shortestPathMatrix3[startPoint[0]][startPoint[1]] = (self.shortestPathMatrix3[currPathPoint[0]][currPathPoint[1]] + randomBlue) / 2
+                    self.shortestPathMatrix1[startPoint[0]][startPoint[1]] =\
+                                        (self.shortestPathMatrix1[currPathPoint[0]][currPathPoint[1]] + randomRed) / 2
+                    self.shortestPathMatrix2[startPoint[0]][startPoint[1]] =\
+                                        (self.shortestPathMatrix2[currPathPoint[0]][currPathPoint[1]] + randomGreen) / 2
+                    self.shortestPathMatrix3[startPoint[0]][startPoint[1]] =\
+                                        (self.shortestPathMatrix3[currPathPoint[0]][currPathPoint[1]] + randomBlue) / 2
                 return shortestPathWeights
 
             if currentWeight - self._heuristic(current, endPoint) > pixelWeights[current[0]][current[1]]:
@@ -97,17 +99,21 @@ class AStar:
                 newDistance = pixelWeights[current[0]][current[1]] + self.matrix[current[0]][current[1]]
 
                 # check that the neighbor is not out of raster bounds
-                if neighbor[0] > 0 and neighbor[1] > 0 and neighbor[0] < len(self.matrix) and neighbor[1] < len(self.matrix[0]):
+                if neighbor[0] > 0 and neighbor[1] > 0 and neighbor[0] < len(self.matrix) and\
+                   neighbor[1] < len(self.matrix[0]):
                     if newDistance < pixelWeights[neighbor[0]][neighbor[1]]:
                         predMatrix[neighbor[0]][neighbor[1]] = (current[0], current[1])
                         pixelWeights[neighbor[0]][neighbor[1]] = newDistance
                         if self.createShortestPathMatrix:
-                            if self.shortestPathMatrix1[current[0]][current[1]] == 0 and self.shortestPathMatrix2[current[0]][current[1]] == 0 and self.shortestPathMatrix3[current[0]][current[1]] == 0:
+                            if self.shortestPathMatrix1[current[0]][current[1]] == 0 and\
+                               self.shortestPathMatrix2[current[0]][current[1]] == 0 and\
+                               self.shortestPathMatrix3[current[0]][current[1]] == 0:
                                 self.shortestPathMatrix1[current[0]][current[1]] = 255
                                 self.shortestPathMatrix2[current[0]][current[1]] = 255
                                 self.shortestPathMatrix3[current[0]][current[1]] = 255
 
-                        heapq.heappush(pq, (pixelWeights[neighbor[0]][neighbor[1]] + self._heuristic(neighbor, endPoint), neighbor))
+                        heapq.heappush(pq, (pixelWeights[neighbor[0]][neighbor[1]] +\
+                                            self._heuristic(neighbor, endPoint), neighbor))
 
         return [sys.maxsize]
 

@@ -19,7 +19,7 @@
 from qgis.testing import unittest, start_app, TestCase
 from qgis.core import QgsApplication, QgsRectangle, QgsCoordinateReferenceSystem, QgsProviderRegistry, QgsPointXY, QgsProviderMetadata, QgsUnitTypes, QgsVectorLayer, QgsRasterLayer
 
-from ..models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
+from ..models.GraphLayer import GraphLayer, GraphLayerType, GraphDataProvider
 from ..models.GraphBuilder import GraphBuilder
 from ..helperFunctions import getPluginPath
 
@@ -51,15 +51,15 @@ class TestGraphBuilder(TestCase):
     @classmethod
     def setUpClass(cls):
         """Runs before each test class instantiation."""
-        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
-        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
-                                                                            QgsGraphDataProvider.description(),
-                                                                            QgsGraphDataProvider.createProvider()))
+        QgsApplication.pluginLayerRegistry().addPluginLayerType(GraphLayerType())
+        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(GraphDataProvider.providerKey(),
+                                                                            GraphDataProvider.description(),
+                                                                            GraphDataProvider.createProvider()))
 
     @classmethod
     def tearDownClass(cls):
         """Runs after each test class instantiation."""
-        QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
+        QgsApplication.pluginLayerRegistry().removePluginLayerType(GraphLayer.LAYER_TYPE)
 
     def test_random_graph_complete_without_seed(self):
         self.graphBuilder.setRandomOption("numberOfVertices", 10)
@@ -132,27 +132,27 @@ class TestGraphBuilder(TestCase):
         self.graphBuilder.setOption("edgeDirection", "Undirected")
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/lineBased_connection_test_layer/lineBased_connection_points_1.shp")))
         self.graphBuilder.setLineLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/lineBased_connection_test_layer/lineBased_connection_lines_1.shp")))
-        
+
         graph = self.graphBuilder.makeGraph()
-        
+
         self.assertEqual(graph.edgeCount(), 5)
         self.assertNotEqual(graph.hasEdge(0,3), -1)
         self.assertNotEqual(graph.hasEdge(3,1), -1)
         self.assertNotEqual(graph.hasEdge(1,2), -1)
         self.assertNotEqual(graph.hasEdge(2,5), -1)
         self.assertNotEqual(graph.hasEdge(5,4), -1)
-        
+
         # second test
         self.graphBuilder.setOption("degreeThreshold", 3)
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/lineBased_connection_test_layer/lineBased_connection_points_2.shp")))
         self.graphBuilder.setLineLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/lineBased_connection_test_layer/lineBased_connection_lines_2.shp")))
-        
+
         graph = self.graphBuilder.makeGraph()
-        
+
         self.assertEqual(graph.edgeCount(), 2)
         self.assertNotEqual(graph.hasEdge(1,2), -1)
         self.assertNotEqual(graph.hasEdge(2,0), -1)
-        
+
         #third test
         self.graphBuilder.setOption("degreeThreshold", 5)
         graph = self.graphBuilder.makeGraph()
@@ -167,7 +167,7 @@ class TestGraphBuilder(TestCase):
 
         def determine_clusters(graph):
             clusters = []
-            for vertex in graph.vertices():
+            for vertexId, vertex in graph.vertices().items():
                 # check if vertex already in a cluster
                 inCluster = False
                 for cluster in clusters:
@@ -186,7 +186,7 @@ class TestGraphBuilder(TestCase):
                         outEdges = remainingVertex.outgoingEdges()
                         # iterate over adjacent vertices
                         for adjacentVertexId in [graph.edge(e).fromVertex() for e in inEdges] + [graph.edge(e).toVertex() for e in outEdges]:
-                            adjacentVertex = graph.vertex(graph.findVertexByID(adjacentVertexId))
+                            adjacentVertex = graph.vertex(adjacentVertexId)
                             if adjacentVertex not in clusterVertices:
                                 clusterVertices.append(adjacentVertex)
                                 remainingVertices.append(adjacentVertex)
@@ -225,13 +225,13 @@ class TestGraphBuilder(TestCase):
         graph = self.graphBuilder.makeGraph()
         fromVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0, 1.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
-        if edgeIdx == -1:
+        edgeId = graph.hasEdge(fromVertex, toVertex)
+        if edgeId == -1:
             fromVertex = graph.findVertex(QgsPointXY(0, 1.0))
             toVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
-            edgeIdx = graph.hasEdge(fromVertex, toVertex)
+            edgeId = graph.hasEdge(fromVertex, toVertex)
 
-        self.assertEqual(math.sqrt(2), graph.costOfEdge(edgeIdx))
+        self.assertEqual(math.sqrt(2), graph.costOfEdge(edgeId))
 
     def test_manhattan_distance_strategy(self):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.shp")))
@@ -241,13 +241,13 @@ class TestGraphBuilder(TestCase):
         graph = self.graphBuilder.makeGraph()
         fromVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0, 1.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
-        if edgeIdx == -1:
+        edgeId = graph.hasEdge(fromVertex, toVertex)
+        if edgeId == -1:
             fromVertex = graph.findVertex(QgsPointXY(0, 1.0))
             toVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
-            edgeIdx = graph.hasEdge(fromVertex, toVertex)
+            edgeId = graph.hasEdge(fromVertex, toVertex)
 
-        self.assertEqual(2, graph.costOfEdge(edgeIdx))
+        self.assertEqual(2, graph.costOfEdge(edgeId))
 
     def test_geodesic_distance_strategy(self):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_vertices_layer/simple_graph_vertices_layer.shp")))
@@ -257,13 +257,13 @@ class TestGraphBuilder(TestCase):
         graph = self.graphBuilder.makeGraph()
         fromVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0, 1.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
-        if edgeIdx == -1:
+        edgeId = graph.hasEdge(fromVertex, toVertex)
+        if edgeId == -1:
             fromVertex = graph.findVertex(QgsPointXY(0, 1.0))
             toVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
-            edgeIdx = graph.hasEdge(fromVertex, toVertex)
+            edgeId = graph.hasEdge(fromVertex, toVertex)
 
-        self.assertEqual(157249.38127194397, graph.costOfEdge(edgeIdx))
+        self.assertEqual(157249.38127194397, graph.costOfEdge(edgeId))
 
     def test_advanced_distance_strategy_with_raster(self):
         self.graphBuilder.setOption("distanceStrategy", "Advanced")
@@ -277,11 +277,11 @@ class TestGraphBuilder(TestCase):
         graph = self.graphBuilder.makeGraph()
         fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
+        edgeId = graph.hasEdge(fromVertex, toVertex)
 
-        self.assertEqual(7.0, graph.costOfEdge(edgeIdx))
-        self.assertEqual(2.0, graph.costOfEdge(edgeIdx, 1))
-        self.assertEqual(3.5, graph.costOfEdge(edgeIdx, 2))
+        self.assertEqual(7.0, graph.costOfEdge(edgeId))
+        self.assertEqual(2.0, graph.costOfEdge(edgeId, 1))
+        self.assertEqual(3.5, graph.costOfEdge(edgeId, 2))
 
     def test_fields_in_advance_distance_strategy(self):
         self.graphBuilder.setOption("distanceStrategy", "Advanced")
@@ -292,9 +292,9 @@ class TestGraphBuilder(TestCase):
         graph = self.graphBuilder.makeGraph()
         fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
+        edgeId = graph.hasEdge(fromVertex, toVertex)
 
-        self.assertEqual(graph.edge(edgeIdx).id(), graph.costOfEdge(edgeIdx, 0))
+        self.assertEqual(edgeId, graph.costOfEdge(edgeId, 0))
 
     def test_polygons_in_advanced_distance_strategy(self):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.shp")))
@@ -305,15 +305,15 @@ class TestGraphBuilder(TestCase):
         graph = self.graphBuilder.makeGraph()
         fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
-        self.assertEqual(0, graph.costOfEdge(edgeIdx, 0))
-        self.assertEqual(0, graph.costOfEdge(edgeIdx, 1))
+        edgeId = graph.hasEdge(fromVertex, toVertex)
+        self.assertEqual(0, graph.costOfEdge(edgeId, 0))
+        self.assertEqual(0, graph.costOfEdge(edgeId, 1))
 
         fromVertex = graph.findVertex(QgsPointXY(-1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
-        self.assertEqual(1, graph.costOfEdge(edgeIdx, 0))
-        self.assertEqual(0, graph.costOfEdge(edgeIdx, 1))
+        edgeId = graph.hasEdge(fromVertex, toVertex)
+        self.assertEqual(1, graph.costOfEdge(edgeId, 0))
+        self.assertEqual(0, graph.costOfEdge(edgeId, 1))
 
     def test_math_in_advanced_distance_strategy(self):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.shp")))
@@ -322,8 +322,8 @@ class TestGraphBuilder(TestCase):
         graph = self.graphBuilder.makeGraph()
         fromVertex = graph.findVertex(QgsPointXY(1.0, 0.0))
         toVertex = graph.findVertex(QgsPointXY(0.0, 0.0))
-        edgeIdx = graph.hasEdge(fromVertex, toVertex)
-        self.assertEqual(3, graph.costOfEdge(edgeIdx, 0))
+        edgeId = graph.hasEdge(fromVertex, toVertex)
+        self.assertEqual(3, graph.costOfEdge(edgeId, 0))
 
     def test_forbidden_areas(self):
         self.graphBuilder.setVectorLayer(QgsVectorLayer(os.path.join(getPluginPath(), "tests/testdata/simple_graph_edges_layer/simple_graph_edges_layer.shp")))
@@ -353,12 +353,12 @@ class TestGraphBuilder(TestCase):
         self.assertEqual(10, secondGraph.vertexCount())
         self.assertEqual(firstGraph.edgeCount(), secondGraph.edgeCount())
 
-        for vertexIdx in range(len(firstGraph.vertices())):
-            self.assertEqual(firstGraph.vertex(vertexIdx).point(), secondGraph.vertex(vertexIdx).point())
+        for vertexId in firstGraph.vertices():
+            self.assertEqual(firstGraph.vertex(vertexId).point(), secondGraph.vertex(vertexId).point())
 
-        for edgeIdx in range(len(firstGraph.edges())):
-            self.assertEqual(firstGraph.edge(edgeIdx).fromVertex(), secondGraph.edge(edgeIdx).fromVertex())
-            self.assertEqual(firstGraph.edge(edgeIdx).toVertex(), secondGraph.edge(edgeIdx).toVertex())
+        for edgeId in firstGraph.edges():
+            self.assertEqual(firstGraph.edge(edgeId).fromVertex(), secondGraph.edge(edgeId).fromVertex())
+            self.assertEqual(firstGraph.edge(edgeId).toVertex(), secondGraph.edge(edgeId).toVertex())
 
     def test_random_area_extent(self):
         self.graphBuilder.setRandomOption("numberOfVertices", 10)
@@ -366,7 +366,8 @@ class TestGraphBuilder(TestCase):
 
         graph = self.graphBuilder.makeGraph()
         rectangle = QgsRectangle(-50, -50, 50, 50)
-        for vertex in graph.vertices():
+        for id in graph.vertices():
+            vertex = graph.vertices()[id]
             self.assertTrue(rectangle.contains(vertex.point()))
 
 

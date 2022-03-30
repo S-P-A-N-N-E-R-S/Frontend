@@ -49,24 +49,26 @@ class EdgeCostsField(BaseField, GraphDependencyMixin):
                 raise ParseError(f"Invalid data object: Field {self.label} missing but required") from error
             return
 
-        if not data[self.graphKey].costOfEdge(0, data[self.key]):
-            raise ParseError("Algortihm requires a weighted graph")
+        for edgeId in data[self.graphKey].edges():
+            if not data[self.graphKey].costOfEdge(edgeId, data[self.key]):
+                raise ParseError("Algorithm requires a weighted graph")
+            break
 
         if "." in self.key:
             fieldName, mapKey = self.key.split(".")
             try:
                 protoField = getattr(request, fieldName).get_or_create(mapKey)
                 protoField.type = generic_container_pb2.AttributeType.EDGE
-                for edgeIdx, _edge in enumerate(data[self.graphKey].edges()):
-                    edgeCost = data[self.graphKey].costOfEdge(edgeIdx, data[self.key])
+                for edgeId in data[self.graphKey].edges():
+                    edgeCost = data[self.graphKey].costOfEdge(edgeId, data[self.key])
                     protoField.attributes.append(edgeCost)
             except AttributeError as error:
                 raise ParseError(f"Invalid field name: {fieldName}") from error
         else:
             try:
                 protoField = getattr(request, self.key)
-                for edgeIdx, _edge in enumerate(data[self.graphKey].edges()):
-                    edgeCost = data[self.graphKey].costOfEdge(edgeIdx, data[self.key])
+                for edgeId in data[self.graphKey].edges():
+                    edgeCost = data[self.graphKey].costOfEdge(edgeId, data[self.key])
                     protoField.append(edgeCost)
             except AttributeError as error:
                 raise ParseError(f"Invalid key: {self.key}") from error
@@ -105,13 +107,14 @@ class EdgeCostsResult(BaseResult, GraphDependencyMixin):
         :param response: Protobuf message containing the result field to be parsed
         :param data: Dictionairy the data will be placed into
         """
-
         data[self.graphKey].setDistanceStrategy("Advanced")
         if "." in self.key:
             protoField = self.getProtoMapField(response)
+            edgeIds = list(data[self.graphKey].edges().keys())
             for edgeIdx, edgeCost in enumerate(protoField.attributes):
-                data[self.graphKey].setCostOfEdge(edgeIdx, data[self.key], edgeCost)
+                data[self.graphKey].setCostOfEdge(edgeIds[edgeIdx], data[self.key], edgeCost)
         else:
             protoField = self.getProtoField(response)
+            edgeIds = list(data[self.graphKey].edges().keys())
             for edgeIdx, edgeCost in enumerate(protoField):
-                data[self.graphKey].setCostOfEdge(edgeIdx, data[self.key], edgeCost)
+                data[self.graphKey].setCostOfEdge(edgeIds[edgeIdx], data[self.key], edgeCost)

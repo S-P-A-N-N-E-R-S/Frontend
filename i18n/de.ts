@@ -4,32 +4,32 @@
 <context>
     <name>@default</name>
     <message>
-        <location filename="../models/QgsGraphLayer.py" line="538"/>
+        <location filename="../models/GraphLayer.py" line="538"/>
         <source>Zoom to Layer</source>
         <translation>Auf Layer zoomen</translation>
     </message>
     <message>
-        <location filename="../models/QgsGraphLayer.py" line="544"/>
+        <location filename="../models/GraphLayer.py" line="544"/>
         <source>Toggle Edge Text</source>
         <translation>Kantentext umschalten</translation>
     </message>
     <message>
-        <location filename="../models/QgsGraphLayer.py" line="550"/>
+        <location filename="../models/GraphLayer.py" line="550"/>
         <source>Toggle Direction</source>
         <translation>Richtung umschalten</translation>
     </message>
     <message>
-        <location filename="../models/QgsGraphLayer.py" line="556"/>
+        <location filename="../models/GraphLayer.py" line="556"/>
         <source>Export to VectorLayer</source>
         <translation>Als Vectorlayer exportieren</translation>
     </message>
     <message>
-        <location filename="../models/QgsGraphLayer.py" line="562"/>
+        <location filename="../models/GraphLayer.py" line="562"/>
         <source>Export To File</source>
         <translation>Als Datei exportieren</translation>
     </message>
     <message>
-        <location filename="../models/QgsGraphLayer.py" line="568"/>
+        <location filename="../models/GraphLayer.py" line="568"/>
         <source>Random Vertex Color</source>
         <translation>Setze zufällige Vertex-Farbe</translation>
     </message>
