@@ -29,7 +29,7 @@ from qgis.utils import *
 from .views.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath
 
-from .models.QgsGraphLayer import QgsGraphLayer, QgsGraphLayerType, QgsGraphDataProvider
+from .models.GraphLayer import GraphLayer, GraphLayerType, GraphDataProvider
 
 import os, string, random
 
@@ -202,13 +202,13 @@ class SPANNERSPlugin:
         self.graphToolbar.setEnabled(True)
         self.graphToolbar.setVisible(True)
 
-        QgsApplication.pluginLayerRegistry().addPluginLayerType(QgsGraphLayerType())
+        QgsApplication.pluginLayerRegistry().addPluginLayerType(GraphLayerType())
 
-        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(QgsGraphDataProvider.providerKey(),
-                                                                            QgsGraphDataProvider.description(),
-                                                                            QgsGraphDataProvider.createProvider()))
+        QgsProviderRegistry.instance().registerProvider(QgsProviderMetadata(GraphDataProvider.providerKey(),
+                                                                            GraphDataProvider.description(),
+                                                                            GraphDataProvider.createProvider()))
 
-        # re-read and therefore reload plugin layers after adding QgsGraphLayerType to PluginLayerRegistry
+        # re-read and therefore reload plugin layers after adding GraphLayerType to PluginLayerRegistry
         self.reloadPluginLayers()
 
     def openView(self, view):
@@ -246,7 +246,7 @@ class SPANNERSPlugin:
         plugin_menu = self.iface.pluginMenu()
         plugin_menu.removeAction(self.menuAction)
 
-        QgsApplication.pluginLayerRegistry().removePluginLayerType(QgsGraphLayer.LAYER_TYPE)
+        QgsApplication.pluginLayerRegistry().removePluginLayerType(GraphLayer.LAYER_TYPE)
         QgsProject.instance().layersWillBeRemoved.disconnect(self.deleteLayers)
 
         self.iface.currentLayerChanged.disconnect(self.__layerChanged)
@@ -317,5 +317,5 @@ class SPANNERSPlugin:
 
         if not layer == None:
             if hasattr(layer, "LAYER_TYPE") and layer.LAYER_TYPE == "graph":
-                # only keep track of current QgsGraphLayers
+                # only keep track of current GraphLayers
                 self.currentLayer = layer

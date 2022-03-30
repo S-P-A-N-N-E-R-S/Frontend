@@ -22,7 +22,7 @@ import traceback
 from .base import BaseController
 
 from ..models.GraphBuilder import GraphBuilder
-from ..models.QgsGraphLayer import QgsGraphLayer
+from ..models.GraphLayer import GraphLayer
 from .. import helperFunctions as helper
 
 from qgis.core import *
@@ -44,8 +44,8 @@ class GraphController(BaseController):
         Constructor
         :type view: GraphView
         """
-        super().__init__(view)                           
-             
+        super().__init__(view)
+
         self.view.addRandomArea(self.tr("Germany"), "Germany")
         self.view.addRandomArea(self.tr("France"), "France")
         self.view.addRandomArea(self.tr("Osnabrueck"), "Osnabrueck")
@@ -54,7 +54,7 @@ class GraphController(BaseController):
         self.view.addRandomArea(self.tr("Australia"), "Australia")
 
         self.view.addConnectionType(self.tr("Nearest neighbor"), "Nearest neighbor")
-        self.view.addConnectionType(self.tr("None"), "None")      
+        self.view.addConnectionType(self.tr("None"), "None")
         self.view.addConnectionType(self.tr("Complete"), "Complete")
         self.view.addConnectionType(self.tr("ClusterComplete"), "ClusterComplete")
         self.view.addConnectionType(self.tr("ClusterNN"), "ClusterNN")
@@ -116,8 +116,8 @@ class GraphController(BaseController):
         for idx, polygonCostLayer in enumerate(polygonCostLayers):
             if not polygonCostLayer.isValid():
                 self.view.showWarning(self.tr("Polygon cost layer[{}] is invalid!").format(idx))
-                return            
-            builder.setPolygonsForCostFunction(polygonCostLayer)           
+                return
+            builder.setPolygonsForCostFunction(polygonCostLayer)
 
         # polygon forbidden area
         forbiddenAreaLayer = self.view.getForbiddenAreaLayer()
@@ -150,12 +150,12 @@ class GraphController(BaseController):
         builder.setOption("randomConnectionNumber", self.view.getRandomEdgesNumber())
         builder.setOption("createFeatureInfos", self.view.getCreateInfos())
         builder.setOption("degreeThreshold", self.view.getDegreeThreshold())
-        
+
         if self.view.getConnectionType()[1] == "LineLayerBased":
             lineLayer = self.view.getLineLayerForConnection()
             if not lineLayer.isValid():
                 self.view.showWarning(self.tr("Line layer is invalid!"))
-                return     
+                return
             builder.setLineLayer(lineLayer)
 
         # set builder options for random graph
@@ -189,7 +189,7 @@ class GraphController(BaseController):
                 return
 
             # create empty graph layer
-            graphLayer = QgsGraphLayer()
+            graphLayer = GraphLayer()
 
             # set graph to graph layer
             graphLayer.setGraph(graph)
@@ -221,7 +221,7 @@ class GraphController(BaseController):
             graphName = os.path.basename(fileName)
 
         # create and run task from function
-        graphLayer = QgsGraphLayer()
+        graphLayer = GraphLayer()
         graphTask = QgsTask.fromFunction(
             "Building graph: {}".format(graphName),
             builder.makeGraphTask,

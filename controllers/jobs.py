@@ -19,7 +19,7 @@
 from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog
 
 from .base import BaseController
-from ..models.QgsGraphLayer import QgsGraphLayer
+from ..models.GraphLayer import GraphLayer
 from .. import helperFunctions as helper
 
 # client imports
@@ -290,7 +290,7 @@ class JobsController(BaseController):
 
             # if response contains a graph: show it in qgis
             if "graph" in result and result["graph"]:
-                graphLayer = QgsGraphLayer()
+                graphLayer = GraphLayer()
                 graphLayer.setGraph(result["graph"])
                 jobName = result["job"].getJobName()
                 graphName = result.get("graphName", f"{jobName} - {self.tr('Result')}")

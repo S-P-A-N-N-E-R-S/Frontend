@@ -53,115 +53,112 @@ class TestExtGraph(TestCase):
         shutil.rmtree(cls.tempDir, True)
 
     def test_vertex_class(self):
-        vertex = ExtGraph.ExtVertex(QgsPointXY(1.0, 0.5), 7)
-        self.assertEqual(7, vertex.id())
+        vertex = ExtGraph.ExtVertex(QgsPointXY(1.0, 0.5))
         self.assertEqual(QgsPointXY(1.0, 0.5), vertex.point())
 
         vertex.setNewPoint(QgsPointXY(2.0, 3.4))
-        self.assertEqual(7, vertex.id())
         self.assertEqual(QgsPointXY(2.0, 3.4), vertex.point())
 
     def test_edge_class(self):
-        fromVertex = ExtGraph.ExtVertex(QgsPointXY(1.0, 2.0), 7)
-        toVertex = ExtGraph.ExtVertex(QgsPointXY(1.0, 3.5), 2)
-        edge = ExtGraph.ExtEdge(fromVertex.id(), toVertex.id(), 2, True)
-        self.assertEqual(2, edge.id())
-        self.assertEqual(7, edge.fromVertex())
-        self.assertEqual(2, edge.toVertex())
+        fromVertexId = self.graph.addVertex(QgsPointXY(1.0, 2.0))
+        toVertexId = self.graph.addVertex(QgsPointXY(1.0, 3.5))
+        edge = ExtGraph.ExtEdge(fromVertexId, toVertexId, True)
+
+        self.assertEqual(fromVertexId, edge.fromVertex())
+        self.assertEqual(toVertexId, edge.toVertex())
         self.assertTrue(edge.highlighted())
 
         edge.toggleHighlight()
         self.assertFalse(edge.highlighted())
 
     def test_vertex_addition(self):
-        firstIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
-        secondIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
-        thirdIndex = self.graph.addVertex(QgsPointXY(0.0, 1.0))
-        fourthIndex = self.graph.addVertex(QgsPointXY(1.0, 0.0))
+        firstId = self.graph.addVertex(QgsPointXY(1.0, 1.0))
+        secondId = self.graph.addVertex(QgsPointXY(0.0, 0.0))
+        thirdId = self.graph.addVertex(QgsPointXY(0.0, 1.0))
+        fourthId = self.graph.addVertex(QgsPointXY(1.0, 0.0))
 
         self.assertEqual(4, self.graph.vertexCount())
 
-        fifthIndex = self.graph.addVertex(QgsPointXY(0.5, 0.5))
+        fifthId = self.graph.addVertex(QgsPointXY(0.5, 0.5))
         self.assertEqual(5, self.graph.vertexCount())
 
-        self.assertEqual(QgsPointXY(1.0, 1.0), self.graph.vertex(firstIndex).point())
-        self.assertEqual(QgsPointXY(0.0, 1.0), self.graph.vertex(thirdIndex).point())
-        self.assertEqual(QgsPointXY(0.5, 0.5), self.graph.vertex(fifthIndex).point())
+        self.assertEqual(QgsPointXY(1.0, 1.0), self.graph.vertex(firstId).point())
+        self.assertEqual(QgsPointXY(0.0, 1.0), self.graph.vertex(thirdId).point())
+        self.assertEqual(QgsPointXY(0.5, 0.5), self.graph.vertex(fifthId).point())
 
     def test_edge_addition(self):
-        firstVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
-        secondVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
-        thirdVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 1.0))
-        fourthVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 0.0))
+        firstVertexId = self.graph.addVertex(QgsPointXY(1.0, 1.0))
+        secondVertexId = self.graph.addVertex(QgsPointXY(0.0, 0.0))
+        thirdVertexId = self.graph.addVertex(QgsPointXY(0.0, 1.0))
+        fourthVertexId = self.graph.addVertex(QgsPointXY(1.0, 0.0))
 
-        firstVertex = self.graph.vertex(firstVertexIndex)
-        secondVertex = self.graph.vertex(secondVertexIndex)
-        thirdVertex = self.graph.vertex(thirdVertexIndex)
-        fourthVertex = self.graph.vertex(fourthVertexIndex)
+        firstVertex = self.graph.vertex(firstVertexId)
+        secondVertex = self.graph.vertex(secondVertexId)
+        thirdVertex = self.graph.vertex(thirdVertexId)
+        fourthVertex = self.graph.vertex(fourthVertexId)
 
-        firstEdgeIndex = self.graph.addEdge(firstVertex.id(), secondVertex.id(), ID=4)
-        secondEdgeIndex = self.graph.addEdge(thirdVertex.id(), fourthVertex.id(), ID=3)
-        thirdEdgeIndex = self.graph.addEdge(secondVertex.id(), thirdVertex.id(), ID=5)
+        firstEdgeId = self.graph.addEdge(firstVertexId, secondVertexId, ID=4)
+        secondEdgeId = self.graph.addEdge(thirdVertexId, fourthVertexId, ID=3)
+        thirdEdgeId = self.graph.addEdge(secondVertexId, thirdVertexId, ID=5)
 
         self.assertEqual(3, self.graph.edgeCount())
-        self.assertEqual(thirdEdgeIndex, self.graph.hasEdge(secondVertexIndex, thirdVertexIndex))
-        self.assertEqual(-1, self.graph.hasEdge(thirdVertexIndex, secondVertexIndex))
-        self.assertEqual(-1, self.graph.hasEdge(firstVertexIndex, thirdVertexIndex))
+        self.assertEqual(thirdEdgeId, self.graph.hasEdge(secondVertexId, thirdVertexId))
+        self.assertEqual(-1, self.graph.hasEdge(thirdVertexId, secondVertexId))
+        self.assertEqual(-1, self.graph.hasEdge(firstVertexId, thirdVertexId))
 
-        self.assertEqual(5, self.graph.edge(thirdEdgeIndex).id())
-        self.assertEqual(secondVertex.id(), self.graph.edge(thirdEdgeIndex).fromVertex())
-        self.assertEqual(thirdVertex.id(), self.graph.edge(thirdEdgeIndex).toVertex())
-        self.assertEqual(secondEdgeIndex, self.graph.findEdgeByID(3))
-        self.assertEqual(firstEdgeIndex, self.graph.findEdgeByID(4))
-        self.assertEqual(thirdEdgeIndex, self.graph.findEdgeByID(5))
+        self.assertEqual(secondVertexId, self.graph.edge(thirdEdgeId).fromVertex())
+        self.assertEqual(thirdVertexId, self.graph.edge(thirdEdgeId).toVertex())
+        self.assertEqual(secondEdgeId, 3)
+        self.assertEqual(firstEdgeId, 4)
+        self.assertEqual(thirdEdgeId, 5)
 
     def test_vertex_removal(self):
-        firstIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
-        secondIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
+        firstId = self.graph.addVertex(QgsPointXY(1.0, 1.0))
+        secondId = self.graph.addVertex(QgsPointXY(0.0, 0.0))
         self.assertEqual(2, self.graph.vertexCount())
 
-        firstVertex = self.graph.vertex(firstIndex)
-        secondVertex = self.graph.vertex(secondIndex)
+        firstVertex = self.graph.vertex(firstId)
+        secondVertex = self.graph.vertex(secondId)
 
-        self.graph.deleteVertex(secondIndex)
+        self.graph.deleteVertex(secondId)
         self.assertEqual(1, self.graph.vertexCount())
-        self.assertRaises(IndexError, self.graph.vertex, secondIndex)
+        self.assertRaises(IndexError, self.graph.vertex, secondId)
 
-        thirdIndex = self.graph.addVertex(QgsPointXY(0.5, 0.5))
-        thirdVertex = self.graph.vertex(thirdIndex)
+        thirdId = self.graph.addVertex(QgsPointXY(0.5, 0.5))
+        thirdVertex = self.graph.vertex(thirdId)
         self.assertEqual(2, self.graph.vertexCount())
         self.assertEqual(2, len(self.graph.vertices()))
-        for vertex in self.graph.vertices():
+        for vertexId, vertex in self.graph.vertices().items():
             self.assertIn(vertex, [firstVertex, thirdVertex])
 
     def test_edge_removal(self):
-        firstVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
-        secondVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
-        thirdVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 1.0))
-        fourthVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 0.0))
+        firstVertexId = self.graph.addVertex(QgsPointXY(1.0, 1.0))
+        secondVertexId = self.graph.addVertex(QgsPointXY(0.0, 0.0))
+        thirdVertexId = self.graph.addVertex(QgsPointXY(0.0, 1.0))
+        fourthVertexId = self.graph.addVertex(QgsPointXY(1.0, 0.0))
 
-        firstVertex = self.graph.vertex(firstVertexIndex)
-        secondVertex = self.graph.vertex(secondVertexIndex)
-        thirdVertex = self.graph.vertex(thirdVertexIndex)
-        fourthVertex = self.graph.vertex(fourthVertexIndex)
+        firstVertex = self.graph.vertex(firstVertexId)
+        secondVertex = self.graph.vertex(secondVertexId)
+        thirdVertex = self.graph.vertex(thirdVertexId)
+        fourthVertex = self.graph.vertex(fourthVertexId)
 
-        firstEdgeIndex = self.graph.addEdge(firstVertex.id(), secondVertex.id())
-        secondEdgeIndex = self.graph.addEdge(thirdVertex.id(), fourthVertex.id())
-        thirdEdgeIndex = self.graph.addEdge(secondVertex.id(), thirdVertex.id())
+        firstEdgeId = self.graph.addEdge(firstVertexId, secondVertexId)
+        secondEdgeId = self.graph.addEdge(thirdVertexId, fourthVertexId)
+        thirdEdgeId = self.graph.addEdge(secondVertexId, thirdVertexId)
 
-        firstEdge = self.graph.edge(firstEdgeIndex)
-        secondEdge = self.graph.edge(secondEdgeIndex)
-        thirdEdge = self.graph.edge(thirdEdgeIndex)
+        firstEdge = self.graph.edge(firstEdgeId)
+        secondEdge = self.graph.edge(secondEdgeId)
+        thirdEdge = self.graph.edge(thirdEdgeId)
 
         self.assertEqual(3, self.graph.edgeCount())
-        self.assertTrue(self.graph.deleteEdge(secondEdgeIndex))
+        self.assertTrue(self.graph.deleteEdge(secondEdgeId))
         self.assertEqual(2, self.graph.edgeCount())
 
-        fourthIndex = self.graph.addEdge(fourthVertex.id(), firstVertex.id())
-        fourthEdge = self.graph.edge(fourthIndex)
+        fourthId = self.graph.addEdge(fourthVertexId, firstVertexId)
+        fourthEdge = self.graph.edge(fourthId)
         self.assertEqual(3, self.graph.edgeCount())
         self.assertEqual(3, len(self.graph.edges()))
-        for edge in self.graph.edges():
+        for edgeId, edge in self.graph.edges().items():
             self.assertIn(edge, [firstEdge, thirdEdge, fourthEdge])
 
     def test_read_graphML(self):
@@ -172,31 +169,31 @@ class TestExtGraph(TestCase):
         self.assertEqual(15, self.graph.edgeCount())
 
         # check some vertices
-        self.assertEqual(QgsPointXY(0, -1.0), self.graph.vertex(self.graph.findEdgeByID(3)).point())
-        self.assertEqual(QgsPointXY(0.0, 0.0), self.graph.vertex(self.graph.findEdgeByID(0)).point())
-        self.assertEqual(QgsPointXY(2.0, 0), self.graph.vertex(self.graph.findEdgeByID(5)).point())
+        self.assertEqual(QgsPointXY(0, -1.0), self.graph.vertex(3).point())
+        self.assertEqual(QgsPointXY(0.0, 0.0), self.graph.vertex(0).point())
+        self.assertEqual(QgsPointXY(2.0, 0), self.graph.vertex(5).point())
 
         # check some edges
-        vertex = self.graph.vertex(self.graph.findEdgeByID(0))
+        vertex = self.graph.vertex(0)
         outgoingEdges = vertex.outgoingEdges()
         self.assertEqual(3, len(outgoingEdges))
         incomingEdges = vertex.incomingEdges()
         self.assertEqual(5, len(incomingEdges))
 
-        self.assertNotEqual(-1, self.graph.hasEdge(self.graph.findEdgeByID(0), self.graph.findEdgeByID(1)))
-        self.assertNotEqual(-1, self.graph.hasEdge(self.graph.findEdgeByID(3), self.graph.findEdgeByID(1)))
-        self.assertNotEqual(-1, self.graph.hasEdge(self.graph.findEdgeByID(4), self.graph.findEdgeByID(3)))
+        self.assertNotEqual(-1, self.graph.hasEdge(0, 1))
+        self.assertNotEqual(-1, self.graph.hasEdge(3, 1))
+        self.assertNotEqual(-1, self.graph.hasEdge(4, 3))
 
     def test_write_graphML(self):
-        firstVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
-        secondVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
-        firstVertex = self.graph.vertex(firstVertexIndex)
-        secondVertex = self.graph.vertex(secondVertexIndex)
+        firstVertexId = self.graph.addVertex(QgsPointXY(1.0, 1.0))
+        secondVertexId = self.graph.addVertex(QgsPointXY(0.0, 0.0))
+        firstVertex = self.graph.vertex(firstVertexId)
+        secondVertex = self.graph.vertex(secondVertexId)
 
-        firstEdgeIndex = self.graph.addEdge(firstVertex.id(), secondVertex.id())
-        secondEdgeIndex = self.graph.addEdge(secondVertex.id(), firstVertex.id())
-        firstEdge = self.graph.edge(firstEdgeIndex)
-        secondEdge = self.graph.edge(secondEdgeIndex)
+        firstEdgeId = self.graph.addEdge(firstVertexId, secondVertexId)
+        secondEdgeId = self.graph.addEdge(secondVertexId, firstVertexId)
+        firstEdge = self.graph.edge(firstEdgeId)
+        secondEdge = self.graph.edge(secondEdgeId)
 
         temp_file = os.path.join(self.tempDir, "graph.graphml")
         self.graph.writeGraphML(temp_file)
@@ -206,57 +203,57 @@ class TestExtGraph(TestCase):
         self.assertEqual(2, temp_graph.edgeCount())
         self.assertEqual(2, temp_graph.vertexCount())
 
-        self.assertEqual(QgsPointXY(1.0, 1.0), temp_graph.vertex(temp_graph.findEdgeByID(firstVertex.id())).point())
-        self.assertEqual(QgsPointXY(0.0, 0.0), temp_graph.vertex(temp_graph.findEdgeByID(secondVertex.id())).point())
+        self.assertEqual(QgsPointXY(1.0, 1.0), temp_graph.vertex(firstVertexId).point())
+        self.assertEqual(QgsPointXY(0.0, 0.0), temp_graph.vertex(secondVertexId).point())
 
-        self.assertNotEqual(-1, temp_graph.hasEdge(temp_graph.findEdgeByID(firstVertex.id()), temp_graph.findEdgeByID(secondVertex.id())))
-        self.assertNotEqual(-1, temp_graph.hasEdge(temp_graph.findEdgeByID(secondVertex.id()), temp_graph.findEdgeByID(firstVertex.id())))
+        self.assertNotEqual(-1, temp_graph.hasEdge(firstVertexId, secondVertexId))
+        self.assertNotEqual(-1, temp_graph.hasEdge(secondVertexId, firstVertexId))
 
     def test_edge_costs(self):
-        firstVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
-        secondVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
-        firstVertex = self.graph.vertex(firstVertexIndex)
-        secondVertex = self.graph.vertex(secondVertexIndex)
+        firstVertexId = self.graph.addVertex(QgsPointXY(0.0, 0.0))
+        secondVertexId = self.graph.addVertex(QgsPointXY(1.0, 1.0))
+        firstVertex = self.graph.vertex(firstVertexId)
+        secondVertex = self.graph.vertex(secondVertexId)
 
-        edgeIndex = self.graph.addEdge(firstVertex.id(), secondVertex.id())
-        edge = self.graph.edge(edgeIndex)
+        edgeId = self.graph.addEdge(firstVertexId, secondVertexId)
+        edge = self.graph.edge(edgeId)
         # self.graph.crs = QgsCoordinateReferenceSystem("EPSG:4326")
         self.graph.updateCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         self.graph.setDistanceStrategy("Euclidean")
-        self.assertEqual(math.sqrt(2), self.graph.costOfEdge(edgeIndex))
+        self.assertEqual(math.sqrt(2), self.graph.costOfEdge(edgeId))
         self.graph.setDistanceStrategy("Manhattan")
-        self.assertEqual(2, self.graph.costOfEdge(edgeIndex))
+        self.assertEqual(2, self.graph.costOfEdge(edgeId))
         self.graph.setDistanceStrategy("Geodesic")
-        self.assertEqual(157249.38127194397, self.graph.costOfEdge(edgeIndex))
+        self.assertEqual(157249.38127194397, self.graph.costOfEdge(edgeId))
         self.graph.setDistanceStrategy("Ellipsoidal")
-        self.assertLess(156899, self.graph.costOfEdge(edgeIndex))
-        self.assertGreater(156900, self.graph.costOfEdge(edgeIndex))
+        self.assertLess(156899, self.graph.costOfEdge(edgeId))
+        self.assertGreater(156900, self.graph.costOfEdge(edgeId))
         self.graph.setDistanceStrategy("Advanced")
-        self.graph.setCostOfEdge(edgeIndex, 0, 12)
-        self.graph.setCostOfEdge(edgeIndex, 1, 24)
-        self.assertEqual(12, self.graph.costOfEdge(edgeIndex, 0))
-        self.assertEqual(24, self.graph.costOfEdge(edgeIndex, 1))
+        self.graph.setCostOfEdge(edgeId, 0, 12)
+        self.graph.setCostOfEdge(edgeId, 1, 24)
+        self.assertEqual(12, self.graph.costOfEdge(edgeId, 0))
+        self.assertEqual(24, self.graph.costOfEdge(edgeId, 1))
 
-        self.assertEqual(math.sqrt(2), self.graph.distanceP2P(firstVertexIndex, secondVertexIndex))
+        self.assertEqual(math.sqrt(2), self.graph.distanceP2P(firstVertexId, secondVertexId))
 
     def test_findVertexByID(self):
-        firstVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0), ID=12)
-        secondVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0), ID=4)
-        thirdVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 1.0), ID=9)
-        fourthVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 0.0), ID=0)
+        firstVertexId = self.graph.addVertex(QgsPointXY(1.0, 1.0), ID=12)
+        secondVertexId = self.graph.addVertex(QgsPointXY(0.0, 0.0), ID=4)
+        thirdVertexId = self.graph.addVertex(QgsPointXY(0.0, 1.0), ID=9)
+        fourthVertexId = self.graph.addVertex(QgsPointXY(1.0, 0.0), ID=0)
 
-        self.assertEqual(firstVertexIndex, self.graph.findVertexByID(12))
-        self.assertEqual(secondVertexIndex, self.graph.findVertexByID(4))
-        self.assertEqual(thirdVertexIndex, self.graph.findVertexByID(9))
-        self.assertEqual(fourthVertexIndex, self.graph.findVertexByID(0))
+        self.assertEqual(firstVertexId, 12)
+        self.assertEqual(secondVertexId, 4)
+        self.assertEqual(thirdVertexId, 9)
+        self.assertEqual(fourthVertexId, 0)
 
     def test_find_vertex(self):
-        firstVertexIndex = self.graph.addVertex(QgsPointXY(1.0, 1.0))
-        secondVertexIndex = self.graph.addVertex(QgsPointXY(0.0, 0.0))
+        firstVertexId = self.graph.addVertex(QgsPointXY(1.0, 1.0))
+        secondVertexId = self.graph.addVertex(QgsPointXY(0.0, 0.0))
 
-        self.assertEqual(firstVertexIndex, self.graph.findVertex(QgsPointXY(1.5, 1.0), 1))
-        self.assertEqual(secondVertexIndex, self.graph.findVertex(QgsPointXY(0.0, 0.0), 0))
+        self.assertEqual(firstVertexId, self.graph.findVertex(QgsPointXY(1.5, 1.0)))
+        self.assertEqual(secondVertexId, self.graph.findVertex(QgsPointXY(0.0, 0.0)))
 
     def test_add_vertex_complete(self):
         graphBuilder = GraphBuilder()

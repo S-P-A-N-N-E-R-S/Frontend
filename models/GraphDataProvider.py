@@ -16,11 +16,10 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.core import *
+from qgis.core import (QgsAbstractFeatureIterator, QgsFeatureRequest, QgsAbstractFeatureSource, QgsVectorDataProvider,
+                       QgsFeatureIterator, QgsDataProvider, QgsProject, QgsFields, QgsRectangle)
 
-import traceback
-
-class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
+class GraphFeatureIterator(QgsAbstractFeatureIterator):
 
     def __init__(self, source, point, request=QgsFeatureRequest()):
         super().__init__(request)
@@ -80,7 +79,7 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
             if self._index + 1 < len(self._source._pointFeatures):
                 self._index += 1
             return self._source._pointFeatures[self._index]
-        
+
         else:
             if self._index + 1 < len(self._source._lineFeatures):
                 self._index += 1
@@ -95,24 +94,24 @@ class QgsGraphFeatureIterator(QgsAbstractFeatureIterator):
         return True
 
 
-class QgsGraphFeatureSource(QgsAbstractFeatureSource):
+class GraphFeatureSource(QgsAbstractFeatureSource):
 
     def __init__(self, provider, point):
-        super(QgsGraphFeatureSource).__init__()
+        super(GraphFeatureSource).__init__()
         self._provider = provider
         self._pointFeatures = provider._pointFeatures
         self._lineFeatures = provider._lineFeatures
-        
+
         self.point = point
 
     def __del__(self):
         pass
 
     def getFeatures(self, request, point):
-        return QgsFeatureIterator(QgsGraphFeatureIterator(self, request, point))
+        return QgsFeatureIterator(GraphFeatureIterator(self, request, point))
 
 
-class QgsGraphDataProvider(QgsVectorDataProvider):
+class GraphDataProvider(QgsVectorDataProvider):
     """
     DataProvider for GraphLayer
     Keeps track of features for PointGeometry AND LineGeometry
@@ -124,33 +123,34 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
 
     @classmethod
     def description(self):
-        return "DataProvider for QgsGraphLayer"
+        return "DataProvider for GraphLayer"
 
     @classmethod
-    def createProvider(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(), flags=QgsDataProvider.ReadFlags()):
-        return QgsGraphDataProvider(uri, providerOptions, flags)
+    def createProvider(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(),
+                       flags=QgsDataProvider.ReadFlags()):
+        return GraphDataProvider(uri, providerOptions, flags)
 
-    
+
     def __init__(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(), flags=QgsDataProvider.ReadFlags()):
         super().__init__(uri)
 
         self.mCRS = QgsProject.instance().crs()
-        
+
         self._pointUri = uri
         self._lineUri = uri
-        
+
         self._providerOptions = providerOptions
         self._flags = flags
-        
+
         self._pointFeatures = []
         self._lineFeatures = []
-        
+
         self._pointFields = QgsFields()
         self._lineFields = QgsFields()
-        
+
         self._extent = QgsRectangle()
         self._subsetString = ''
-        
+
         self._pointFeatureCount = 0
         self._lineFeatureCount = 0
 
@@ -166,7 +166,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         del self._lineFields
         del self._extent
         del self._providerOptions
-        
+
     def isValid(self):
         return True
 
@@ -192,11 +192,11 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         return self.mCRS
 
     def featureSource(self, point):
-        return QgsGraphFeatureSource(self, point)
+        return GraphFeatureSource(self, point)
 
     def getFeatures(self, point, request=QgsFeatureRequest()):
         # return self._pointFeatures and self._lineFeatures one by one in a tuple
-        return QgsFeatureIterator(QgsGraphFeatureIterator(self.featureSource(point), point, request))
+        return QgsFeatureIterator(GraphFeatureIterator(self.featureSource(point), point, request))
 
     def featureCount(self, point):
         if point:
@@ -238,7 +238,7 @@ class QgsGraphDataProvider(QgsVectorDataProvider):
         if point and idx < self._pointFeatureCount:
             del self._pointFeatures[idx]
             self._pointFeatureCount -= 1
-        
+
             return True
         elif not point and idx < self._lineFeatureCount:
             del self._lineFeatures[idx]

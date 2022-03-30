@@ -21,9 +21,9 @@ from qgis.PyQt.QtCore import pyqtSignal, Qt, QPoint
 
 from qgis.gui import QgsMapTool
 from qgis.utils import iface
-from qgis.core import QgsCoordinateTransform
+from qgis.core import QgsCoordinateTransform, QgsProject
 
-from ...models.QgsGraphLayer import QgsGraphLayer
+from ...models.GraphLayer import GraphLayer
 
 
 class VertexPickerMapTool(QgsMapTool):
@@ -57,11 +57,14 @@ class VertexPickerMapTool(QgsMapTool):
         converter = iface.mapCanvas().getCoordinateTransform()
         clickPosition = converter.toMapCoordinates(clickPosition)
 
-        vertexIdx = self.layer.mGraph.findVertex(clickPosition, iface.mapCanvas().mapUnitsPerPixel() * 4)
+        if QgsProject.instance().crs().authid() != self.layer.mGraph.crs.authid():
+            clickPosition = self.layer.mTransform.transform(clickPosition, QgsCoordinateTransform.ReverseTransform)
 
-        if vertexIdx >= 0:
-            self.selectedVertexIdx = vertexIdx
-            self.vertexSelected.emit(vertexIdx)
+        vertexId = self.layer.mGraph.findVertex(clickPosition)
+
+        if vertexId >= 0:
+            self.selectedVertexIdx = vertexId
+            self.vertexSelected.emit(vertexId)
 
     def keyReleaseEvent(self, event):
         # cancel selection
@@ -126,10 +129,10 @@ class GraphVertexPickerWidget(QWidget):
         # graph layer is prioritized
         graph = self.graphLayer.getGraph() if self.graphLayer is not None else self.graph
         if graph is not None:
-            for vertexIdx in range(graph.vertexCount()):
-                vertex = graph.vertex(vertexIdx).point()
+            for vertexId in graph.vertices():
+                vertex = graph.vertex(vertexId).point()
                 self.comboBox.addItem("Vertex ID: {} [Point({})]".format(
-                    graph.vertex(vertexIdx).id(), vertex.toString(2)), graph.vertex(vertexIdx).id())
+                    vertexId, vertex.toString(2)), vertexId)
 
     def _selectOnCanvas(self):
         """
@@ -196,7 +199,7 @@ class GraphVertexPickerWidget(QWidget):
         :param graphLayer:
         :return:
         """
-        if graphLayer is not None and graphLayer.pluginLayerType() != QgsGraphLayer.LAYER_TYPE:
+        if graphLayer is not None and graphLayer.pluginLayerType() != GraphLayer.LAYER_TYPE:
             raise TypeError("Not a graph layer")
         self.graphLayer = graphLayer
         self._updateVertices()
@@ -213,4 +216,3 @@ class GraphVertexPickerWidget(QWidget):
         :return: Returns vertex id of selected vertex in graph
         """
         return self.comboBox.currentData()
-

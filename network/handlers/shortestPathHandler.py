@@ -70,26 +70,24 @@ class OldShortestPathRequest():
 
         request.graph.uid = 0
 
-        for vertexIdx in range(self.graph.vertexCount()):
-            point = self.graph.vertex(vertexIdx).point()
+        for vertexId, vertex in self.graph.vertices().items():
+            point = vertex.point()
 
             protoVertex = request.graph.vertexList.add()
-            protoVertex.uid = vertexIdx
+            protoVertex.uid = vertexId
 
             vertexCoordinates = request.vertexCoordinates.add()
             vertexCoordinates.x = point.x()
             vertexCoordinates.y = point.y()
             # TODO Include possible z coordinates in protobuf
 
-        for edgeIdx in range(self.graph.edgeCount()):
-            edge = self.graph.edge(edgeIdx)
-
+        for edgeId, edge in self.graph.edges().items():
             protoEdge = request.graph.edgeList.add()
-            protoEdge.uid = edgeIdx
+            protoEdge.uid = edgeId
             protoEdge.inVertexIndex = edge.fromVertex()
             protoEdge.outVertexIndex = edge.toVertex()
 
-            request.edgeCosts.append(self.graph.costOfEdge(edgeIdx))
+            request.edgeCosts.append(self.graph.costOfEdge(edgeId))
 
         return request
 
@@ -146,4 +144,4 @@ class OldShortestPathResponse():
             self.graph.addVertex(QgsPointXY(vertexX, vertexY))
 
         for edge in protoGraph.edgeList:
-            self.graph.addEdge(edge.inVertexIndex, edge.outVertexIndex, [])
+            self.graph.addEdge(edge.inVertexIndex, edge.outVertexIndex)

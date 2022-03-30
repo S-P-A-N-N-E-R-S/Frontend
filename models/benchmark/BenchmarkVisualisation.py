@@ -173,7 +173,8 @@ class BenchmarkVisualisation():
 
         plt.ylabel(self.yLabel)
         plt.xlabel(self.xLabel)
-        plt.xticks([r + ((width/2)*(len(self.zLabels)-1)) for r in range(len(self.xParameters[longestParaIndex]))], self.xParameters[longestParaIndex])
+        plt.xticks([r + ((width/2)*(len(self.zLabels)-1)) for r in range(len(self.xParameters[longestParaIndex]))],
+                    self.xParameters[longestParaIndex])
         if self.createLegend:
             plt.legend(loc = "best")
 
