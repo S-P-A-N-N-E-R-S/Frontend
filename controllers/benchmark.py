@@ -482,7 +482,8 @@ class BenchmarkController(BaseController):
             raise exception
 
     def abortTask(self):
-        self.task.cancel()
+        if self.task is not None:
+            self.task.cancel()
 
     def benchmarkTask(self, _task):
         for benchmarkDO in self.benchmarkDOs:
