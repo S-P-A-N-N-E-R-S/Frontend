@@ -150,7 +150,7 @@ class GraphLayerRenderer(QgsMapLayerRenderer):
                                 midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() +\
                                                    0.5 * fromPoint.y())
                                 edgeCost = self.mGraph.costOfEdge(outgoingEdgeId, self.mRenderedEdgeCostFunction)
-                                if not edgeCost:
+                                if not edgeCost and not edgeCost == 0:
                                     painter.drawText(midPoint, "None")
                                 elif edgeCost % 1 == 0:
                                     painter.drawText(midPoint, str(edgeCost))

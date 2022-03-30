@@ -221,7 +221,7 @@ class ExtEdgeUndoCommand(QUndoCommand):
             self.setText(self.undoString)
 
         self.mOldCosts = []
-        if self.mLayer.mGraph.distanceStrategy == "Advanced":
+        if self.mLayer.mGraph.distanceStrategy == "Advanced" and deleted:
             for functionIdx in range(self.mLayer.mGraph.amountOfEdgeCostFunctions()):
                 self.mOldCosts.append(self.mLayer.mGraph.costOfEdge(self.mEdgeID, functionIdx))
 
