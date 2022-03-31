@@ -15,5 +15,6 @@ icon=resources/images/icon.svg
 version=1.0.0
 tags=analysis, graph, layer, plot, visualization, draw
 homepage=https://project2.informatik.uni-osnabrueck.de/spanners/
-repository=https://gitpgtcs.informatik.uni-osnabrueck.de/spanners/frontend
+repository=https://github.com/S-P-A-N-N-E-R-S/Frontend
+tracker=https://github.com/S-P-A-N-N-E-R-S/Frontend/issues
 qgisMaximumversion=3.99
