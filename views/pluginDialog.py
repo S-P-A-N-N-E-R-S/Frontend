@@ -36,7 +36,6 @@ from .optionsView import OptionsView
 from .benchmarkView import BenchmarkView
 
 
-
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'PluginDialog.ui'))
@@ -45,12 +44,12 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 class PluginDialog(QDialog, FORM_CLASS):
 
     class Views(Enum):
-        ResourceView = 0
-        GraphView = 1
-        OGDFAnalysisView = 2
-        BenchmarkView = 3
-        JobsView = 4
-        OptionsView = 5
+        RESOURCE_VIEW = 0
+        GRAPH_VIEW = 1
+        OGDF_ANALYSIS_VIEW = 2
+        BENCHMARK_VIEW = 3
+        JOBS_VIEW = 4
+        OPTIONS_VIEW = 5
 
     def __init__(self, parent=None):
         """Constructor."""
@@ -66,8 +65,8 @@ class PluginDialog(QDialog, FORM_CLASS):
         self.menu_list.currentRowChanged.connect(self.changeViewIndex)
 
         # setup message bar
-        self.bar = QgsMessageBar()
-        self.content_widget.layout().insertWidget(1, self.bar)
+        self.messageBar = QgsMessageBar()
+        self.content_widget.layout().insertWidget(1, self.messageBar)
 
         # set up help button
         self.footer_buttonbox.helpRequested.connect(self.showHelp)
@@ -90,12 +89,12 @@ class PluginDialog(QDialog, FORM_CLASS):
         """ Opens help website in web browser """
         QDesktopServices.openUrl(QUrl(helper.getHelpUrl()))
 
-    def setView(self, View):
+    def setView(self, view):
         """ Opens the passed view """
-        self.menu_list.setCurrentRow(View.value)
+        self.menu_list.setCurrentRow(view.value)
         self.activateWindow()
 
     def changeViewIndex(self, index):
-        if index == self.Views.JobsView.value:
+        if index == self.Views.JOBS_VIEW.value:
             self.jobsView.controller.refreshJobs()
         self.stacked_content_views.setCurrentIndex(index)

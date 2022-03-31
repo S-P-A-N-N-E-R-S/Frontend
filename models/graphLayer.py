@@ -16,6 +16,9 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+import math
+import random
+
 from qgis.core import (QgsMapLayerRenderer, QgsProject, QgsPluginLayer, QgsFields, QgsRectangle, QgsField, QgsFeature,
                        QgsGeometry, QgsPoint, QgsVectorFileWriter, QgsWkbTypes, QgsVectorLayer, QgsPointXY,
                        QgsPluginLayerType, QgsCoordinateTransform)
@@ -24,16 +27,15 @@ from qgis.utils import iface
 from qgis.PyQt.QtCore import QVariant, QPointF, Qt, QLineF
 from qgis.PyQt.QtGui import QColor, QFont, QPainterPath, QPen
 from qgis.PyQt.QtWidgets import (QDialog, QPushButton, QBoxLayout, QLabel,
-                                    QFileDialog, QFrame, QApplication, QHBoxLayout,
-                                    QRadioButton, QGroupBox, QUndoStack, QToolButton, QSpinBox,
-                                    QToolBar)
+                                 QFileDialog, QFrame, QApplication, QHBoxLayout,
+                                 QRadioButton, QGroupBox, QUndoStack, QToolButton, QSpinBox,
+                                 QToolBar)
 
-import random, math
-
-from .GraphDataProvider import GraphDataProvider
-from .GraphMapTool import GraphMapTool
-from .ExtGraph import ExtGraph
+from .graphDataProvider import GraphDataProvider
+from .graphMapTool import GraphMapTool
+from .extGraph import ExtGraph
 from ..helperFunctions import tr
+
 
 class GraphLayerRenderer(QgsMapLayerRenderer):
     """
@@ -90,8 +92,8 @@ class GraphLayerRenderer(QgsMapLayerRenderer):
                 # used to convert map coordinates to canvas coordinates
                 converter = self.renderContext().mapToPixel()
 
-                for id in self.mGraph.mVertices:
-                    vertex = self.mGraph.vertex(id)
+                for vertexId in self.mGraph.mVertices:
+                    vertex = self.mGraph.vertex(vertexId)
 
                     # draw vertex
                     point = vertex.point()
@@ -110,7 +112,7 @@ class GraphLayerRenderer(QgsMapLayerRenderer):
                     # draw vertex costs
                     if self.mShowVertexText:
                         painter.setPen(QColor('black'))
-                        vertexCost = self.mGraph.costOfVertex(id, self.mRenderedVertexCostFunction)
+                        vertexCost = self.mGraph.costOfVertex(vertexId, self.mRenderedVertexCostFunction)
                         if not vertexCost and not vertexCost == 0:
                             painter.drawText(point, "None")
                         elif vertexCost % 1 == 0:
@@ -147,7 +149,7 @@ class GraphLayerRenderer(QgsMapLayerRenderer):
 
                             # add text with edgeCost at line mid point
                             if self.mShowEdgeText:
-                                midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() +\
+                                midPoint = QPointF(0.5 * toPoint.x() + 0.5 * fromPoint.x(), 0.5 * toPoint.y() +
                                                    0.5 * fromPoint.y())
                                 edgeCost = self.mGraph.costOfEdge(outgoingEdgeId, self.mRenderedEdgeCostFunction)
                                 if not edgeCost and not edgeCost == 0:
@@ -157,11 +159,11 @@ class GraphLayerRenderer(QgsMapLayerRenderer):
                                 else:
                                     painter.drawText(midPoint, str("%.3f" % edgeCost))
 
-                if not len(lines) == 0:
+                if len(lines) != 0:
                     painter.setPen(QColor('black'))
                     painter.drawLines(lines)
 
-                if not len(highlightedLines) == 0:
+                if len(highlightedLines) != 0:
                     highlightPen = QPen(QColor('red'))
                     highlightPen.setWidth(2)
                     painter.setPen(highlightPen)
@@ -270,10 +272,10 @@ class GraphLayer(QgsPluginLayer):
 
         self.nameChanged.connect(self.activateUniqueName)
 
-        if not iface == None:
+        if not iface is None:
             self.enableEditToolBar()
 
-    def deleteLater(self, dummy):
+    def deleteLater(self, _dummy):
         self.toggleEdit(True)
 
         del self.mDataProvider
@@ -403,7 +405,6 @@ class GraphLayer(QgsPluginLayer):
                 self.mDataProvider.addAttributes([costField], False)
                 self.mLineFields.append(costField)
 
-
             # build line features
             for edgeId in self.mGraph.mEdges:
                 edge = self.mGraph.edge(edgeId)
@@ -446,25 +447,25 @@ class GraphLayer(QgsPluginLayer):
         """
 
         # get saveFileName and datatype to export to
-        saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;" +\
-                                                   "Geopackage (*.gpkg);;CSV (*.csv);; GraphML (*.graphml);;" +\
+        saveFileName = QFileDialog.getSaveFileName(None, "Export To File", "/home", "Shapefile (*.shp);;" +
+                                                   "Geopackage (*.gpkg);;CSV (*.csv);; GraphML (*.graphml);;" +
                                                    "GeoJSON (*.geojson)")
         pointFileName = saveFileName[0]
         lineFileName = saveFileName[0]
 
         driver = ""
 
-        if saveFileName[1] == "Shapefile (*.shp)": # Shapefile
+        if saveFileName[1] == "Shapefile (*.shp)":  # Shapefile
             pointFileName += "Points.shp" if not "Points.shp" in pointFileName else ""
             lineFileName += "Lines.shp" if not "Lines.shp" in lineFileName else ""
             driver = "ESRI Shapefile"
 
-        elif saveFileName[1] == "Geopackage (*.gpkg)": # Geopackage
+        elif saveFileName[1] == "Geopackage (*.gpkg)":  # Geopackage
             pointFileName += "Points.gpkg" if not "Points.gpkg" in pointFileName else ""
             lineFileName += "Lines.gpkg" if not "Lines.gpkg" in lineFileName else ""
             driver = "GPKG"
 
-        elif saveFileName[1] == "CSV (*.csv)": # CSV
+        elif saveFileName[1] == "CSV (*.csv)":  # CSV
             pointFileName += "Points.csv" if not "Points.csv" in pointFileName else ""
             lineFileName += "Lines.csv"if not "Lines.csv" in lineFileName else ""
             driver = "CSV"
@@ -487,7 +488,7 @@ class GraphLayer(QgsPluginLayer):
         if self.exportPoints:
             # write point features in QgsVectorFileWriter (save features in selected file)
             pointWriter = QgsVectorFileWriter(pointFileName, "utf-8", self.fields(True),
-                                            QgsWkbTypes.Point, self.crs(), driver)
+                                              QgsWkbTypes.Point, self.crs(), driver)
 
             if pointWriter.hasError() != QgsVectorFileWriter.NoError:
                 print("ERROR QgsVectorFileWriter", pointWriter.errorMessage())
@@ -501,14 +502,14 @@ class GraphLayer(QgsPluginLayer):
         if self.exportLines:
             # write line features in QgsVectorFileWriter (save features in selected file)
             lineWriter = QgsVectorFileWriter(lineFileName, "utf-8", self.fields(False),
-                                            QgsWkbTypes.LineString, self.crs(), driver)
+                                             QgsWkbTypes.LineString, self.crs(), driver)
 
             if lineWriter.hasError() != QgsVectorFileWriter.NoError:
                 print("ERROR QgsVectorFileWriter", lineWriter.errorMessage())
                 return False
 
             for feat in self.mDataProvider.getFeatures(False):
-                    lineWriter.addFeature(feat)
+                lineWriter.addFeature(feat)
 
             del lineWriter
 
@@ -560,7 +561,7 @@ class GraphLayer(QgsPluginLayer):
 
         return True
 
-    def readXml(self, node, context):
+    def readXml(self, node, _context):
         """
         Reads the layer and the graph from a QGIS project file
         """
@@ -644,7 +645,6 @@ class GraphLayer(QgsPluginLayer):
         self.mLineFields.append(fromVertexField)
         self.mLineFields.append(toVertexField)
 
-
         # get vertex information and add them to graph
         for vertexIdx in range(vertexNodes.length()):
             if vertexNodes.at(vertexIdx).isElement():
@@ -696,7 +696,7 @@ class GraphLayer(QgsPluginLayer):
 
         return True
 
-    def writeXml(self, node, doc, context):
+    def writeXml(self, node, doc, _context):
         """
         Writes the layer and the graph to a QGIS project file
         """
@@ -978,26 +978,26 @@ class GraphLayer(QgsPluginLayer):
                         if currHighestNr <= 0:
                             currHighestNr = 1
 
-
             self.setName(constructName + (str(currHighestNr) if currHighestNr > 0 else ""))
+
 
 class GraphLayerType(QgsPluginLayerType):
     """
     When loading a project containing a GraphLayer, a factory class is needed.
     """
     TOOLTIPTEXT = tr("List of Options") + ":"\
-                                +"\n " + tr("LeftClick: Add Vertex without Edges")\
-                                +"\n " + tr("CTRL + LeftClick: Add Vertex with Edges")\
-                                +"\n " + tr("RightClick: Select Vertex")\
-                                +"\n " + tr(" 1) Select Vertex")\
-                                +"\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
-                                +"\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
-                                +"\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
-                                +"\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
-                                +"\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection")\
-                                +"\n " + tr("SHIFT + LeftClick + Drag: Select multiple vertices at once")\
-                                +"\n " + tr("SHIFT + RightClick + Drag: Zoom to selected area")\
-                                +"\n " + tr("R: Removes the existing single vertex selection")
+        + "\n " + tr("LeftClick: Add Vertex without Edges")\
+        + "\n " + tr("CTRL + LeftClick: Add Vertex with Edges")\
+        + "\n " + tr("RightClick: Select Vertex")\
+        + "\n " + tr(" 1) Select Vertex")\
+        + "\n " + tr(" 2) Move Vertex (without Edges) on LeftClick")\
+        + "\n " + tr(" 3) Move Vertex (with Edges) on CTRL+LeftClick")\
+        + "\n " + tr(" 4) Add Edge to 2nd Vertex on RightClick (removes already existing edge)")\
+        + "\n " + tr(" 5) Remove Vertex on CTRL+RightClick")\
+        + "\n " + tr(" 6) 2nd RightClick not on Vertex removes Selection")\
+        + "\n " + tr("SHIFT + LeftClick + Drag: Select multiple vertices at once")\
+        + "\n " + tr("SHIFT + RightClick + Drag: Zoom to selected area")\
+        + "\n " + tr("R: Removes the existing single vertex selection")
 
     def __init__(self):
         super().__init__(GraphLayer.LAYER_TYPE)
@@ -1025,21 +1025,18 @@ class GraphLayerType(QgsPluginLayerType):
         layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
         # QLabel with information about the GraphLayer
-        informationLabel = QLabel(layer.name() +
-                        "\n " + ((tr("Seed: ") + str(layer.mGraph.randomSeed)) if layer.mGraph.randomSeed else "") +
-                        "\n " + tr("Vertices") + ": " + str(layer.getGraph().vertexCount()) +
-                        "\n " + tr("Edges") + ": " + str(layer.getGraph().edgeCount()) +
-                        "\n " + tr("CRS") + ": " + layer.crs().authid())
+        informationLabel = QLabel(
+            layer.name() + "\n " + ((tr("Seed: ") + str(layer.mGraph.randomSeed)) if layer.mGraph.randomSeed else "") +
+            "\n " + tr("Vertices") + ": " + str(layer.getGraph().vertexCount()) + "\n " + tr("Edges") + ": " +
+            str(layer.getGraph().edgeCount()) + "\n " + tr("CRS") + ": " + layer.crs().authid())
         informationLabel.setWordWrap(True)
         informationLabel.setVisible(True)
         informationLabel.setStyleSheet("border: 1px solid black;")
         layout.addWidget(informationLabel)
 
         # QLabel with information about the graphs information
-        graphInformationText = tr("DistanceStrategy: ") + layer.mGraph.distanceStrategy + ("(" +\
-          str(layer.mGraph.amountOfEdgeCostFunctions()) + ")" if layer.mGraph.distanceStrategy == "Advanced" else "") +\
-          "\n" + tr("Edge Direction: ") + layer.mGraph.edgeDirection +\
-          "\n" + tr("Connection Type: ") + layer.mGraph.mConnectionType
+        graphInformationText = tr("DistanceStrategy: ") + layer.mGraph.distanceStrategy + ("(" + str(layer.mGraph.amountOfEdgeCostFunctions()) + ")" if layer.mGraph.distanceStrategy ==
+                                                                                           "Advanced" else "") + "\n" + tr("Edge Direction: ") + layer.mGraph.edgeDirection + "\n" + tr("Connection Type: ") + layer.mGraph.mConnectionType
 
         if layer.mGraph.mConnectionType == "Nearest neighbor" or layer.mGraph.mConnectionType == "DistanceNN" or\
            layer.mGraph.mConnectionType == "ClusterNN":
@@ -1094,13 +1091,13 @@ class GraphLayerType(QgsPluginLayerType):
 
         # button to toggle rendered edge text
         toggleEdgeTextButton = QPushButton(tr("Toggle Edge Text"))
-        toggleEdgeTextButton.setVisible(hasEdges) # don't show this button when graph has no edges
+        toggleEdgeTextButton.setVisible(hasEdges)  # don't show this button when graph has no edges
         toggleEdgeTextButton.clicked.connect(layer.toggleEdgeText)
         toggleLayout.addWidget(toggleEdgeTextButton)
 
         # button to toggle rendered vertex text
         toggleVertexTextButton = QPushButton(tr("Toggle Vertex Text"))
-        toggleVertexTextButton.setVisible(hasEdges) # don't show this button when graph has no edges
+        toggleVertexTextButton.setVisible(hasEdges)  # don't show this button when graph has no edges
         toggleVertexTextButton.clicked.connect(layer.toggleVertexText)
         toggleLayout.addWidget(toggleVertexTextButton)
 
@@ -1180,11 +1177,11 @@ class GraphLayerType(QgsPluginLayerType):
 
         selectExportTypeGroup = QGroupBox(tr("Export Type"))
         onlyPointsRadio = QRadioButton(tr("Only Points"))
-        onlyPointsRadio.toggled.connect(lambda:layer.toggleExportType(onlyPointsRadio))
+        onlyPointsRadio.toggled.connect(lambda: layer.toggleExportType(onlyPointsRadio))
         onlyLinesRadio = QRadioButton(tr("Only Lines"))
-        onlyLinesRadio.toggled.connect(lambda:layer.toggleExportType(onlyLinesRadio))
+        onlyLinesRadio.toggled.connect(lambda: layer.toggleExportType(onlyLinesRadio))
         bothRadio = QRadioButton(tr("Both"))
-        bothRadio.toggled.connect(lambda:layer.toggleExportType(bothRadio))
+        bothRadio.toggled.connect(lambda: layer.toggleExportType(bothRadio))
         bothRadio.setChecked(True)
 
         radioLayout = QHBoxLayout()

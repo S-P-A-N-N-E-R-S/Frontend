@@ -23,8 +23,8 @@ from datetime import date, datetime
 from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog, Qgis
 
 from .base import BaseController
-from ..models.benchmark.BenchmarkDataObjWrapper import BenchmarkDataObjWrapper
-from ..models.benchmark.BenchmarkVisualisation import BenchmarkVisualisation
+from ..models.benchmark.benchmarkDataObjWrapper import BenchmarkDataObjWrapper
+from ..models.benchmark.benchmarkVisualisation import BenchmarkVisualisation
 
 # client imports
 from ..network.client import Client
@@ -39,6 +39,7 @@ class BenchmarkController(BaseController):
     Controller which does the calls to the server, collects the results and executes the
     visualisation process.
     """
+
     def __init__(self, view):
         """
         Constructor
@@ -79,38 +80,47 @@ class BenchmarkController(BaseController):
         logSelections = self.view.getLogAxisSelection()
         tightSelections = self.view.getTightLayoutSelection()
 
-        allGraphAnalyses = ["Graph Vertices", "Graph Edges", "Graph Densities", "Graph Min Fragility", "Graph Max Fragility", "Graph Avg Fragility",
-                            "Graph Diameter", "Graph Radius", "Graph Girth (unit weights)", "Graph Girth", "Graph Node Connectivity",
+        allGraphAnalyses = ["Graph Vertices", "Graph Edges", "Graph Densities", "Graph Min Fragility",
+                            "Graph Max Fragility", "Graph Avg Fragility", "Graph Diameter", "Graph Radius",
+                            "Graph Girth (unit weights)", "Graph Girth", "Graph Node Connectivity",
                             "Graph Edge Connectivity", "Graph Reciprocity"]
+
         # go through all the benchmark requests created
         for sIndex in range(len(self.view.getSelection1())):
-            benchVis = BenchmarkVisualisation(analysisSelections[sIndex], legendSelections[sIndex], logSelections[sIndex], tightSelections[sIndex])
+            benchVis = BenchmarkVisualisation(
+                analysisSelections[sIndex],
+                legendSelections[sIndex],
+                logSelections[sIndex],
+                tightSelections[sIndex])
             selectionList = self.view.getSelection1()[sIndex]
-            firstPartition = {"":self.doWrapper.benchmarkDOs}
+            firstPartition = {"": self.doWrapper.benchmarkDOs}
             partition = {}
-            for i in range(0,len(selectionList)):
-                selection = selectionList[i]
-                if i > 0:
+            for sectionIdx, selection in enumerate(selectionList):
+                if sectionIdx > 0:
                     if selection == "Graphs" or selection == "Algorithms":
                         partition = self.doWrapper.partition(selection, partition)
                     elif selection in allGraphAnalyses:
-                        partition = self.doWrapper.partition("Graphs", partition, graphAnalysis = selection.split(" ")[1])
+                        partition = self.doWrapper.partition("Graphs", partition, graphAnalysis=selection.split(" ")[1])
                     else:
-                        partition = self.doWrapper.partition("Parameter", partition, self.doWrapper.parameterKeyHash[selection])
+                        partition = self.doWrapper.partition(
+                            "Parameter", partition, self.doWrapper.parameterKeyHash[selection])
                 else:
                     if selection == "Graphs" or selection == "Algorithms":
                         firstPartition = self.doWrapper.partition(selection, firstPartition)
                     elif selection in allGraphAnalyses:
-                        firstPartition = self.doWrapper.partition("Graphs", firstPartition, graphAnalysis = selection.split(" ")[1])
+                        firstPartition = self.doWrapper.partition(
+                            "Graphs", firstPartition, graphAnalysis=selection.split(" ")[1])
                     else:
-                        firstPartition = self.doWrapper.partition("Parameter", firstPartition, self.doWrapper.parameterKeyHash[selection])
+                        firstPartition = self.doWrapper.partition(
+                            "Parameter", firstPartition, self.doWrapper.parameterKeyHash[selection])
 
                     for key in firstPartition:
                         if isinstance(key, tuple):
                             partition[key[1]] = firstPartition[key]
+
             # color categorization done
             if len(selectionList) == 0:
-                partition = {"":self.doWrapper.benchmarkDOs}
+                partition = {"": self.doWrapper.benchmarkDOs}
 
             # split the partition into individual dictionary entries
             for dictKey in partition.keys():
@@ -125,15 +135,17 @@ class BenchmarkController(BaseController):
                 else:
                     zParameter = dictKey
 
-                dictHelp = {dictKey : dictValue}
+                dictHelp = {dictKey: dictValue}
                 selectionList2 = self.view.getSelection2()[sIndex]
                 for selection in selectionList2:
                     if selection == "Algorithms" or selection == "Graphs":
                         dictHelp = self.doWrapper.partition(selection, dictHelp)
                     elif selection in allGraphAnalyses:
-                        dictHelp = self.doWrapper.partition("Graphs", dictHelp, graphAnalysis = selection.split("Graph ")[1])
+                        dictHelp = self.doWrapper.partition(
+                            "Graphs", dictHelp, graphAnalysis=selection.split("Graph ")[1])
                     else:
-                        dictHelp = self.doWrapper.partition("Parameter", dictHelp, self.doWrapper.parameterKeyHash[selection])
+                        dictHelp = self.doWrapper.partition(
+                            "Parameter", dictHelp, self.doWrapper.parameterKeyHash[selection])
 
                 # get all the analysis values and save them so they can be plotted later
                 # store into dictHelp (same keys and transform DOs into numbers)
@@ -160,9 +172,14 @@ class BenchmarkController(BaseController):
                             boxPlotSel = True
 
                     if boxPlotSel:
-                        xValuesBox.append(self.doWrapper.getAnalysisValue(self.view.getAnalysis()[sIndex], dictHelp[dictKey2], False))
+                        xValuesBox.append(
+                            self.doWrapper.getAnalysisValue(
+                                self.view.getAnalysis()[sIndex],
+                                dictHelp[dictKey2],
+                                False))
 
-                    xValues.append(self.doWrapper.getAnalysisValue(self.view.getAnalysis()[sIndex], dictHelp[dictKey2], True))
+                    xValues.append(self.doWrapper.getAnalysisValue(
+                        self.view.getAnalysis()[sIndex], dictHelp[dictKey2], True))
 
                 xLabel = ""
                 for selection in selectionList2:
@@ -172,9 +189,9 @@ class BenchmarkController(BaseController):
                         xLabel = xLabel + "/" + selection
 
                 xParametersValues = []
-                for p in range(len(xParameters)):
-                    xParameters[p] = xParameters[p].replace(" ","")
-                    diffParaSplit = xParameters[p].split("/")
+                for xParameterIdx, xParameter in enumerate(xParameters):
+                    xParameters[xParameterIdx] = xParameter.replace(" ", "")
+                    diffParaSplit = xParameter.split("/")
                     axisValue = ""
                     for diffPara in diffParaSplit:
                         if "#" in diffPara:
@@ -203,7 +220,8 @@ class BenchmarkController(BaseController):
                     benchVis.plotLines(visCounter)
                 elif vis == "Box plot":
                     benchVis.plotBoxPlot(visCounter)
-                visCounter+=1
+
+                visCounter += 1
                 # create text file
                 if self.view.getCsvCreationSelection():
                     benchVis.createTextFile(self.view.getTextFilePath(), vis == "Box plot")
@@ -228,7 +246,8 @@ class BenchmarkController(BaseController):
         # check selection 2
         for counter, sel2 in enumerate(selection2):
             if len(sel2) == 0:
-                self.view.showError(self.tr("Enter at least one parameter in selection 2"), self.tr("Error in benchmark number " + str(counter+1)))
+                self.view.showError(self.tr("Enter at least one parameter in selection 2"),
+                                    self.tr("Error in benchmark number " + str(counter+1)))
                 return False
 
         # check analysis selections
@@ -237,36 +256,44 @@ class BenchmarkController(BaseController):
             return False
 
         # check no duplicate selections
-        for counter, sel1  in enumerate(selection1):
+        for counter, sel1 in enumerate(selection1):
             for checkedItem1 in sel1:
                 for checkedItem2 in selection2[counter]:
                     if checkedItem1 == checkedItem2:
-                        self.view.showError(self.tr("Duplicate selection"), self.tr("Error in benchmark number " + str(counter+1)))
+                        self.view.showError(self.tr("Duplicate selection"), self.tr(
+                            "Error in benchmark number " + str(counter+1)))
                         return False
 
         for counter, vis in enumerate(visualisation):
             if len(vis) == 0:
-                self.view.showError(self.tr("No visualisation selected"), self.tr("Error in benchmark number " + str(counter+1)))
+                self.view.showError(
+                    self.tr("No visualisation selected"),
+                    self.tr("Error in benchmark number " + str(counter + 1)))
                 return False
 
-        for counter, sel1  in enumerate(selection1):
+        for counter, sel1 in enumerate(selection1):
             for checkedItem1 in sel1:
                 for checkedItem2 in selection2[counter]:
-                    if checkedItem1 == "Graphs" and (checkedItem2 == "Graph Edges" or checkedItem2 == "Graph Vertices" or checkedItem2 == "Graph Densities"):
-                        self.view.showError(self.tr("No further graph attribute selection possible"), self.tr("Error in benchmark number " + str(counter+1)))
+                    if checkedItem1 == "Graphs" and (
+                            checkedItem2 == "Graph Edges" or checkedItem2 == "Graph Vertices" or checkedItem2 ==
+                            "Graph Densities"):
+                        self.view.showError(self.tr("No further graph attribute selection possible"),
+                                            self.tr("Error in benchmark number " + str(counter+1)))
                         return False
 
         if self.view.getNumberOfSelectedGraphs() == 1:
-            for counter, sel1  in enumerate(selection1):
+            for counter, sel1 in enumerate(selection1):
                 for sel in sel1:
                     if sel == "Graphs":
-                        self.view.showError(self.tr("Select multiple graphs"), self.tr("Error in benchmark number " + str(counter+1)))
+                        self.view.showError(self.tr("Select multiple graphs"), self.tr(
+                            "Error in benchmark number " + str(counter+1)))
                         return False
 
-            for counter, sel2  in enumerate(selection2):
+            for counter, sel2 in enumerate(selection2):
                 for sel in sel2:
                     if sel == "Graphs":
-                        self.view.showError(self.tr("Select multiple graphs"), self.tr("Error in benchmark number " + str(counter+1)))
+                        self.view.showError(self.tr("Select multiple graphs"), self.tr(
+                            "Error in benchmark number " + str(counter+1)))
                         return False
         return True
 
@@ -347,128 +374,162 @@ class BenchmarkController(BaseController):
                 dateString = date.today().strftime("%b_%d_%Y_")
                 timeString = datetime.now().strftime("%H_%M_%S")
                 if path == "":
-                    f = open(path + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
+                    filename = f"{path}Complete_Benchmark_Data_{dateString}{timeString}.csv"
                 else:
-                    f = open(path + "/" + "Complete_Benchmark_Data_" + dateString + timeString + ".csv","w")
+                    filename = f"{path}/Complete_Benchmark_Data_{dateString}{timeString}.csv"
 
-                # write header to file
-                f.write("Algorithm,Name of Graph")
-                allParameters = []
-                for benchmarkDO in self.benchmarkDOs:
-                    for key in benchmarkDO.parameters.keys():
-                        if not key in allParameters and key != "graph":
-                            allParameters.append(key)
-                for paraKey in allParameters:
-                    f.write("," + str(paraKey))
-
-                f.write(",Runtime(s),Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness")
-                if self.view.getCompleteAnalysisSelection():
-                    f.write(",Lightness,Min Fragility,Max Fragility,Avg Fragility,Diameter,Radius,Girth(unit weights),Girth,Node Connectivity,Edge Connectivity,Reciprocity\n")
-                else:
-                    f.write("\n")
-
-                for benchmarkDO in self.benchmarkDOs:
-                    # write all benchmark information into file
-                    f.write(benchmarkDO.algorithm +  "," + benchmarkDO.graphName)
+                with open(filename, "w") as csvFile:
+                    # write header to file
+                    csvFile.write("Algorithm,Name of Graph")
+                    allParameters = []
+                    for benchmarkDO in self.benchmarkDOs:
+                        for key in benchmarkDO.parameters.keys():
+                            if not key in allParameters and key != "graph":
+                                allParameters.append(key)
                     for paraKey in allParameters:
-                        if paraKey in benchmarkDO.parameters.keys():
-                            paraString = str(benchmarkDO.parameters[paraKey])
-                            if "," in paraString and "(" in paraString:
-                                paraString = paraString.split(",")[0].replace("(","").replace("'","")
-                            f.write("," + paraString)
-                        else:
-                            f.write(",?")
-                    allNumberOfEdgesResponse = benchmarkDO.getAllNumberOfEdgesResponse()
-                    f.write("," + str(benchmarkDO.getAvgRuntime()))
-                    f.write("," + str(allNumberOfEdgesResponse).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                    f.write("," + str(benchmarkDO.getAllNumberOfVerticesResponse()).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        csvFile.write("," + str(paraKey))
 
-                    edgeCountDiff = []
-                    for edgeCount in allNumberOfEdgesResponse:
-                        edgeCountDiff.append(abs(benchmarkDO.getGraph().edgeCount() - edgeCount))
-                    f.write("," + str(edgeCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-
-                    vertexCountDiff = []
-                    for vertexCount in benchmarkDO.getAllNumberOfVerticesResponse():
-                        vertexCountDiff.append(abs(benchmarkDO.getGraph().vertexCount() - vertexCount))
-                    f.write("," + str(vertexCountDiff).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                    allVertexCounts = benchmarkDO.getAllNumberOfVerticesResponse()
-
-                    avgDegrees = []
-                    for i in range(len(allNumberOfEdgesResponse)):
-                        avgDegrees.append(round(allNumberOfEdgesResponse[i] / allVertexCounts[i],3))
-                    f.write("," + str(avgDegrees).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-
-                    sparseness = []
-                    for edgeCount in allNumberOfEdgesResponse:
-                        sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(),3))
-                    f.write("," + str(sparseness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-
+                    csvFile.write(
+                        ",Runtime(s),Number of Edges,Number of Vertices,Edges Difference,Vertices Difference,Average Degree,Sparseness")
                     if self.view.getCompleteAnalysisSelection():
-                        costFunction = benchmarkDO.getParameters()['edgeCosts']
-                        mstWeight = float(self.doWrapper.serverCall(benchmarkDO.getGraph(), "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])
-                        lightness = []
-                        allEdgeCounts = benchmarkDO.getAllNumberOfEdgesResponse()
-                        for edgeCount in allEdgeCounts:
-                            lightness.append(round(edgeCount / mstWeight, 3))
-                        f.write("," + str(lightness).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        csvFile.write(
+                            ",Lightness,Min Fragility,Max Fragility,Avg Fragility,Diameter,Radius,Girth(unit weights),Girth,Node Connectivity,Edge Connectivity,Reciprocity\n")
+                    else:
+                        csvFile.write("\n")
 
-                        fragilities = [[] for i in range(3)]
-                        for graph in benchmarkDO.getResponseGraphs():
-                            result = self.doWrapper.serverCall(graph, "utils/Fragility", 0)
-                            fragilities[0].append(float(result.data["minFragility"]))
-                            fragilities[1].append(float(result.data["maxFragility"]))
-                            fragilities[2].append(float(result.data["avgFragility"]))
-                        f.write("," + str(fragilities[0]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        f.write("," + str(fragilities[1]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
-                        f.write("," + str(fragilities[2]).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                    for benchmarkDO in self.benchmarkDOs:
+                        # write all benchmark information into file
+                        csvFile.write(benchmarkDO.algorithm + "," + benchmarkDO.graphName)
+                        for paraKey in allParameters:
+                            if paraKey in benchmarkDO.parameters.keys():
+                                paraString = str(benchmarkDO.parameters[paraKey])
+                                if "," in paraString and "(" in paraString:
+                                    paraString = paraString.split(",")[0].replace("(", "").replace("'", "")
+                                csvFile.write("," + paraString)
+                            else:
+                                csvFile.write(",?")
+                        allNumberOfEdgesResponse = benchmarkDO.getAllNumberOfEdgesResponse()
+                        csvFile.write("," + str(benchmarkDO.getAvgRuntime()))
+                        csvFile.write(
+                            "," + str(allNumberOfEdgesResponse).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
+                        csvFile.write("," + str(benchmarkDO.getAllNumberOfVerticesResponse()
+                                                ).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
 
-                        diameter = []
-                        for graph in benchmarkDO.getResponseGraphs():
-                            diameter.append(float(self.doWrapper.serverCall(graph, "utils/Diameter", 0).data["diameter"]))
-                        f.write("," + str(diameter).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        edgeCountDiff = []
+                        for edgeCount in allNumberOfEdgesResponse:
+                            edgeCountDiff.append(abs(benchmarkDO.getGraph().edgeCount() - edgeCount))
+                        csvFile.write(
+                            "," + str(edgeCountDiff).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
 
-                        radius = []
-                        for graph in benchmarkDO.getResponseGraphs():
-                            radius.append(float(self.doWrapper.serverCall(graph, "utils/Radius", 0).data["radius"]))
-                        f.write("," + str(radius).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        vertexCountDiff = []
+                        for vertexCount in benchmarkDO.getAllNumberOfVerticesResponse():
+                            vertexCountDiff.append(abs(benchmarkDO.getGraph().vertexCount() - vertexCount))
+                        csvFile.write(
+                            "," + str(vertexCountDiff).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
+                        allVertexCounts = benchmarkDO.getAllNumberOfVerticesResponse()
 
-                        girth = []
-                        addInfos = {"graphAttributes.unitWeights": 1}
-                        for graph in benchmarkDO.getResponseGraphs():
-                            girth.append(float(self.doWrapper.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))
-                        f.write("," + str(girth).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        avgDegrees = []
+                        for idx, numberOfEdge in enumerate(allNumberOfEdgesResponse):
+                            avgDegrees.append(round(numberOfEdge / allVertexCounts[idx], 3))
+                        csvFile.write(
+                            "," + str(avgDegrees).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
 
-                        girth = []
-                        addInfos = {"graphAttributes.unitWeights": 0}
-                        for graph in benchmarkDO.getResponseGraphs():
-                            girth.append(float(self.doWrapper.serverCall(graph, "utils/Girth", 0, addInfos).data["girth"]))
-                        f.write("," + str(girth).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        sparseness = []
+                        for edgeCount in allNumberOfEdgesResponse:
+                            sparseness.append(round(edgeCount / benchmarkDO.getGraph().edgeCount(), 3))
+                        csvFile.write(
+                            "," + str(sparseness).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
 
-                        connectivity = []
-                        if benchmarkDO.getGraph().edgeDirection == "Directed":
-                            directed = 1
-                        else:
-                            directed = 0
-                        addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
-                        for graph in benchmarkDO.getResponseGraphs():
-                            connectivity.append(float(self.doWrapper.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
-                        f.write("," + str(connectivity).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                        if self.view.getCompleteAnalysisSelection():
+                            costFunction = benchmarkDO.getParameters()['edgeCosts']
+                            mstWeight = float(
+                                self.doWrapper.serverCall(
+                                    benchmarkDO.getGraph(),
+                                    "Minimum Spanning Trees/Kruskals Algorithm", costFunction).data["totalWeight"])
+                            lightness = []
+                            allEdgeCounts = benchmarkDO.getAllNumberOfEdgesResponse()
+                            for edgeCount in allEdgeCounts:
+                                lightness.append(round(edgeCount / mstWeight, 3))
+                            csvFile.write(
+                                "," + str(lightness).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
 
-                        connectivity = []
-                        addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
-                        for graph in benchmarkDO.getResponseGraphs():
-                            connectivity.append(float(self.doWrapper.serverCall(graph, "utils/Connectivity", 0, addInfos).data["connectivity"]))
-                        f.write("," + str(connectivity).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            fragilities = [[] for i in range(3)]
+                            for graph in benchmarkDO.getResponseGraphs():
+                                result = self.doWrapper.serverCall(graph, "utils/Fragility", 0)
+                                fragilities[0].append(float(result.data["minFragility"]))
+                                fragilities[1].append(float(result.data["maxFragility"]))
+                                fragilities[2].append(float(result.data["avgFragility"]))
+                            csvFile.write("," + str(fragilities[0]).replace("[",
+                                          "").replace("]", "").replace(",", "/").replace(" ", ""))
+                            csvFile.write("," + str(fragilities[1]).replace("[",
+                                          "").replace("]", "").replace(",", "/").replace(" ", ""))
+                            csvFile.write("," + str(fragilities[2]).replace("[",
+                                          "").replace("]", "").replace(",", "/").replace(" ", ""))
 
-                        reci = []
-                        counts = benchmarkDO.getAllNumberOfReciprocalEdges()
-                        allResponseGraphs = benchmarkDO.getResponseGraphs()
-                        for index, count  in enumerate(counts):
-                            reci.append(count / allResponseGraphs[index].edgeCount())
-                        f.write("," + str(reci).replace("[","").replace("]","").replace(",","/").replace(" ",""))
+                            diameter = []
+                            for graph in benchmarkDO.getResponseGraphs():
+                                diameter.append(float(self.doWrapper.serverCall(
+                                    graph, "utils/Diameter", 0).data["diameter"]))
+                            csvFile.write(
+                                "," + str(diameter).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
 
-                    f.write("\n")
+                            radius = []
+                            for graph in benchmarkDO.getResponseGraphs():
+                                radius.append(float(self.doWrapper.serverCall(graph, "utils/Radius", 0).data["radius"]))
+                            csvFile.write(
+                                "," + str(radius).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
+
+                            girth = []
+                            addInfos = {"graphAttributes.unitWeights": 1}
+                            for graph in benchmarkDO.getResponseGraphs():
+                                girth.append(float(self.doWrapper.serverCall(
+                                    graph, "utils/Girth", 0, addInfos).data["girth"]))
+                            csvFile.write(
+                                "," + str(girth).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
+
+                            girth = []
+                            addInfos = {"graphAttributes.unitWeights": 0}
+                            for graph in benchmarkDO.getResponseGraphs():
+                                girth.append(float(self.doWrapper.serverCall(
+                                    graph, "utils/Girth", 0, addInfos).data["girth"]))
+                            csvFile.write(
+                                "," + str(girth).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
+
+                            connectivity = []
+                            if benchmarkDO.getGraph().edgeDirection == "Directed":
+                                directed = 1
+                            else:
+                                directed = 0
+                            addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
+                            for graph in benchmarkDO.getResponseGraphs():
+                                connectivity.append(
+                                    float(
+                                        self.doWrapper.serverCall(
+                                            graph, "utils/Connectivity", 0, addInfos).data
+                                        ["connectivity"]))
+                            csvFile.write(
+                                "," + str(connectivity).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
+
+                            connectivity = []
+                            addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
+                            for graph in benchmarkDO.getResponseGraphs():
+                                connectivity.append(
+                                    float(
+                                        self.doWrapper.serverCall(
+                                            graph, "utils/Connectivity", 0, addInfos).data
+                                        ["connectivity"]))
+                            csvFile.write(
+                                "," + str(connectivity).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
+
+                            reci = []
+                            counts = benchmarkDO.getAllNumberOfReciprocalEdges()
+                            allResponseGraphs = benchmarkDO.getResponseGraphs()
+                            for index, count in enumerate(counts):
+                                reci.append(count / allResponseGraphs[index].edgeCount())
+                            csvFile.write(
+                                "," + str(reci).replace("[", "").replace("]", "").replace(",", "/").replace(" ", ""))
+
+                        csvFile.write("\n")
 
             self._visualisationControl()
         except Exception as exception:
@@ -495,7 +556,7 @@ class BenchmarkController(BaseController):
                 fieldData = benchmarkDO.parameters[key]
                 request.setFieldData(key, fieldData)
 
-            for i in range(self.view.getExecutions(benchmarkDO.algorithm)):
+            for _ in range(self.view.getExecutions(benchmarkDO.algorithm)):
                 try:
                     with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                         executionID = client.sendJobRequest(request)
@@ -513,7 +574,7 @@ class BenchmarkController(BaseController):
                         with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                             if counter == 0:
                                 time.sleep(0.5)
-                                counter+=1
+                                counter += 1
                             else:
                                 time.sleep(1)
                             jobStatus = client.getJobStatus()

@@ -25,7 +25,7 @@ import configparser
 from enum import Enum
 
 from qgis.PyQt.QtCore import QCoreApplication
-from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe,QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
+from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsProject, QgsWkbTypes, QgsProcessingUtils, QgsRasterPipe, QgsRasterFileWriter, QgsRasterLayer,  QgsSettings
 
 
 class TlsOption(Enum):
@@ -90,7 +90,7 @@ def getPluginPath():
     return abspath(dirname(__file__))
 
 
-def getResourcesPath(example):
+def getResourcesPath():
     """ Get the example path """
     return join(getPluginPath(), "resources")
 
@@ -149,27 +149,29 @@ def tr(message, context="@default"):
     return QCoreApplication.translate(context, message)
 
 
-def saveLayer(layer, layerName, type, path=None, format=None):
+def saveLayer(layer, layerName, layerType, path=None, layerFormat=None):
     """
     Saves passed layer and returns created layer. Can used to copy a layer. Returns a new layer.
     :param layer: raster or vector layer
     :param path: file path or None. If none a temporary layer will be created.
     :param layerName: Name of the layer displayed in QGIS
-    :param type: "vector" or "raster"
-    :param format: not all tested and not for temporary vector layer available. In this case set None.
+    :param layerType: "vector" or "raster"
+    :param layerFormat: not all tested and not for temporary vector layer available. In this case set None.
                     vector: 'gpkg', 'shp', '000', 'bna', 'csv', 'dgn', 'dxf', 'geojson', 'geojsonl', 'geojsons', 'gml', 'gpx', 'gxt', 'ili', 'itf', 'json', 'kml', 'ods', 'sql', 'sqlite', 'tab', 'txt', 'xlsx', 'xml', 'xtf'
                     raster: "tif", "gen", "bmp", "bt", "byn", "bil", "ers", "gpkg", "grd", "grd", "gtx", "img", "mpr", "lbl", "kro", "ter", "mbtiles", "hdr", "mrf", "ntf", "gsb", "grd", "pix", "map", "pdf", "xml", "pgm", "rsw", "grd", "rst", "sdat", "rgb", "ter", "vrt", "nc"
                    The default format for raster layer is tif.
     :return: created Layer. None if created layer is invalid.
     """
     if layer.isValid():
-        if type == "vector":
+        if layerType == "vector":
             if path:
-                if not format:
+                if not layerFormat:
                     # use extension
-                    format = splitext(path)[1]
+                    layerFormat = splitext(path)[1]
                 # copy layer to path
-                QgsVectorFileWriter.writeAsVectorFormat(layer, path, "UTF-8", layer.crs(), QgsVectorFileWriter.driverForExtension(format))
+                QgsVectorFileWriter.writeAsVectorFormat(
+                    layer, path, "UTF-8", layer.crs(),
+                    QgsVectorFileWriter.driverForExtension(layerFormat))
                 # load created layer
                 createdLayer = QgsVectorLayer(path, splitext(basename(path))[0], "ogr")
                 if createdLayer.isValid():
@@ -186,20 +188,20 @@ def saveLayer(layer, layerName, type, path=None, format=None):
                 if tmpLayer.isValid():
                     return tmpLayer
 
-        elif type == "raster":
+        elif layerType == "raster":
             if not path:
                 # create temporary path
                 path = QgsProcessingUtils.generateTempFilename(layerName)
-            if not format:
+            if not layerFormat:
                 # use tif
-                format = "tif"
+                layerFormat = "tif"
             # copy layer to path
             provider = layer.dataProvider()
             pipe = QgsRasterPipe()
             pipe.set(provider.clone())
 
             fileWriter = QgsRasterFileWriter(path)
-            fileWriter.setOutputFormat(fileWriter.driverForExtension(format))
+            fileWriter.setOutputFormat(fileWriter.driverForExtension(layerFormat))
             fileWriter.writeRaster(pipe, provider.xSize(), provider.ySize(), provider.extent(), provider.crs())
 
             # load created layer
@@ -220,7 +222,7 @@ def saveGraph(graph, graphLayer, graphName="", savePath=None, renderGraph=True):
     success = True
     errorMsg = ""
     if savePath:
-        fileName, extension = splitext(savePath)
+        _fileName, extension = splitext(savePath)
         if extension == ".graphml":
             graph.writeGraphML(savePath)
         else:
@@ -294,8 +296,8 @@ def hasAStarC():
     :return: true if cpp library available
     """
     pattern = re.compile("AStarC")
-    dir = join(getPluginPath(), "lib")
-    for filepath in os.listdir(dir):
+    libDir = join(getPluginPath(), "lib")
+    for filepath in os.listdir(libDir):
         if pattern.search(filepath):
             return True
     return False

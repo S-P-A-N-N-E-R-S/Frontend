@@ -19,6 +19,7 @@
 from qgis.core import (QgsAbstractFeatureIterator, QgsFeatureRequest, QgsAbstractFeatureSource, QgsVectorDataProvider,
                        QgsFeatureIterator, QgsDataProvider, QgsProject, QgsFields, QgsRectangle)
 
+
 class GraphFeatureIterator(QgsAbstractFeatureIterator):
 
     def __init__(self, source, point, request=QgsFeatureRequest()):
@@ -118,18 +119,17 @@ class GraphDataProvider(QgsVectorDataProvider):
     """
 
     @classmethod
-    def providerKey(self):
+    def providerKey(cls):
         return "graphprovider"
 
     @classmethod
-    def description(self):
+    def description(cls):
         return "DataProvider for GraphLayer"
 
     @classmethod
-    def createProvider(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(),
+    def createProvider(cls, uri='', providerOptions=QgsDataProvider.ProviderOptions(),
                        flags=QgsDataProvider.ReadFlags()):
         return GraphDataProvider(uri, providerOptions, flags)
-
 
     def __init__(self, uri='', providerOptions=QgsDataProvider.ProviderOptions(), flags=QgsDataProvider.ReadFlags()):
         super().__init__(uri)
@@ -154,7 +154,7 @@ class GraphDataProvider(QgsVectorDataProvider):
         self._pointFeatureCount = 0
         self._lineFeatureCount = 0
 
-        self._points = True # if graph has only points
+        self._points = True  # if graph has only points
 
         # if 'index=yes' in self._uri:
         #     self.createSpatialIndex()
@@ -176,7 +176,7 @@ class GraphDataProvider(QgsVectorDataProvider):
         else:
             self._lineUri = uri
 
-    def dataSourceUri(self, point, expandAuthConfig=True):
+    def dataSourceUri(self, point, _expandAuthConfig=True):
         if point:
             return self._pointUri
         else:
@@ -186,7 +186,7 @@ class GraphDataProvider(QgsVectorDataProvider):
         self.mCRS = crs
 
     def crs(self):
-        if self.mCRS == None:
+        if self.mCRS is None:
             return QgsProject.instance().crs()
 
         return self.mCRS
@@ -210,7 +210,7 @@ class GraphDataProvider(QgsVectorDataProvider):
         else:
             return self._lineFields
 
-    def addFeature(self, feat, point, idx=-1, flags=None):
+    def addFeature(self, feat, point, idx=-1, _flags=None):
         """
         Adds a feature to the data provider
 

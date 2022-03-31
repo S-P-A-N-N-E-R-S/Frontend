@@ -16,14 +16,14 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.PyQt.QtWidgets import QWidget, QHBoxLayout, QComboBox, QToolButton, QMenu, QAction, QApplication
+from qgis.PyQt.QtWidgets import QWidget, QHBoxLayout, QComboBox, QToolButton, QMenu, QAction
 from qgis.PyQt.QtCore import pyqtSignal, Qt, QPoint
 
 from qgis.gui import QgsMapTool
 from qgis.utils import iface
 from qgis.core import QgsCoordinateTransform, QgsProject
 
-from ...models.GraphLayer import GraphLayer
+from ...models.graphLayer import GraphLayer
 
 
 class VertexPickerMapTool(QgsMapTool):

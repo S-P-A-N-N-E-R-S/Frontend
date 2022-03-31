@@ -19,14 +19,14 @@
 import os
 import traceback
 
+from qgis.core import QgsTask, QgsApplication, QgsMessageLog, Qgis, QgsProject
+from qgis.utils import iface
+
 from .base import BaseController
 
-from ..models.GraphBuilder import GraphBuilder
-from ..models.GraphLayer import GraphLayer
+from ..models.graphBuilder import GraphBuilder
+from ..models.graphLayer import GraphLayer
 from .. import helperFunctions as helper
-
-from qgis.core import *
-from qgis.utils import iface
 
 
 class GraphController(BaseController):
@@ -76,7 +76,7 @@ class GraphController(BaseController):
         for taskTuple in GraphController.activeGraphTasks:
             task, taskId = taskTuple
             task.statusChanged.connect(
-                lambda: self.view.updateTaskInTable(task, taskId)
+                lambda tsk=task, tskId=taskId: self.view.updateTaskInTable(tsk, tskId)
             )
         self.view.loadTasksTable(GraphController.activeGraphTasks)
 
@@ -98,7 +98,7 @@ class GraphController(BaseController):
         self.view.showInfo(self.tr("Start graph building.."))
         self.view.insertLogText("Start graph building..\n")
         builder = GraphBuilder()
-        builder.setOption("createGraphAsLayers",False)
+        builder.setOption("createGraphAsLayers", False)
         graphName = "New"   # default name
         savePath = self.view.getSavePath()
 
@@ -107,7 +107,9 @@ class GraphController(BaseController):
             rasterLayer, rasterBand = rasterInput
             if rasterLayer and rasterBand:
                 if not rasterLayer.isValid():
-                    self.view.showWarning(self.tr("Raster layer:{}[{}] is invalid!").format(rasterLayer.name(), rasterBand))
+                    self.view.showWarning(self.tr("Raster layer:{}[{}] is invalid!").format(
+                        rasterLayer.name(),
+                        rasterBand))
                     return
                 builder.setRasterLayer(rasterLayer, rasterBand)
 
@@ -199,7 +201,8 @@ class GraphController(BaseController):
             if graphCrs and graphCrs.isValid():
                 graphLayer.setCrs(graphCrs)
 
-            success, errorMsg = helper.saveGraph(graph, graphLayer, graphName, savePath, self.view.isRenderGraphChecked())
+            success, errorMsg = helper.saveGraph(graph, graphLayer, graphName,
+                                                 savePath, self.view.isRenderGraphChecked())
             if not success:
                 self.view.showError(errorMsg)
             else:
@@ -217,7 +220,7 @@ class GraphController(BaseController):
 
         # set name to save path basename
         if savePath:
-            fileName, extension = os.path.splitext(savePath)
+            fileName, _extension = os.path.splitext(savePath)
             graphName = os.path.basename(fileName)
 
         # create and run task from function
@@ -275,7 +278,8 @@ class GraphController(BaseController):
 
                 # save graph to destination
                 savePath = self.view.getSavePath()
-                success, errorMsg = helper.saveGraph(graph, graphLayer, graphName, savePath, self.view.isRenderGraphChecked())
+                success, errorMsg = helper.saveGraph(graph, graphLayer, graphName,
+                                                     savePath, self.view.isRenderGraphChecked())
                 if not success:
                     self.view.showError(errorMsg)
                 else:

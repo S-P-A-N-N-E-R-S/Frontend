@@ -18,7 +18,7 @@
 
 from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem
 
-from ...models.ExtGraph import ExtGraph
+from ...models.extGraph import ExtGraph
 
 from ..protocol.build import origin_graph_pb2, meta_pb2
 
@@ -96,8 +96,8 @@ class OriginGraphResponse():
             self.graph.addEdge(inVertexId, outVertexId, edge.uid)
 
         # set vertex positions
-        for id, vertexCoordinates in enumerate(response.vertexCoordinates):
-            vertex = self.graph.vertex(id)
+        for vertexId, vertexCoordinates in enumerate(response.vertexCoordinates):
+            vertex = self.graph.vertex(vertexId)
             vertex.point().setX(vertexCoordinates.x)
             vertex.point().setY(vertexCoordinates.y)
             # TODO Parse possible z coordinates from protobuf

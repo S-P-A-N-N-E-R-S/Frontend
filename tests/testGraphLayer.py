@@ -22,8 +22,8 @@ from qgis.utils import iface
 
 from qgis.PyQt.QtGui import QColor
 
-from ..models.ExtGraph import ExtGraph
-from ..models.GraphLayer import GraphLayer, GraphLayerType, GraphDataProvider
+from ..models.extGraph import ExtGraph
+from ..models.graphLayer import GraphLayer, GraphLayerType, GraphDataProvider
 from ..helperFunctions import getPluginPath, saveLayer
 
 import os

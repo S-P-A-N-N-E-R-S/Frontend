@@ -16,6 +16,8 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+import enum
+
 from qgis.core import Qgis, QgsGeometry, QgsRectangle, QgsCoordinateTransform, QgsProject
 from qgis.gui import QgsMapTool, QgsVertexMarker, QgsRubberBand
 from qgis.utils import iface
@@ -24,9 +26,8 @@ from qgis.PyQt.QtCore import QPoint, Qt, QObject
 from qgis.PyQt.QtWidgets import QDialog, QPushButton, QBoxLayout, QLabel, QDoubleSpinBox, QGroupBox
 from qgis.PyQt.QtGui import QColor
 
-from .GraphUndoCommands import ExtVertexUndoCommand, ExtEdgeUndoCommand
+from .graphUndoCommands import ExtVertexUndoCommand, ExtEdgeUndoCommand
 
-import enum
 
 class Operations(enum.Enum):
     DEFAULT = -1
@@ -36,6 +37,7 @@ class Operations(enum.Enum):
 
     # right clicks
     SELECT_VERTEX = 2
+
 
 class GraphMapTool(QgsMapTool, QObject):
     """
@@ -215,8 +217,7 @@ class GraphMapTool(QgsMapTool, QObject):
         layout = QBoxLayout(QBoxLayout.Direction.TopToBottom)
 
         # QLabel with information about the GraphLayer
-        edge = self.mLayer.mGraph.edge(edgeId)
-        informationLabel = QLabel(self.tr("Edge ") +  str(edgeId))
+        informationLabel = QLabel(self.tr("Edge ") + str(edgeId))
         informationLabel.setWordWrap(True)
         informationLabel.setVisible(True)
         informationLabel.setStyleSheet("border: 1px solid black;")
@@ -258,7 +259,7 @@ class GraphMapTool(QgsMapTool, QObject):
             layout.addWidget(applyButton)
 
         else:
-            distanceLabel = QLabel(self.tr("Distance Strategy: ") + self.mLayer.mGraph.distanceStrategy + ": " +\
+            distanceLabel = QLabel(self.tr("Distance Strategy: ") + self.mLayer.mGraph.distanceStrategy + ": " +
                                    str(self.mLayer.mGraph.costOfEdge(edgeId)))
             distanceLabel.setWordWrap(False)
             distanceLabel.setVisible(True)
@@ -280,16 +281,16 @@ class GraphMapTool(QgsMapTool, QObject):
         self.win.setLayout(layout)
         self.win.adjustSize()
 
-    def _deleteVertex(self, id):
+    def _deleteVertex(self, vertexId):
         """
         Deletes a vertex and its outgoing and incoming edges from the Graphlayers graph.
 
-        :type id: Integer, vertex id to be removed
+        :type vertexId: Integer, vertex id to be removed
         :type commandID: Integer, to possibly force merge of commands
         """
-        oldPos = self.mLayer.mGraph.vertex(id).point()
+        oldPos = self.mLayer.mGraph.vertex(vertexId).point()
 
-        vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), id, oldPos, "Delete")
+        vertexUndoCommand = ExtVertexUndoCommand(self.mLayer.id(), vertexId, oldPos, "Delete")
 
         self.mLayer.mUndoStack.push(vertexUndoCommand)
 
@@ -326,24 +327,24 @@ class GraphMapTool(QgsMapTool, QObject):
 
         # left click or left click Operations
         if event.button() == Qt.LeftButton and self.operation == Operations.DEFAULT or\
-           self.operation == Operations.ADD_VERTEX_WITH_EDGES: # LeftClick
+           self.operation == Operations.ADD_VERTEX_WITH_EDGES:  # LeftClick
             self.leftPressed = True
 
-            if self.shiftPressed: # select vertices by rectangle
+            if self.shiftPressed:  # select vertices by rectangle
                 self.topLeft = clickPosition
                 self.bottomRight = clickPosition
                 self.drawRect = True
 
             elif not self.ctrlPressed and not self.operation == Operations.ADD_VERTEX_WITH_EDGES:
-                if not self.firstFound: # addVertex
+                if not self.firstFound:  # addVertex
                     self._addVertex(clickPosition)
 
-                elif self.firstFound: # move firstFoundVertex to new position
+                elif self.firstFound:  # move firstFoundVertex to new position
                     self._addVertex(clickPosition, True)
 
                     self.__removeFirstFound()
 
-            elif self.ctrlPressed or self.operation == Operations.ADD_VERTEX_WITH_EDGES: # CTRL + LeftClick
+            elif self.ctrlPressed or self.operation == Operations.ADD_VERTEX_WITH_EDGES:  # CTRL + LeftClick
                 if not self.advancedCosts:
                     if not self.firstFound:
                         # use addVertex from GraphBuilder to also add edges
@@ -367,18 +368,18 @@ class GraphMapTool(QgsMapTool, QObject):
                                                    level=Qgis.Critical)
 
         # right click or right click Operations
-        if not self.operation == Operations.DEFAULT or event.button() == Qt.RightButton: # RightClick
+        if not self.operation == Operations.DEFAULT or event.button() == Qt.RightButton:  # RightClick
             self.rightPressed = True
 
             vertexId = self.mLayer.mGraph.findVertex(clickPosition)
 
-            if self.shiftPressed: # select area to zoom in by rectangle
+            if self.shiftPressed:  # select area to zoom in by rectangle
                 self.topLeft = clickPosition
                 self.bottomRight = clickPosition
                 self.drawRect = True
 
             elif vertexId >= 0 and (self.operation == Operations.SELECT_VERTEX or not self.ctrlPressed) and\
-                 not self.firstFound: # first RightClick
+                    not self.firstFound:  # first RightClick
                 # mark first found vertex
                 self.firstFound = True
                 self.firstFoundVertexID = vertexId
@@ -395,18 +396,18 @@ class GraphMapTool(QgsMapTool, QObject):
                     if "Delete Vertex" in action.whatsThis():
                         action.setEnabled(True)
 
-            elif vertexId < 0 and self.firstFound: # second RightClick (no vertex found)
+            elif vertexId < 0 and self.firstFound:  # second RightClick (no vertex found)
                 self.__removeFirstFound()
 
-            elif vertexId > 0 and self.firstFound and (not self.ctrlPressed or\
-                                                       self.operation == Operations.SELECT_VERTEX): # second RightClick
+            elif vertexId > 0 and self.firstFound and (not self.ctrlPressed or
+                                                       self.operation == Operations.SELECT_VERTEX):  # second RightClick
                 # add edge between firstFoundVertexID and vertexID
                 # shows edge edit window if it already exits
                 self._addEdge(self.firstFoundVertexID, vertexId)
 
                 self.__removeFirstFound()
 
-            elif vertexId > 0 and self.ctrlPressed and self.firstFound: # second CTRL + RightClick
+            elif vertexId > 0 and self.ctrlPressed and self.firstFound:  # second CTRL + RightClick
                 # remove vertex if found on click
                 self._deleteVertex(vertexId)
 
@@ -452,21 +453,21 @@ class GraphMapTool(QgsMapTool, QObject):
                 markers = []
                 foundVerticesString = str(len(foundVertexIds)) + self.tr(" vertices found.")
                 foundVerticesIDString = ""
-                for i in range(len(foundVertexIds)):
-                    vertex = self.mLayer.mGraph.vertex(foundVertexIds[i])
+                for idx, foundVertexId in enumerate(foundVertexIds):
+                    vertex = self.mLayer.mGraph.vertex(foundVertexId)
                     markers.append(QgsVertexMarker(iface.mapCanvas()))
-                    markers[i].setIconType(QgsVertexMarker.ICON_CROSS)
+                    markers[idx].setIconType(QgsVertexMarker.ICON_CROSS)
 
                     foundPosition = vertex.point()
                     if QgsProject.instance().crs().authid() != self.mLayer.mGraph.crs.authid():
-                        markers[i].setCenter(self.mLayer.mTransform.transform(foundPosition))
+                        markers[idx].setCenter(self.mLayer.mTransform.transform(foundPosition))
                     else:
-                        markers[i].setCenter(foundPosition)
+                        markers[idx].setCenter(foundPosition)
 
-                    foundVerticesIDString += str(foundVertexIds[i])
-                    if i + 1 < len(foundVertexIds):
+                    foundVerticesIDString += str(foundVertexId)
+                    if idx + 1 < len(foundVertexIds):
                         foundVerticesIDString += ", "
-                    if i % 5 == 0 and i > 0:
+                    if idx % 5 == 0 and idx > 0:
                         foundVerticesIDString += "\n"
 
                 # QLabel with information about the found vertices
@@ -482,8 +483,8 @@ class GraphMapTool(QgsMapTool, QObject):
 
                 # TODO: informationLabel stays big after Vertex ID are hidden again
                 showVertexIDButton = QPushButton(self.tr("Show Vertex IDs"))
-                showVertexIDButton.clicked.connect(lambda: showVertexIDButton.setText(self.tr("Show Vertex IDs")\
-                                                           if foundIDLabel.isVisible() else self.tr("Hide Vertex IDs")))
+                showVertexIDButton.clicked.connect(lambda: showVertexIDButton.setText(
+                    self.tr("Show Vertex IDs") if foundIDLabel.isVisible() else self.tr("Hide Vertex IDs")))
                 showVertexIDButton.clicked.connect(lambda: foundIDLabel.setVisible(not foundIDLabel.isVisible()))
                 showVertexIDButton.setVisible(True)
                 layout.addWidget(showVertexIDButton)
@@ -505,8 +506,8 @@ class GraphMapTool(QgsMapTool, QObject):
                 def _deleteAttachedEdges():
                     self.mLayer.mUndoStack.beginMacro("Delete Attached Edges")
 
-                    for id in foundVertexIds:
-                        vertex = self.mLayer.mGraph.vertex(id)
+                    for vertexId in foundVertexIds:
+                        vertex = self.mLayer.mGraph.vertex(vertexId)
 
                         # delete outgoing edges
                         for outgoingIdx in range(len(vertex.outgoingEdges()) - 1, -1, -1):
@@ -533,7 +534,6 @@ class GraphMapTool(QgsMapTool, QObject):
                     numberFound = len(foundVertexIds)
                     if numberFound > 0 and len(markers) > 0:
                         for i in range(numberFound - 1, -1, -1):
-                            print(markers[i])
                             iface.mapCanvas().scene().removeItem(markers[i])
                             del markers[i]
 
@@ -598,7 +598,6 @@ class GraphMapTool(QgsMapTool, QObject):
                 del self.rubberBand
 
     def __removeFirstFound(self):
-        print(self.firstFound, self.firstMarker)
         if self.firstFound:
             self.firstFound = False
 

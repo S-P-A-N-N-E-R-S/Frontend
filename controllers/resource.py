@@ -18,10 +18,10 @@
 
 import os
 
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject
+
 from .base import BaseController
 from .. import helperFunctions as helper
-
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject, QgsVectorFileWriter, QgsRasterPipe, QgsRasterFileWriter, QgsWkbTypes, QgsProcessingUtils
 
 
 class ResourceController(BaseController):
@@ -39,7 +39,7 @@ class ResourceController(BaseController):
         self.view.addResource(self.tr("berlin streets"), ("berlin streets", "vector"))
         self.view.addResource(self.tr("brandenburg nature reserves"), ("brandenburg nature reserves", "vector"))
         self.view.addResource(self.tr("brandenburg water conservation areas"),
-                             ("brandenburg water conservation areas", "vector"))
+                              ("brandenburg water conservation areas", "vector"))
         self.view.addResource(self.tr("berlin environmental zone"), ("berlin environmental zone", "vector"))
 
         # add raster resources to view
@@ -62,7 +62,7 @@ class ResourceController(BaseController):
 
     def createData(self):
         """ Loads the selected data and stores it to the destination path if specified """
-        LayerName = self.view.getResource()[0]
+        layerName = self.view.getResource()[0]
         resource, resourceType = self.view.getResource()[1]
         path = self.view.getFilePath()
         extension = os.path.splitext(path)[1]
@@ -71,25 +71,23 @@ class ResourceController(BaseController):
             self.view.showError(self.tr("No file format is specified!"))
             return
 
+        resourceLayer = None
         if resourceType == "vector":
             resourceLayer = QgsVectorLayer(helper.getDatasetPath(resource, ".shp"), resource, "ogr")
-            if resourceLayer.isValid():
-                createdLayer = helper.saveLayer(resourceLayer, LayerName, "vector", path, extension)
-                if createdLayer:
-                    QgsProject.instance().addMapLayer(createdLayer)
-                else:
-                    self.view.showError(self.tr("Layer or file format is invalid!"))
-            else:
-                self.view.showError(self.tr("Layer is invalid!"))
         elif resourceType == "raster":
             resourceLayer = QgsRasterLayer(helper.getDatasetPath(resource, ".tif"), resource)
-            if resourceLayer.isValid():
-                createdLayer = helper.saveLayer(resourceLayer, LayerName, "raster", path, extension)
-                if createdLayer:
-                    QgsProject.instance().addMapLayer(createdLayer)
-                else:
-                    self.view.showError(self.tr("Layer or file format is invalid!"))
+
+        if resourceLayer is None:
+            self.view.showError(self.tr("Resource not found!"))
+            return
+
+        if resourceLayer.isValid():
+            createdLayer = helper.saveLayer(resourceLayer, layerName, resourceType, path, extension)
+
+            if createdLayer:
+                QgsProject.instance().addMapLayer(createdLayer)
+                self.view.showSuccess(self.tr("Layer created!"))
             else:
-                self.view.showError(self.tr("Layer is invalid!"))
-
-
+                self.view.showError(self.tr("Layer or file format is invalid!"))
+        else:
+            self.view.showError(self.tr("Layer is invalid!"))

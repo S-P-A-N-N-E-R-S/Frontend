@@ -20,15 +20,13 @@ import os
 from enum import Enum
 import html
 
-from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt import uic
 from qgis.PyQt.QtCore import pyqtSignal, Qt, QVariant, QObject
-from qgis.PyQt.QtWidgets import QPushButton, QAbstractItemView
+from qgis.PyQt.QtWidgets import QPushButton, QAbstractItemView, QDialog
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel, QColor
-from qgis.PyQt.Qsci import QsciScintilla, QsciLexerPython
+from qgis.PyQt.Qsci import QsciScintilla
 
-from qgis.core import QgsVectorLayer
-
-from ...models.GraphBuilder import GraphBuilder
+from ...models.graphBuilder import GraphBuilder
 
 
 class ExpressionItem(QStandardItem):
@@ -39,8 +37,8 @@ class ExpressionItem(QStandardItem):
     """
 
     class ItemType(Enum):
-        Expression = 0
-        Group = 1
+        EXPRESSION = 0
+        GROUP = 1
 
     def __init__(self, label, expressionText, helpText, itemType):
         """
@@ -112,14 +110,14 @@ class ExpressionContext(QObject):
                         "expressionText": "raster[]:pixelValue",
                         "syntax": self.tr("raster[index]:pixelValue"),
                         "description": self.tr("Check if one pixel value of a raster data satisfies the condition. Only usable with raster data"),
-                        "example": self.tr("if(raster[0]:pixelValue > 100; 10; 20)")        
+                        "example": self.tr("if(raster[0]:pixelValue > 100; 10; 20)")
                     },
                     {
                         "label": self.tr("percentOfValues"),
                         "expressionText": "raster[]:percentOfValues()",
                         "syntax": self.tr("raster[index]:percentOfValues(percentage)"),
                         "description": self.tr("Check if a specified percentage of the pixels values satisfy the condition. Only usable with raster data"),
-                        "example": self.tr("if(raster[0]:percentOfValues(50) > 100; 10; 20)")                      
+                        "example": self.tr("if(raster[0]:percentOfValues(50) > 100; 10; 20)")
                     },
                     {
                         "label": self.tr("spPixelValue"),
@@ -132,9 +130,9 @@ class ExpressionContext(QObject):
                         "label": self.tr("spPercentOfValues"),
                         "expressionText": "raster[]:percentOfValues( , )",
                         "syntax": self.tr("raster[index]:percentOfValues(heuristic, percentage)"),
-                        "description": self.tr("Check if a specified percentage of shortest path pixel values satisfy the condition. Only usable with raster data"),                     
+                        "description": self.tr("Check if a specified percentage of shortest path pixel values satisfy the condition. Only usable with raster data"),
                         "example": self.tr("if(raster[0]:spPercentOfValues(2,50) > 100; 10; 20)")
-                    },                                       
+                    },
                 ],
             },
             "Distances": {
@@ -160,7 +158,7 @@ class ExpressionContext(QObject):
                         "label": "ellipsoidal",
                         "expressionText": "ellipsoidal",
                         "description": self.tr("Calculates the ellipsoidal distance. Not usable with all CRS!")
-                        
+
                     },
                     {
                         "label": "spEuclidean",
@@ -189,7 +187,7 @@ class ExpressionContext(QObject):
                         "syntax": self.tr("raster[index]:spEllipsoidal(heuristic_index)"),
                         "description": self.tr("Calculates the ellipsoidal distance of the shortest path. Not usable with all CRS!"),
                         "example": self.tr("raster[0]:spEllipsoidal(3)")
-                    },                                       
+                    },
                 ],
             },
             "Fields": {
@@ -320,14 +318,14 @@ class ExpressionContext(QObject):
                         "description": self.tr("Returns the modulo of x divided by y."),
                         "syntax": self.tr("fmod(x,y)"),
                         "example": self.tr("fmod(14, 4) → 2.0"),
-                    },                  
+                    },
                     {
                         "label": "gamma",
                         "expressionText": "math.gamma( )",
                         "description": self.tr("Returns the gamma function at x."),
                         "syntax": self.tr("gamma(x)"),
                         "example": self.tr("gamma(10) → 362880.0"),
-                    },                                                 
+                    },
                     {
                         "label": "isqrt",
                         "expressionText": "math.isqrt( )",
@@ -355,21 +353,21 @@ class ExpressionContext(QObject):
                         "description": self.tr("Returns the value of the logarithm of the passed value and base."),
                         "syntax": self.tr("log(base,value)"),
                         "example": self.tr("log(2, 32) → 5"),
-                    },                 
+                    },
                     {
                         "label": "pow",
                         "expressionText": "math.pow( )",
                         "description": self.tr("Returns the value of x to the power of y"),
                         "syntax": self.tr("pow(x,y)"),
                         "example": self.tr("pow(4, 3) → 64.0"),
-                    },                  
+                    },
                     {
                         "label": "radians",
                         "expressionText": "math.radians( )",
                         "description": self.tr("Converts from degrees to radians."),
                         "syntax": self.tr("radians(degrees)"),
                         "example": self.tr("radians(180) → 3.14159"),
-                    },                    
+                    },
                     {
                         "label": "remainder",
                         "expressionText": "math.remainder( )",
@@ -422,7 +420,7 @@ class ExpressionContext(QObject):
                 ],
             },
             "Random": {
-                "label": self.tr("Random value"), 
+                "label": self.tr("Random value"),
                 "description": self.tr("Create a random value between two defined values"),
                 "expressions": [
                     {
@@ -430,7 +428,7 @@ class ExpressionContext(QObject):
                         "expressionText": "random( , )",
                         "description": self.tr("Random value between value1 and value2"),
                         "syntax": self.tr("random(value1,value2)")
-                    },                           
+                    },
                 ]
             },
             "Operators": {
@@ -658,7 +656,7 @@ class ExpressionContext(QObject):
                         "label": "spTotalClimb",
                         "expressionText": "spTotalClimb()",
                         "description": self.tr("Returns the total climb of the shortest path pixels.")
-                    },                         
+                    },
                 ],
             },
         }
@@ -681,7 +679,7 @@ class ExpressionContext(QObject):
             expressionItem = ExpressionItem(label,
                                             expression.get("expressionText", ""),
                                             self.formatHelpText(group, label, description, syntax, example),
-                                            ExpressionItem.ItemType.Expression
+                                            ExpressionItem.ItemType.EXPRESSION
                                             )
             groupExpressionItems.append(expressionItem)
 
@@ -694,7 +692,7 @@ class ExpressionContext(QObject):
         :return:
         """
         groupLabel = self.groups.get(group, {}).get("label", group)
-        return ExpressionItem(groupLabel, "", self.getGroupHelpText(group), ExpressionItem.ItemType.Group)
+        return ExpressionItem(groupLabel, "", self.getGroupHelpText(group), ExpressionItem.ItemType.GROUP)
 
     def getFieldItem(self, group, field):
         """
@@ -707,7 +705,7 @@ class ExpressionContext(QObject):
         """
         return ExpressionItem(field, " field:" + field + " ",
                               self.formatHelpText(group, field, self.fieldDescription),
-                              ExpressionItem.ItemType.Expression)
+                              ExpressionItem.ItemType.EXPRESSION)
 
     def getPolygonItem(self, group, label, polygonIndex):
         """
@@ -722,7 +720,7 @@ class ExpressionContext(QObject):
         """
         return ExpressionItem(label, " polygon[{}]:".format(polygonIndex),
                               self.formatHelpText(group, label, self.polygonsDescription),
-                              ExpressionItem.ItemType.Expression)
+                              ExpressionItem.ItemType.EXPRESSION)
 
     def getRasterDataItem(self, group, label, rasterIndex):
         """
@@ -734,7 +732,7 @@ class ExpressionContext(QObject):
         """
         return ExpressionItem(label, " raster[{}]:".format(rasterIndex),
                               self.formatHelpText(group, label, self.rasterDataDescription),
-                              ExpressionItem.ItemType.Expression)
+                              ExpressionItem.ItemType.EXPRESSION)
 
     def formatHelpText(self, group, expression, description, syntax="", example=""):
         """
@@ -783,32 +781,33 @@ class ExpressionContext(QObject):
 CostFunctionDialogUi, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'CostFunctionDialog.ui'))
 
 
-class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
+class CostFunctionDialog(QDialog, CostFunctionDialogUi):
     """
     Advanced cost function editor
     """
     costFunctionChanged = pyqtSignal()
 
-    def __init__(self, parent=None, vectorLayer=None, rasterData=[], polygonLayers=[]):
+    def __init__(self, parent=None, vectorLayer=None, rasterData=None, polygonLayers=None):
         """
         Constructor
         :param parent:
         :type rasterData: Array of raster inputs and each input is a tuple: (layer, band)
         :param vectorLayer: Vector layer which fields are shown in the tree view
         """
-        super(CostFunctionDialog, self).__init__(parent)
+        super().__init__(parent)
         self.setupUi(self)
 
         self.vectorLayer = vectorLayer
-        self.rasterData = rasterData
-        self.polygonLayers = polygonLayers
+        self.rasterData = rasterData if rasterData is not None else []
+        self.polygonLayers = polygonLayers if polygonLayers is not None else []
+
 
         self.codeEditor.setWrapMode(QsciScintilla.WrapWord)
 
         # set error indicator
-        self.Error_INDICATOR_ID = 8
-        self.codeEditor.indicatorDefine(QsciScintilla.SquiggleIndicator, self.Error_INDICATOR_ID)
-        self.codeEditor.setIndicatorForegroundColor(QColor("red"), self.Error_INDICATOR_ID)
+        self.ERROR_INDICATOR_ID = 8
+        self.codeEditor.indicatorDefine(QsciScintilla.SquiggleIndicator, self.ERROR_INDICATOR_ID)
+        self.codeEditor.setIndicatorForegroundColor(QColor("red"), self.ERROR_INDICATOR_ID)
 
         # syntax highlighting
         # self.codeEditor.setLexer(QsciLexerPython())
@@ -842,8 +841,8 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
             <h1>Cost Function Builder</h1>
             <p>The builder provides an easy method for creating cost functions.</p>
             <h2>Usage</h2>
-            <p>On the left side there is the editor where the cost function can be entered. Below the editor are buttons 
-            with the most common functions. In the center there is a list of all available expressions that can 
+            <p>On the left side there is the editor where the cost function can be entered. Below the editor are buttons
+            with the most common functions. In the center there is a list of all available expressions that can
             be used in the cost function.</p>
             <h2>Example</h2>
             <p>if(field:ELEV > 100; raster[0]:sum; raster[0]:min)</p>
@@ -862,16 +861,16 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
         if not costFunction:
             statusText = "No function is set"
         else:
-            fields = self.getVectorLayer().fields() if self.getVectorLayer() else []            
-           
+            fields = self.getVectorLayer().fields() if self.getVectorLayer() else []
+
             numberOfRasterData = len(self.rasterData)
             syntaxCheckRes = GraphBuilder.syntaxCheck(costFunction, fields, numberOfRasterData, len(self.polygonLayers))
             statusText = syntaxCheckRes[0]
-            
+
             errorRangeStart = syntaxCheckRes[2]
-            errorRangeEnd = syntaxCheckRes[3]           
-            
-            self.codeEditor.fillIndicatorRange(0, errorRangeStart, 0, errorRangeEnd, self.Error_INDICATOR_ID)
+            errorRangeEnd = syntaxCheckRes[3]
+
+            self.codeEditor.fillIndicatorRange(0, errorRangeStart, 0, errorRangeEnd, self.ERROR_INDICATOR_ID)
 
         self.setStatus(statusText)
 
@@ -886,7 +885,7 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
         if not item:
             return
 
-        if item.getItemType() is ExpressionItem.ItemType.Group:
+        if item.getItemType() is ExpressionItem.ItemType.GROUP:
             return
 
         self.insertEditorText(item.getExpressionText())
@@ -952,7 +951,7 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
         group = "Random"
         randomItems = self.expressionContext.getGroupExpressionItems(group)
         for item in randomItems:
-            self._addTreeItem(group, item)    
+            self._addTreeItem(group, item)
 
 
         # Operators
@@ -989,11 +988,11 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
         button = self.sender()
         text = button.text()
         # add brackets to if text
-        if "if" == text:
+        if text == "if":
             text = "if( ; ; )"
         self.insertEditorText(" " + text + " ")
 
-    def _changeItemHelpText(self, currentItemIndex, previousItemIndex):
+    def _changeItemHelpText(self, currentItemIndex, _previousItemIndex):
         """
         Displays the help text of the selected expression
         :param currentItemIndex:
@@ -1051,7 +1050,7 @@ class CostFunctionDialog(QtWidgets.QDialog, CostFunctionDialogUi):
         """ Removes all error indicators in editor"""
         numLines = self.codeEditor.lines()
         lengthLastLine= len(self.codeEditor.text(numLines-1))
-        self.codeEditor.clearIndicatorRange(0, 0, numLines-1, lengthLastLine-1, self.Error_INDICATOR_ID)
+        self.codeEditor.clearIndicatorRange(0, 0, numLines-1, lengthLastLine-1, self.ERROR_INDICATOR_ID)
 
     def setStatus(self, text):
         """

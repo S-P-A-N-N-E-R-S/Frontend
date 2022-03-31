@@ -23,6 +23,6 @@ class BaseController(QObject):
     """ Base class of all controllers """
 
     def __init__(self, view):
-        super(BaseController, self).__init__()
-        
+        super().__init__()
+
         self.view = view

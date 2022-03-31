@@ -25,6 +25,7 @@ class BenchmarkData():
     """
     Holds information about one benchmark call
     """
+
     def __init__(self, graph, algorithm):
         # holds field labels (field.get("label")) and values
         self.parameters = {}
@@ -69,12 +70,12 @@ class BenchmarkData():
         for time in self.runtimes:
             values.append(time/1000000)
         return mean(values)
-        
+
     def getAllRuntimes(self):
         values = []
         for time in self.runtimes:
             values.append(time/1000000)
-        return values    
+        return values
 
     def getAvgNumberOfEdgesResponse(self):
         values = []
@@ -109,22 +110,22 @@ class BenchmarkData():
         values = []
         for i in range(len(self.responseGraphs)):
             totalWeight = 0
-            for edgeID in range(self.responseGraphs[i].edgeCount()):      
+            for edgeID in range(self.responseGraphs[i].edgeCount()):
                 totalWeight += self.responseGraphs[i].costOfEdge(edgeID)
-            values.append(totalWeight)    
-            
+            values.append(totalWeight)
+
         return mean(values)
-        
+
     def getAllEdgeWeightResponse(self):
         values = []
         for i in range(len(self.responseGraphs)):
             totalWeight = 0
             for edgeID in range(self.responseGraphs[i].edgeCount()):
                 totalWeight += self.responseGraphs[i].costOfEdge(edgeID)
-            values.append(totalWeight)    
-            
+            values.append(totalWeight)
+
         return values
-    
+
     def getAllNumberOfReciprocalEdges(self):
         values = []
         for i in range(len(self.responseGraphs)):
@@ -133,11 +134,11 @@ class BenchmarkData():
             for edgeID in range(graph.edgeCount()):
                 edge = graph.edge(edgeID)
                 if graph.hasEdge(edge.toVertex(), edge.fromVertex()) != -1:
-                    count+=1
+                    count += 1
             values.append(count)
-        
-        return values    
-    
+
+        return values
+
     def getAvgNumberOfReciprocalEdges(self):
         values = []
         for i in range(len(self.responseGraphs)):
@@ -146,11 +147,11 @@ class BenchmarkData():
             for edgeID in range(graph.edgeCount()):
                 edge = graph.edge(edgeID)
                 if graph.hasEdge(edge.toVertex(), edge.fromVertex()) != -1:
-                    count+=1      
+                    count += 1
             values.append(count)
-        
-        return mean(values)                    
-            
+
+        return mean(values)
+
     def getServerResponses(self):
         return self.serverResponses
 

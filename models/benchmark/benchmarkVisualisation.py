@@ -54,55 +54,54 @@ class BenchmarkVisualisation():
         dateString = date.today().strftime("%b_%d_%Y_")
         timeString = datetime.now().strftime("%H_%M_%S_%f")
         if path == "":
-            f = open(path + "BenchmarkResult_" + dateString + timeString + ".csv","w")
+            filename = f"{path}BenchmarkResult_{dateString}{timeString}.csv"
         else:
-            f = open(path + "/" + "BenchmarkResult_" + dateString + timeString + ".csv","w")
+            filename = f"{path}/BenchmarkResult_{dateString}{timeString}.csv"
 
-        longestParasIndex = 0
-        longestParasLength = len(self.xParameters[0])
-        for counter, xParaList in enumerate(self.xParameters):
-            if longestParasLength < len(xParaList):
-                longestParasIndex = counter
-                longestParasLength = len(xParaList)
+        with open(filename, "w") as f:
+            longestParasIndex = 0
+            longestParasLength = len(self.xParameters[0])
+            for counter, xParaList in enumerate(self.xParameters):
+                if longestParasLength < len(xParaList):
+                    longestParasIndex = counter
+                    longestParasLength = len(xParaList)
 
-        if len(self.zLabels) > 1:
-            f.write(self.xLabel + ",")
+            if len(self.zLabels) > 1:
+                f.write(self.xLabel + ",")
 
-        for index, parameter in enumerate(self.xParameters[longestParasIndex]):
-            if not boxPlot:
-                if index == 0:
-                    f.write(parameter)
-                else:
-                    f.write("," + parameter)
-            else:
-                for i in range(len(self.valuesBoxPlot[0][index])):
-                    if index == 0 and i == 0:
-                        f.write(parameter + "_" + str(i))
-                    else:
-                        f.write("," + parameter + "_" + str(i))
-
-        f.write("\n")
-
-        for i in range(len(self.zLabels)):
-            if len(self.zLabels[i]) > 0:
-                f.write(self.zLabels[i] + ",")
-            if not boxPlot:
-                for index, value in enumerate(self.values[i]):
+            for index, parameter in enumerate(self.xParameters[longestParasIndex]):
+                if not boxPlot:
                     if index == 0:
-                        f.write(str(value))
+                        f.write(parameter)
                     else:
-                        f.write("," + str(value))
-            else:
-                valueListForPlot = self.valuesBoxPlot[i]
-                for index, valueList in enumerate(valueListForPlot):
-                    for index2, value in enumerate(valueList):
-                        if index == 0 and index2 == 0:
+                        f.write("," + parameter)
+                else:
+                    for i in range(len(self.valuesBoxPlot[0][index])):
+                        if index == 0 and i == 0:
+                            f.write(parameter + "_" + str(i))
+                        else:
+                            f.write("," + parameter + "_" + str(i))
+
+            f.write("\n")
+
+            for i in range(len(self.zLabels)):
+                if len(self.zLabels[i]) > 0:
+                    f.write(self.zLabels[i] + ",")
+                if not boxPlot:
+                    for index, value in enumerate(self.values[i]):
+                        if index == 0:
                             f.write(str(value))
                         else:
                             f.write("," + str(value))
-            f.write("\n")
-
-        f.close()
+                else:
+                    valueListForPlot = self.valuesBoxPlot[i]
+                    for index, valueList in enumerate(valueListForPlot):
+                        for index2, value in enumerate(valueList):
+                            if index == 0 and index2 == 0:
+                                f.write(str(value))
+                            else:
+                                f.write("," + str(value))
+                f.write("\n")
 
     def plotPoints(self, withLines, callNumber):
         plt.figure(callNumber)
@@ -111,14 +110,14 @@ class BenchmarkVisualisation():
             zLabel = self.zLabels[i]
 
             if withLines is True:
-                plt.plot(self.xParameters[i], self.values[i], marker = "o", label=zLabel, linestyle = '-')
+                plt.plot(self.xParameters[i], self.values[i], marker="o", label=zLabel, linestyle='-')
             else:
                 plt.scatter(self.xParameters[i], self.values[i], label=zLabel)
 
         plt.ylabel(self.yLabel)
         plt.xlabel(self.xLabel)
         if self.createLegend:
-            plt.legend(loc = "best")
+            plt.legend(loc="best")
 
         if self.logSelected:
             plt.yscale("log")
@@ -127,19 +126,18 @@ class BenchmarkVisualisation():
             plt.tight_layout()
         plt.show()
 
-
     def plotLines(self, callNumber):
         plt.figure(callNumber)
 
         for i in range(len(self.zLabels)):
             zLabel = self.zLabels[i]
 
-            plt.plot(self.xParameters[i], self.values[i], label=zLabel, linestyle = '-')
+            plt.plot(self.xParameters[i], self.values[i], label=zLabel, linestyle='-')
 
         plt.ylabel(self.yLabel)
         plt.xlabel(self.xLabel)
         if self.createLegend:
-            plt.legend(loc = "best")
+            plt.legend(loc="best")
 
         if self.logSelected:
             plt.yscale("log")
@@ -157,7 +155,7 @@ class BenchmarkVisualisation():
         # get longest xParameters
         longestParaIndex = 0
         longestPara = len(self.xParameters[0])
-        for i in range (len(self.xParameters)):
+        for i in range(len(self.xParameters)):
             if len(self.xParameters[i]) > longestPara:
                 longestParaIndex = i
                 longestPara = len(self.xParameters[i])
@@ -174,9 +172,9 @@ class BenchmarkVisualisation():
         plt.ylabel(self.yLabel)
         plt.xlabel(self.xLabel)
         plt.xticks([r + ((width/2)*(len(self.zLabels)-1)) for r in range(len(self.xParameters[longestParaIndex]))],
-                    self.xParameters[longestParaIndex])
+                   self.xParameters[longestParaIndex])
         if self.createLegend:
-            plt.legend(loc = "best")
+            plt.legend(loc="best")
 
         if self.logSelected:
             plt.yscale("log")
@@ -186,7 +184,6 @@ class BenchmarkVisualisation():
 
         plt.show()
 
-
     def plotBoxPlot(self, _callNumber):
         _fig, ax = plt.subplots()
         boxes = []
@@ -194,8 +191,7 @@ class BenchmarkVisualisation():
         colors = ["blue", "green", "purple", "tan", "pink", "red"]
 
         for i in range(len(self.zLabelsBoxPlot)):
-            zLabel = self.zLabelsBoxPlot[i]
-            bp = ax.boxplot(self.valuesBoxPlot[i], labels=self.xParametersBoxPlot[i], patch_artist = True)
+            bp = ax.boxplot(self.valuesBoxPlot[i], labels=self.xParametersBoxPlot[i], patch_artist=True)
             for patch in bp["boxes"]:
                 patch.set(facecolor=colors[i])
             boxes.append(bp["boxes"][0])
@@ -204,7 +200,7 @@ class BenchmarkVisualisation():
         plt.ylabel(self.yLabel)
         plt.xlabel(self.xLabel)
         if self.createLegend:
-            plt.legend(boxes, self.zLabelsBoxPlot,loc = "best")
+            plt.legend(boxes, self.zLabelsBoxPlot, loc="best")
         if self.logSelected:
             ax.set_yscale("log")
 
