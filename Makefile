@@ -38,7 +38,7 @@ SOURCES = \
 PLUGINNAME = spanners_plugin
 
 PY_FILES = __init__.py mainPlugin.py helperFunctions.py exceptions.py
-DIRECTORIES = controllers lib models resources views network i18n scripts
+DIRECTORIES = controllers lib models resources views network i18n scripts help
 EXTRAS = metadata.txt Makefile
 
 PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
