@@ -19,7 +19,7 @@
 from qgis.core import QgsSettings, QgsApplication, QgsTask, QgsMessageLog
 
 from .base import BaseController
-from ..models.GraphLayer import GraphLayer
+from ..models.graphLayer import GraphLayer
 from .. import helperFunctions as helper
 
 # client imports

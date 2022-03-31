@@ -16,13 +16,13 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from .baseView import BaseView
-from ..controllers.resource import ResourceController
-from ..helperFunctions import getRasterFileFilter, getVectorFileFilter
-
 from qgis.gui import QgsFileWidget
 
 from qgis.PyQt.QtCore import QUrl
+
+from .baseView import BaseView
+from ..controllers.resource import ResourceController
+from ..helperFunctions import getRasterFileFilter, getVectorFileFilter
 
 
 class ResourceView(BaseView):
@@ -58,9 +58,9 @@ class ResourceView(BaseView):
 
     # destination output
 
-    def setFilter(self, filter):
+    def setFilter(self, fileFilter):
         """ Sets the supported output file formats """
-        self.dialog.create_from_resource_output.setFilter(filter)
+        self.dialog.create_from_resource_output.setFilter(fileFilter)
 
     def setVectorFilter(self):
         self.setFilter(getVectorFileFilter())

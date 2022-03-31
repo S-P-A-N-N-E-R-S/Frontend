@@ -97,7 +97,7 @@ class JobsView(BaseView):
         jobName = job.getJobName()
         jobItem = QListWidgetItem(jobName)
         jobItem.setData(Qt.UserRole, job.jobId)
-        icon = self.dialog.ogdf_jobs_list.style().standardIcon(getattr(QStyle,job.getIconName()))
+        icon = self.dialog.ogdf_jobs_list.style().standardIcon(getattr(QStyle, job.getIconName()))
         jobItem.setIcon(icon)
         jobItem.setToolTip(f"Status: {job.getStatus()}")
         self.dialog.ogdf_jobs_list.addItem(jobItem)

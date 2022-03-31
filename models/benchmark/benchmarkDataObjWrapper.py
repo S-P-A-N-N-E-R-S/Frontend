@@ -19,17 +19,20 @@
 import time
 from statistics import mean
 from collections import OrderedDict
+
 from ...network.client import Client
 from ...network import handlerManager
 from ...network.exceptions import NetworkClientError, ParseError
 from ... import helperFunctions as helper
 from ...network.protocol.build.status_pb2 import StatusType
 
+
 class BenchmarkDataObjWrapper():
     """
     Wrapper for all the BenchmarkData objects. It provides an interface to get the information necessary for the
     visualisation process. After the objects are created the benchmark controller only communicates with this wrapper.
     """
+
     def __init__(self, DOs):
         # all the BenchmarkData objects created by executing all the permutations
         self.benchmarkDOs = DOs
@@ -112,8 +115,8 @@ class BenchmarkDataObjWrapper():
                 else:
                     allEdgeCounts = dataObj.getAllNumberOfEdgesResponse()
                     allVertexCounts = dataObj.getAllNumberOfVerticesResponse()
-                    for i in range(len(allEdgeCounts)):
-                        values.append(round(allEdgeCounts[i] / allVertexCounts[i],3))
+                    for edgeCountIdx, edgeCount in enumerate(allEdgeCounts):
+                        values.append(round(edgeCount / allVertexCounts[edgeCountIdx], 3))
             elif analysis == "Sparseness":
                 if average:
                     values = [dataObj.getAvgNumberOfEdgesResponse() / originalGraph.edgeCount()]
@@ -157,7 +160,7 @@ class BenchmarkDataObjWrapper():
                 else:
                     counts = dataObj.getAllNumberOfReciprocalEdges()
                     allResponseGraphs = dataObj.getResponseGraphs()
-                    for index, count  in enumerate(counts):
+                    for index, count in enumerate(counts):
                         values.append(count / allResponseGraphs[index].edgeCount())
 
         # redundant in most cases because values has only one value
@@ -166,7 +169,7 @@ class BenchmarkDataObjWrapper():
         else:
             return values
 
-    def partition(self, partitionType, partitionDict, parameterKey = None, graphAnalysis = None):
+    def partition(self, partitionType, partitionDict, parameterKey=None, graphAnalysis=None):
         """
         Method is called multiple times, depending on the number of selections made.
 
@@ -180,12 +183,12 @@ class BenchmarkDataObjWrapper():
             if partitionType == "Graphs":
                 partitionToSort = {}
                 allGraphs = self._getAllGraphs(doList)
-                for i in range(len(allGraphs)):
-                    graphName = allGraphs[i][0]
+                for graphIdx, graphObject in enumerate(allGraphs):
+                    graphName = graphObject[0]
                     # get all data objects which use the graph
                     dataObjsForPartition = []
-                    for j in range(len(doList)):
-                        dataObj = doList[j]
+                    dataObj = None
+                    for dataObj in doList:
                         if dataObj.getGraphName() == graphName:
                             dataObjsForPartition.append(dataObj)
                     keyTuple = key
@@ -197,25 +200,25 @@ class BenchmarkDataObjWrapper():
                         if graphAnalysis == "Edges" or graphAnalysis == "Vertices" or graphAnalysis == "Densities" or\
                            graphAnalysis == "Reciprocity":
                             if graphAnalysis == "Edges":
-                                axisEntry = allGraphs[i][1].edgeCount()
+                                axisEntry = graphObject[1].edgeCount()
                             elif graphAnalysis == "Vertices":
-                                axisEntry = allGraphs[i][1].vertexCount()
+                                axisEntry = graphObject[1].vertexCount()
                             elif graphAnalysis == "Densities":
-                                if allGraphs[i][1].edgeDirection == "Directed":
-                                    axisEntry = allGraphs[i][1].edgeCount() / (allGraphs[i][1].vertexCount()*\
-                                                (allGraphs[i][1].vertexCount()-1))
+                                if graphObject[1].edgeDirection == "Directed":
+                                    axisEntry = graphObject[1].edgeCount() / (graphObject[1].vertexCount() *
+                                                                              (graphObject[1].vertexCount()-1))
                                 else:
-                                    axisEntry = (2 * allGraphs[i][1].edgeCount()) / (allGraphs[i][1].vertexCount()*\
-                                                (allGraphs[i][1].vertexCount()-1))
+                                    axisEntry = (2 * graphObject[1].edgeCount()) / (graphObject[1].vertexCount() *
+                                                                                    (graphObject[1].vertexCount()-1))
                             elif graphAnalysis == "Reciprocity":
                                 count = 0
-                                for edgeID in range(allGraphs[i][1].edgeCount()):
-                                    edge = allGraphs[i][1].edge(edgeID)
-                                    if allGraphs[i][1].hasEdge(edge.toVertex(), edge.fromVertex()) != -1:
-                                        count+=1
-                                axisEntry = count / allGraphs[i][1].edgeCount()
+                                for edgeID in range(graphObject[1].edgeCount()):
+                                    edge = graphObject[1].edge(edgeID)
+                                    if graphObject[1].hasEdge(edge.toVertex(), edge.fromVertex()) != -1:
+                                        count += 1
+                                axisEntry = count / graphObject[1].edgeCount()
                             # order the data objects into the correct dictionary entry
-                            axisEntry = round(axisEntry,3)
+                            axisEntry = round(axisEntry, 3)
                             if axisEntry in partitionToSort:
                                 partitionToSort[axisEntry].extend(dataObjsForPartition)
                             else:
@@ -223,33 +226,34 @@ class BenchmarkDataObjWrapper():
                         else:
                             if graphAnalysis in self.serverCallMatchings:
                                 for dataObj in dataObjsForPartition:
-                                    axisEntry = self._getAxisEntryFromServer(dataObj, graphAnalysis, allGraphs, i)
+                                    axisEntry = self._getAxisEntryFromServer(
+                                        dataObj, graphAnalysis, allGraphs, graphIdx)
                                     if axisEntry in partitionToSort:
                                         partitionToSort[axisEntry].append(dataObj)
                                     else:
                                         partitionToSort[axisEntry] = [dataObj]
 
                             elif graphAnalysis == "Node Connectivity":
-                                if allGraphs[i][1].edgeDirection == "Directed":
+                                if graphObject[1].edgeDirection == "Directed":
                                     directed = 1
                                 else:
                                     directed = 0
                                 costFunction = dataObj.getParameters()['edgeCosts']
                                 addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 1}
-                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction,
+                                axisEntry = float(self.serverCall(graphObject[1], "utils/Connectivity", costFunction,
                                                                   addInfos).data["connectivity"])
                                 if axisEntry in partitionToSort:
                                     partitionToSort[axisEntry].append(dataObj)
                                 else:
                                     partitionToSort[axisEntry] = [dataObj]
                             elif graphAnalysis == "Edge Connectivity":
-                                if allGraphs[i][1].edgeDirection == "Directed":
+                                if graphObject[1].edgeDirection == "Directed":
                                     directed = 1
                                 else:
                                     directed = 0
                                 costFunction = dataObj.getParameters()['edgeCosts']
                                 addInfos = {"graphAttributes.directed": directed, "graphAttributes.nodeConnectivity": 0}
-                                axisEntry = float(self.serverCall(allGraphs[i][1], "utils/Connectivity", costFunction,
+                                axisEntry = float(self.serverCall(graphObject[1], "utils/Connectivity", costFunction,
                                                                   addInfos).data["connectivity"])
                                 if axisEntry in partitionToSort:
                                     partitionToSort[axisEntry].append(dataObj)
@@ -281,11 +285,9 @@ class BenchmarkDataObjWrapper():
 
             elif partitionType == "Algorithms":
                 allAlgs = self._getAllAlgs(doList)
-                for i in range(len(allAlgs)):
-                    algName = allAlgs[i]
+                for algName in allAlgs:
                     dataObjsForPartition = []
-                    for j in range(len(doList)):
-                        dataObj = doList[j]
+                    for dataObj in doList:
                         if dataObj.getAlgorithm() == algName:
                             dataObjsForPartition.append(dataObj)
                     keyTuple = key
@@ -304,8 +306,7 @@ class BenchmarkDataObjWrapper():
 
                 for value in allValues:
                     dataObjsForPartition = []
-                    for i in range(len(doList)):
-                        dataObj = doList[i]
+                    for dataObj in doList:
                         parameters = dataObj.getParameters()
                         for param in parameters.keys():
                             if param == parameterKey and parameters[param] == value:
@@ -334,10 +335,10 @@ class BenchmarkDataObjWrapper():
         for graph in dataObj.getResponseGraphs():
             values.append(float(self.serverCall(graph, self.serverCallMatchings[analysis][0], 0,
                                                 self.serverCallMatchings[analysis][2])
-                                                    .data[self.serverCallMatchings[analysis][1]]))
+                                .data[self.serverCallMatchings[analysis][1]]))
         return values
 
-    def serverCall(self, graph, algoString, costFunction, addInfos = None):
+    def serverCall(self, graph, algoString, costFunction, addInfos=None):
         # TODO: set costFunction correctly if this is fixed in the network
         # Currently the returned graph has advanced costs with one cost function
         # so its works to set the edge costs to 0 for the analysis calls (except lightness call)
@@ -357,7 +358,7 @@ class BenchmarkDataObjWrapper():
         try:
             with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                 executionID = client.sendJobRequest(request)
-        except (NetworkClientError, ParseError) as error:
+        except (NetworkClientError, ParseError):
             pass
         status = "waiting"
         counter = 0
@@ -368,7 +369,7 @@ class BenchmarkDataObjWrapper():
                 with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                     if counter == 0:
                         time.sleep(0.25)
-                        counter+=1
+                        counter += 1
                     else:
                         time.sleep(0.25)
                     jobStatus = client.getJobStatus()
@@ -376,14 +377,14 @@ class BenchmarkDataObjWrapper():
                     jobId = executionID
                     job = jobStatus[jobId]
                     status = self.STATUS_TEXTS.get(job.status, "status not supported")
-            except (NetworkClientError, ParseError) as error:
+            except (NetworkClientError, ParseError):
                 return -1
         try:
             with Client(helper.getHost(), helper.getPort(), tlsOption=helper.getTlsOption()) as client:
                 response = client.getJobResult(job.jobId)
                 return response
 
-        except (NetworkClientError, ParseError) as error:
+        except (NetworkClientError, ParseError):
             return -1
 
     def _getAllParameterValues(self, parameterKey, dataObjects):
@@ -401,7 +402,7 @@ class BenchmarkDataObjWrapper():
         graphList = []
         for dataObj in dataObjects:
             if not dataObj.getGraphName() in graphList:
-                graphList.append((dataObj.getGraphName(),dataObj.getGraph()))
+                graphList.append((dataObj.getGraphName(), dataObj.getGraph()))
 
         return graphList
 

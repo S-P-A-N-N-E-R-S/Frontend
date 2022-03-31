@@ -210,8 +210,8 @@ def getSortedJobStates(sortingOption, sortingDirection):
     """
 
     sortedJobStates = list(jobStates.values())
-    sortedJobStates.sort(key= lambda job: jobSortingFunction(job, sortingOption),
-        reverse=bool(sortingDirection=="Descending"))
+    sortedJobStates.sort(key=lambda job: jobSortingFunction(job, sortingOption),
+                         reverse=bool(sortingDirection == "Descending"))
     return sortedJobStates or []
 
 

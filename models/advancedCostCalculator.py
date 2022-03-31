@@ -16,25 +16,30 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+import math
+import random
+import re
+import statistics
+
+import numpy as np
+
 from qgis.core import (QgsWkbTypes, QgsField, QgsVectorLayer, QgsFeature, QgsGeometry, QgsPoint, QgsPointXY,
                        QgsDistanceArea, QgsProcessingUtils, QgsRasterLayer, QgsCoordinateTransform, QgsProject)
 from qgis.PyQt.QtCore import QVariant
-from .AStarOnRasterData import AStarOnRasterData
-import random
 from qgis import processing
-import math
-import re
-import statistics
 from osgeo import gdal, osr
-import numpy as np
+
+from .aStarOnRasterData import AStarOnRasterData
+
 
 class AdvancedCostCalculator():
     """
     Class to calculate the edge costs of a graph by analysis of a cost function. The cost function
     can use different variables and operators.
     """
+
     def __init__(self, rLayers, vLayer, graph, polygons, usePolygons, rasterBands, task, allowDoubleEdges,
-                 createShortestPathView = False):
+                 createShortestPathView=False):
         """
         Constructor
 
@@ -57,8 +62,8 @@ class AdvancedCostCalculator():
         self.polygons = polygons
         self.usePolygons = usePolygons
         self.rasterBands = rasterBands
-        self.operators = ["+","-","*","/","(",")"]
-        self.mathOperatorsWithTwoVar = ["pow","dist","comb", "copysign", "fmod", "ldexp", "remainder", "log", "atan2"]
+        self.operators = ["+", "-", "*", "/", "(", ")"]
+        self.mathOperatorsWithTwoVar = ["pow", "dist", "comb", "copysign", "fmod", "ldexp", "remainder", "log", "atan2"]
         self.translatedParts = {}
         self.formulaParts = []
         self.aStarAlgObjects = []
@@ -70,8 +75,8 @@ class AdvancedCostCalculator():
         self.geoDistPixelNeighbors = []
         self.ellDistPixelNeighbors = []
 
-    def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygonsList = None,
-                    edgesCrossingPolygonsList = None):
+    def __translate(self, part, edgeID, sampledPointsLayer, edgesInPolygonsList=None,
+                    edgesCrossingPolygonsList=None):
         """
         Method translates the given part into a number that can replace the variable in the formula.
 
@@ -113,7 +118,7 @@ class AdvancedCostCalculator():
         # translate polygon construct
         regex = re.compile(r'polygon\[[0-9]\]:crossesPolygon')
         res = regex.search(part)
-        if res != None:
+        if res is not None:
             index = int(res.group().split("[")[1].split("]")[0])
             for feature in edgesCrossingPolygonsList[index].getFeatures():
                 if edgeID == feature["ID"]:
@@ -123,7 +128,7 @@ class AdvancedCostCalculator():
         # translate polygon construct
         regex = re.compile(r'polygon\[[0-9]\]:insidePolygon')
         res = regex.search(part)
-        if res != None:
+        if res is not None:
             index = int(res.group().split("[")[1].split("]")[0])
             for feature in edgesInPolygonsList[index].getFeatures():
                 if edgeID == feature["ID"]:
@@ -133,7 +138,7 @@ class AdvancedCostCalculator():
         # python math method
         if "math." in part:
             try:
-                mathOperation = part.split(".",1)[1].split("%")[0]
+                mathOperation = part.split(".", 1)[1].split("%")[0]
                 if mathOperation in self.mathOperatorsWithTwoVar:
                     # recursive calls
                     var1 = part.split("%")[1].split(",")[0]
@@ -143,7 +148,7 @@ class AdvancedCostCalculator():
                     # recursive call
                     var = part.split("$")[0].split("%")[1]
                     return "math." + mathOperation + "(" + var + ")"
-            except:
+            except Exception:
                 pass
 
         if "rnd?" in part:
@@ -153,21 +158,21 @@ class AdvancedCostCalculator():
             if lb.isnumeric() and ub.isnumeric():
                 if int(lb) > int(ub):
                     return str(0)
-                return str(random.randint(int(lb),int(ub)))
+                return str(random.randint(int(lb), int(ub)))
             try:
                 convertedLB = float(eval(lb))
                 convertedUB = float(eval(ub))
                 if convertedLB > convertedUB:
                     return str(0)
-                return str(random.uniform(convertedLB,convertedUB))
-            except:
+                return str(random.uniform(convertedLB, convertedUB))
+            except Exception:
                 pass
 
             return part
 
         # translate if part
         if "if" in part:
-            expression = part.split(";")[0].split("{",1)[1]
+            expression = part.split(";")[0].split("{", 1)[1]
             expression = expression.replace("and", " and ")
             expression = expression.replace("or", " or ")
             expressionParts = re.split("and|or", expression)
@@ -175,9 +180,9 @@ class AdvancedCostCalculator():
                 if "pixelValue" in expPart:
                     listString = expPart.split("(")[1].split(")")[0]
                     if "," in listString:
-                        list = listString.split(",")
+                        listStringSplit = listString.split(",")
                         equalTrue = False
-                        for l in list:
+                        for l in listStringSplit:
                             toEval = re.sub(r"pixelValue\(([0-9]+,)+[0-9]+\)", "", expPart)
                             toEval = l + toEval
                             if eval(toEval) == True:
@@ -200,16 +205,16 @@ class AdvancedCostCalculator():
                 if "percentOfValues" in expPart:
                     # percentage is first value in the list
                     listString = expPart.split("(")[1].split(")")[0]
-                    list = listString.split(",")
-                    percentage = list[0]
+                    listStringSplit = listString.split(",")
+                    percentage = listStringSplit[0]
                     trueExpFount = 0
-                    for l in range(1, len(list)):
+                    for l in range(1, len(listStringSplit)):
                         toEval = re.sub(r"percentOfValues\(([0-9]+,)+[0-9]+\)", "", expPart)
-                        toEval = list[l] + toEval
+                        toEval = listStringSplit[l] + toEval
 
                         if eval(toEval) == True:
-                            trueExpFount+=1
-                    if int(percentage) <= (trueExpFount / (len(list)-1))*100:
+                            trueExpFount += 1
+                    if int(percentage) <= (trueExpFount / (len(listStringSplit)-1))*100:
                         expression = expression.replace(expPart, " True ")
                     else:
                         expression = expression.replace(expPart, " False ")
@@ -230,8 +235,8 @@ class AdvancedCostCalculator():
                 for feature in self.vLayer.getFeatures():
                     geom = feature.geometry()
                     if QgsWkbTypes.isMultiType(geom.wkbType()):
-                         for part in geom.asMultiPolyline():
-                            for i in range(1,len(part)):
+                        for part in geom.asMultiPolyline():
+                            for i in range(1, len(part)):
                                 if part[i-1] == self.graph.vertex(edge.fromVertex()).point() and\
                                    part[i] == self.graph.vertex(edge.toVertex()).point():
                                     return str(feature[name])
@@ -254,9 +259,9 @@ class AdvancedCostCalculator():
             bandForRaster = self.rasterBands[rasterDataID]
             stringForLookup = "SAMPLE_" + str(bandForRaster)
             # check if the pointValues are already created for this edge
-            if self.pointValuesForEdge[rasterDataID] == None:
+            if self.pointValuesForEdge[rasterDataID] is None:
                 self.pointValuesForEdge[rasterDataID] = []
-                #search for the right edgeID
+                # search for the right edgeID
                 for feature in sampledPointsLayer[rasterDataID].getFeatures():
                     if feature["line_id"] == edgeID:
                         pointValue = feature[stringForLookup]
@@ -273,15 +278,16 @@ class AdvancedCostCalculator():
                 numberOfDiagonals = None
                 for aStarObj in self.aStarAlgObjects:
                     if aStarObj.heuristicID == heurID and aStarObj.rasterID == rasterDataID:
-                        if self.pixelValuesForEdge[rasterDataID*6 + heurID] == None:
+                        if self.pixelValuesForEdge[rasterDataID*6 + heurID] is None:
                             if self.allowDoubleEdges and (self.graph.vertex(edge.fromVertex()).point(),
                                                           self.graph.vertex(edge.toVertex()).point()) in\
-                                                            self.spForPointPairs.keys():
+                                    self.spForPointPairs.keys():
                                 pixelValues = self.spForPointPairs[self.graph.vertex(edge.fromVertex()).point(),
                                                                    self.graph.vertex(edge.toVertex()).point()]
                             else:
-                                pixelValues = aStarObj.getShortestPathWeight(self.graph.vertex(edge.fromVertex()).point(),
-                                                                             self.graph.vertex(edge.toVertex()).point())
+                                pixelValues = aStarObj.getShortestPathWeight(
+                                    self.graph.vertex(edge.fromVertex()).point(),
+                                    self.graph.vertex(edge.toVertex()).point())
                                 if self.allowDoubleEdges:
                                     self.spForPointPairs[(self.graph.vertex(edge.toVertex()).point(),
                                                           self.graph.vertex(edge.fromVertex()).point())] = pixelValues
@@ -301,7 +307,7 @@ class AdvancedCostCalculator():
 
         return str("0")
 
-    def __calculateRasterAnalysis(self, values, analysis, rLayerIndex = 0, numberOfDiagonals = None):
+    def __calculateRasterAnalysis(self, values, analysis, rLayerIndex=0, numberOfDiagonals=None):
         """
         Method is responsible to translate all the raster analysis constructs.
 
@@ -313,7 +319,7 @@ class AdvancedCostCalculator():
             return str(sum(values))
         elif "mean" in analysis.lower():
             return str(statistics.mean(values))
-        elif "median" == analysis.lower():
+        elif analysis.lower() == "median":
             return str(statistics.median(values))
         elif "min" in analysis.lower():
             return str(min(values))
@@ -321,7 +327,7 @@ class AdvancedCostCalculator():
             return str(max(values))
         elif "variance" in analysis.lower():
             return str(statistics.variance(values))
-        elif "standdev" == analysis:
+        elif analysis == "standdev":
             return str(statistics.stdev(values))
         elif "gradientsum" in analysis.lower():
             f = np.array(values, dtype=float)
@@ -357,12 +363,12 @@ class AdvancedCostCalculator():
             listOfPixelValuesAsString = "pixelValue(" + str(values[0])
             for pValue in values:
                 listOfPixelValuesAsString = listOfPixelValuesAsString + "," + str(pValue)
-            listOfPixelValuesAsString = listOfPixelValuesAsString + ")";
+            listOfPixelValuesAsString = listOfPixelValuesAsString + ")"
             return listOfPixelValuesAsString
         elif "percentofvalues" in analysis.lower():
-            findPercentage = re.search("percentofvalues\([0-9]+\)",analysis.lower())
-            help = findPercentage.group().replace("(","").replace(")","")
-            percentage = help.split("percentofvalues")[1]
+            findPercentage = re.search(r"percentofvalues\([0-9]+\)", analysis.lower())
+            findPercentageHelp = findPercentage.group().replace("(", "").replace(")", "")
+            percentage = findPercentageHelp.split("percentofvalues")[1]
 
             listOfPixelValuesAsString = "percentOfValues(" + percentage
             for pValue in values:
@@ -371,27 +377,27 @@ class AdvancedCostCalculator():
             listOfPixelValuesAsString = listOfPixelValuesAsString + ")"
             return listOfPixelValuesAsString
         elif "euclidean" in analysis.lower():
-            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.euclDistPixelNeighbors[rLayerIndex],2) +\
-                                                            math.pow(self.euclDistPixelNeighbors[rLayerIndex],2)))
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.euclDistPixelNeighbors[rLayerIndex], 2) +
+                                                            math.pow(self.euclDistPixelNeighbors[rLayerIndex], 2)))
             nonDiagonalLength = self.euclDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
             shortestPathEucl = diagonalLength + nonDiagonalLength
             return str(shortestPathEucl)
         elif "manhattan" in analysis.lower():
             shortestPathMan = self.manDistPixelNeighbors[rLayerIndex] * len(values)-1
-            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.manDistPixelNeighbors[rLayerIndex],2) +\
-                                                            math.pow(self.manDistPixelNeighbors[rLayerIndex],2)))
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.manDistPixelNeighbors[rLayerIndex], 2) +
+                                                            math.pow(self.manDistPixelNeighbors[rLayerIndex], 2)))
             nonDiagonalLength = self.manDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
             shortestPathMan = diagonalLength + nonDiagonalLength
             return str(shortestPathMan)
         elif "geodesic" in analysis.lower():
-            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.geoDistPixelNeighbors[rLayerIndex],2) +\
-                                                            math.pow(self.geoDistPixelNeighbors[rLayerIndex],2)))
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.geoDistPixelNeighbors[rLayerIndex], 2) +
+                                                            math.pow(self.geoDistPixelNeighbors[rLayerIndex], 2)))
             nonDiagonalLength = self.geoDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
             shortestPathGeo = diagonalLength + nonDiagonalLength
             return str(shortestPathGeo)
         elif "ellipsoidal" in analysis.lower():
-            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.ellDistPixelNeighbors[rLayerIndex],2) +\
-                                                            math.pow(self.ellDistPixelNeighbors[rLayerIndex],2)))
+            diagonalLength = numberOfDiagonals * (math.sqrt(math.pow(self.ellDistPixelNeighbors[rLayerIndex], 2) +
+                                                            math.pow(self.ellDistPixelNeighbors[rLayerIndex], 2)))
             nonDiagonalLength = self.ellDistPixelNeighbors[rLayerIndex] * (len(values)-1-numberOfDiagonals)
             shortestPathEll = diagonalLength + nonDiagonalLength
             return str(shortestPathEll)
@@ -405,7 +411,7 @@ class AdvancedCostCalculator():
         """
         graphLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")
         dpEdgeLayer = graphLayerEdges.dataProvider()
-        dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int),])
+        dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int), ])
         graphLayerEdges.updateFields()
 
         graphLayerEdges.setCrs(self.vLayer.crs())
@@ -437,7 +443,7 @@ class AdvancedCostCalculator():
         :return translated formula
         """
         rasterReg = False
-        rasterRegexString = 'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+(,[0-9]+)?\)|[A-z]+)'
+        rasterRegexString = r'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+(,[0-9]+)?\)|[A-z]+)'
         if regex == rasterRegexString:
             rasterReg = True
         regex = re.compile(regex)
@@ -460,7 +466,7 @@ class AdvancedCostCalculator():
                     self.translatedParts[costFunction[res.start():res.end()]] = translated
                 matchesTranslationHash[res.group()] = translated
 
-        for key in matchesTranslationHash.keys():
+        for key in matchesTranslationHash:
             costFunction = costFunction.replace(key, matchesTranslationHash[key])
 
         if rasterReg and "raster" in costFunction:
@@ -479,11 +485,11 @@ class AdvancedCostCalculator():
         """
         try:
             eval(costFunction)
-        except:
+        except Exception:
             return False
         return True
 
-    def setEdgeCosts(self, costFunction, edgeID = None, costFunctionCount = None):
+    def setEdgeCosts(self, costFunction, edgeID=None, costFunctionCount=None):
         """
         Set the cost function for the edge cost calculation.
 
@@ -501,8 +507,11 @@ class AdvancedCostCalculator():
                 result = processing.run("qgis:generatepointspixelcentroidsalongline", {"INPUT_RASTER": self.rLayers[i],
                                                                                        "INPUT_VECTOR": edgeLayer,
                                                                                        "OUTPUT": "memory:"})
-                result2 = processing.run("qgis:rastersampling",{"INPUT": result["OUTPUT"], "RASTERCOPY": self.rLayers[i],
-                                                                "COLUMN_PREFIX": "SAMPLE_", "OUTPUT": "memory:"})
+                result2 = processing.run(
+                    "qgis:rastersampling",
+                    {"INPUT": result["OUTPUT"],
+                     "RASTERCOPY": self.rLayers[i],
+                     "COLUMN_PREFIX": "SAMPLE_", "OUTPUT": "memory:"})
                 sampledPointsLayers.append(result2["OUTPUT"])
 
         # initialize all necessary AStarOnRasterData objects
@@ -514,7 +523,7 @@ class AdvancedCostCalculator():
 
             if "," in heuristicIndexString:
                 heuristicIndex = int(heuristicIndexString.split(",")[0])
-                #costFunction = costFunction.replace(matchString, matchString.split("(")[0] + "(" +\
+                # costFunction = costFunction.replace(matchString, matchString.split("(")[0] + "(" +\
                 #                                    matchString.split(",")[1])
             else:
                 heuristicIndex = int(heuristicIndexString)
@@ -534,20 +543,18 @@ class AdvancedCostCalculator():
 
             for rLayer in self.rLayers:
                 ds = gdal.Open(rLayer.source())
-                cols = ds.RasterXSize
-                rows = ds.RasterYSize
                 transform = ds.GetGeoTransform()
                 xOrigin = transform[0]
                 yOrigin = transform[3]
                 pixelWidth = transform[1]
                 pixelHeight = -transform[5]
 
-                #get coordinates of top left pixel
+                # get coordinates of top left pixel
                 xCoord = xOrigin + (pixelWidth/2)
                 yCoord = yOrigin + (pixelHeight/2)
                 originalPoint = QgsPointXY(xCoord, yCoord)
 
-                #get coordinates of a neighbor
+                # get coordinates of a neighbor
                 xCoordN = xOrigin + (pixelWidth/2)
                 yCoordN = (pixelHeight*1) + yOrigin + (pixelHeight/2)
                 originalPointN = QgsPointXY(xCoordN, yCoordN)
@@ -557,13 +564,13 @@ class AdvancedCostCalculator():
                 transformedPoint = tr.transform(originalPoint)
                 transformedPointN = tr.transform(originalPointN)
                 if "spEuclidean" in costFunction:
-                    euclDist = math.sqrt(pow(transformedPoint.x()-transformedPointN.x(),2) +\
-                                         pow(transformedPoint.y()-transformedPointN.y(),2))
+                    euclDist = math.sqrt(pow(transformedPoint.x()-transformedPointN.x(), 2) +
+                                         pow(transformedPoint.y()-transformedPointN.y(), 2))
                     self.euclDistPixelNeighbors.append(euclDist)
 
                 if "spManhattan" in costFunction:
                     manhattenDist = abs(transformedPoint.x()-transformedPointN.x()) +\
-                                    abs(transformedPoint.y()-transformedPointN.y())
+                        abs(transformedPoint.y()-transformedPointN.y())
                     self.manDistPixelNeighbors.append(manhattenDist)
 
                 if "spGeodesic" in costFunction:
@@ -620,7 +627,7 @@ class AdvancedCostCalculator():
             if self.task is not None:
                 newProgress = self.task.progress() + 70/self.graph.edgeCount()
                 if newProgress <= 100:
-                    self.task.setProgress(round(newProgress,2))
+                    self.task.setProgress(round(newProgress, 2))
             self.pointValuesForEdge = [None] * len(self.rLayers)
             self.pixelValuesForEdge = [None] * len(self.rLayers) * 6
 
@@ -629,15 +636,16 @@ class AdvancedCostCalculator():
             # translate different formula parts by searching constructs with regular expressions:
             # Call translate method with each extracted construct and replace in formula
 
-            regexList = ['euclidean', 'manhattan', 'ellipsoidal', 'geodesic', 'field:[A-z]+',
-                         'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+(,[0-9]+)?\)|[A-z]+)',
-                         'polygon\[[0-9]?\]:(crossesPolygon|insidePolygon)']
+            regexList = [
+                r'euclidean', r'manhattan', r'ellipsoidal', r'geodesic', r'field:[A-z]+',
+                r'raster\[[0-9]+\]:(percentOfValues\([0-9]+\)|sp[A-z]+\([0-9]+(,[0-9]+)?\)|[A-z]+)',
+                r'polygon\[[0-9]?\]:(crossesPolygon|insidePolygon)']
 
             for regex in regexList:
                 costFunction = self.__translateRegexSearch(costFunction, regex, i, sampledPointsLayers,
                                                            edgesInPolygonsList, edgesCrossingPolygonsList, False)
 
-            constructRegexList = ['math\.[a-z]+%.+?\$', 'rnd\?.+?§.+?&', 'if\{.+?;.+?;.+?\}']
+            constructRegexList = [r'math\.[a-z]+%.+?\$', r'rnd\?.+?§.+?&', r'if\{.+?;.+?;.+?\}']
             while not self.__fullyTranslatedCheck(costFunction):
                 if self.task is not None and self.task.isCanceled():
                     break
@@ -653,11 +661,11 @@ class AdvancedCostCalculator():
         if self.createShortestPathView:
             self.shortestPathViewLayers = []
             for aStarObj in self.aStarAlgObjects:
-                if aStarObj != None:
+                if aStarObj is not None:
                     fileName = "SPView" + "_" + str(aStarObj.rasterID) + "_" + str(aStarObj.heuristicID)
                     tmpPath = QgsProcessingUtils.generateTempFilename(fileName + ".tif")
                     driver = gdal.GetDriverByName('GTiff')
-                    ds = driver.Create(tmpPath, ysize=aStarObj.matrixRowSize,xsize=aStarObj.matrixColSize, bands = 3,
+                    ds = driver.Create(tmpPath, ysize=aStarObj.matrixRowSize, xsize=aStarObj.matrixColSize, bands=3,
                                        eType=gdal.GDT_Byte)
                     ds.GetRasterBand(1).WriteArray(aStarObj.getShortestPathMatrix1())
                     ds.GetRasterBand(2).WriteArray(aStarObj.getShortestPathMatrix2())

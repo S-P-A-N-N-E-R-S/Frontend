@@ -16,19 +16,22 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+import math
+import random
+import sys
+
 from qgis.core import (QgsVectorLayer, QgsUnitTypes, QgsWkbTypes, QgsPointXY, QgsField, QgsCoordinateReferenceSystem,
                        QgsFeature, QgsGeometry, QgsProject, QgsPoint, QgsPalLayerSettings, QgsTextFormat,
                        QgsTextBufferSettings, QgsVectorLayerSimpleLabeling, QgsMessageLog, Qgis)
 from qgis.PyQt.QtGui import QFont, QColor
 from qgis.PyQt.QtCore import QVariant
-from .ExtGraph import ExtGraph
-from .FormulaCheck import formulaCheck
-from .AdvancedCostCalculator import AdvancedCostCalculator
-from .GraphLayer import GraphLayer
-import random
 from qgis import processing
-import math
-import sys
+
+from .extGraph import ExtGraph
+from .formulaCheck import formulaCheck
+from .advancedCostCalculator import AdvancedCostCalculator
+from .graphLayer import GraphLayer
+
 from ..lib.kdtree import kdtree
 
 
@@ -60,6 +63,7 @@ class GraphBuilder:
         - area: Area of the globe you want the random Graph to be in. Can be one of the specified countries
                 or user defined
     """
+
     def __init__(self):
         """
         Constructor:
@@ -158,7 +162,7 @@ class GraphBuilder:
         self.__options["createRandomGraph"] = False
         self.vLayer = vectorLayer
 
-    def setRasterLayer(self, rasterLayer, band = 1):
+    def setRasterLayer(self, rasterLayer, band=1):
         """
         Set raster data to be used in the AdvancedCostCalculator class.
 
@@ -227,23 +231,23 @@ class GraphBuilder:
         random.seed(seed)
         self.graph.setRandomSeed(seed)
 
-        for i in range(self.__randomOptions["numberOfVertices"]):
+        for _ in range(self.__randomOptions["numberOfVertices"]):
             if self.task is not None and self.task.isCanceled():
                 break
             if self.task is not None:
                 self.task.setProgress(self.task.progress() + 10/self.__randomOptions["numberOfVertices"])
             if self.__randomOptions["area"] == "Germany":
-                self.graph.addVertex(QgsPointXY(random.uniform(6.803,13.480), random.uniform(47.420,55.000)))
+                self.graph.addVertex(QgsPointXY(random.uniform(6.803, 13.480), random.uniform(47.420, 55.000)))
             elif self.__randomOptions["area"] == "France":
-                self.graph.addVertex(QgsPointXY(random.uniform(-3.163,6.426), random.uniform(43.830,50.055)))
+                self.graph.addVertex(QgsPointXY(random.uniform(-3.163, 6.426), random.uniform(43.830, 50.055)))
             elif self.__randomOptions["area"] == "Osnabrueck":
-                self.graph.addVertex(QgsPointXY(random.uniform(8.01050,8.09776), random.uniform(52.24311,52.30802)))
+                self.graph.addVertex(QgsPointXY(random.uniform(8.01050, 8.09776), random.uniform(52.24311, 52.30802)))
             elif self.__randomOptions["area"] == "United States":
-                self.graph.addVertex(QgsPointXY(random.uniform(-122.892,-74.157), random.uniform(33.725,46.052)))
+                self.graph.addVertex(QgsPointXY(random.uniform(-122.892, -74.157), random.uniform(33.725, 46.052)))
             elif self.__randomOptions["area"] == "Rome":
-                self.graph.addVertex(QgsPointXY(random.uniform(12.40009,12.57946), random.uniform(41.83013,41.97905)))
+                self.graph.addVertex(QgsPointXY(random.uniform(12.40009, 12.57946), random.uniform(41.83013, 41.97905)))
             elif self.__randomOptions["area"] == "Australia":
-                self.graph.addVertex(QgsPointXY(random.uniform(115.157,150.167), random.uniform(-37.211,-14.210)))
+                self.graph.addVertex(QgsPointXY(random.uniform(115.157, 150.167), random.uniform(-37.211, -14.210)))
             elif isinstance(self.__randomOptions["area"], tuple):
                 rectangleExtent, _ = self.__randomOptions["area"]
                 self.graph.addVertex(QgsPointXY(random.uniform(rectangleExtent.xMinimum(), rectangleExtent.xMaximum()),
@@ -291,8 +295,8 @@ class GraphBuilder:
             theID = feat.id()
             # bucket init
             buckets[theID] = []
-            attrValue = {placeOfID:theID}
-            dp.changeAttributeValues({theID:attrValue})
+            attrValue = {placeOfID: theID}
+            dp.changeAttributeValues({theID: attrValue})
             explodedLinesFieldFetch[theID] = {}
             for field in originalLineLayerFields:
                 explodedLinesFieldFetch[theID][field] = feat[field]
@@ -311,7 +315,7 @@ class GraphBuilder:
             else:
                 crsUnitRead = self.vLayer.crs()
             distConverted = self.__options["distance"][0] *\
-                            QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())
+                QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1], crsUnitRead.mapUnits())
             result = processing.run("native:joinbynearest", {"INPUT": self.vLayer, "INPUT_2": explodedLines,
                                                              "PREFIX": "new_",
                                                              "NEIGHBORS": explodedLines.featureCount(),
@@ -329,8 +333,8 @@ class GraphBuilder:
                 break
             if currFeat["n"] == 1 or currFeat["n"] == 0 or currFeat["n"] == None:
                 # it is possible that there are multiple matches for one vertex
-                graphVertexCounter+=1
-            if currFeat["n"] == None:
+                graphVertexCounter += 1
+            if currFeat["n"] is None:
                 continue
             # uniqueID gives matching to line segment
             buckets[currFeat["new_newUniqueID"]].append((graphVertexCounter, currFeat))
@@ -341,8 +345,7 @@ class GraphBuilder:
                 dictsForOrigVertices[graphVertexCounter] = [explodedLinesFieldFetch[currFeat["new_newUniqueID"]]]
 
         # create edges between the vertices in one bucket
-        for key in buckets.keys():
-            bucket = buckets[key]
+        for key, bucket in buckets.items():
             if len(bucket) == 2:
                 for i in range(len(bucket)-1):
                     if self.__options["createFeatureInfos"]:
@@ -364,7 +367,7 @@ class GraphBuilder:
                     feat = bucket[i][1]
                     geom = feat.geometry()
                     point = geom.asPoint()
-                    dist = math.sqrt(pow(startPoint.x()-point.x(),2) + pow(startPoint.y()-point.y(),2))
+                    dist = math.sqrt(pow(startPoint.x()-point.x(), 2) + pow(startPoint.y()-point.y(), 2))
                     bucket[i] = bucket[i] + (dist,)
 
                 sortedList = sorted(bucket, key=lambda tri: tri[2])
@@ -463,9 +466,9 @@ class GraphBuilder:
                            self.graph.hasEdge(connectedVertices[i], connectedVertices[j]) == -1:
                             if self.__options["createFeatureInfos"]:
                                 combined = attributeDictsForVertices[connectedVertices[i]] +\
-                                           attributeDictsForVertices[connectedVertices[j]]
+                                    attributeDictsForVertices[connectedVertices[j]]
                                 # remove duplicates
-                                toAdd = {frozenset(item.items()) : item for item in combined}.values()
+                                toAdd = {frozenset(item.items()): item for item in combined}.values()
                             else:
                                 toAdd = None
 
@@ -486,7 +489,7 @@ class GraphBuilder:
             v = stack.pop()
             if not visited[v]:
                 visited[v] = True
-                visitedCounter+=1
+                visitedCounter += 1
                 neighborEdges = []
                 neighbors = []
                 for edgeId in graph.vertex(v).incomingEdges():
@@ -518,7 +521,10 @@ class GraphBuilder:
                             thePoint = self.graph.vertex(entry[0]).point()
                             for entry2 in buckets[graph.edge(usedEdges[v]).feature.id()]:
                                 thePoint2 = self.graph.vertex(entry2[0]).point()
-                                dist = math.sqrt(pow(thePoint.x()-thePoint2.x(),2) + pow(thePoint.y()-thePoint2.y(),2))
+                                dist = math.sqrt(
+                                    pow(thePoint.x() - thePoint2.x(),
+                                        2) + pow(thePoint.y() - thePoint2.y(),
+                                                 2))
                                 if dist < minDist:
                                     minDist = dist
                                     nearestV1 = entry[0]
@@ -545,7 +551,7 @@ class GraphBuilder:
         """
         for i in range(self.graph.vertexCount()-1):
             if self.task is not None and self.task.isCanceled():
-                    return
+                return
             if self.task is not None:
                 if self.__options["distanceStrategy"] == "Advanced":
                     newProgress = self.task.progress() + 20/self.graph.vertexCount()
@@ -572,10 +578,10 @@ class GraphBuilder:
 
             for j in range(i+1, self.graph.vertexCount()):
                 if self.__options["edgeDirection"] == "Directed":
-                    notUsedVertexPairs.append((i,j))
-                    notUsedVertexPairs.append((j,i))
+                    notUsedVertexPairs.append((i, j))
+                    notUsedVertexPairs.append((j, i))
                 else:
-                    notUsedVertexPairs.append((i,j))
+                    notUsedVertexPairs.append((i, j))
 
         for i in range(self.__options["randomConnectionNumber"]):
             if len(notUsedVertexPairs) == 0:
@@ -594,7 +600,7 @@ class GraphBuilder:
         points = []
         for i in range(self.graph.vertexCount()):
             point = self.graph.vertex(i).point()
-            points.append([point.x(),point.y(),i])
+            points.append([point.x(), point.y(), i])
 
         self.kdTree = kdtree.create(points)
 
@@ -609,42 +615,43 @@ class GraphBuilder:
                 return
             if self.task is not None:
                 if self.__options["distanceStrategy"] == "Advanced":
-                    newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                    _newProgress = self.task.progress() + 20/self.graph.vertexCount()
                 else:
-                    newProgress = self.task.progress() + 90/self.graph.vertexCount()
+                    _newProgress = self.task.progress() + 90/self.graph.vertexCount()
 
             point = self.graph.vertex(i).point()
 
             if self.__options["connectionType"] == "Nearest neighbor":
                 if self.__options["edgeDirection"] == "Directed":
-                    listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],self.__options["neighborNumber"]+1)
+                    listOfNeighbors = self.kdTree.search_knn(
+                        [point.x(), point.y(), i], self.__options["neighborNumber"]+1)
                 else:
                     if len(self.graph.mVertices[i].mIncomingEdges) < self.__options["neighborNumber"]:
-                        listOfNeighbors = self.kdTree.search_knn([point.x(),point.y(),i],
-                                                                  self.__options["neighborNumber"]+1-\
-                                                                  len(self.graph.mVertices[i].mIncomingEdges))
+                        listOfNeighbors = self.kdTree.search_knn([point.x(), point.y(), i],
+                                                                 self.__options["neighborNumber"]+1 -
+                                                                 len(self.graph.mVertices[i].mIncomingEdges))
                     else:
                         listOfNeighbors = []
             elif self.__options["connectionType"] == "DistanceNN":
-                    # make distance transformation
-                    transDistValue = self.__options["distance"][0] *\
-                                     QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1],
-                                                                      crsUnitRead.mapUnits())
-                    listOfNeighbors = self.kdTree.search_nn_dist([point.x(),point.y(),i], pow(transDistValue,2))
-            for j in range(0,len(listOfNeighbors)):
+                # make distance transformation
+                transDistValue = self.__options["distance"][0] *\
+                    QgsUnitTypes.fromUnitToUnitFactor(self.__options["distance"][1],
+                                                      crsUnitRead.mapUnits())
+                listOfNeighbors = self.kdTree.search_nn_dist([point.x(), point.y(), i], pow(transDistValue, 2))
+            for neighbor in listOfNeighbors:
                 if self.__options["connectionType"] == "Nearest neighbor":
-                    neighborPoint = listOfNeighbors[j][0].data
+                    neighborPoint = neighbor[0].data
                 elif self.__options["connectionType"] == "DistanceNN":
-                    neighborPoint = listOfNeighbors[j]
+                    neighborPoint = neighbor
                 if i != neighborPoint[2]:
-                    self.graph.addEdge(i,neighborPoint[2])
+                    self.graph.addEdge(i, neighborPoint[2])
 
                 if self.__options["distanceStrategy"] == "Advanced":
                     self.graph.featureMatchings.append(self.graph.mVertices[neighborPoint[2]].mCoordinates)
 
-            if (self.__options["connectionType"] == "Nearest neighbor" or\
-                self.__options["connectionType"] == "DistanceNN") and self.__options["nnAllowDoubleEdges"] == False:
-                self.kdTree = self.kdTree.remove([point.x(),point.y(),i])
+            if (self.__options["connectionType"] == "Nearest neighbor" or
+                    self.__options["connectionType"] == "DistanceNN") and self.__options["nnAllowDoubleEdges"] == False:
+                self.kdTree = self.kdTree.remove([point.x(), point.y(), i])
 
     def __createCluster(self):
         """
@@ -663,7 +670,7 @@ class GraphBuilder:
                 dpVerticeLayer.addFeature(newFeature)
 
         # change so you only go throw the features ones and store in 2d array
-        result = processing.run("qgis:kmeansclustering", {"INPUT":self.vLayer,
+        result = processing.run("qgis:kmeansclustering", {"INPUT": self.vLayer,
                                                           "CLUSTERS": self.__options["clusterNumber"],
                                                           "OUTPUT": "memory:"})
         self.layerWithClusterIDS = result["OUTPUT"]
@@ -674,53 +681,55 @@ class GraphBuilder:
             for feature in self.layerWithClusterIDS.getFeatures():
                 if feature["CLUSTER_ID"] == cluster:
                     allPointsInCluster.append(featureCounter)
-                featureCounter+=1
+                featureCounter += 1
 
             if self.__options["connectionType"] == "ClusterNN":
                 points = []
-                for i in range(len(allPointsInCluster)):
-                    vertex = self.graph.vertex(allPointsInCluster[i])
+                for pointInCluster in allPointsInCluster:
+                    vertex = self.graph.vertex(pointInCluster)
                     vertex.setClusterID(cluster)
                     point = vertex.point()
-                    points.append([point.x(),point.y(),allPointsInCluster[i]])
+                    points.append([point.x(), point.y(), pointInCluster])
 
                 # build kd tree
                 self.kdTree = kdtree.create(points)
-                count = 0
-                for i in range(len(allPointsInCluster)):
+                for pointInCluster in allPointsInCluster:
                     if self.task is not None:
                         if self.__options["distanceStrategy"] == "Advanced":
-                            newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                            _newProgress = self.task.progress() + 20/self.graph.vertexCount()
                         else:
-                            newProgress = self.task.progress() + 90/self.graph.vertexCount()
+                            _newProgress = self.task.progress() + 90/self.graph.vertexCount()
 
                     if self.task is not None and self.task.isCanceled():
                         return
-                    if len(allPointsInCluster)>1:
-                        vertex = self.graph.vertex(allPointsInCluster[i]).point()
+                    if len(allPointsInCluster) > 1:
+                        vertex = self.graph.vertex(pointInCluster).point()
 
                         if self.__options["edgeDirection"] == "Directed":
-                            nearestPoints = self.kdTree.search_knn([vertex.x(),vertex.y(),
-                                                                    allPointsInCluster[i]],
-                                                                    self.__options["neighborNumber"]+1)
+                            nearestPoints = self.kdTree.search_knn([vertex.x(), vertex.y(),
+                                                                    pointInCluster],
+                                                                   self.__options["neighborNumber"]+1)
                         else:
                             nearestPoints = []
-                            if len(self.graph.vertex(allPointsInCluster[i]).mIncomingEdges) <\
+                            if len(self.graph.vertex(pointInCluster).mIncomingEdges) <\
                                self.__options["neighborNumber"]:
-                                nearestPoints = self.kdTree.search_knn([vertex.x(),vertex.y(), allPointsInCluster[i]],
-                                                        self.__options["neighborNumber"]+1-\
-                                                        (len(self.graph.vertex(allPointsInCluster[i]).mIncomingEdges)))
+                                nearestPoints = self.kdTree.search_knn(
+                                    [vertex.x(),
+                                     vertex.y(),
+                                     pointInCluster],
+                                    self.__options["neighborNumber"] + 1 -
+                                    (len(self.graph.vertex(pointInCluster).mIncomingEdges)))
 
-                        for t in range(1,len(nearestPoints)):
+                        for t in range(1, len(nearestPoints)):
                             neighborPoint = nearestPoints[t][0].data
 
-                            self.graph.addEdge(allPointsInCluster[i],neighborPoint[2])
+                            self.graph.addEdge(pointInCluster, neighborPoint[2])
 
                             if self.__options["distanceStrategy"] == "Advanced":
                                 self.graph.featureMatchings.append(self.graph.mVertices[neighborPoint[2]].mCoordinates)
 
                         if self.__options["nnAllowDoubleEdges"] == False:
-                            self.kdTree = self.kdTree.remove([vertex.x(),vertex.y(), allPointsInCluster[i]])
+                            self.kdTree = self.kdTree.remove([vertex.x(), vertex.y(), pointInCluster])
 
             elif self.__options["connectionType"] == "ClusterComplete":
                 for i in range(len(allPointsInCluster)-1):
@@ -729,16 +738,15 @@ class GraphBuilder:
                         return
                     if self.task is not None:
                         if self.__options["distanceStrategy"] == "Advanced":
-                            newProgress = self.task.progress() + 20/self.graph.vertexCount()
+                            _newProgress = self.task.progress() + 20/self.graph.vertexCount()
                         else:
-                            newProgress = self.task.progress() + 90/self.graph.vertexCount()
-                    for j in range(i+1,len(allPointsInCluster)):
-                         self.graph.addEdge(allPointsInCluster[i],allPointsInCluster[j])
-                         if self.__options["edgeDirection"] == "Directed":
-                             self.graph.addEdge(allPointsInCluster[j], allPointsInCluster[i],)
-                         if self.__options["distanceStrategy"] == "Advanced":
+                            _newProgress = self.task.progress() + 90/self.graph.vertexCount()
+                    for j in range(i+1, len(allPointsInCluster)):
+                        self.graph.addEdge(allPointsInCluster[i], allPointsInCluster[j])
+                        if self.__options["edgeDirection"] == "Directed":
+                            self.graph.addEdge(allPointsInCluster[j], allPointsInCluster[i],)
+                        if self.__options["distanceStrategy"] == "Advanced":
                             self.graph.featureMatchings.append(self.graph.mVertices[allPointsInCluster[j]].mCoordinates)
-
 
     def __createGraphForLineGeometry(self):
         """
@@ -773,7 +781,7 @@ class GraphBuilder:
                     for i in range(len(part)):
                         if part[i].toString() in vertexHash:
                             searchVertex = vertexHash[part[i].toString()]
-                            if i!=0:
+                            if i != 0:
                                 self.graph.addEdge(lastVertexID, searchVertex, feat=feature)
                                 if self.__options["distanceStrategy"] == "Advanced":
                                     self.graph.featureMatchings.append(feature)
@@ -781,7 +789,7 @@ class GraphBuilder:
                         else:
                             addedID = self.graph.addVertex(part[i])
                             vertexHash[part[i].toString()] = addedID
-                            if i!=0:
+                            if i != 0:
                                 self.graph.addEdge(lastVertexID, addedID, feat=feature)
                                 self.graph.featureMatchings.append(feature)
                             lastVertexID = addedID
@@ -822,7 +830,7 @@ class GraphBuilder:
             points = []
             for i in range(self.graph.vertexCount()):
                 point = self.graph.vertex(i).point()
-                points.append([point.x(),point.y(),i])
+                points.append([point.x(), point.y(), i])
 
             # build kd tree
             self.kdTree = kdtree.create(points)
@@ -830,13 +838,13 @@ class GraphBuilder:
             for feature in self.additionalPointLayer.getFeatures():
                 if self.task is not None and self.task.isCanceled():
                     return
-                counter+=1
+                counter += 1
                 geom = feature.geometry()
                 pointID = self.graph.addVertex(geom.asPoint())
 
                 nearestPointID = self.kdTree.search_knn([self.graph.vertex(pointID).point().x(),
                                                          self.graph.vertex(pointID).point().y(), counter],
-                                                         2)[0][0].data[2]
+                                                        2)[0][0].data[2]
                 self.graph.addEdge(pointID, nearestPointID)
 
     def __importAdvancedCosts(self):
@@ -855,7 +863,7 @@ class GraphBuilder:
         get deleted from the graph.
         """
         # create the current edge layer
-        currentEdges = self.createEdgeLayer(False,True)
+        currentEdges = self.createEdgeLayer(False, True)
         # call QGIS tool to extract all the edges which cross the polygon
         result1 = processing.run("native:extractbylocation", {"INPUT": currentEdges, "PREDICATE": 2,
                                                               "INTERSECT": self.forbiddenAreas,
@@ -904,7 +912,7 @@ class GraphBuilder:
             else:
                 graphLayerVertices.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
-        #add the vertices and edges to the layers
+        # add the vertices and edges to the layers
         for i in range(self.graph.vertexCount()):
             if self.task is not None and self.task.isCanceled():
                 return
@@ -912,7 +920,6 @@ class GraphBuilder:
             newFeature.setGeometry(QgsGeometry.fromPointXY(self.graph.vertex(i).point()))
             newFeature.setAttributes([i, self.graph.vertex(i).point().x(), self.graph.vertex(i).point().y()])
             dpVerticeLayer.addFeature(newFeature)
-
 
         if addToCanvas == True:
             QgsProject.instance().addMapLayer(graphLayerVertices)
@@ -931,8 +938,8 @@ class GraphBuilder:
             return
         graphLayerEdges = QgsVectorLayer("LineString", "GraphEdges", "memory")
         dpEdgeLayer = graphLayerEdges.dataProvider()
-        dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("fromVertex",QVariant.Double),
-                                   QgsField("toVertex",QVariant.Double),QgsField("weight", QVariant.Double)])
+        dpEdgeLayer.addAttributes([QgsField("ID", QVariant.Int), QgsField("fromVertex", QVariant.Double),
+                                   QgsField("toVertex", QVariant.Double), QgsField("weight", QVariant.Double)])
         graphLayerEdges.updateFields()
 
         if self.__options["createRandomGraph"] == False:
@@ -959,28 +966,28 @@ class GraphBuilder:
             dpEdgeLayer.addFeature(newFeature)
 
         if addToCanvas == True:
-            layer_settings  = QgsPalLayerSettings()
-            text_format = QgsTextFormat()
+            layerSettings = QgsPalLayerSettings()
+            textFormat = QgsTextFormat()
 
-            text_format.setFont(QFont("Arial", 12))
-            text_format.setSize(12)
+            textFormat.setFont(QFont("Arial", 12))
+            textFormat.setSize(12)
 
-            buffer_settings = QgsTextBufferSettings()
-            buffer_settings.setEnabled(True)
-            buffer_settings.setSize(0.1)
-            buffer_settings.setColor(QColor("black"))
+            bufferSettings = QgsTextBufferSettings()
+            bufferSettings.setEnabled(True)
+            bufferSettings.setSize(0.1)
+            bufferSettings.setColor(QColor("black"))
 
-            text_format.setBuffer(buffer_settings)
-            layer_settings.setFormat(text_format)
+            textFormat.setBuffer(bufferSettings)
+            layerSettings.setFormat(textFormat)
 
-            layer_settings.fieldName = "weight"
-            layer_settings.placement = 2
+            layerSettings.fieldName = "weight"
+            layerSettings.placement = 2
 
-            layer_settings.enabled = True
+            layerSettings.enabled = True
 
-            layer_settings = QgsVectorLayerSimpleLabeling(layer_settings)
+            layerSettings = QgsVectorLayerSimpleLabeling(layerSettings)
             graphLayerEdges.setLabelsEnabled(True)
-            graphLayerEdges.setLabeling(layer_settings)
+            graphLayerEdges.setLabeling(layerSettings)
             graphLayerEdges.triggerRepaint()
             QgsProject.instance().addMapLayer(graphLayerEdges)
 
@@ -1018,12 +1025,12 @@ class GraphBuilder:
     def getNearestVertex(self, vertexIndex):
         vertex = self.graph.vertex(vertexIndex).point()
         currentVertex = self.graph.vertex(0).point()
-        shortestDist = math.sqrt(pow(vertex.x()-currentVertex.x(),2) + pow(vertex.y()-currentVertex.y(),2))
+        shortestDist = math.sqrt(pow(vertex.x()-currentVertex.x(), 2) + pow(vertex.y()-currentVertex.y(), 2))
         shortestIndex = []
         for v in range(self.graph.vertexCount()):
             if v != vertexIndex:
                 currentVertex = self.graph.vertex(v).point()
-                currentDist = math.sqrt(pow(vertex.x()-currentVertex.x(),2) + pow(vertex.y()-currentVertex.y(),2))
+                currentDist = math.sqrt(pow(vertex.x()-currentVertex.x(), 2) + pow(vertex.y()-currentVertex.y(), 2))
                 if currentDist < shortestDist:
                     shortestDist = currentDist
                     shortestIndex = v
@@ -1040,7 +1047,7 @@ class GraphBuilder:
             raise TypeError("Not a point geometry")
         for feat in vertexLayer.getFeatures():
             geom = feat.geometry()
-            self.graph.addVertexWithEdges([geom.asPoint().x(),geom.asPoint().y()])
+            self.graph.addVertexWithEdges([geom.asPoint().x(), geom.asPoint().y()])
 
     def getGraph(self):
         return self.graph
@@ -1065,8 +1072,8 @@ class GraphBuilder:
         self.graph.setDistanceStrategy(self.__options["distanceStrategy"])
         self.graph.setConnectionType(self.__options["connectionType"])
         self.graph.setGraphBuilderInformation(self.__options["neighborNumber"], self.__options["edgeDirection"],
-                                            self.__options["clusterNumber"], self.__options["nnAllowDoubleEdges"],
-                                            self.__options["distance"])
+                                              self.__options["clusterNumber"], self.__options["nnAllowDoubleEdges"],
+                                              self.__options["distance"])
 
         if self.__options["createRandomGraph"] == True:
             self.__createRandomVertices()
@@ -1081,10 +1088,10 @@ class GraphBuilder:
             if self.__options["connectionType"] == "Complete":
                 self.__createComplete()
             elif self.__options["connectionType"] == "Nearest neighbor" or\
-                 self.__options["connectionType"] == "DistanceNN":
+                    self.__options["connectionType"] == "DistanceNN":
                 self.__createNearestNeighbor()
             elif self.__options["connectionType"] == "ClusterComplete" or\
-                 self.__options["connectionType"] == "ClusterNN":
+                    self.__options["connectionType"] == "ClusterNN":
                 self.__createCluster()
             elif self.__options["connectionType"] == "Random":
                 self.__createRandomConnections()
@@ -1105,7 +1112,7 @@ class GraphBuilder:
             self.__removeIntersectingEdges()
 
         # call AdvancedCostCalculations methods
-        if self.__options["distanceStrategy"] == "Advanced" and not (hasattr(self, "advancedImport") and\
+        if self.__options["distanceStrategy"] == "Advanced" and not (hasattr(self, "advancedImport") and
            not self.advancedImport):
             # create AdvancedCostCalculator object with the necessary parameters
             costCalculator = AdvancedCostCalculator(self.rLayers, self.vLayer, self.graph, self.polygonsForCostFunction,

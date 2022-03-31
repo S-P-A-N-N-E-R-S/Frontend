@@ -16,11 +16,9 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from .baseView import BaseView
-from .widgets.costFunctionDialog import CostFunctionDialog
-from ..controllers.graph import GraphController
-from ..helperFunctions import getVectorFileFilter, hasAStarC
-from ..models.ExtGraph import ExtGraph
+import os
+import re
+import time
 
 from qgis.core import QgsMapLayerProxyModel, QgsTask, QgsUnitTypes, QgsVectorLayer, QgsWkbTypes, QgsApplication
 from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox, QgsProjectionSelectionWidget
@@ -28,9 +26,13 @@ from qgis.utils import iface
 
 from PyQt5.QtCore import QTimer, Qt, QSize, QRegExp
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QPushButton, QHBoxLayout, QSizePolicy, QLineEdit, QToolButton
-from PyQt5.QtGui import QIcon, QRegExpValidator
+from PyQt5.QtGui import QRegExpValidator
 
-import time, os, re
+from .baseView import BaseView
+from .widgets.costFunctionDialog import CostFunctionDialog
+from ..controllers.graph import GraphController
+from ..helperFunctions import getVectorFileFilter, hasAStarC
+from ..models.extGraph import ExtGraph
 
 
 class GraphView(BaseView):
@@ -129,7 +131,8 @@ class GraphView(BaseView):
         # set up random extent
         self.addRandomArea(self.tr("Custom"), "custom area")
         self.dialog.create_graph_randomarea_extent.setMapCanvas(iface.mapCanvas())
-        self.dialog.create_graph_randomarea_extent.toggleDialogVisibility.connect(lambda visible: self.setMinimized(not visible))
+        self.dialog.create_graph_randomarea_extent.toggleDialogVisibility.connect(
+            lambda visible: self.setMinimized(not visible))
         self.dialog.create_graph_randomarea_input.currentIndexChanged.connect(self._randomAreaChanged)
 
         # set up controller
@@ -148,7 +151,7 @@ class GraphView(BaseView):
         :return:
         """
         inputText = self.dialog.create_graph_input.currentText()
-        root, ext = os.path.splitext(inputText)
+        _root, ext = os.path.splitext(inputText)
         # show only crs input and hide other params if graph file is selected and not random
         self.dialog.create_graph_advanced_parameters_groupbox.setHidden(ext == ".graphml" and not self.isRandom())
         self.dialog.create_graph_crs_label.setVisible(ext == ".graphml" and not self.isRandom())
@@ -227,7 +230,8 @@ class GraphView(BaseView):
         self.dialog.create_graph_nearest_neighbor_widget.setEnabled(connectionType in ["Nearest neighbor", "ClusterNN",
                                                                                        "DistanceNN"])
         self.dialog.create_graph_numberneighbor_input.setEnabled(connectionType != "DistanceNN")
-        self.dialog.create_graph_distance_widget.setEnabled(connectionType == "DistanceNN" or connectionType == "LineLayerBased")
+        self.dialog.create_graph_distance_widget.setEnabled(
+            connectionType == "DistanceNN" or connectionType == "LineLayerBased")
         self.dialog.create_graph_clusternumber_input.setEnabled(connectionType in ["ClusterComplete", "ClusterNN"])
         self.dialog.create_graph_randomnumber_input.setEnabled(connectionType == "Random")
         self.dialog.create_graph_line_layer_input.setEnabled(connectionType == "LineLayerBased")
@@ -250,7 +254,7 @@ class GraphView(BaseView):
         :return:
         """
         shortPathFound = False
-        regex = re.compile("raster\[[0-9]+\]:sp")
+        regex = re.compile(r"raster\[[0-9]+\]:sp")
         for costFunction in self.getCostFunctions():
             if regex.search(costFunction):
                 shortPathFound = True
@@ -282,10 +286,12 @@ class GraphView(BaseView):
         :return:
         """
         #  change add button to remove button
-        lastLayout = self.dialog.create_graph_rasterdata_widget.layout().itemAt(self.dialog.create_graph_rasterdata_widget.layout().count()-1)
+        lastLayout = self.dialog.create_graph_rasterdata_widget.layout().itemAt(
+            self.dialog.create_graph_rasterdata_widget.layout().count() - 1)
         button = lastLayout.itemAt(lastLayout.count()-1).widget()
         self._toRemoveButton(button, self.tr("Remove raster input"))
-        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_rasterdata_widget, lastLayout))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(
+            self.dialog.create_graph_rasterdata_widget, lastLayout))
 
         layerComboBox = QgsMapLayerComboBox()
         layerComboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -316,10 +322,12 @@ class GraphView(BaseView):
         :return:
         """
         #  change add button to remove button
-        lastLayout = self.dialog.create_graph_polycost_widget.layout().itemAt(self.dialog.create_graph_polycost_widget.layout().count() - 1)
+        lastLayout = self.dialog.create_graph_polycost_widget.layout().itemAt(
+            self.dialog.create_graph_polycost_widget.layout().count() - 1)
         button = lastLayout.itemAt(lastLayout.count() - 1).widget()
         self._toRemoveButton(button, self.tr("Remove polygon input"))
-        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_polycost_widget, lastLayout))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(
+            self.dialog.create_graph_polycost_widget, lastLayout))
 
         layerComboBox = QgsMapLayerComboBox()
         layerComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
@@ -347,7 +355,8 @@ class GraphView(BaseView):
         lastLayout = costFunctionWidget.layout().itemAt(costFunctionWidget.layout().count() - 1)
         button = lastLayout.itemAt(lastLayout.count() - 1).widget()
         self._toRemoveButton(button, self.tr("Remove cost function"))
-        button.clicked.connect(lambda: self._removeLayoutFromWidget(self.dialog.create_graph_costfunction_widget, lastLayout))
+        button.clicked.connect(lambda: self._removeLayoutFromWidget(
+            self.dialog.create_graph_costfunction_widget, lastLayout))
 
         costLineEdit = QLineEdit()
         costLineEdit.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
@@ -408,7 +417,7 @@ class GraphView(BaseView):
         QTimer.singleShot(1000, lambda: self.dialog.create_graph_create_btn.setEnabled(True))
 
     def _randomAreaChanged(self):
-        area, userdata = self.getRandomArea()
+        _area, userdata = self.getRandomArea()
         if userdata == "custom area":
             self.dialog.create_graph_randomarea_extent.setDisabled(False)
         else:
@@ -431,7 +440,7 @@ class GraphView(BaseView):
 
             # assumed that only one additional item is inserted
             path = self.dialog.create_graph_input.additionalItems()[0]
-            name, ext = os.path.splitext(os.path.basename(path))
+            _name, ext = os.path.splitext(os.path.basename(path))
             if ext != ".graphml":
                 return True
             else:
@@ -463,7 +472,7 @@ class GraphView(BaseView):
         # assumed that only one additional item is inserted
         if self.hasInput() and not self.isInputLayer():
             path = self.dialog.create_graph_input.additionalItems()[0]
-            name, ext = os.path.splitext(os.path.basename(path))
+            _name, ext = os.path.splitext(os.path.basename(path))
             if ext == ".graphml":
                 graph = ExtGraph()
                 graph.readGraphML(path)
@@ -504,8 +513,8 @@ class GraphView(BaseView):
             # return map extent if no extent is selected
             return iface.mapCanvas().extent(), iface.mapCanvas().mapSettings().destinationCrs()
 
-    def addConnectionType(self, type, userData=None):
-        self.dialog.create_graph_connectiontype_input.addItem(type, userData)
+    def addConnectionType(self, connectionType, userData=None):
+        self.dialog.create_graph_connectiontype_input.addItem(connectionType, userData)
 
     def getConnectionType(self):
         return self.dialog.create_graph_connectiontype_input.currentText(), self.dialog.create_graph_connectiontype_input.currentData()
@@ -648,7 +657,7 @@ class GraphView(BaseView):
         taskIdItem = QTableWidgetItem(str(taskId))
         descriptionItem = QTableWidgetItem(task.description())
         statusItem = QTableWidgetItem(self.__getTaskStatus(task.status()))
-        progressItem = QTableWidgetItem(str(round(task.progress(),2)) + "%")
+        progressItem = QTableWidgetItem(str(round(task.progress(), 2)) + "%")
         self.dialog.graph_tasks_table.setItem(row, 0, taskIdItem)
         self.dialog.graph_tasks_table.setItem(row, 1, descriptionItem)
         self.dialog.graph_tasks_table.setItem(row, 2, progressItem)
@@ -670,8 +679,8 @@ class GraphView(BaseView):
         self.dialog.graph_tasks_table.clearContents()
         self.dialog.graph_tasks_table.setRowCount(len(tasks))
         row = 0
-        for tuple in tasks:
-            task, taskId = tuple
+        for taskTuple in tasks:
+            task, taskId = taskTuple
             self.__setTableRow(row, task, taskId)
             row += 1
 

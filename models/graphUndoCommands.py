@@ -21,6 +21,7 @@ from qgis.utils import iface
 
 from qgis.PyQt.QtWidgets import QUndoCommand
 
+
 class ExtVertexUndoCommand(QUndoCommand):
     def __init__(self, layerId, vertexId, oldPoint, operation, newPoint=None):
         """
@@ -76,7 +77,7 @@ class ExtVertexUndoCommand(QUndoCommand):
             else:
                 childCommand.undo()
 
-        iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " +\
+        iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " +
                                        str(self.childCount()) + " edges!", level=Qgis.Success, duration=1)
 
     def _deleteVertex(self, fromWithEdges=False):
@@ -103,7 +104,7 @@ class ExtVertexUndoCommand(QUndoCommand):
                 else:
                     childCommand.redo()
 
-        iface.messageBar().pushMessage("Success", "Deleted vertex " + str(delVertID) + " and " +\
+        iface.messageBar().pushMessage("Success", "Deleted vertex " + str(delVertID) + " and " +
                                        str(len(deletedEdges)) + " edges!", level=Qgis.Success, duration=1)
 
     def _addVertexWithEdges(self):
@@ -121,7 +122,7 @@ class ExtVertexUndoCommand(QUndoCommand):
                     edgeUndoCommand = ExtEdgeUndoCommand(self.mLayer.id(), edgeId, fromID, toID, False, self)
                     edgeUndoCommand.redo()
 
-            iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " +\
+            iface.messageBar().pushMessage("Success", "Added vertex " + str(self.mVertexID) + " and " +
                                            str(self.childCount()) + " edges!", level=Qgis.Success, duration=1)
         else:
             self._addVertex(True)
@@ -165,8 +166,9 @@ class ExtVertexUndoCommand(QUndoCommand):
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
 
-    def mergeWith(self, command):
+    def mergeWith(self, _command):
         return False
+
 
 class ExtEdgeUndoCommand(QUndoCommand):
     def __init__(self, layerId, edgeId, fromVertexID, toVertexID, deleted=True, parentCommand=None):
@@ -213,9 +215,9 @@ class ExtEdgeUndoCommand(QUndoCommand):
             self.redoString = "Delete" if self.mDeleted else "Readd"
             self.undoString = "Readd" if self.mDeleted else "Delete"
 
-            self.redoString += " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +\
+            self.redoString += " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) + ", " +\
                                str(self.mToVertexID) + ")"
-            self.undoString += " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) +  ", " +\
+            self.undoString += " edge " + str(self.mEdgeID) + " = (" + str(self.mFromVertexID) + ", " +\
                                str(self.mToVertexID) + ")"
 
             self.setText(self.undoString)
@@ -261,21 +263,21 @@ class ExtEdgeUndoCommand(QUndoCommand):
         :type newCosts: Float[]
         """
         self.mNewCosts = []
-        for i in range(len(newCosts)):
-            self.mNewCosts.append(newCosts[i])
+        for newCost in newCosts:
+            self.mNewCosts.append(newCost)
         self.mCostsChanged = True
 
-    def setDeletedVertex(self, id):
+    def setDeletedVertex(self, vertexId):
         if self.mFromVertexID == -1:
-            self.mFromVertexID = id
+            self.mFromVertexID = vertexId
 
         elif self.mToVertexID == -1:
-            self.mToVertexID = id
+            self.mToVertexID = vertexId
 
         self.redoString = "Delete" if self.mDeleted else "Readd" + " edge " + str(self.mEdgeID) + " = (" +\
                           str(self.mFromVertexID) + ", " + str(self.mToVertexID) + ")"
         self.undoString = "Readd" if self.mDeleted else "Delete" + " edge " + str(self.mEdgeID) + " = (" +\
-                          str(self.mFromVertexID) +  ", " +  str(self.mToVertexID) + ")"
+                          str(self.mFromVertexID) + ", " + str(self.mToVertexID) + ")"
 
         self.setText(self.undoString)
 
@@ -323,5 +325,5 @@ class ExtEdgeUndoCommand(QUndoCommand):
         self.mLayer.triggerRepaint()
         iface.mapCanvas().refresh()
 
-    def mergeWith(self, command):
+    def mergeWith(self, _command):
         return False

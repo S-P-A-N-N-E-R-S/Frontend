@@ -19,8 +19,8 @@
 from qgis.testing import unittest, start_app, TestCase
 from qgis.core import QgsPointXY, QgsCoordinateReferenceSystem
 
-from ..models.ExtGraph import ExtGraph
-from ..models.GraphBuilder import GraphBuilder
+from ..models.extGraph import ExtGraph
+from ..models.graphBuilder import GraphBuilder
 from ..helperFunctions import getPluginPath
 
 import os
@@ -97,9 +97,9 @@ class TestExtGraph(TestCase):
         thirdVertex = self.graph.vertex(thirdVertexId)
         fourthVertex = self.graph.vertex(fourthVertexId)
 
-        firstEdgeId = self.graph.addEdge(firstVertexId, secondVertexId, ID=4)
-        secondEdgeId = self.graph.addEdge(thirdVertexId, fourthVertexId, ID=3)
-        thirdEdgeId = self.graph.addEdge(secondVertexId, thirdVertexId, ID=5)
+        firstEdgeId = self.graph.addEdge(firstVertexId, secondVertexId, addedEdgeID=4)
+        secondEdgeId = self.graph.addEdge(thirdVertexId, fourthVertexId, addedEdgeID=3)
+        thirdEdgeId = self.graph.addEdge(secondVertexId, thirdVertexId, addedEdgeID=5)
 
         self.assertEqual(3, self.graph.edgeCount())
         self.assertEqual(thirdEdgeId, self.graph.hasEdge(secondVertexId, thirdVertexId))
@@ -238,10 +238,10 @@ class TestExtGraph(TestCase):
         self.assertEqual(math.sqrt(2), self.graph.distanceP2P(firstVertexId, secondVertexId))
 
     def test_findVertexByID(self):
-        firstVertexId = self.graph.addVertex(QgsPointXY(1.0, 1.0), ID=12)
-        secondVertexId = self.graph.addVertex(QgsPointXY(0.0, 0.0), ID=4)
-        thirdVertexId = self.graph.addVertex(QgsPointXY(0.0, 1.0), ID=9)
-        fourthVertexId = self.graph.addVertex(QgsPointXY(1.0, 0.0), ID=0)
+        firstVertexId = self.graph.addVertex(QgsPointXY(1.0, 1.0), addedVertexID=12)
+        secondVertexId = self.graph.addVertex(QgsPointXY(0.0, 0.0), addedVertexID=4)
+        thirdVertexId = self.graph.addVertex(QgsPointXY(0.0, 1.0), addedVertexID=9)
+        fourthVertexId = self.graph.addVertex(QgsPointXY(1.0, 0.0), addedVertexID=0)
 
         self.assertEqual(firstVertexId, 12)
         self.assertEqual(secondVertexId, 4)

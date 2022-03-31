@@ -19,7 +19,7 @@
 
 from ..exceptions import ParseError
 from ..fields import graphField, baseField
-from ...models.ExtGraph import ExtGraph
+from ...models.extGraph import ExtGraph
 
 from ..protocol.build import generic_container_pb2, available_handlers_pb2, meta_pb2
 

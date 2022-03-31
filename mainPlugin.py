@@ -16,22 +16,22 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
-from qgis.PyQt.QtGui import *
-from qgis.PyQt.QtWidgets import *
-from qgis.PyQt.QtXml import *
-from qgis.PyQt.QtCore import *
+import os
+import string
+import random
 
-from qgis.core import *
-from qgis.gui import *
-from qgis.analysis import *
-from qgis.utils import *
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QMenu, QToolButton, QToolBar
+from qgis.PyQt.QtXml import QDomDocument
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+
+from qgis.core import QgsProject, QgsApplication, QgsProviderRegistry, QgsProviderMetadata, QgsZipUtils
+from qgis.utils import iface
 
 from .views.pluginDialog import PluginDialog
 from .helperFunctions import getImagePath
 
-from .models.GraphLayer import GraphLayer, GraphLayerType, GraphDataProvider
-
-import os, string, random
+from .models.graphLayer import GraphLayer, GraphLayerType, GraphDataProvider
 
 
 class SPANNERSPlugin:
@@ -42,27 +42,27 @@ class SPANNERSPlugin:
     analyses on the created graphs.
     """
 
-    def __init__(self, iface):
+    def __init__(self, interface):
         """
         Constructor
-        :type iface: QgisInterface
+        :type interface: QgisInterface
         """
-        self.iface = iface
+        self.iface = interface
         self.dialog = None
 
         # initialize plugin directory
-        self.plugin_dir = os.path.dirname(__file__)
+        self.pluginDir = os.path.dirname(__file__)
 
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir,
+        localePath = os.path.join(
+            self.pluginDir,
             'i18n',
             '{}.qm'.format(locale))
 
-        if os.path.exists(locale_path):
+        if os.path.exists(localePath):
             self.translator = QTranslator()
-            self.translator.load(locale_path)
+            self.translator.load(localePath)
             QCoreApplication.installTranslator(self.translator)
 
         QgsProject.instance().layersWillBeRemoved.connect(self.deleteLayers)
@@ -85,37 +85,40 @@ class SPANNERSPlugin:
 
     def initActions(self):
         self.resourceAction = QAction(self.tr("Create from resource"), self.iface.mainWindow())
-        self.resourceAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ResourceView))
+        self.resourceAction.triggered.connect(lambda: self.openView(PluginDialog.Views.RESOURCE_VIEW))
         self.resourceAction.setWhatsThis(self.tr("Create from resource"))
         self.resourceAction.setStatusTip(self.tr("Create from resource"))
 
         self.graphAction = QAction(self.tr("Create graph"), self.iface.mainWindow())
-        self.graphAction.triggered.connect(lambda: self.openView(PluginDialog.Views.GraphView))
+        self.graphAction.triggered.connect(lambda: self.openView(PluginDialog.Views.GRAPH_VIEW))
         self.graphAction.setWhatsThis(self.tr("Create graph"))
         self.graphAction.setStatusTip(self.tr("Create graph"))
 
         self.ogdfAnalysisAction = QAction(self.tr("OGDF analysis"), self.iface.mainWindow())
-        self.ogdfAnalysisAction.triggered.connect(lambda: self.openView(PluginDialog.Views.OGDFAnalysisView))
+        self.ogdfAnalysisAction.triggered.connect(lambda: self.openView(PluginDialog.Views.OGDF_ANALYSIS_VIEW))
         self.ogdfAnalysisAction.setWhatsThis(self.tr("OGDF analysis"))
         self.ogdfAnalysisAction.setStatusTip(self.tr("OGDF analysis"))
 
         self.benchmarksAction = QAction(self.tr("Benchmarks"), self.iface.mainWindow())
-        self.benchmarksAction.triggered.connect(lambda: self.openView(PluginDialog.Views.BenchmarkView))
+        self.benchmarksAction.triggered.connect(lambda: self.openView(PluginDialog.Views.BENCHMARK_VIEW))
         self.benchmarksAction.setWhatsThis(self.tr("Benchmarks"))
         self.benchmarksAction.setStatusTip(self.tr("Benchmarks"))
 
         self.ogdfJobsAction = QAction(self.tr("OGDF jobs"), self.iface.mainWindow())
-        self.ogdfJobsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.JobsView))
+        self.ogdfJobsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.JOBS_VIEW))
         self.ogdfJobsAction.setWhatsThis(self.tr("OGDF jobs"))
         self.ogdfJobsAction.setStatusTip(self.tr("OGDF jobs"))
 
         self.optionsAction = QAction(self.tr("Options"), self.iface.mainWindow())
-        self.optionsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.OptionsView))
+        self.optionsAction.triggered.connect(lambda: self.openView(PluginDialog.Views.OPTIONS_VIEW))
         self.optionsAction.setWhatsThis(self.tr("Options"))
         self.optionsAction.setStatusTip(self.tr("Options"))
 
-        self.defaultAction = QAction(QIcon(getImagePath("icon.svg")), self.tr("Create from resource"), self.iface.mainWindow())
-        self.defaultAction.triggered.connect(lambda: self.openView(PluginDialog.Views.ResourceView))
+        self.defaultAction = QAction(
+            QIcon(getImagePath("icon.svg")),
+            self.tr("Create from resource"),
+            self.iface.mainWindow())
+        self.defaultAction.triggered.connect(lambda: self.openView(PluginDialog.Views.RESOURCE_VIEW))
         self.defaultAction.setWhatsThis(self.tr("Create from resource"))
         self.defaultAction.setStatusTip(self.tr("Create from resource"))
 
@@ -141,8 +144,8 @@ class SPANNERSPlugin:
         self.toolBarAction = self.iface.addToolBarWidget(self.toolBarButton)
 
         # create menu entry
-        plugin_menu = self.iface.pluginMenu()
-        plugin_menu.addMenu(menu)
+        pluginMenu = self.iface.pluginMenu()
+        pluginMenu.addMenu(menu)
 
         # create toolbar entries for edit options if not already existing
         self.graphToolbar = None
@@ -180,7 +183,9 @@ class SPANNERSPlugin:
         self.deleteVertexAction.setEnabled(False)
         self.graphToolbar.addAction(self.deleteVertexAction)
 
-        self.addVertexWithEdgesAction = QAction(QIcon(getImagePath("Add_Vertex_With_Edges_Icon.svg")), self.tr("Add Vertex With Edges"))
+        self.addVertexWithEdgesAction = QAction(
+            QIcon(getImagePath("Add_Vertex_With_Edges_Icon.svg")),
+            self.tr("Add Vertex With Edges"))
         self.addVertexWithEdgesAction.setToolTip(self.tr("Add Vertex With Edges"))
         self.addVertexWithEdgesAction.setWhatsThis("Add Vertex With Edges")
         self.addVertexWithEdgesAction.setEnabled(False)
@@ -243,8 +248,8 @@ class SPANNERSPlugin:
         del self.graphToolbar
 
         # remove menu entry
-        plugin_menu = self.iface.pluginMenu()
-        plugin_menu.removeAction(self.menuAction)
+        pluginMenu = self.iface.pluginMenu()
+        pluginMenu.removeAction(self.menuAction)
 
         QgsApplication.pluginLayerRegistry().removePluginLayerType(GraphLayer.LAYER_TYPE)
         QgsProject.instance().layersWillBeRemoved.disconnect(self.deleteLayers)
@@ -264,7 +269,8 @@ class SPANNERSPlugin:
             readFileName = QgsProject.instance().absoluteFilePath()
         else:
             # temporarily unzip qgz to qgs
-            directory = QgsProject.instance().absolutePath() + "/" + QgsProject.instance().baseName() + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+            directory = QgsProject.instance().absolutePath(
+            ) + "/" + QgsProject.instance().baseName() + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
             if not os.path.exists(directory):
                 os.makedirs(directory)
             QgsZipUtils.unzip(QgsProject.instance().absoluteFilePath(), directory)
@@ -302,8 +308,8 @@ class SPANNERSPlugin:
             self.currentLayer = None
 
     def deleteLayers(self, layers):
-        for l in layers:
-            delLayer = QgsProject.instance().mapLayer(l)
+        for layer in layers:
+            delLayer = QgsProject.instance().mapLayer(layer)
             del delLayer
 
     def __layerChanged(self, layer):
@@ -315,7 +321,7 @@ class SPANNERSPlugin:
         if hasattr(self, "currentLayer") and self.currentLayer and self.currentLayer.isEditing:
             self.currentLayer.toggleEdit()
 
-        if not layer == None:
+        if not layer is None:
             if hasattr(layer, "LAYER_TYPE") and layer.LAYER_TYPE == "graph":
                 # only keep track of current GraphLayers
                 self.currentLayer = layer

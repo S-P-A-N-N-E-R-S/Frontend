@@ -41,7 +41,7 @@ class BenchmarkView(BaseView):
         addButton.setMaximumSize(25, 25)
         addButton.setIcon(QgsApplication.getThemeIcon("symbologyAdd.svg"))
         addButton.clicked.connect(self._newBenchmarkSelection)
-        self.dialog.analysis_visualisation.layout().addWidget(addButton, *(0,2))
+        self.dialog.analysis_visualisation.layout().addWidget(addButton, *(0, 2))
 
         self._createNewBenchmarkSelections(True)
 
@@ -87,21 +87,20 @@ class BenchmarkView(BaseView):
         """
         return self.ogdfBenchmarkWidget
 
-    def _createNewBenchmarkSelections(self, initial = False):
+    def _createNewBenchmarkSelections(self, initial=False):
         # delete all widgets
         copy = self.benchmarkAnalysisCounter
         for i in reversed(range(1, copy+1)):
             self._clearOneBenchmarkSelection(i, initial)
         # create the same amount of updated widgets
-        for i in range(1,copy+1):
+        for i in range(1, copy+1):
             self._newBenchmarkSelection()
 
     def _newBenchmarkSelection(self):
-        self.benchmarkAnalysisCounter+=1
+        self.benchmarkAnalysisCounter += 1
         tabBenchmarkWidget = QTabWidget()
 
-
-        self.dialog.analysis_visualisation.layout().addWidget(tabBenchmarkWidget,*(self.benchmarkAnalysisCounter,0))
+        self.dialog.analysis_visualisation.layout().addWidget(tabBenchmarkWidget, *(self.benchmarkAnalysisCounter, 0))
 
         ogdfAlgs = self.getSelectedAlgs()
         requests = []
@@ -113,10 +112,9 @@ class BenchmarkView(BaseView):
                 requests.append(request.getFieldInfo())
 
         itemsToAdd = ["Graphs", "Graph Edges", "Graph Vertices", "Graph Densities", "Graph Min Fragility",
-                     "Graph Max Fragility", "Graph Avg Fragility", "Graph Diameter", "Graph Radius",
-                     "Graph Girth (unit weights)", "Graph Girth", "Graph Node Connectivity",
-                     "Graph Edge Connectivity", "Graph Reciprocity", "Algorithms"]
-
+                      "Graph Max Fragility", "Graph Avg Fragility", "Graph Diameter", "Graph Radius",
+                      "Graph Girth (unit weights)", "Graph Girth", "Graph Node Connectivity",
+                      "Graph Edge Connectivity", "Graph Reciprocity", "Algorithms"]
 
         colorCat = QListWidget()
         colorCat.setMinimumSize(380, 192)
@@ -149,9 +147,9 @@ class BenchmarkView(BaseView):
 
         # visualization widget
         listWidgetVisualisation = QListWidget()
-        listWidgetVisualisation.setMinimumSize(380,192)
-        listWidgetVisualisation.setObjectName("visualisation_"+ str(self.benchmarkAnalysisCounter))
-        self.dialog.analysis_visualisation.layout().addWidget(listWidgetVisualisation,*(self.benchmarkAnalysisCounter,1))
+        listWidgetVisualisation.setMinimumSize(380, 192)
+        listWidgetVisualisation.setObjectName("visualisation_" + str(self.benchmarkAnalysisCounter))
+        self.dialog.analysis_visualisation.layout().addWidget(listWidgetVisualisation, *(self.benchmarkAnalysisCounter, 1))
 
         # fill widget
         itemsToAdd = ["Points without connection", "Points with connection", "Bar chart", "Lines", "Box plot"]
@@ -170,7 +168,7 @@ class BenchmarkView(BaseView):
         removeButton.setMaximumSize(25, 25)
         removeButton.setIcon(QgsApplication.getThemeIcon("symbologyRemove.svg"))
         removeButton.clicked.connect(lambda: self._clearOneBenchmarkSelection(self.benchmarkAnalysisCounter))
-        self.dialog.analysis_visualisation.layout().addWidget(removeButton, *(self.benchmarkAnalysisCounter,2))
+        self.dialog.analysis_visualisation.layout().addWidget(removeButton, *(self.benchmarkAnalysisCounter, 2))
 
     def _addParameterFields(self, widget, requests):
         """
@@ -200,8 +198,8 @@ class BenchmarkView(BaseView):
         widget.addItem(item)
         widget.setItemWidget(item, QRadioButton(itemName))
 
-    def _clearOneBenchmarkSelection(self, row, initial = False):
-        self.benchmarkAnalysisCounter-=1
+    def _clearOneBenchmarkSelection(self, row, initial=False):
+        self.benchmarkAnalysisCounter -= 1
         rangeEnd = 3
         if initial:
             rangeEnd = 2
@@ -230,7 +228,10 @@ class BenchmarkView(BaseView):
 
     def updateAllGraphs(self):
         for layer in QgsProject.instance().mapLayers().values():
-            if isinstance(layer, QgsPluginLayer) and not self.dialog.benchmark_all_graphs.findItems(layer.name(), Qt.MatchExactly):
+            if isinstance(
+                    layer, QgsPluginLayer) and not self.dialog.benchmark_all_graphs.findItems(
+                    layer.name(),
+                    Qt.MatchExactly):
                 self.dialog.benchmark_all_graphs.addItem(layer.name())
 
     def _addAllGraphs(self):
@@ -251,15 +252,15 @@ class BenchmarkView(BaseView):
     def addOGDFAlg(self, analysis):
         item = QTreeWidgetItem(self.dialog.benchmark_ogdf_algorithms)
         item.setText(0, analysis)
-        item.setCheckState(0,Qt.Unchecked)
-        self.dialog.benchmark_ogdf_algorithms.insertTopLevelItem(0,item)
+        item.setCheckState(0, Qt.Unchecked)
+        self.dialog.benchmark_ogdf_algorithms.insertTopLevelItem(0, item)
 
     def addOGDFAlgs(self, analysisList):
         groups = {}
         for analysis in analysisList:
             try:
                 groups[analysis.split("/")[0]]
-            except:
+            except KeyError:
                 groups[analysis.split("/")[0]] = []
 
             groups[analysis.split("/")[0]].append(analysis.split("/")[1])
@@ -287,8 +288,8 @@ class BenchmarkView(BaseView):
             child = root.child(i)
             numChildren = child.childCount()
 
-            for n in range(numChildren):
-                child2 = child.child(n)
+            for childIdx in range(numChildren):
+                child2 = child.child(childIdx)
                 if child2.checkState(0) == Qt.Checked:
                     checked.append(child.text(0) + "/" + child2.text(0))
         return checked
@@ -302,8 +303,8 @@ class BenchmarkView(BaseView):
         """
         grid = self.dialog.analysis_visualisation.layout()
         selection1 = []
-        for c in range(1,self.benchmarkAnalysisCounter+1):
-            benchmarkSelWidget = grid.itemAtPosition(c,0).widget().widget(0)
+        for analysisIdx in range(1, self.benchmarkAnalysisCounter+1):
+            benchmarkSelWidget = grid.itemAtPosition(analysisIdx, 0).widget().widget(0)
             oneSelection = []
             for i in range(benchmarkSelWidget.count()):
                 if benchmarkSelWidget.item(i).checkState() == Qt.Checked:
@@ -322,10 +323,9 @@ class BenchmarkView(BaseView):
         grid = self.dialog.analysis_visualisation.layout()
         selection2 = []
 
-        for c in range(1,self.benchmarkAnalysisCounter+1):
-            benchmarkSelWidget = grid.itemAtPosition(c,0).widget().widget(1)
+        for analysisIdx in range(1, self.benchmarkAnalysisCounter+1):
+            benchmarkSelWidget = grid.itemAtPosition(analysisIdx, 0).widget().widget(1)
             oneSelection = []
-            sectionFound = False
             for i in range(benchmarkSelWidget.count()):
                 if benchmarkSelWidget.item(i).checkState() == Qt.Checked:
                     oneSelection.append(benchmarkSelWidget.item(i).text())
@@ -343,9 +343,8 @@ class BenchmarkView(BaseView):
         grid = self.dialog.analysis_visualisation.layout()
         analysis = []
 
-        for c in range(1,self.benchmarkAnalysisCounter+1):
-            benchmarkSelWidget = grid.itemAtPosition(c,0).widget().widget(2)
-            sectionFound = False
+        for analysisIdx in range(1, self.benchmarkAnalysisCounter+1):
+            benchmarkSelWidget = grid.itemAtPosition(analysisIdx, 0).widget().widget(2)
             for i in range(benchmarkSelWidget.count()):
                 radioB = benchmarkSelWidget.itemWidget(benchmarkSelWidget.item(i))
                 if radioB.isChecked():
@@ -361,8 +360,8 @@ class BenchmarkView(BaseView):
         grid = self.dialog.analysis_visualisation.layout()
         visualisation = []
 
-        for c in range(1,self.benchmarkAnalysisCounter+1):
-            visualisationSelWidget = grid.itemAtPosition(c,1).widget()
+        for analysisIdx in range(1, self.benchmarkAnalysisCounter+1):
+            visualisationSelWidget = grid.itemAtPosition(analysisIdx, 1).widget()
             oneSelection = []
             for i in range(visualisationSelWidget.count()):
                 if "Additional Options" in visualisationSelWidget.item(i).text():
@@ -372,7 +371,6 @@ class BenchmarkView(BaseView):
             visualisation.append(oneSelection)
 
         return visualisation
-
 
     def getExecutions(self, algName):
         for i in range(self.dialog.benchmark_ogdf_parameters.layout().count()):
@@ -385,8 +383,8 @@ class BenchmarkView(BaseView):
     def getCreateLegendSelection(self):
         legendSelections = []
         grid = self.dialog.analysis_visualisation.layout()
-        for c in range(1,self.benchmarkAnalysisCounter+1):
-            visualisationSelWidget = grid.itemAtPosition(c,1).widget()
+        for analysisIdx in range(1, self.benchmarkAnalysisCounter+1):
+            visualisationSelWidget = grid.itemAtPosition(analysisIdx, 1).widget()
             for i in range(visualisationSelWidget.count()):
                 if visualisationSelWidget.item(i).text() == "Create legend":
                     if visualisationSelWidget.item(i).checkState() == Qt.Checked:
@@ -399,8 +397,8 @@ class BenchmarkView(BaseView):
     def getLogAxisSelection(self):
         logSelections = []
         grid = self.dialog.analysis_visualisation.layout()
-        for c in range(1,self.benchmarkAnalysisCounter+1):
-            visualisationSelWidget = grid.itemAtPosition(c,1).widget()
+        for analysisIdx in range(1, self.benchmarkAnalysisCounter+1):
+            visualisationSelWidget = grid.itemAtPosition(analysisIdx, 1).widget()
             for i in range(visualisationSelWidget.count()):
                 if visualisationSelWidget.item(i).text() == "Logarithmic y-axis":
                     if visualisationSelWidget.item(i).checkState() == Qt.Checked:
@@ -413,8 +411,8 @@ class BenchmarkView(BaseView):
     def getTightLayoutSelection(self):
         tightSelections = []
         grid = self.dialog.analysis_visualisation.layout()
-        for c in range(1,self.benchmarkAnalysisCounter+1):
-            visualisationSelWidget = grid.itemAtPosition(c,1).widget()
+        for analysisIdx in range(1, self.benchmarkAnalysisCounter+1):
+            visualisationSelWidget = grid.itemAtPosition(analysisIdx, 1).widget()
             for i in range(visualisationSelWidget.count()):
                 if visualisationSelWidget.item(i).text() == "Tight layout":
                     if visualisationSelWidget.item(i).checkState() == Qt.Checked:

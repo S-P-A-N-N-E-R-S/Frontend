@@ -50,7 +50,7 @@ class VertexCoordinatesField(BaseField, GraphDependencyMixin):
             vertexCoordinates = protoField.add()
             vertexCoordinates.x = point.x()
             vertexCoordinates.y = point.y()
-            #TODO Include possible z coordinates in protobuf
+            # TODO Include possible z coordinates in protobuf
 
 
 class VertexCoordinatesResult(BaseResult, GraphDependencyMixin):
@@ -73,4 +73,4 @@ class VertexCoordinatesResult(BaseResult, GraphDependencyMixin):
             vertex = data[self.graphKey].vertex(vertexIds[idx])
             vertex.point().setX(vertexCoordinates.x)
             vertex.point().setY(vertexCoordinates.y)
-            #TODO Parse possible z coordinates from protobuf
+            # TODO Parse possible z coordinates from protobuf

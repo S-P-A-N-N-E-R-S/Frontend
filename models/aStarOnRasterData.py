@@ -16,16 +16,18 @@
 #  License along with this program; if not, see
 #  https://www.gnu.org/licenses/gpl-2.0.html.
 
+import sys
+
+import numpy as np
+
 from qgis.core import QgsCoordinateTransform, QgsProject, QgsRasterBandStats
 from osgeo import gdal
-import numpy as np
-import sys
 
 try:
     from ..lib.AStarC import AStar
 except ImportError:
     # use non-performant pure Python implementation
-    from .AStarPython import AStar
+    from .aStarPython import AStar
 
 
 class AStarOnRasterData:
@@ -61,10 +63,10 @@ class AStarOnRasterData:
                              .minimumValue)
         meanRasterValue = int((self.rLayer.dataProvider().bandStatistics(self.bandID, QgsRasterBandStats.All)).mean)
 
-        #----------------------------------
+        # ----------------------------------
 
         self.aStarObject = AStar(readBand.ReadAsArray(), heuristicIndex, minRasterValue, meanRasterValue,
-                                   createShortestPathMatrix)
+                                 createShortestPathMatrix)
 
         # ----------------------------------
 
@@ -81,7 +83,6 @@ class AStarOnRasterData:
         endPointCol = int((endPointTransform.x() - self.xOrigin) / self.pixelWidth)
         endPointRow = int((self.yOrigin - endPointTransform.y()) / self.pixelHeight)
 
-        dimensions = (self.matrixRowSize, self.matrixColSize)
         # check startPoint and endPoint are inside the raster, if not return max value
         if startPointCol > self.matrixColSize or startPointCol < 0 or startPointRow < 0 or\
            startPointRow > self.matrixRowSize:
@@ -89,11 +90,11 @@ class AStarOnRasterData:
         if endPointCol > self.matrixColSize or endPointCol < 0 or endPointRow < 0 or endPointRow > self.matrixRowSize:
             return [sys.maxsize]
 
-        #----------------------------------
+        # ----------------------------------
 
         return self.aStarObject.shortestPath(startPointRow, startPointCol, endPointRow, endPointCol)
 
-        #----------------------------------
+        # ----------------------------------
 
     def getShortestPathMatrix1(self):
         numpyTransform = np.matrix(self.aStarObject.getShortestPathMatrix1())

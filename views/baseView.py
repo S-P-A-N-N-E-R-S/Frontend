@@ -30,7 +30,7 @@ class BaseView(QObject):
         Base constructor of a view
         :param dialog: contains all ui elements
         """
-        super(BaseView, self).__init__()
+        super().__init__()
 
         self.name = None
         self.dialog = dialog
@@ -46,28 +46,28 @@ class BaseView(QObject):
 
     def showError(self, msg, title="Error"):
         """ Shows an error in the notification bar """
-        self.dialog.bar.pushMessage(title, msg, level=Qgis.Critical)
+        self.dialog.messageBar.pushMessage(title, msg, level=Qgis.Critical)
 
     def showWarning(self, msg, title="Warning"):
         """ Shows a warning in the notification bar """
-        self.dialog.bar.pushMessage(title, msg, level=Qgis.Warning)
+        self.dialog.messageBar.pushMessage(title, msg, level=Qgis.Warning)
 
     def showSuccess(self, msg, title="Success"):
         """ Shows a success in the notification bar """
-        self.dialog.bar.pushMessage(title, msg, level=Qgis.Success)
+        self.dialog.messageBar.pushMessage(title, msg, level=Qgis.Success)
 
     def showInfo(self, msg, title="Info"):
         """ Shows an info in the notification bar """
-        self.dialog.bar.pushMessage(title, msg, level=Qgis.Info)
+        self.dialog.messageBar.pushMessage(title, msg, level=Qgis.Info)
 
-    def _browseFile(self, layerComboBox, filter):
+    def _browseFile(self, layerComboBox, fileTypes):
         """
         Allows to browse for a file and adds it to the QGSMapLayerComboBox
         :param layerComboBox: name of the QGSMapLayerComboBox
         :param filter: supported file types
         :return:
         """
-        path, selectedFilter = QFileDialog.getOpenFileName(filter=filter)
+        path, _selectedFilter = QFileDialog.getOpenFileName(filter=fileTypes)
         if path:
             comboBox = getattr(self.dialog, layerComboBox)
             comboBox.setAdditionalItems([path])

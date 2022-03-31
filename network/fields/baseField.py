@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import QLabel
 
 from ..exceptions import ParseError
 
+
 class BaseField:
     """Base class for all request fields"""
 

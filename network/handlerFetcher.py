@@ -64,7 +64,7 @@ class HandlerFetcher(QObject):
         try:
             with Client(host, port, tlsOption) as client:
                 client.getAvailableHandlers()
-                return {"success": "Algorithms refreshed!",}
+                return {"success": "Algorithms refreshed!", }
         except (NetworkClientError, ParseError, ServerError) as error:
             return {"error": str(error)}
 

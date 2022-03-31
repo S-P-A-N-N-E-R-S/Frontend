@@ -19,8 +19,8 @@
 from qgis.testing import unittest, start_app, TestCase
 from qgis.core import QgsApplication, QgsRectangle, QgsCoordinateReferenceSystem, QgsProviderRegistry, QgsPointXY, QgsProviderMetadata, QgsUnitTypes, QgsVectorLayer, QgsRasterLayer
 
-from ..models.GraphLayer import GraphLayer, GraphLayerType, GraphDataProvider
-from ..models.GraphBuilder import GraphBuilder
+from ..models.graphLayer import GraphLayer, GraphLayerType, GraphDataProvider
+from ..models.graphBuilder import GraphBuilder
 from ..helperFunctions import getPluginPath
 
 import os
