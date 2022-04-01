@@ -60,4 +60,4 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
 ## Used Libraries
-The library kdtree, licenced under the ISC, is used for shortest path analyses.
+The library kdtree, licenced under the ISC, is used for the distance calculations.
